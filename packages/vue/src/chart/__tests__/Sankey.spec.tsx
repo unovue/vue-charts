@@ -1,4 +1,4 @@
-import { render } from '@testing-library/vue'
+import { fireEvent, render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { Sankey } from '../Sankey'
 
@@ -39,5 +39,46 @@ describe('<Sankey />', () => {
       <Sankey data={{ nodes: [], links: [] }} width={600} height={400} />
     ))
     expect(container.querySelector('.v-charts-sankey')).toBeNull()
+  })
+
+  it('renders custom #node slot', () => {
+    const { container } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false}>
+        {{
+          node: ({ x, y, width, height, index }: any) => (
+            <rect
+              data-testid={`custom-node-${index}`}
+              x={x}
+              y={y}
+              width={width}
+              height={height}
+              fill="red"
+            />
+          ),
+        }}
+      </Sankey>
+    ))
+    expect(container.querySelectorAll('[data-testid^="custom-node-"]')).toHaveLength(4)
+  })
+
+  it('renders custom #link slot', () => {
+    const { container } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false}>
+        {{
+          link: ({ d, index }: any) => (
+            <path data-testid={`custom-link-${index}`} d={d} stroke="green" fill="none" />
+          ),
+        }}
+      </Sankey>
+    ))
+    expect(container.querySelectorAll('[data-testid^="custom-link-"]')).toHaveLength(4)
+  })
+
+  it('respects nodeWidth prop', () => {
+    const { container } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} nodeWidth={25} isAnimationActive={false} />
+    ))
+    const firstRect = container.querySelector('.v-charts-sankey-node rect')!
+    expect(Number(firstRect.getAttribute('width'))).toBeCloseTo(25, 5)
   })
 })
