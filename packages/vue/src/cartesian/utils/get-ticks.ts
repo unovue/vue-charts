@@ -2,7 +2,7 @@ import type { CartesianViewBoxRequired } from '@/cartesian/type'
 import type { Size } from '@/types'
 import type { CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { CartesianTickItem } from '@/types/tick'
-import { isNumber, isSsr, isVisible } from '@/utils'
+import { Global, isNumber, isVisible } from '@/utils'
 import { getStringSize } from '@/utils/attrs'
 import { getEquidistantTicks } from '@/utils/cartesian'
 import { mathSign } from '@/utils/data'
@@ -144,7 +144,7 @@ export function getTicks(
     return []
   }
 
-  if (isNumber(interval) || isSsr) {
+  if (isNumber(interval) || Global.isSsr) {
     return getNumberIntervalTicks(ticks, isNumber(interval) ? interval : 0) ?? []
   }
 
