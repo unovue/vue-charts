@@ -56,8 +56,6 @@ export function isVisible(
   return sign * (tickPosition - (sign * size) / 2 - start) >= 0 && sign * (tickPosition + (sign * size) / 2 - end) <= 0
 }
 
-export const isSsr = typeof window === 'undefined'
-
 /**
  * Checks if the value is null or undefined
  * @param {any} value The value to check

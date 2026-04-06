@@ -1,5 +1,5 @@
 import type { Size } from '@/types'
-import { isSsr } from '@/utils/validate'
+import { Global } from '@/utils/Global'
 import type { CSSProperties } from 'vue'
 
 interface StringCache {
@@ -35,7 +35,7 @@ function removeInvalidKeys(obj: Record<string, any>) {
 }
 
 export function getStringSize(text: string | number, style: CSSProperties = {}): Size {
-  if (text === undefined || text === null || isSsr) {
+  if (text === undefined || text === null || Global.isSsr) {
     return { width: 0, height: 0 }
   }
 
