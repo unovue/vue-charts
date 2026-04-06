@@ -1,5 +1,6 @@
 import { Fragment, Teleport, computed, defineComponent } from 'vue'
 import type { PropType } from 'vue'
+import type { AnimationOptions } from 'motion-v'
 import { useAppSelector } from '@/state/hooks'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -24,8 +25,9 @@ function getLegendItemColor(stroke: string | undefined, fill: string | undefined
   return stroke && stroke !== 'none' ? stroke : fill
 }
 
-function getSinglePolygonPath(points: ReadonlyArray<{ x: number; y: number }>): string {
-  if (!points.length) return ''
+function getSinglePolygonPath(points: ReadonlyArray<{ x: number, y: number }>): string {
+  if (!points.length)
+    return ''
   // Repeat first point at end (matching Recharts getParsedPoints behavior) to ensure
   // explicit close segment for correct SVG fill when used in range paths
   const pts = [...points, points[0]]
@@ -34,8 +36,8 @@ function getSinglePolygonPath(points: ReadonlyArray<{ x: number; y: number }>): 
 }
 
 function getRangePath(
-  points: ReadonlyArray<{ x: number; y: number }>,
-  baseLinePoints: ReadonlyArray<{ x: number; y: number }>,
+  points: ReadonlyArray<{ x: number, y: number }>,
+  baseLinePoints: ReadonlyArray<{ x: number, y: number }>,
 ): string {
   const outerPath = getSinglePolygonPath(points)
   const inner = getSinglePolygonPath([...baseLinePoints].reverse())
@@ -79,6 +81,10 @@ export const Radar = defineComponent({
     connectNulls: { type: Boolean, default: false },
     label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
     isAnimationActive: { type: Boolean, default: true },
+    transition: {
+      type: Object as PropType<AnimationOptions>,
+      default: () => ({ duration: 0.8, ease: 'easeOut' }),
+    },
     activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
   },
   setup(props) {
@@ -130,9 +136,11 @@ export const Radar = defineComponent({
     const isAnimating = useIsAnimating(() => props.isAnimationActive)
 
     provideCartesianLabelListData(computed(() => {
-      if (props.isAnimationActive && isAnimating.value) return undefined
+      if (props.isAnimationActive && isAnimating.value)
+        return undefined
       const data = radarPoints.value
-      if (!data) return undefined
+      if (!data)
+        return undefined
       return data.points.map(point => ({
         x: point.x,
         y: point.y,
@@ -146,7 +154,7 @@ export const Radar = defineComponent({
     let prevPoints: RadarPoint[] | null = null
     let prevBaseLinePoints: RadarPoint[] | null = null
     let animationId = 0
-    let lastData: RadarComposedData | undefined = undefined
+    let lastData: RadarComposedData | undefined
 
     const renderPolygon = (
       points: RadarPoint[],
@@ -171,44 +179,44 @@ export const Radar = defineComponent({
           <g class="v-charts-radar-polygon">
             {isRange && baseLinePoints.length > 0
               ? (
-                <g>
+                  <g>
+                    <path
+                      d={pathD}
+                      fill={isClosed ? props.fill : 'none'}
+                      fill-opacity={props.fillOpacity}
+                      stroke="none"
+                      stroke-dasharray={props.strokeDasharray}
+                    />
+                    {hasStroke && (
+                      <path
+                        d={getSinglePolygonPath(points)}
+                        fill="none"
+                        stroke={stroke}
+                        stroke-width={props.strokeWidth}
+                        stroke-dasharray={props.strokeDasharray}
+                      />
+                    )}
+                    {hasStroke && (
+                      <path
+                        d={getSinglePolygonPath(baseLinePoints)}
+                        fill="none"
+                        stroke={stroke}
+                        stroke-width={props.strokeWidth}
+                        stroke-dasharray={props.strokeDasharray}
+                      />
+                    )}
+                  </g>
+                )
+              : (
                   <path
                     d={pathD}
                     fill={isClosed ? props.fill : 'none'}
                     fill-opacity={props.fillOpacity}
-                    stroke="none"
+                    stroke={stroke}
+                    stroke-width={props.strokeWidth}
                     stroke-dasharray={props.strokeDasharray}
                   />
-                  {hasStroke && (
-                    <path
-                      d={getSinglePolygonPath(points)}
-                      fill="none"
-                      stroke={stroke}
-                      stroke-width={props.strokeWidth}
-                      stroke-dasharray={props.strokeDasharray}
-                    />
-                  )}
-                  {hasStroke && (
-                    <path
-                      d={getSinglePolygonPath(baseLinePoints)}
-                      fill="none"
-                      stroke={stroke}
-                      stroke-width={props.strokeWidth}
-                      stroke-dasharray={props.strokeDasharray}
-                    />
-                  )}
-                </g>
-              )
-              : (
-                <path
-                  d={pathD}
-                  fill={isClosed ? props.fill : 'none'}
-                  fill-opacity={props.fillOpacity}
-                  stroke={stroke}
-                  stroke-width={props.strokeWidth}
-                  stroke-dasharray={props.strokeDasharray}
-                />
-              )}
+                )}
           </g>
           {props.dot && (
             <g class="v-charts-radar-dots">
@@ -233,10 +241,12 @@ export const Radar = defineComponent({
     }
 
     return () => {
-      if (props.hide) return null
+      if (props.hide)
+        return null
 
       const data = radarPoints.value
-      if (data == null || data.points.length === 0) return null
+      if (data == null || data.points.length === 0)
+        return null
 
       const { points, baseLinePoints, isRange } = data
 
@@ -284,6 +294,7 @@ export const Radar = defineComponent({
           <Animate
             key={animationId}
             isActive={true}
+            transition={props.transition}
             onAnimationStart={() => { isAnimating.value = true }}
             onAnimationEnd={() => { isAnimating.value = false }}
           >

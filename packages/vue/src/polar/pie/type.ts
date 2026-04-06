@@ -1,4 +1,5 @@
 import type { PropType } from 'vue'
+import type { AnimationOptions } from 'motion-v'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
@@ -23,6 +24,10 @@ export const PieVueProps = {
   hide: { type: Boolean, default: false },
   activeIndex: { type: Number, default: -1 },
   isAnimationActive: { type: Boolean, default: true },
+  transition: {
+    type: Object as PropType<AnimationOptions>,
+    default: () => ({ duration: 1.2, ease: 'easeOut' }),
+  },
   label: { type: Boolean, default: false },
   class: classProp,
 }

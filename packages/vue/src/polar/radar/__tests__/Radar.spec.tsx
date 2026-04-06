@@ -1,9 +1,11 @@
 import { render } from '@testing-library/vue'
+import { mount } from '@vue/test-utils'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { RadarChart } from '@/chart/RadarChart'
 import { Radar } from '@/polar/radar/Radar'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
+import { Animate } from '@/animation/Animate'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const exampleRadarData = [
@@ -39,6 +41,31 @@ describe('Radar', () => {
       expect(d).toBeTruthy()
       expect(d).toContain('M')
       expect(d).toContain('Z')
+    })
+
+    it('accepts custom transition prop without errors', () => {
+      const { container } = render(() => (
+        <RadarChart width={500} height={500} data={exampleRadarData}>
+          <Radar
+            dataKey="value"
+            isAnimationActive={false}
+            transition={{ duration: 0.2, ease: 'linear' }}
+          />
+        </RadarChart>
+      ))
+      expect(getRadarPolygonPaths(container).length).toBe(1)
+    })
+
+    it('passes transition prop through to Animate', () => {
+      const customTransition = { duration: 0.25, ease: 'linear' as const }
+      const wrapper = mount(() => (
+        <RadarChart width={500} height={500} data={exampleRadarData}>
+          <Radar dataKey="value" transition={customTransition} />
+        </RadarChart>
+      ))
+      const animate = wrapper.findComponent(Animate)
+      expect(animate.exists()).toBe(true)
+      expect(animate.props('transition')).toEqual(customTransition)
     })
 
     it('renders empty when data is empty', () => {

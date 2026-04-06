@@ -1,8 +1,10 @@
 import { render } from '@testing-library/vue'
+import { mount } from '@vue/test-utils'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
+import { Animate } from '@/animation/Animate'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const data = [
@@ -29,6 +31,27 @@ describe('RadialBar', () => {
       ))
       const sectors = container.querySelectorAll('.v-charts-sector')
       expect(sectors.length).toBe(7)
+    })
+
+    it('passes transition prop through to Animate', () => {
+      const customTransition = { duration: 0.3, ease: 'linear' as const }
+      const wrapper = mount(() => (
+        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={10} data={data}>
+          <RadialBar dataKey="uv" transition={customTransition} />
+        </RadialBarChart>
+      ))
+      const animate = wrapper.findComponent(Animate)
+      expect(animate.exists()).toBe(true)
+      expect(animate.props('transition')).toEqual(customTransition)
+    })
+
+    it('accepts custom transition prop', () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={10} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} transition={{ duration: 0.2, ease: 'linear' }} />
+        </RadialBarChart>
+      ))
+      expect(container.querySelectorAll('.v-charts-sector').length).toBe(7)
     })
 
     it('renders no sectors when no RadialBar is added', () => {
