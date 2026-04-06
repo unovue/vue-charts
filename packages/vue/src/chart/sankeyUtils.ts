@@ -73,4 +73,5 @@ export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSanke
   return { nodes: result.nodes, links: result.links }
 }
 
-export const linkPathGenerator = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>()
+export const linkPathGenerator: (link: SankeyLayoutLink) => string | null
+  = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>() as any
