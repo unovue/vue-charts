@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Sankey } from '../Sankey'
 
 const sampleData = {
@@ -80,5 +80,27 @@ describe('<Sankey />', () => {
     ))
     const firstRect = container.querySelector('.v-charts-sankey-node rect')!
     expect(Number(firstRect.getAttribute('width'))).toBeCloseTo(25, 5)
+  })
+
+  it('fires onClick with type "node" when a node is clicked', async () => {
+    const onClick = vi.fn()
+    const { container } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+    ))
+    const node = container.querySelector('.v-charts-sankey-node')!
+    await fireEvent.click(node)
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(onClick.mock.calls[0][1]).toBe('node')
+  })
+
+  it('fires onClick with type "link" when a link is clicked', async () => {
+    const onClick = vi.fn()
+    const { container } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+    ))
+    const link = container.querySelector('.v-charts-sankey-link')!
+    await fireEvent.click(link)
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(onClick.mock.calls[0][1]).toBe('link')
   })
 })
