@@ -217,6 +217,7 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
           <Animate
             key={animationId}
             isActive={true}
+            transition={props.transition}
             onAnimationStart={() => { isAnimating.value = true }}
             onAnimationEnd={() => { isAnimating.value = false }}
           >

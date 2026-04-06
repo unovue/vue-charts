@@ -464,7 +464,7 @@ export const selectActiveTooltipIndex: (state: RechartsRootState) => TooltipInde
   combineActiveTooltipIndex,
 )
 
-export const selectActiveLabel: (state: RechartsRootState) => string | undefined = createSelector(
+export const selectActiveLabel: (state: RechartsRootState) => string | number | undefined = createSelector(
   [selectTooltipAxisTicks, selectActiveTooltipIndex],
   combineActiveLabel,
 )

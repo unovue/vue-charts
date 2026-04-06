@@ -59,7 +59,7 @@ export type MouseHandlerDataParam = {
    * Exactly the same as activeTooltipIndex - this was also duplicated in recharts@2 so let's keep both properties for better backwards compatibility.
    */
   activeIndex: number | TooltipIndex | undefined
-  activeLabel: string | undefined
+  activeLabel: string | number | undefined
   activeDataKey: DataKey<any> | undefined
   activeCoordinate: Coordinate | undefined
 }

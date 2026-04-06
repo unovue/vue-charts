@@ -150,7 +150,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
       const stroke = (attrs.stroke as string) ?? props.stroke
       return (
         <Layer class={['v-charts-pie', props.class]}>
-          <Animate isActive={props.isAnimationActive} from={0} to={1} transition={{ duration: 1.5 }}>
+          <Animate isActive={props.isAnimationActive} from={0} to={1} transition={props.transition}>
             {(progress: number) => {
               // Chain animation: curAngle accumulates so all sectors sweep as one continuous arc
               let curAngle = sectorList[0]?.startAngle ?? 0
