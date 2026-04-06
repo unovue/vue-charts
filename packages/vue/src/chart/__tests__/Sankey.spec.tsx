@@ -1,5 +1,8 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
+import { Tooltip } from '@/components/Tooltip'
+import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { Sankey } from '../Sankey'
 
 const sampleData = {
@@ -18,6 +21,10 @@ const sampleData = {
 }
 
 describe('<Sankey />', () => {
+  beforeEach(() => {
+    mockGetBoundingClientRect({ width: 600, height: 400 })
+  })
+
   it('renders one rect per node', () => {
     const { container } = render(() => (
       <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} />
@@ -102,5 +109,39 @@ describe('<Sankey />', () => {
     await fireEvent.click(link)
     expect(onClick).toHaveBeenCalledTimes(1)
     expect(onClick.mock.calls[0][1]).toBe('link')
+  })
+
+  it('shows tooltip with node payload on node hover', async () => {
+    const { container, getByText } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false}>
+        <Tooltip />
+      </Sankey>
+    ))
+
+    const wrapper = container.querySelector('.v-charts-wrapper')!
+    const firstNode = container.querySelector('.v-charts-sankey-node')!
+    await fireEvent(firstNode, new MouseEvent('mouseenter', { bubbles: true }))
+    await fireEvent(wrapper, new MouseEvent('mousemove', { bubbles: true, clientX: 50, clientY: 50 }))
+    await nextTick()
+    await nextTick()
+
+    expect(getByText('A')).toBeTruthy()
+  })
+
+  it('shows tooltip with link payload on link hover', async () => {
+    const { container, getByText } = render(() => (
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false}>
+        <Tooltip />
+      </Sankey>
+    ))
+
+    const wrapper = container.querySelector('.v-charts-wrapper')!
+    const firstLink = container.querySelector('.v-charts-sankey-link')!
+    await fireEvent(firstLink, new MouseEvent('mouseenter', { bubbles: true }))
+    await fireEvent(wrapper, new MouseEvent('mousemove', { bubbles: true, clientX: 200, clientY: 200 }))
+    await nextTick()
+    await nextTick()
+
+    expect(getByText('A - B')).toBeTruthy()
   })
 })
