@@ -37,14 +37,28 @@ export interface SunburstLayoutOptions {
 }
 
 /**
+ * Record each node's original child index before sorting mutates the order.
+ * This ensures tooltipIndex paths point into the original data.children order.
+ */
+function recordOriginalIndices(node: any): void {
+  if (node.children) {
+    node.children.forEach((child: any, i: number) => {
+      child._originalIndex = i
+      recordOriginalIndices(child)
+    })
+  }
+}
+
+/**
  * Build a hierarchical tooltip index path string for a d3 hierarchy node.
+ * Uses _originalIndex (pre-sort) so the path matches the original data structure.
  * E.g. 'children[0].children[1]'
  */
 function buildTooltipIndex(node: any): string {
   const parts: string[] = []
   let current = node
   while (current.parent) {
-    const idx = current.parent.children!.indexOf(current)
+    const idx = current._originalIndex ?? current.parent.children!.indexOf(current)
     parts.unshift(`children[${idx}]`)
     current = current.parent
   }
@@ -64,7 +78,11 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
       const val = d[dataKey]
       return typeof val === 'number' && val > 0 ? val : 0
     })
-    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+
+  // Record original child indices before sort mutates the order
+  recordOriginalIndices(root)
+
+  root.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 
   // partition gives x0/x1 in [0, 1] (angular fraction) and y0/y1 in [0, 1] (depth fraction)
   partition<SunburstData>().size([1, 1])(root)
