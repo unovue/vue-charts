@@ -99,6 +99,8 @@ const SunburstInner = defineComponent({
         startAngle: props.startAngle,
         endAngle: props.endAngle,
         dataKey: props.dataKey,
+        ringPadding: props.ringPadding,
+        padding: props.padding,
       }),
     )
 
