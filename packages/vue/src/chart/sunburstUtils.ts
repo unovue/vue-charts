@@ -32,6 +32,8 @@ export interface SunburstLayoutOptions {
   startAngle: number
   endAngle: number
   dataKey: string
+  ringPadding?: number
+  padding?: number
 }
 
 /**
@@ -50,7 +52,7 @@ function buildTooltipIndex(node: any): string {
 }
 
 export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstLayoutNode[] {
-  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey } = options
+  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey, ringPadding = 0, padding = 0 } = options
 
   if (!data.children || data.children.length === 0)
     return []
@@ -77,10 +79,17 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
     if (d.depth === 0)
       return
 
-    const nodeStartAngle = startAngle + d.x0 * angleRange
-    const nodeEndAngle = startAngle + d.x1 * angleRange
-    const nodeInnerRadius = innerRadius + d.y0 * radiusRange
-    const nodeOuterRadius = innerRadius + d.y1 * radiusRange
+    // Angular padding: shrink each sector by half padding on each side (in degrees)
+    const nodeStartAngle = startAngle + d.x0 * angleRange + padding / 2
+    const nodeEndAngle = startAngle + d.x1 * angleRange - padding / 2
+
+    // Radial padding: add ringPadding to inner, subtract from outer
+    const nodeInnerRadius = innerRadius + d.y0 * radiusRange + ringPadding / 2
+    const nodeOuterRadius = innerRadius + d.y1 * radiusRange - ringPadding / 2
+
+    // Skip degenerate sectors
+    if (nodeEndAngle <= nodeStartAngle || nodeOuterRadius <= nodeInnerRadius)
+      return
 
     nodes.push({
       cx,
