@@ -167,4 +167,34 @@ describe('computeSunburstLayout', () => {
       expect(node.tooltipIndex).toMatch(/^children\[\d+\]/)
     }
   })
+
+  it('tooltipIndex uses original data order, not sorted order', () => {
+    // Values are NOT in sorted order — sort will reorder them
+    const unsortedData = {
+      name: 'root',
+      children: [
+        { name: 'Small', value: 10 },
+        { name: 'Large', value: 300 },
+        { name: 'Medium', value: 100 },
+      ],
+    }
+    const nodes = computeSunburstLayout({
+      data: unsortedData,
+      cx: 200,
+      cy: 200,
+      innerRadius: 50,
+      outerRadius: 200,
+      startAngle: 0,
+      endAngle: 360,
+      dataKey: 'value',
+    })
+
+    // tooltipIndex must match original data order for get(data, path) to work
+    const small = nodes.find(n => n.name === 'Small')!
+    const large = nodes.find(n => n.name === 'Large')!
+    const medium = nodes.find(n => n.name === 'Medium')!
+    expect(small.tooltipIndex).toBe('children[0]') // original index 0
+    expect(large.tooltipIndex).toBe('children[1]') // original index 1
+    expect(medium.tooltipIndex).toBe('children[2]') // original index 2
+  })
 })
