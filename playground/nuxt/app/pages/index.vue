@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon } from 'lucide-vue-next'
+import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, GitBranch, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon, Sun } from 'lucide-vue-next'
 
 const routes = [
   {
@@ -71,6 +71,20 @@ const routes = [
     description: 'Hierarchical data as nested rectangles, custom content, nest drill-down.',
     icon: LayoutGrid,
     count: 4,
+  },
+  {
+    path: '/sankey-charts',
+    name: 'Sankey Charts',
+    description: 'Flow diagrams showing the magnitude of flow between nodes.',
+    icon: GitBranch,
+    count: 1,
+  },
+  {
+    path: '/sunburst-charts',
+    name: 'Sunburst Charts',
+    description: 'Hierarchical data displayed as concentric ring sectors.',
+    icon: Sun,
+    count: 1,
   },
   {
     path: '/tooltip-charts',
