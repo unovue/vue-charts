@@ -15,7 +15,7 @@ dist
 .claude/*
 .agents/*
 tasks/
-
+.omx/*
 # Docs site generated files
 docs/.nuxt
 docs/.data
