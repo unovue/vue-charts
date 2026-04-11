@@ -324,7 +324,7 @@ const SankeyInner = defineComponent({
           class="v-charts-sankey-link"
           d={d}
           fill="none"
-          stroke={props.linkFill}
+          stroke={props.linkStroke === 'none' ? props.linkFill : props.linkStroke}
           stroke-width={linkWidth}
           stroke-opacity={0.2}
           style={{ opacity }}
