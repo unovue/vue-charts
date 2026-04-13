@@ -12,10 +12,10 @@ export default defineAppConfig({
     },
   },
   socials: {
-    github: 'https://github.com/unovue/vuecharts',
+    github: 'https://github.com/unovue/vue-charts',
   },
   github: {
-    url: 'https://github.com/unovue/vuecharts',
+    url: 'https://github.com/unovue/vue-charts',
   },
   toc: {
     bottom: {
@@ -24,7 +24,7 @@ export default defineAppConfig({
         {
           icon: 'i-lucide-star',
           label: 'Star on GitHub',
-          to: 'https://github.com/unovue/vuecharts',
+          to: 'https://github.com/unovue/vue-charts',
           target: '_blank',
         },
       ],
