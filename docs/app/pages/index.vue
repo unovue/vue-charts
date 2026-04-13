@@ -119,7 +119,7 @@ async function switchCategory(key: string) {
 }
 
 onMounted(async () => {
-  const mod = await featuredLoaders.bar()
+  const mod = await featuredLoaders.bar?.()
   featuredComponent.value = mod.default
 })
 
