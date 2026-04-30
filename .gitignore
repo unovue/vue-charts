@@ -24,3 +24,5 @@ docs/test-results
 
 # Playwright MCP
 .playwright-mcp
+
+openspec
