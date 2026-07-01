@@ -3,7 +3,7 @@ import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import { validateWidthHeight } from '@/utils'
 import { provideStore } from '@reduxjs/vue-redux'
-import type { PropType } from 'vue'
+import type { PropType, StyleValue } from 'vue'
 import { Fragment, defineComponent } from 'vue'
 import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
@@ -99,7 +99,7 @@ export const CategoricalProps = {
     type: Number,
   },
   style: {
-    type: Object,
+    type: [String, Object, Array] as PropType<StyleValue>,
   },
   syncId: {
     type: [Number, String],

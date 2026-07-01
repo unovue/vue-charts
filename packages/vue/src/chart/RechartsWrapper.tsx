@@ -1,4 +1,4 @@
-import { type CSSProperties, type PropType, type Ref, type VNode, defineComponent, ref } from 'vue'
+import { type PropType, type Ref, type StyleValue, type VNode, defineComponent, ref } from 'vue'
 import { mouseLeaveChart } from '../state/tooltipSlice'
 import { useAppDispatch } from '../state/hooks'
 import { mouseClickAction, mouseMoveAction } from '../state/mouseEventsMiddleware'
@@ -29,7 +29,7 @@ export const RechartsWrapper = defineComponent({
     onTouchEnd: { type: Function as PropType<CategoricalChartFunc> },
     onTouchMove: { type: Function as PropType<CategoricalChartFunc> },
     onTouchStart: { type: Function as PropType<CategoricalChartFunc> },
-    style: { type: Object as PropType<CSSProperties> },
+    style: { type: [String, Object, Array] as PropType<StyleValue> },
     width: { type: Number, required: true },
   },
   setup(props, { slots }) {
@@ -119,7 +119,7 @@ export const RechartsWrapper = defineComponent({
     return () => (
       <div
         class={['v-charts-wrapper', props.class]}
-        style={{ position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px`, ...props.style }}
+        style={[{ position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` }, props.style]}
         role="application"
         onClick={myOnClick}
         onContextmenu={myOnContextMenu}
