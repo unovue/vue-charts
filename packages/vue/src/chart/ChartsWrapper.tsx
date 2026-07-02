@@ -1,4 +1,4 @@
-import { type PropType, type Ref, type StyleValue, type VNode, defineComponent, ref } from 'vue'
+import { type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref } from 'vue'
 import { mouseLeaveChart } from '../state/tooltipSlice'
 import { useAppDispatch } from '../state/hooks'
 import { mouseClickAction, mouseMoveAction } from '../state/mouseEventsMiddleware'
@@ -13,8 +13,8 @@ import { providePortalRaw } from '@/chart/TooltipPortalContext'
 import { provideLegendPortalRaw } from '@/chart/LegendPortalContext'
 import { getChartPointer } from '@/utils/chart'
 
-export const RechartsWrapper = defineComponent({
-  name: 'RechartsWrapper',
+export const ChartsWrapper = defineComponent({
+  name: 'ChartsWrapper',
   props: {
     class: classProp,
     height: { type: Number, required: true },
@@ -26,9 +26,11 @@ export const RechartsWrapper = defineComponent({
     onMouseLeave: { type: Function as PropType<CategoricalChartFunc> },
     onMouseMove: { type: Function as PropType<CategoricalChartFunc> },
     onMouseUp: { type: Function as PropType<CategoricalChartFunc> },
+    onResize: { type: Function as PropType<(width: number, height: number) => void> },
     onTouchEnd: { type: Function as PropType<CategoricalChartFunc> },
     onTouchMove: { type: Function as PropType<CategoricalChartFunc> },
     onTouchStart: { type: Function as PropType<CategoricalChartFunc> },
+    responsive: { type: Boolean, default: false },
     style: { type: [String, Object, Array] as PropType<StyleValue> },
     width: { type: Number, required: true },
   },
@@ -42,11 +44,32 @@ export const RechartsWrapper = defineComponent({
     const legendPortal = ref<HTMLElement | null>(null)
     providePortalRaw(tooltipPortal)
     provideLegendPortalRaw(legendPortal)
+    const wrapperEl = ref<HTMLDivElement | null>(null)
     const innerRef = (node: HTMLDivElement | null) => {
       scaleRef.value = node
       tooltipPortal.value = node
       legendPortal.value = node
+      wrapperEl.value = node
     }
+
+    // When `responsive` is set, the wrapper div fills its parent via CSS and
+    // measures itself, feeding the pixel size back to the chart (Recharts 3.3+ pattern).
+    let resizeObserver: ResizeObserver | null = null
+    onMounted(() => {
+      if (!props.responsive || !wrapperEl.value) {
+        return
+      }
+      const { width, height } = wrapperEl.value.getBoundingClientRect()
+      props.onResize?.(width, height)
+      resizeObserver = new ResizeObserver((entries) => {
+        const { width: w, height: h } = entries[0].contentRect
+        props.onResize?.(w, h)
+      })
+      resizeObserver.observe(wrapperEl.value)
+    })
+    onUnmounted(() => {
+      resizeObserver?.disconnect()
+    })
 
     const myOnClick = (e: MouseEvent) => {
       // Capture chart pointer synchronously before dispatching to middleware,
@@ -119,7 +142,12 @@ export const RechartsWrapper = defineComponent({
     return () => (
       <div
         class={['v-charts-wrapper', props.class]}
-        style={[{ position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` }, props.style]}
+        style={[
+          props.responsive
+            ? { position: 'relative', cursor: 'default', width: '100%', height: '100%' }
+            : { position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` },
+          props.style,
+        ]}
         role="application"
         onClick={myOnClick}
         onContextmenu={myOnContextMenu}

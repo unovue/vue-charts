@@ -5,7 +5,7 @@ import { provideStore } from '@reduxjs/vue-redux'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
-import { RechartsWrapper } from './RechartsWrapper'
+import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
 import { useAppDispatch } from '@/state/hooks'
 import {
@@ -379,12 +379,12 @@ const _Sankey = defineComponent({
         return null
 
       return (
-        <RechartsWrapper width={props.width} height={props.height}>
+        <ChartsWrapper width={props.width} height={props.height}>
           <SankeyInner {...props}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>
           {slots.default?.()}
-        </RechartsWrapper>
+        </ChartsWrapper>
       )
     }
   },

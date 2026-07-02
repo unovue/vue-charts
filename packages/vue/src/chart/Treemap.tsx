@@ -6,7 +6,7 @@ import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
-import { RechartsWrapper } from './RechartsWrapper'
+import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
 import { useAppDispatch } from '@/state/hooks'
 import { setActiveMouseOverItemIndex, setActiveClickItemIndex, mouseLeaveItem, addTooltipEntrySettings, removeTooltipEntrySettings } from '@/state/tooltipSlice'
@@ -442,7 +442,7 @@ export const Treemap = defineComponent({
       if (!props.data || props.data.length === 0) return null
 
       return (
-        <RechartsWrapper
+        <ChartsWrapper
           width={props.width}
           height={props.height}
         >
@@ -450,7 +450,7 @@ export const Treemap = defineComponent({
             {{ content: slots.content }}
           </TreemapInner>
           {slots.default?.()}
-        </RechartsWrapper>
+        </ChartsWrapper>
       )
     }
   },

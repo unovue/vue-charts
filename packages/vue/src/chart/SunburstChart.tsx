@@ -5,7 +5,7 @@ import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
-import { RechartsWrapper } from './RechartsWrapper'
+import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
 import { useAppDispatch } from '@/state/hooks'
 import {
@@ -225,7 +225,7 @@ export const SunburstChart = defineComponent({
       if (!props.data?.children || props.data.children.length === 0) return null
 
       return (
-        <RechartsWrapper
+        <ChartsWrapper
           width={props.width}
           height={props.height}
         >
@@ -233,7 +233,7 @@ export const SunburstChart = defineComponent({
             {{ content: slots.content }}
           </SunburstInner>
           {slots.default?.()}
-        </RechartsWrapper>
+        </ChartsWrapper>
       )
     }
   },
