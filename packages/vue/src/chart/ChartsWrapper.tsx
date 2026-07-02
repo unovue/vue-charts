@@ -1,4 +1,5 @@
-import { type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref } from 'vue'
+import { type PropType, type StyleValue, defineComponent, onMounted, ref } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
 import { mouseLeaveChart } from '../state/tooltipSlice'
 import { useAppDispatch } from '../state/hooks'
 import { mouseClickAction, mouseMoveAction } from '../state/mouseEventsMiddleware'
@@ -54,22 +55,21 @@ export const ChartsWrapper = defineComponent({
 
     // When `responsive` is set, the wrapper div fills its parent via CSS and
     // measures itself, feeding the pixel size back to the chart (Recharts 3.3+ pattern).
-    let resizeObserver: ResizeObserver | null = null
-    onMounted(() => {
-      if (!props.responsive || !wrapperEl.value) {
-        return
-      }
-      const { width, height } = wrapperEl.value.getBoundingClientRect()
-      props.onResize?.(width, height)
-      resizeObserver = new ResizeObserver((entries) => {
-        const { width: w, height: h } = entries[0].contentRect
-        props.onResize?.(w, h)
+    // `useResizeObserver` owns the observer lifecycle (auto-disconnects on unmount);
+    // the initial getBoundingClientRect avoids a first-frame flash before it fires.
+    if (props.responsive) {
+      useResizeObserver(wrapperEl, (entries) => {
+        const { width, height } = entries[0].contentRect
+        props.onResize?.(width, height)
       })
-      resizeObserver.observe(wrapperEl.value)
-    })
-    onUnmounted(() => {
-      resizeObserver?.disconnect()
-    })
+      onMounted(() => {
+        if (!wrapperEl.value) {
+          return
+        }
+        const { width, height } = wrapperEl.value.getBoundingClientRect()
+        props.onResize?.(width, height)
+      })
+    }
 
     const myOnClick = (e: MouseEvent) => {
       // Capture chart pointer synchronously before dispatching to middleware,

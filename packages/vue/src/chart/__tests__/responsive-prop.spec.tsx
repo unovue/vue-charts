@@ -88,8 +88,9 @@ describe('responsive prop', () => {
     ))
     await nextTick()
 
-    expect(MockResizeObserver.instances.length).toBe(1)
-    MockResizeObserver.instances[0].trigger(640, 480)
+    expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
+    // The latest instance is the one actively observing the wrapper.
+    MockResizeObserver.instances.at(-1)!.trigger(640, 480)
     await nextTick()
 
     const svg = container.querySelector('.vcharts-surface') as SVGElement
