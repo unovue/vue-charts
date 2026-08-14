@@ -20,7 +20,8 @@
     "prepare": "simple-git-hooks",
     "pub:release": "pnpm --filter vccs pub:release",
     "docs": "pnpm --filter docs dev",
-    "docs:dev": "pnpm --filter docs dev"
+    "docs:dev": "pnpm --filter docs dev",
+    "bumpp": "bumpp package.json packages/*/package.json docs/package.json"
   },
   "dependencies": {
     "@vueuse/core": "^13.1.0",
