@@ -171,6 +171,17 @@ function renderChildren() {
   })
 }
 
+/**
+ * Rendering the children through `<component :is="() => renderChildren()" />` would
+ * create a new component type on every render, so Vue unmounts and remounts the whole
+ * chart subtree each time. Charts that dispatch on `mouseenter` (radial bar, radar) then
+ * loop forever: the remount recreates the element under the cursor, which fires
+ * `mouseenter` again. This renderer keeps a stable type, so the subtree is patched.
+ */
+const ChildrenRenderer = (rendererProps: { nodes: VNode[] }) => rendererProps.nodes
+ChildrenRenderer.props = { nodes: { type: Array, required: true } }
+ChildrenRenderer.inheritAttrs = false
+
 const containerStyle = computed(() => ({
   ...props.style,
   ...normalizeStyle({
@@ -191,6 +202,6 @@ const containerStyle = computed(() => ({
     :class="[props.class]"
     :style="containerStyle"
   >
-    <component :is="() => renderChildren()" />
+    <ChildrenRenderer :nodes="renderChildren() ?? []" />
   </div>
 </template>

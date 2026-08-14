@@ -1,6 +1,6 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { defineComponent, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { ResponsiveContainer } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -216,6 +216,37 @@ describe('ResponsiveContainer', () => {
       unmount()
 
       expect(disconnectSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('child stability', () => {
+    it('keeps children mounted when the container re-renders', async () => {
+      const onMountedSpy = vi.fn()
+      const onUnmountedSpy = vi.fn()
+      const Child = defineComponent({
+        setup() {
+          onMounted(onMountedSpy)
+          onUnmounted(onUnmountedSpy)
+          return () => <div class="stable-child">test</div>
+        },
+      })
+      const cssClass = ref('a')
+
+      render(() => (
+        <ResponsiveContainer class={cssClass.value}>
+          <Child />
+        </ResponsiveContainer>
+      ))
+      await nextTick()
+      expect(onMountedSpy).toHaveBeenCalledTimes(1)
+
+      cssClass.value = 'b'
+      await nextTick()
+      cssClass.value = 'c'
+      await nextTick()
+
+      expect(onMountedSpy).toHaveBeenCalledTimes(1)
+      expect(onUnmountedSpy).not.toHaveBeenCalled()
     })
   })
 
