@@ -16,7 +16,7 @@ import {
   selectTooltipPayload,
   useChartName,
 } from '@/state/selectors/selectors'
-import { useElementBounding, useMagicKeys, usePreferredReducedMotion } from '@vueuse/core'
+import { useMagicKeys, usePreferredReducedMotion } from '@vueuse/core'
 import type { AxisId } from '@/state/cartesianAxisSlice'
 import type {
   ChartCoordinate,
@@ -261,8 +261,10 @@ const TooltipBoundingBox = defineComponent({
       }
     })
     const el = ref<HTMLDivElement>()
-    const lastBoundingBox = useElementBounding(el, {
-    })
+    // Measured after every transform write instead of through `useElementBounding`:
+    // its ResizeObserver fires on the tooltip's own layout, which feeds back into the
+    // transform that caused it and can loop on every pointer move.
+    const tooltipSize = ref({ width: 0, height: 0 })
     let preTransform: CSSProperties | undefined
     let animationControls: AnimationPlaybackControls | undefined
     const reducedMotion = usePreferredReducedMotion()
@@ -276,13 +278,13 @@ const TooltipBoundingBox = defineComponent({
         position: position!,
         reverseDirection: reverseDirection!,
         tooltipBox: {
-          height: lastBoundingBox.height.value,
-          width: lastBoundingBox.width.value,
+          height: tooltipSize.value.height,
+          width: tooltipSize.value.width,
         },
         useTranslate3d: false,
         viewBox: viewBox!,
       })
-      transform = !lastBoundingBox.height.value && preTransform ? preTransform : transform
+      transform = !tooltipSize.value.height && preTransform ? preTransform : transform
       preTransform = transform || preTransform
       return { cssClasses, cssProperties, transform }
     })
@@ -299,6 +301,12 @@ const TooltipBoundingBox = defineComponent({
       }
       else {
         element.style.transform = transform.transform
+      }
+
+      const width = element.offsetWidth
+      const height = element.offsetHeight
+      if (height > 0 && (width !== tooltipSize.value.width || height !== tooltipSize.value.height)) {
+        tooltipSize.value = { width, height }
       }
 
       onCleanup(() => {
