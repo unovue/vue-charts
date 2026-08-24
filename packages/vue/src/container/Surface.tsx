@@ -1,7 +1,7 @@
 /**
  * @fileOverview Surface component for SVG rendering
  */
-import type { CSSProperties, PropType, SVGAttributes } from 'vue'
+import type { PropType, SVGAttributes, StyleValue } from 'vue'
 import { defineComponent } from 'vue'
 import { classProp } from '@/types'
 import type { VueClassValue } from '@/types'
@@ -19,7 +19,7 @@ const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
     height: number
     viewBox?: ViewBox
     class?: VueClassValue
-    style?: CSSProperties
+    style?: StyleValue
     title?: string
     desc?: string
   }>({
@@ -39,7 +39,7 @@ const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
     },
     class: classProp,
     style: {
-      type: Object,
+      type: [String, Object, Array] as PropType<StyleValue>,
       default: undefined,
     },
     title: {

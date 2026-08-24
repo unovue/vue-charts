@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type CSSProperties, computed, ref } from 'vue'
+import { type StyleValue, computed, ref } from 'vue'
 import type { VueClassValue } from '@/types'
 import { provideCursorLayerRef } from '@/context/cursorLayerContext'
 import { provideGraphicalLayerRef } from '@/context/graphicalLayerContext'
@@ -15,7 +15,7 @@ interface SurfaceProps {
     height?: number
   }
   class?: VueClassValue
-  style?: CSSProperties
+  style?: StyleValue
   title?: string
   desc?: string
 }
