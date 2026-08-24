@@ -1,7 +1,7 @@
 {
   "name": "vccs",
   "type": "module",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Composable charting components for Vue 3 — an unofficial port of Recharts",
   "author": "rick-hup",
   "license": "MIT",
