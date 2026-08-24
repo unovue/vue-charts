@@ -27,8 +27,11 @@ export function useResponsiveSize(props: ResponsiveSizeProps): UseResponsiveSize
   // Size measured from the wrapper div when `responsive` is enabled.
   const { size: responsiveSize, setSize: handleResize } = useRoundedSize()
 
-  const effectiveWidth = computed(() => (props.responsive ? responsiveSize.value.width : props.width!))
-  const effectiveHeight = computed(() => (props.responsive ? responsiveSize.value.height : props.height!))
+  // `?? 0`: absent props yield 0, which validateWidthHeight rejects — the
+  // hasValidSize gate keeps every consumer on the valid path, so the number
+  // type is honored inside the hook rather than asserted.
+  const effectiveWidth = computed(() => (props.responsive ? responsiveSize.value.width : props.width ?? 0))
+  const effectiveHeight = computed(() => (props.responsive ? responsiveSize.value.height : props.height ?? 0))
   const hasValidSize = computed(() => validateWidthHeight({ width: effectiveWidth.value, height: effectiveHeight.value }))
 
   return { effectiveWidth, effectiveHeight, hasValidSize, handleResize }
