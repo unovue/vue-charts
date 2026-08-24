@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { CSSProperties, VNode } from 'vue'
-import { Fragment, cloneVNode, computed, defineOptions, defineSlots, onMounted, onUnmounted, ref, toRef } from 'vue'
+import { Fragment, cloneVNode, computed, onMounted, onUnmounted, ref, toRef } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
 import { isPercent } from '../utils/validate'
 import { normalizeStyle } from '@/utils/style'
 import { provideSizeContext } from '@/container/useSizeContext'
+import { useRoundedSize } from '@/hooks/useRoundedSize'
 
 defineOptions({
   name: 'ResponsiveContainer',
@@ -39,7 +40,7 @@ export interface ResponsiveContainerProps {
   onResize?: (width: number, height: number) => void
 }
 const debounce = toRef(props, 'debounce')
-const sizes = ref({
+const { size: sizes, setSize: setContainerSize } = useRoundedSize({
   width: props.initialDimension.width,
   height: props.initialDimension.height,
 })
@@ -85,18 +86,6 @@ provideSizeContext({
   calculatedHeight,
 })
 
-function setContainerSize(width: number, height: number) {
-  const roundedWidth = Math.round(width)
-  const roundedHeight = Math.round(height)
-  const { width: containerWidth, height: containerHeight } = sizes.value
-  if (containerWidth === roundedWidth && containerHeight === roundedHeight) {
-    return
-  }
-  sizes.value = {
-    width: roundedWidth,
-    height: roundedHeight,
-  }
-}
 const handleResize = useThrottleFn(
   (entries: ResizeObserverEntry[]) => {
     const { width: containerWidth, height: containerHeight } = entries[0].contentRect

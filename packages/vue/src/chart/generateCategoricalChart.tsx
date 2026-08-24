@@ -1,10 +1,9 @@
 import { createRechartsStore } from '@/state/store'
 import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
-import { validateWidthHeight } from '@/utils'
 import { provideStore } from '@reduxjs/vue-redux'
 import type { PropType, StyleValue } from 'vue'
-import { Fragment, defineComponent, ref } from 'vue'
+import { Fragment, defineComponent } from 'vue'
 import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
 import Surface from '@/chart/Surface.vue'
@@ -18,6 +17,7 @@ import type { ChartOptions } from '@/state/optionsSlice'
 import ReportChartProps from '@/state/ReportChartProps'
 import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
+import { useResponsiveSize } from '@/hooks/useResponsiveSize'
 
 const defaultLayout: LayoutType = 'horizontal'
 const defaultMargin: Margin = { top: 5, right: 5, bottom: 5, left: 5 }
@@ -166,48 +166,41 @@ export function generateCategoricalChart({
 
       const clipPathId = provideClipPathId(props)
 
-      // Size measured from the wrapper div when `responsive` is enabled.
-      const responsiveSize = ref({ width: 0, height: 0 })
-      function handleResize(width: number, height: number) {
-        const roundedWidth = Math.round(width)
-        const roundedHeight = Math.round(height)
-        if (responsiveSize.value.width === roundedWidth && responsiveSize.value.height === roundedHeight) {
-          return
+      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize } = useResponsiveSize(props)
+
+      function renderPolarOptions(isPolarChart: boolean) {
+        if (!isPolarChart) {
+          return null
         }
-        responsiveSize.value = { width: roundedWidth, height: roundedHeight }
+        return (
+          <ReportPolarOptions
+            cx={props.cx ?? '50%'}
+            cy={props.cy ?? '50%'}
+            startAngle={props.startAngle ?? defaultProps.startAngle ?? 90}
+            endAngle={props.endAngle ?? defaultProps.endAngle ?? -270}
+            innerRadius={props.innerRadius ?? 0}
+            outerRadius={props.outerRadius ?? '80%'}
+          />
+        )
       }
 
       return () => {
         const { compact, width, height, title, desc, responsive, ...rest } = props
         const attributes = { ...attrs }
 
-        // In responsive mode the size is measured from the wrapper div; otherwise it comes from props.
-        const effectiveWidth = responsive ? responsiveSize.value.width : width!
-        const effectiveHeight = responsive ? responsiveSize.value.height : height!
-        const hasValidSize = validateWidthHeight({ width: effectiveWidth, height: effectiveHeight })
-
         const layout = props.layout ?? defaultProps.layout ?? defaultLayout
         const isPolarChart = layout === 'centric' || layout === 'radial'
 
         if (compact) {
-          if (!hasValidSize) {
+          if (!hasValidSize.value) {
             return null
           }
           return (
             <Fragment>
               <ChartDataContextProvider chartData={props.data!} />
-              <ReportMainChartProps width={effectiveWidth} height={effectiveHeight} layout={layout} margin={props.margin ?? defaultMargin} />
-              {isPolarChart && (
-                <ReportPolarOptions
-                  cx={props.cx ?? '50%'}
-                  cy={props.cy ?? '50%'}
-                  startAngle={props.startAngle ?? defaultProps.startAngle ?? 90}
-                  endAngle={props.endAngle ?? defaultProps.endAngle ?? -270}
-                  innerRadius={props.innerRadius ?? 0}
-                  outerRadius={props.outerRadius ?? '80%'}
-                />
-              )}
-              <Surface {...attrs} {...rest} width={effectiveWidth} height={effectiveHeight} title={title} desc={desc}>
+              <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />
+              {renderPolarOptions(isPolarChart)}
+              <Surface {...attrs} {...rest} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
                 <ClipPath clipPathId={clipPathId} />
                 {slots.default?.()}
               </Surface>
@@ -217,7 +210,7 @@ export function generateCategoricalChart({
 
         // Non-responsive charts bail out early when the size is invalid (unchanged behavior).
         // Responsive charts must still render the wrapper so the ResizeObserver can measure it.
-        if (!responsive && !hasValidSize) {
+        if (!responsive && !hasValidSize.value) {
           return null
         }
 
@@ -239,32 +232,23 @@ export function generateCategoricalChart({
         }
         return (
           <Fragment>
-            {hasValidSize && <ChartDataContextProvider chartData={props.data!} />}
-            {hasValidSize && <ReportMainChartProps width={effectiveWidth} height={effectiveHeight} layout={layout} margin={props.margin ?? defaultMargin} />}
-            {hasValidSize && isPolarChart && (
-              <ReportPolarOptions
-                cx={props.cx ?? '50%'}
-                cy={props.cy ?? '50%'}
-                startAngle={props.startAngle ?? defaultProps.startAngle ?? 90}
-                endAngle={props.endAngle ?? defaultProps.endAngle ?? -270}
-                innerRadius={props.innerRadius ?? 0}
-                outerRadius={props.outerRadius ?? '80%'}
-              />
-            )}
+            {hasValidSize.value && <ChartDataContextProvider chartData={props.data!} />}
+            {hasValidSize.value && <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />}
+            {hasValidSize.value && renderPolarOptions(isPolarChart)}
             <ChartsWrapper
               responsive={responsive}
               onResize={handleResize}
               style={props.style}
               class={props.class}
-              width={effectiveWidth}
-              height={effectiveHeight}
+              width={effectiveWidth.value}
+              height={effectiveHeight.value}
               {...eventHandlerAttrs}
             >
-              {hasValidSize && (
+              {hasValidSize.value && (
                 <Surface
                   {...svgAttributes}
-                  width={effectiveWidth}
-                  height={effectiveHeight}
+                  width={effectiveWidth.value}
+                  height={effectiveHeight.value}
                   title={title}
                   desc={desc}
                   style={FULL_WIDTH_AND_HEIGHT}
@@ -275,7 +259,7 @@ export function generateCategoricalChart({
               )}
               {slots.tooltip?.()}
             </ChartsWrapper>
-            {hasValidSize && <ReportChartProps {...props as any} />}
+            {hasValidSize.value && <ReportChartProps {...props as any} />}
           </Fragment>
         )
       }
