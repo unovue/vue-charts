@@ -42,6 +42,7 @@ import type { MaybeStackedGraphicalItem } from './barSelectors'
 import { combineAxisRangeWithReverse } from './combiners/combineAxisRangeWithReverse'
 import type { AxisDomain, AxisType, NumberDomain } from '@/types/axis'
 import { checkDomainOfScale, getDomainOfStackGroups, getStackedData, getValueByDataKey } from '@/utils/chart'
+import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 import { isCategoricalAxis, isNan, isNumOrStr, isNumber, isWellBehavedNumber } from '@/utils'
 import type { CategoricalDomain, ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, StackOffsetType, TickItem } from '@/types'
 import type { AxisTick, StackId } from '@/types/tick'
@@ -1287,8 +1288,9 @@ function getXAxisSize(offset: ChartOffsetRequired, axisSettings: XAxisSettings):
 }
 
 function getYAxisSize(offset: ChartOffsetRequired, axisSettings: YAxisSettings): Size {
+  const width = typeof axisSettings.width === 'number' ? axisSettings.width : DEFAULT_Y_AXIS_WIDTH
   return {
-    width: axisSettings.width,
+    width,
     height: offset.height,
   }
 }
@@ -1407,8 +1409,9 @@ export const selectYAxisSize: (state: RechartsRootState, yAxisId: AxisId) => Siz
   selectChartOffset,
   selectYAxisSettings,
   (offset: ChartOffsetRequired, axisSettings: YAxisSettings): Size => {
+    const width = typeof axisSettings.width === 'number' ? axisSettings.width : DEFAULT_Y_AXIS_WIDTH
     return {
-      width: axisSettings.width,
+      width,
       height: offset.height,
     }
   },

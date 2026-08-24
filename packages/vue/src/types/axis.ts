@@ -74,10 +74,21 @@ export type YAxisPadding = { top?: number, bottom?: number } | 'gap' | 'no-gap'
 
 export type YAxisOrientation = 'left' | 'right'
 
+/**
+ * Width of the Y axis in pixels.
+ * `auto` will attempt to resize the axis based on its content.
+ */
+export type YAxisWidth = number | 'auto'
+
 export type YAxisSettings = CartesianAxisSettings & {
   padding: YAxisPadding
-  width: number
+  width: YAxisWidth
   orientation: YAxisOrientation
+  /**
+   * Internal: recent measured widths, used to detect A→B→A oscillation
+   * when width is measured dynamically (width === 'auto').
+   */
+  widthHistory?: number[]
 }
 
 export type AxisRange = readonly [number, number]

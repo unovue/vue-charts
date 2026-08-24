@@ -1,5 +1,5 @@
 import { render } from '@testing-library/vue'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -249,6 +249,68 @@ describe('yAxis', () => {
       const yAxis2 = container2.querySelector('.v-charts-yAxis')
       expect(yAxis1).toBeTruthy()
       expect(yAxis2).toBeTruthy()
+    })
+
+    it('should render the y-axis with given width in the prop', () => {
+      const { container } = render(() => (
+        <BarChart width={100} height={100} data={data}>
+          <YAxis width={40} />
+          <Bar dataKey="amt" isAnimationActive={false} />
+        </BarChart>
+      ))
+
+      const yAxis = container.querySelector('.v-charts-yAxis')
+      expect(yAxis).toBeTruthy()
+      const yAxisLine = yAxis!.querySelector('line')
+      expect(yAxisLine!.getAttribute('width')).toBe('40')
+    })
+
+    it('should render y-axis with dynamically calculated width', async () => {
+      mockGetBoundingClientRect({ width: 80, height: 30 })
+
+      const { container } = render(() => (
+        <BarChart width={400} height={300} data={data}>
+          <YAxis width="auto" ticks={[0, 800, 1600, 2400]} />
+          <Bar dataKey="amt" isAnimationActive={false} />
+        </BarChart>
+      ))
+      await nextTick()
+      await nextTick()
+      await nextTick()
+
+      const yAxis = container.querySelector('.v-charts-yAxis')
+      expect(yAxis).toBeTruthy()
+      const yAxisLine = yAxis!.querySelector('line')
+      // 80 max tick width + 6 tick size + 2 tick margin
+      expect(yAxisLine!.getAttribute('width')).toBe('88')
+      // chart offset must stay numeric when width is 'auto' (no string concatenation leaks)
+      const tickLine = yAxis!.querySelector('.v-charts-cartesian-axis-tick-line')
+      expect(Number(tickLine!.getAttribute('x2'))).not.toBeNaN()
+    })
+
+    it('should render y-axis with dynamically calculated width even after starting from empty data', async () => {
+      mockGetBoundingClientRect({ width: 80, height: 30 })
+
+      const chartData = ref<any[]>([])
+      const { container } = render(() => (
+        <BarChart width={400} height={300} data={chartData.value}>
+          <YAxis width="auto" ticks={[0, 800, 1600, 2400]} />
+          <Bar dataKey="amt" isAnimationActive={false} />
+        </BarChart>
+      ))
+      await nextTick()
+      await nextTick()
+
+      chartData.value = data
+      await nextTick()
+      await nextTick()
+      await nextTick()
+
+      const yAxis = container.querySelector('.v-charts-yAxis')
+      expect(yAxis).toBeTruthy()
+      const yAxisLine = yAxis!.querySelector('line')
+      // 80 max tick width + 6 tick size + 2 tick margin
+      expect(yAxisLine!.getAttribute('width')).toBe('88')
     })
   })
 

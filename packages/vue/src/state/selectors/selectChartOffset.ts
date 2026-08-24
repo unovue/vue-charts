@@ -9,6 +9,7 @@ import type { RechartsRootState } from '../store'
 import type { ChartOffsetRequired, Margin, Size } from '@/types'
 import type { OffsetHorizontal, OffsetVertical } from '@/types/offset'
 import { appendOffsetOfLegend } from '@/utils/legend'
+import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 import type { CartesianViewBoxRequired } from '@/cartesian/type'
 
 export const selectBrushHeight = (state: RechartsRootState) => state.brush.height
@@ -39,7 +40,8 @@ export const selectChartOffset: (state: RechartsRootState) => ChartOffsetRequire
         const { orientation } = entry
 
         if (!entry.mirror && !entry.hide) {
-          return { ...result, [orientation]: result[orientation] + entry.width }
+          const width = typeof entry.width === 'number' ? entry.width : DEFAULT_Y_AXIS_WIDTH
+          return { ...result, [orientation]: result[orientation] + width }
         }
 
         return result

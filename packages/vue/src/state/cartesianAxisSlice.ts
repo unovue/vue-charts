@@ -4,7 +4,7 @@ import { castDraft } from 'immer'
 import type { AxisRange } from './selectors/axisSelectors'
 import type { SVGAttributes } from 'vue'
 import type { RechartsScale, ScaleType } from '@/types/scale'
-import type { AxisDomain, AxisDomainType, AxisInterval } from '@/types/axis'
+import type { AxisDomain, AxisDomainType, AxisInterval, YAxisWidth } from '@/types/axis'
 import type { DataKey } from '@/types'
 import type { AxisTick, TickFormatter } from '@/types/tick'
 
@@ -73,8 +73,13 @@ export type XAxisSettings = CartesianAxisSettings & {
 
 export type YAxisSettings = CartesianAxisSettings & {
   padding: YAxisPadding
-  width: number
+  width: YAxisWidth
   orientation: YAxisOrientation
+  /**
+   * Internal: recent measured widths, used to detect A→B→A oscillation
+   * when width is measured dynamically (width === 'auto').
+   */
+  widthHistory?: number[]
 }
 
 /**
@@ -117,6 +122,27 @@ const cartesianAxisSlice = createSlice({
     removeYAxis(state, action: PayloadAction<YAxisSettings>) {
       delete state.yAxis[action.payload.id!]
     },
+    updateYAxisWidth(state, action: PayloadAction<{ id: AxisId, width: number }>) {
+      const { id, width } = action.payload
+      const axis = state.yAxis[id]
+      if (axis) {
+        const history = axis.widthHistory || []
+        // An oscillation is detected when the new width is the same as the width before the last one.
+        // This is a simple A -> B -> A pattern. If the next width is B, and the difference is less than 1 pixel, we ignore it.
+        if (
+          history.length === 3
+          && history[0] === history[2]
+          && width === history[1]
+          && width !== axis.width
+          && Math.abs(width - (history[0] ?? 0)) <= 1
+        ) {
+          return
+        }
+        const newHistory = [...history, width].slice(-3)
+        axis.width = width
+        axis.widthHistory = newHistory
+      }
+    },
     addZAxis(state, action: PayloadAction<ZAxisSettings>) {
       state.zAxis[action.payload.id!] = castDraft(action.payload)
     },
@@ -126,6 +152,6 @@ const cartesianAxisSlice = createSlice({
   },
 })
 
-export const { addXAxis, removeXAxis, addYAxis, removeYAxis, addZAxis, removeZAxis } = cartesianAxisSlice.actions
+export const { addXAxis, removeXAxis, addYAxis, removeYAxis, addZAxis, removeZAxis, updateYAxisWidth } = cartesianAxisSlice.actions
 
 export const cartesianAxisReducer = cartesianAxisSlice.reducer
