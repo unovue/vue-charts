@@ -71,6 +71,8 @@ export const CartesianAxis = defineComponent({
     angle: Number,
     scale: { type: [Function] as PropType<RechartsScale> },
     stroke: { type: String, default: '#666' },
+    /** Additional props to spread to each tick Text element. */
+    tickTextProps: { type: Object, default: undefined },
   },
   setup(props, { slots }) {
     const state = reactive({
@@ -228,6 +230,7 @@ export const CartesianAxis = defineComponent({
           payload: entry,
           visibleTicksCount: finalTicks.length,
           tickFormatter,
+          ...props.tickTextProps,
         }
         return (
           <Layer

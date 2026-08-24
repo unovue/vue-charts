@@ -199,7 +199,7 @@ describe('tooltip integration', () => {
       </Treemap>
     ))
 
-    // RechartsWrapper should be rendered
+    // ChartsWrapper should be rendered
     const wrapper = container.querySelector('.v-charts-wrapper')
     expect(wrapper).toBeTruthy()
 
