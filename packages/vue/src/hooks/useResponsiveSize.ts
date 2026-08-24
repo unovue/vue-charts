@@ -1,5 +1,6 @@
-import { type ComputedRef, computed, ref } from 'vue'
+import { type ComputedRef, computed } from 'vue'
 import type { CategoricalChartPropsWithOutSvg } from '@/chart/generateCategoricalChart'
+import { useRoundedSize } from '@/hooks/useRoundedSize'
 import { validateWidthHeight } from '@/utils'
 
 type ResponsiveSizeProps = Pick<CategoricalChartPropsWithOutSvg, 'responsive' | 'width' | 'height'>
@@ -24,16 +25,7 @@ interface UseResponsiveSizeResult {
  */
 export function useResponsiveSize(props: ResponsiveSizeProps): UseResponsiveSizeResult {
   // Size measured from the wrapper div when `responsive` is enabled.
-  const responsiveSize = ref({ width: 0, height: 0 })
-
-  function handleResize(width: number, height: number) {
-    const roundedWidth = Math.round(width)
-    const roundedHeight = Math.round(height)
-    if (responsiveSize.value.width === roundedWidth && responsiveSize.value.height === roundedHeight) {
-      return
-    }
-    responsiveSize.value = { width: roundedWidth, height: roundedHeight }
-  }
+  const { size: responsiveSize, setSize: handleResize } = useRoundedSize()
 
   const effectiveWidth = computed(() => (props.responsive ? responsiveSize.value.width : props.width!))
   const effectiveHeight = computed(() => (props.responsive ? responsiveSize.value.height : props.height!))
