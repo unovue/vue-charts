@@ -1,4 +1,5 @@
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LayoutType, Size } from '@/types'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice, current } from '@reduxjs/toolkit'
@@ -8,6 +9,8 @@ export type LegendSettings = {
   layout: LayoutType
   align: HorizontalAlignmentType
   verticalAlign: VerticalAlignmentType
+  position?: CartesianPosition
+  offset?: number
 }
 
 /**
@@ -52,6 +55,8 @@ const legendSlice = createSlice({
       state.settings.align = action.payload.align
       state.settings.layout = action.payload.layout
       state.settings.verticalAlign = action.payload.verticalAlign
+      state.settings.position = action.payload.position
+      state.settings.offset = action.payload.offset
     },
     addLegendPayload(state, action: PayloadAction<ReadonlyArray<LegendPayload>>) {
       state.payload.push(castDraft(action.payload))

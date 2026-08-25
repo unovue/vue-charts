@@ -16,6 +16,8 @@ export default defineComponent({
       processedPayload,
       outerStyle,
       legendPortal,
+      resolvedLayout,
+      positionViewBox,
       syncSettings,
       syncSize,
     } = useLegend(props)
@@ -40,7 +42,8 @@ export default defineComponent({
         return null
       }
 
-      const { layout = 'horizontal', align = 'center', iconSize = 14 } = props
+      const { align = 'center', iconSize = 14 } = props
+      const layout = resolvedLayout.value
 
       const finalStyle = {
         padding: 0,
@@ -108,6 +111,7 @@ export default defineComponent({
 
       const contentProps = {
         ...props,
+        layout: resolvedLayout.value,
         payload: processedPayload.value,
       }
       if (slots.content) {
@@ -118,7 +122,7 @@ export default defineComponent({
     }
 
     return () => {
-      if (legendPortal.value == null) {
+      if (legendPortal.value == null || (props.position != null && positionViewBox.value == null)) {
         return null
       }
 

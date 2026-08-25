@@ -1,0 +1,287 @@
+import type { CartesianViewBoxRequired, TrapezoidViewBox } from '@/cartesian/type'
+import { getPercentValue } from '@/utils/data'
+import { isNumber, isPercent } from '@/utils/validate'
+
+export type TextAnchor = 'start' | 'middle' | 'end' | 'inherit'
+export type TextVerticalAnchor = 'start' | 'middle' | 'end'
+
+export function cartesianViewBoxToTrapezoid(box: undefined): undefined
+export function cartesianViewBoxToTrapezoid(box: CartesianViewBoxRequired | TrapezoidViewBox): TrapezoidViewBox
+export function cartesianViewBoxToTrapezoid(
+  box: CartesianViewBoxRequired | TrapezoidViewBox | undefined,
+): TrapezoidViewBox | undefined {
+  if (!box) {
+    return undefined
+  }
+  return {
+    x: box.x,
+    y: box.y,
+    upperWidth: 'upperWidth' in box ? box.upperWidth : box.width,
+    lowerWidth: 'lowerWidth' in box ? box.lowerWidth : box.width,
+    width: box.width,
+    height: box.height,
+  }
+}
+
+/**
+ * @inline
+ */
+export type CartesianPosition =
+  | 'top'
+  | 'left'
+  | 'right'
+  | 'bottom'
+  | 'center'
+  | 'insideLeft'
+  | 'insideRight'
+  | 'insideTop'
+  | 'insideBottom'
+  | 'insideTopLeft'
+  | 'insideBottomLeft'
+  | 'insideTopRight'
+  | 'insideBottomRight'
+  | {
+    x: number | string
+    y: number | string
+  }
+
+export type GetCartesianPositionOptions = {
+  viewBox: TrapezoidViewBox | CartesianViewBoxRequired
+  parentViewBox?: CartesianViewBoxRequired
+  /**
+   * The offset to the specified "position". Direction of the offset depends on the position.
+   */
+  offset?: number
+  /**
+   * The position of the element relative to the view box.
+   */
+  position?: CartesianPosition
+  /**
+   * If true, the returned width and height will be clamped to keep the element within the parentViewBox.
+   * This is useful for preventing labels from overflowing the chart area.
+   */
+  clamp?: boolean
+}
+
+export type CalculatedCartesianPosition = {
+  x: number
+  y: number
+  horizontalAnchor: TextAnchor
+  verticalAnchor: TextVerticalAnchor
+  width?: number
+  height?: number
+}
+
+/**
+ * Calculates the position and alignment for a generic element in a Cartesian coordinate system.
+ *
+ * @param options - The options including viewBox, position, and offset.
+ * @returns The calculated x, y, alignment and size.
+ */
+export function getCartesianPosition(options: GetCartesianPositionOptions): CalculatedCartesianPosition {
+  const { viewBox, position, offset = 0, parentViewBox, clamp } = options
+
+  const { x, y, height, upperWidth, lowerWidth } = cartesianViewBoxToTrapezoid(viewBox)!
+
+  // Funnel.tsx provides a viewBox where `x` is the top-left of the trapezoid shape.
+  const upperX = x
+  // The trapezoid is centered, so we can calculate the other corners from the top-left.
+  const lowerX = x + (upperWidth - lowerWidth) / 2
+  // middleX is the x-coordinate of the left edge at the vertical midpoint of the trapezoid.
+  const middleX = (upperX + lowerX) / 2
+  // The width of the trapezoid at its vertical midpoint.
+  const midHeightWidth = (upperWidth + lowerWidth) / 2
+  // The center x-coordinate is constant for the entire height of the trapezoid.
+  const centerX = upperX + upperWidth / 2
+
+  // Define vertical offsets and position inverts based on the value being positive or negative.
+  // This allows labels to be positioned correctly for bars with negative height.
+  const verticalSign = height >= 0 ? 1 : -1
+  const verticalOffset = verticalSign * offset
+  const verticalEnd = verticalSign > 0 ? 'end' : 'start'
+  const verticalStart = verticalSign > 0 ? 'start' : 'end'
+
+  // Define horizontal offsets and position inverts based on the value being positive or negative.
+  // This allows labels to be positioned correctly for bars with negative width.
+  const horizontalSign = upperWidth >= 0 ? 1 : -1
+  const horizontalOffset = horizontalSign * offset
+  const horizontalEnd = horizontalSign > 0 ? 'end' : 'start'
+  const horizontalStart = horizontalSign > 0 ? 'start' : 'end'
+
+  if (position === 'top') {
+    const result: CalculatedCartesianPosition = {
+      x: upperX + upperWidth / 2,
+      y: y - verticalOffset,
+      horizontalAnchor: 'middle',
+      verticalAnchor: verticalEnd,
+    }
+
+    if (clamp && parentViewBox) {
+      result.height = Math.max(y - parentViewBox.y, 0)
+      result.width = upperWidth
+    }
+    return result
+  }
+
+  if (position === 'bottom') {
+    const result: CalculatedCartesianPosition = {
+      x: lowerX + lowerWidth / 2,
+      y: y + height + verticalOffset,
+      horizontalAnchor: 'middle',
+      verticalAnchor: verticalStart,
+    }
+    if (clamp && parentViewBox) {
+      result.height = Math.max(parentViewBox.y + parentViewBox.height - (y + height), 0)
+      result.width = lowerWidth
+    }
+    return result
+  }
+
+  if (position === 'left') {
+    const result: CalculatedCartesianPosition = {
+      x: middleX - horizontalOffset,
+      y: y + height / 2,
+      horizontalAnchor: horizontalEnd,
+      verticalAnchor: 'middle',
+    }
+    if (clamp && parentViewBox) {
+      result.width = Math.max(result.x - parentViewBox.x, 0)
+      result.height = height
+    }
+    return result
+  }
+
+  if (position === 'right') {
+    const result: CalculatedCartesianPosition = {
+      x: middleX + midHeightWidth + horizontalOffset,
+      y: y + height / 2,
+      horizontalAnchor: horizontalStart,
+      verticalAnchor: 'middle',
+    }
+    if (clamp && parentViewBox) {
+      result.width = Math.max(parentViewBox.x + parentViewBox.width - result.x, 0)
+      result.height = height
+    }
+    return result
+  }
+
+  const sizeAttrs = clamp && parentViewBox ? { width: midHeightWidth, height } : {}
+
+  if (position === 'insideLeft') {
+    return {
+      x: middleX + horizontalOffset,
+      y: y + height / 2,
+      horizontalAnchor: horizontalStart,
+      verticalAnchor: 'middle',
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideRight') {
+    return {
+      x: middleX + midHeightWidth - horizontalOffset,
+      y: y + height / 2,
+      horizontalAnchor: horizontalEnd,
+      verticalAnchor: 'middle',
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideTop') {
+    return {
+      x: upperX + upperWidth / 2,
+      y: y + verticalOffset,
+      horizontalAnchor: 'middle',
+      verticalAnchor: verticalStart,
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideBottom') {
+    return {
+      x: lowerX + lowerWidth / 2,
+      y: y + height - verticalOffset,
+      horizontalAnchor: 'middle',
+      verticalAnchor: verticalEnd,
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideTopLeft') {
+    return {
+      x: upperX + horizontalOffset,
+      y: y + verticalOffset,
+      horizontalAnchor: horizontalStart,
+      verticalAnchor: verticalStart,
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideTopRight') {
+    return {
+      x: upperX + upperWidth - horizontalOffset,
+      y: y + verticalOffset,
+      horizontalAnchor: horizontalEnd,
+      verticalAnchor: verticalStart,
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideBottomLeft') {
+    return {
+      x: lowerX + horizontalOffset,
+      y: y + height - verticalOffset,
+      horizontalAnchor: horizontalStart,
+      verticalAnchor: verticalEnd,
+      ...sizeAttrs,
+    }
+  }
+
+  if (position === 'insideBottomRight') {
+    return {
+      x: lowerX + lowerWidth - horizontalOffset,
+      y: y + height - verticalOffset,
+      horizontalAnchor: horizontalEnd,
+      verticalAnchor: verticalEnd,
+      ...sizeAttrs,
+    }
+  }
+
+  if (
+    !!position
+    && typeof position === 'object'
+    && (isNumber(position.x) || isPercent(position.x))
+    && (isNumber(position.y) || isPercent(position.y))
+  ) {
+    // TODO: This is not quite right. The width of the trapezoid changes with y.
+    // A percentage-based x should be relative to the width at that y.
+    // For now, we use the mid-height width as a reasonable approximation.
+    return {
+      x: x + getPercentValue(position.x, midHeightWidth),
+      y: y + getPercentValue(position.y, height),
+      horizontalAnchor: 'end',
+      verticalAnchor: 'end',
+      ...sizeAttrs,
+    }
+  }
+
+  return {
+    x: centerX,
+    y: y + height / 2,
+    horizontalAnchor: 'middle',
+    verticalAnchor: 'middle',
+    ...sizeAttrs,
+  }
+}
+
+const absolutePositions: ReadonlyArray<CartesianPosition> = ['top', 'left', 'right', 'bottom']
+
+export function isOutsidePosition(position: CartesianPosition | undefined): boolean {
+  if (position == null) {
+    return false
+  }
+  if (typeof position === 'object') {
+    return true
+  }
+  return absolutePositions.includes(position)
+}

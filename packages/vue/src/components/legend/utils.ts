@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'vue'
 import type { LayoutType, Margin } from '@/types'
+import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { HorizontalAlignmentType, VerticalAlignmentType } from '@/components/DefaultLegendContent'
 import { isNumber } from '@/utils'
 
@@ -7,6 +8,34 @@ type PositionInput = {
   layout?: LayoutType
   align?: HorizontalAlignmentType
   verticalAlign?: VerticalAlignmentType
+}
+
+export function getLayoutForPosition(position: CartesianPosition | undefined): LayoutType {
+  if (position === 'left' || position === 'right' || position === 'insideLeft' || position === 'insideRight') {
+    return 'vertical'
+  }
+
+  return 'horizontal'
+}
+
+export function getOutsidePositionOffset(
+  position: CartesianPosition | undefined,
+  offset: number,
+  box: { width: number, height: number },
+): { top?: number, left?: number } {
+  if (position === 'top') {
+    return { top: box.height + offset }
+  }
+  if (position === 'bottom') {
+    return { top: -box.height - offset }
+  }
+  if (position === 'left') {
+    return { left: box.width + offset }
+  }
+  if (position === 'right') {
+    return { left: -box.width - offset }
+  }
+  return {}
 }
 
 export function getDefaultPosition(
