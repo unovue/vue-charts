@@ -198,7 +198,7 @@ export function generateCategoricalChart({
           return (
             <Fragment>
               <ChartDataContextProvider chartData={props.data!} />
-              <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />
+              <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin} />
               {renderPolarOptions(isPolarChart)}
               <Surface {...attrs} {...rest} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
                 <ClipPath clipPathId={clipPathId} />
