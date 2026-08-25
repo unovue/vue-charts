@@ -127,10 +127,11 @@ export function useLegend(props: LegendProps) {
       return userStyle
     }
 
+    // Vue's style binding appends px to numeric values automatically
     const baseStyle: CSSProperties = {
       position: 'absolute',
-      width: widthOrHeight.value?.width ? `${widthOrHeight.value.width}px` : (props.width ? `${props.width}px` : 'auto'),
-      height: widthOrHeight.value?.height ? `${widthOrHeight.value.height}px` : (props.height ? `${props.height}px` : 'auto'),
+      width: widthOrHeight.value?.width || props.width || 'auto',
+      height: widthOrHeight.value?.height || props.height || 'auto',
     }
 
     const calculatedPositionStyle = positionStyle.value ?? getDefaultPosition(
