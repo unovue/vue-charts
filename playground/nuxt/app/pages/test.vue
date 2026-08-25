@@ -75,6 +75,6 @@ const data = [
       width="auto"
       :label="{ value: 'UV', position: 'insideLeft', angle: -90 }"
     />
-    <Legend align="right" />
+    <Legend position="insideBottomRight" />
   </LineChart>
 </template>

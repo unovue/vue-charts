@@ -1,5 +1,6 @@
 import type { CSSProperties, PropType, VNode } from 'vue'
 import type { LayoutType, Margin } from '@/types'
+import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LegendType } from '@/types/legend'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
 import type { VuePropsToType, WithSVGProps } from '@/types/common'
@@ -10,8 +11,8 @@ export interface LegendSlots {
 
 export const LegendVueProps = {
   layout: {
-    type: String as PropType<LayoutType>,
-    default: 'horizontal',
+    type: String as PropType<LayoutType | 'auto'>,
+    default: 'auto',
   },
   align: {
     type: String as PropType<HorizontalAlignmentType>,
@@ -20,6 +21,21 @@ export const LegendVueProps = {
   verticalAlign: {
     type: String as PropType<VerticalAlignmentType>,
     default: 'bottom',
+  },
+  /**
+   * The position of the legend relative to the chart.
+   * If this is defined, it overrides `align` and `verticalAlign`.
+   */
+  position: {
+    type: [String, Object] as PropType<CartesianPosition>,
+    default: undefined,
+  },
+  /**
+   * The offset to the specified `position`. Direction of the offset depends on the position.
+   */
+  offset: {
+    type: Number,
+    default: 0,
   },
   width: Number,
   height: Number,
