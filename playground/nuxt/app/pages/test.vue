@@ -72,7 +72,7 @@ const data = [
     />
     <XAxis data-key="name" />
     <YAxis
-      :width="400"
+      width="auto"
       :label="{ value: 'UV', position: 'insideLeft', angle: -90 }"
     />
     <Legend align="right" />

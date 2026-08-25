@@ -1,29 +1,9 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { Line, LineChart } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-
-class MockResizeObserver {
-  callback: ResizeObserverCallback
-  static instances: MockResizeObserver[] = []
-
-  constructor(callback: ResizeObserverCallback) {
-    this.callback = callback
-    MockResizeObserver.instances.push(this)
-  }
-
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-
-  trigger(width: number, height: number) {
-    this.callback(
-      [{ contentRect: { width, height } } as ResizeObserverEntry],
-      this as unknown as ResizeObserver,
-    )
-  }
-}
+import { MockResizeObserver } from '@/test/MockResizeObserver'
 
 const data = [
   { name: 'A', uv: 400 },
@@ -110,5 +90,54 @@ describe('responsive prop', () => {
     expect(wrapper.style.width).toBe('400px')
     expect(wrapper.style.height).toBe('320px')
     expect(MockResizeObserver.instances.length).toBe(0)
+  })
+
+  it('starts observing and measures when responsive is toggled on at runtime', async () => {
+    const responsive = ref(false)
+    const { container } = render(() => (
+      <LineChart responsive={responsive.value} width={400} height={320} data={data}>
+        <Line dataKey="uv" isAnimationActive={false} />
+      </LineChart>
+    ))
+    await nextTick()
+
+    expect(MockResizeObserver.instances.length).toBe(0)
+    expect((container.querySelector('.vcharts-surface') as SVGElement).getAttribute('width')).toBe('400')
+
+    responsive.value = true
+    await nextTick()
+    await nextTick()
+
+    expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
+    // The observer's initial callback picks up the mocked 500x300 bounding rect.
+    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    expect(svg.getAttribute('width')).toBe('500')
+    expect(svg.getAttribute('height')).toBe('300')
+  })
+
+  it('stops observing and falls back to props size when responsive is toggled off at runtime', async () => {
+    const disconnectSpy = vi.spyOn(MockResizeObserver.prototype, 'disconnect')
+    const responsive = ref(true)
+    const { container } = render(() => (
+      <LineChart responsive={responsive.value} width={400} height={320} data={data}>
+        <Line dataKey="uv" isAnimationActive={false} />
+      </LineChart>
+    ))
+    await nextTick()
+
+    expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
+    expect((container.querySelector('.vcharts-surface') as SVGElement).getAttribute('width')).toBe('500')
+
+    // Mount-time observer churn already disconnected once; only the toggle-off must disconnect now.
+    disconnectSpy.mockClear()
+    responsive.value = false
+    await nextTick()
+    await nextTick()
+
+    expect(disconnectSpy).toHaveBeenCalled()
+    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    expect(svg.getAttribute('width')).toBe('400')
+    expect(svg.getAttribute('height')).toBe('320')
+    disconnectSpy.mockRestore()
   })
 })

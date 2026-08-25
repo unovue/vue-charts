@@ -3,29 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { ResponsiveContainer } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { MockResizeObserver } from '@/test/MockResizeObserver'
 
-class MockResizeObserver {
-  callback: ResizeObserverCallback
-  static instances: MockResizeObserver[] = []
-
-  constructor(callback: ResizeObserverCallback) {
-    this.callback = callback
-    MockResizeObserver.instances.push(this)
-  }
-
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-
-  trigger(width: number, height: number) {
-    this.callback(
-      [{ contentRect: { width, height } } as ResizeObserverEntry],
-      this as unknown as ResizeObserver,
-    )
-  }
-}
-
-describe('ResponsiveContainer', () => {
+describe('responsiveContainer', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
     MockResizeObserver.instances = []
