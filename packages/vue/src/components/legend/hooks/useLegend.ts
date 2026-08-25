@@ -4,6 +4,7 @@ import { useElementBounding } from '@vueuse/core'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
 import { setLegendSettings, setLegendSize } from '@/state/legendSlice'
 import { selectLegendPayload } from '@/state/selectors/legendSelectors'
+import { selectLegendArea } from '@/state/selectors/selectLegendArea'
 import { useChartHeight, useChartWidth, useMargin, useViewBox } from '@/context/chartLayoutContext'
 import { useLegendPortal } from '@/chart/LegendPortalContext'
 import { getUniqPayload } from '@/utils/payload/getUniqPayload'
@@ -24,6 +25,7 @@ export function useLegend(props: LegendProps) {
   const chartWidth = useChartWidth()
   const chartHeight = useChartHeight()
   const viewBox = useViewBox()
+  const legendArea = useAppSelector(selectLegendArea)
 
   // Element ref for bounding box calculation
   const legendRef = ref<HTMLElement>()
@@ -48,15 +50,6 @@ export function useLegend(props: LegendProps) {
   const boundingBox = computed(() => ({
     width: boundingWidth.value,
     height: boundingHeight.value,
-  }))
-
-  // The margin-inset chart area, placing outside-positioned legends beyond any axes.
-  // Mirrors Recharts' selectLegendArea selector.
-  const legendArea = computed((): CartesianViewBoxRequired => ({
-    x: margin.value.left || 0,
-    y: margin.value.top || 0,
-    width: Math.max(chartWidth.value - (margin.value.left || 0) - (margin.value.right || 0), 0),
-    height: Math.max(chartHeight.value - (margin.value.top || 0) - (margin.value.bottom || 0), 0),
   }))
 
   // Inside positions use the plot area; outside positions use the margin-inset chart area.
