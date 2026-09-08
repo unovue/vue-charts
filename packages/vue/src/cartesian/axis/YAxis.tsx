@@ -1,6 +1,7 @@
 import type { ComponentPublicInstance, PropType } from 'vue'
-import { defineComponent, isVNode, nextTick, ref, watch, watchEffect } from 'vue'
+import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import type { YAxisSettings } from '@/state/cartesianAxisSlice'
 import { addYAxis, removeYAxis, updateYAxisWidth } from '@/state/cartesianAxisSlice'
 import { implicitYAxis, selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize } from '@/state/selectors/axisSelectors'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
@@ -145,7 +146,8 @@ const YAxisSettingsDispatcher = defineComponent({
   },
   setup(props) {
     const dispatch = useAppDispatch()
-    watchEffect((onCleanup) => {
+    let registeredSettings: YAxisSettings | undefined
+    watchEffect(() => {
       const settings = {
         ...props,
         interval: props.interval ?? 'preserveEnd',
@@ -156,10 +158,18 @@ const YAxisSettingsDispatcher = defineComponent({
         minTickGap: props.minTickGap ?? 5,
         tick: props.tick ?? true,
       } as any
+      if (registeredSettings && registeredSettings.id !== settings.id) {
+        dispatch(removeYAxis(registeredSettings))
+      }
       dispatch(addYAxis(settings))
-      onCleanup(() => {
-        dispatch(removeYAxis(settings))
-      })
+      registeredSettings = settings
+    })
+    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
+    onUnmounted(() => {
+      if (registeredSettings) {
+        dispatch(removeYAxis(registeredSettings))
+        registeredSettings = undefined
+      }
     })
     return () => (
       <YAxisImpl {...props} />
