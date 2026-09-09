@@ -2,7 +2,7 @@
  * @fileOverview X Axis
  */
 import type { PropType } from 'vue'
-import { defineComponent, watchEffect } from 'vue'
+import { defineComponent, onUnmounted, watchEffect } from 'vue'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
 import type { XAxisSettings } from '@/state/cartesianAxisSlice'
 import { addXAxis, removeXAxis } from '@/state/cartesianAxisSlice'
@@ -90,7 +90,8 @@ const XAxisSettingsDispatcher = defineComponent({
   },
   setup(props, { slots: dispatcherSlots }) {
     const dispatch = useAppDispatch()
-    watchEffect((onCleanup) => {
+    let registeredSettings: XAxisSettings | undefined
+    watchEffect(() => {
       const settings = {
         interval: props.interval ?? 'preserveEnd',
         id: props.xAxisId,
@@ -117,10 +118,18 @@ const XAxisSettingsDispatcher = defineComponent({
         tick: props.tick ?? true,
         tickFormatter: props.tickFormatter,
       } as XAxisSettings
+      if (registeredSettings && registeredSettings.id !== settings.id) {
+        dispatch(removeXAxis(registeredSettings))
+      }
       dispatch(addXAxis(settings))
-      onCleanup(() => {
-        dispatch(removeXAxis(settings))
-      })
+      registeredSettings = settings
+    })
+    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
+    onUnmounted(() => {
+      if (registeredSettings) {
+        dispatch(removeXAxis(registeredSettings))
+        registeredSettings = undefined
+      }
     })
     return () => (
       <XAxisImpl {...props}>
