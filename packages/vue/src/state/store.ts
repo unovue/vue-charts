@@ -4,7 +4,6 @@ import { optionsReducer } from './optionsSlice'
 import { tooltipReducer } from './tooltipSlice'
 import { chartDataReducer } from './chartDataSlice'
 import { chartLayoutReducer } from './layoutSlice'
-import { mouseClickMiddleware, mouseMoveMiddleware } from './mouseEventsMiddleware'
 import { reduxDevtoolsJsonStringifyReplacer } from './reduxDevtoolsJsonStringifyReplacer'
 import { cartesianAxisReducer } from './cartesianAxisSlice'
 import { graphicalItemsReducer } from './graphicalItemsSlice'
@@ -14,9 +13,6 @@ import { legendReducer } from './legendSlice'
 import { rootPropsReducer } from './rootPropsSlice'
 import { polarAxisReducer } from './polarAxisSlice'
 import { polarOptionsReducer } from './polarOptionsSlice'
-import { keyboardEventsMiddleware } from './keyboardEventsMiddleware'
-import { externalEventsMiddleware } from './externalEventsMiddleware'
-import { touchEventMiddleware } from './touchEventsMiddleware'
 
 const rootReducer = combineReducers({
   brush: brushReducer,
@@ -44,13 +40,7 @@ export function createRechartsStore(preloadedState?: Partial<RechartsRootState>,
       getDefaultMiddleware({
         serializableCheck: false,
         immutableCheck: false,
-      }).concat([
-        mouseClickMiddleware.middleware,
-        mouseMoveMiddleware.middleware,
-        keyboardEventsMiddleware.middleware,
-        externalEventsMiddleware,
-        touchEventMiddleware.middleware,
-      ]),
+      }),
     devTools: {
       serialize: {
         replacer: reduxDevtoolsJsonStringifyReplacer,

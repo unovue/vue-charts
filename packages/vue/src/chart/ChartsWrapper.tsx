@@ -2,11 +2,9 @@ import { type PropType, type StyleValue, defineComponent, ref, watch } from 'vue
 import { useResizeObserver } from '@vueuse/core'
 import { mouseLeaveChart } from '../state/tooltipSlice'
 import { useAppDispatch } from '../state/hooks'
-import { mouseClickAction, mouseMoveAction } from '../state/mouseEventsMiddleware'
+import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
-import { focusAction, keyDownAction } from '../state/keyboardEventsMiddleware'
-import { externalEventAction } from '../state/externalEventsMiddleware'
-import { touchEventAction } from '../state/touchEventsMiddleware'
+import { useChartCallbacks } from '@/events/useChartCallbacks'
 import { classProp } from '@/types'
 import type { CategoricalChartFunc } from '@/types'
 import { useReportScale } from '@/state/utils/useReportScale'
@@ -37,6 +35,8 @@ export const ChartsWrapper = defineComponent({
   },
   setup(props, { slots }) {
     const dispatch = useAppDispatch()
+    const callHandler = useChartCallbacks()
+    const interactions = useChartInteractions()
 
     useSynchronisedEventsFromOtherCharts()
     const scaleRef = useReportScale()
@@ -65,71 +65,69 @@ export const ChartsWrapper = defineComponent({
     }, { immediate: true })
 
     const myOnClick = (e: MouseEvent) => {
-      // Capture chart pointer synchronously before dispatching to middleware,
-      // because createListenerMiddleware defers to microtask and e.currentTarget will be null by then
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        dispatch(mouseClickAction(chartPointer))
+        interactions.click(chartPointer)
       }
-      dispatch(externalEventAction({ handler: props.onClick!, event: e }))
+      callHandler(props.onClick, e)
     }
 
     const myOnMouseEnter = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        dispatch(mouseMoveAction(chartPointer))
+        interactions.move(chartPointer)
       }
-      dispatch(externalEventAction({ handler: props.onMouseEnter!, event: e }))
+      callHandler(props.onMouseEnter, e)
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
       dispatch(mouseLeaveChart())
-      dispatch(externalEventAction({ handler: props.onMouseLeave!, event: e }))
+      callHandler(props.onMouseLeave, e)
     }
 
     const myOnMouseMove = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        dispatch(mouseMoveAction(chartPointer))
+        interactions.move(chartPointer)
       }
-      dispatch(externalEventAction({ handler: props.onMouseMove!, event: e }))
+      callHandler(props.onMouseMove, e)
     }
 
     const onFocus = () => {
-      dispatch(focusAction())
+      interactions.focus()
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      dispatch(keyDownAction(e.key))
+      interactions.keyDown(e.key)
     }
 
     const myOnContextMenu = (e: MouseEvent) => {
-      dispatch(externalEventAction({ handler: props.onContextMenu!, event: e }))
+      callHandler(props.onContextMenu, e)
     }
 
     const myOnDoubleClick = (e: MouseEvent) => {
-      dispatch(externalEventAction({ handler: props.onDoubleClick!, event: e }))
+      callHandler(props.onDoubleClick, e)
     }
 
     const myOnMouseDown = (e: MouseEvent) => {
-      dispatch(externalEventAction({ handler: props.onMouseDown!, event: e }))
+      callHandler(props.onMouseDown, e)
     }
 
     const myOnMouseUp = (e: MouseEvent) => {
-      dispatch(externalEventAction({ handler: props.onMouseUp!, event: e }))
+      callHandler(props.onMouseUp, e)
     }
 
     const myOnTouchStart = (e: TouchEvent) => {
-      dispatch(externalEventAction({ handler: props.onTouchStart!, event: e }))
+      callHandler(props.onTouchStart, e)
     }
 
     const myOnTouchMove = (e: TouchEvent) => {
-      dispatch(touchEventAction(e))
-      dispatch(externalEventAction({ handler: props.onTouchMove!, event: e }))
+      interactions.touchMove(e)
+      callHandler(props.onTouchMove, e)
     }
 
     const myOnTouchEnd = (e: TouchEvent) => {
-      dispatch(externalEventAction({ handler: props.onTouchEnd!, event: e }))
+      callHandler(props.onTouchEnd, e)
     }
 
     return () => (
