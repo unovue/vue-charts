@@ -3,6 +3,7 @@ import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { getBarRects } from '@/test/helper'
 
 function getYAxisTicks(container: Element): NodeListOf<Element> {
   return container.querySelectorAll('.v-charts-yAxis .v-charts-cartesian-axis-tick')
@@ -249,6 +250,16 @@ describe('yAxis', () => {
       const yAxis2 = container2.querySelector('.v-charts-yAxis')
       expect(yAxis1).toBeTruthy()
       expect(yAxis2).toBeTruthy()
+
+      // The wider YAxis must shrink the plot area, moving the first bar right.
+      const rect1 = getBarRects(container1)[0]
+      const rect2 = getBarRects(container2)[0]
+      const x1 = Number.parseFloat(rect1!.getAttribute('x') ?? '')
+      const x2 = Number.parseFloat(rect2!.getAttribute('x') ?? '')
+
+      expect(x1).not.toBeNaN()
+      expect(x2).not.toBeNaN()
+      expect(x2).toBeGreaterThan(x1)
     })
 
     it('should render the y-axis with given width in the prop', () => {
