@@ -1,5 +1,4 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { createSlice } from '@reduxjs/toolkit'
+import { computed, shallowRef } from 'vue'
 
 /**
  * This is the data that's coming through main chart `data` prop
@@ -44,45 +43,31 @@ export type ChartDataState = {
   dataEndIndex: number
 }
 
-export const initialChartDataState: ChartDataState = {
-  chartData: undefined,
-  computedData: undefined,
-  dataStartIndex: 0,
-  dataEndIndex: 0,
+export function createChartData() {
+  const state = shallowRef<ChartDataState>({
+    chartData: undefined,
+    computedData: undefined,
+    dataStartIndex: 0,
+    dataEndIndex: 0,
+  })
+
+  function setData(chartData: ChartData | undefined) {
+    const current = state.value
+    const dataStartIndex = chartData == null ? 0 : current.dataStartIndex
+    const dataEndIndex = chartData == null ? 0 : chartData.length > 0 ? chartData.length - 1 : current.dataEndIndex
+    if (current.chartData === chartData && current.dataStartIndex === dataStartIndex && current.dataEndIndex === dataEndIndex)
+      return
+    state.value = { ...current, chartData, dataStartIndex, dataEndIndex }
+  }
+
+  function setRange(range: Partial<BrushStartEndIndex>) {
+    const current = state.value
+    const dataStartIndex = range.startIndex ?? current.dataStartIndex
+    const dataEndIndex = range.endIndex ?? current.dataEndIndex
+    if (current.dataStartIndex === dataStartIndex && current.dataEndIndex === dataEndIndex)
+      return
+    state.value = { ...current, dataStartIndex, dataEndIndex }
+  }
+
+  return { state: computed(() => state.value), setData, setRange }
 }
-
-type BrushStartEndIndexActionPayload = Partial<BrushStartEndIndex>
-
-const chartDataSlice = createSlice({
-  name: 'chartData',
-  initialState: initialChartDataState,
-  reducers: {
-    setChartData(state, action: PayloadAction<ChartData | undefined>) {
-      state.chartData = action.payload
-      if (action.payload == null) {
-        state.dataStartIndex = 0
-        state.dataEndIndex = 0
-        return
-      }
-      if (action.payload.length > 0 && state.dataEndIndex !== action.payload.length - 1) {
-        state.dataEndIndex = action.payload.length - 1
-      }
-    },
-    setComputedData(state, action: PayloadAction<unknown | undefined>) {
-      state.computedData = action.payload
-    },
-    setDataStartEndIndexes(state, action: PayloadAction<BrushStartEndIndexActionPayload>) {
-      const { startIndex, endIndex } = action.payload
-      if (startIndex != null) {
-        state.dataStartIndex = startIndex
-      }
-      if (endIndex != null) {
-        state.dataEndIndex = endIndex
-      }
-    },
-  },
-})
-
-export const { setChartData, setDataStartEndIndexes, setComputedData } = chartDataSlice.actions
-
-export const chartDataReducer = chartDataSlice.reducer

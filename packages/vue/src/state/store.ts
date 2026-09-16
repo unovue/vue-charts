@@ -2,7 +2,7 @@ import type { Action, Dispatch, Store } from '@reduxjs/toolkit'
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { optionsReducer } from './optionsSlice'
 import { tooltipReducer } from './tooltipSlice'
-import { chartDataReducer } from './chartDataSlice'
+import type { ChartDataState } from './chartData'
 import type { ChartLayoutState } from './chartLayout'
 import { reduxDevtoolsJsonStringifyReplacer } from './reduxDevtoolsJsonStringifyReplacer'
 import { cartesianAxisReducer } from './cartesianAxisSlice'
@@ -17,7 +17,6 @@ import { polarOptionsReducer } from './polarOptionsSlice'
 const rootReducer = combineReducers({
   brush: brushReducer,
   cartesianAxis: cartesianAxisReducer,
-  chartData: chartDataReducer,
   graphicalItems: graphicalItemsReducer,
   legend: legendReducer,
   options: optionsReducer,
@@ -50,5 +49,5 @@ export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, 
 }
 
 export type LegacyChartState = ReturnType<typeof rootReducer>
-export type RechartsRootState = LegacyChartState & { layout: ChartLayoutState }
+export type RechartsRootState = LegacyChartState & { layout: ChartLayoutState, chartData: ChartDataState }
 export type AppDispatch = Dispatch<Action>

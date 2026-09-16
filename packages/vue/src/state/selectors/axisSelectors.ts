@@ -14,7 +14,7 @@ import type {
 } from '../cartesianAxisSlice'
 import type { RechartsRootState } from '../store'
 import { selectChartDataWithIndexes, selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
-import type { AppliedChartData, ChartData, ChartDataState } from '../chartDataSlice'
+import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
 import type {
   CartesianGraphicalItemSettings,
   ErrorBarsSettings,

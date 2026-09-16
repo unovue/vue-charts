@@ -6,7 +6,7 @@ import { selectPolarAxisScale, selectPolarAxisTicks } from './polarScaleSelector
 import { selectAngleAxis, selectPolarViewBox, selectRadiusAxis } from './polarAxisSelectors'
 import type { AxisId } from '../cartesianAxisSlice'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
-import type { ChartDataState } from '../chartDataSlice'
+import type { ChartDataState } from '../chartData'
 import type { AngleAxisSettings, RadiusAxisSettings } from '../polarAxisSlice'
 import { selectUnfilteredPolarItems } from './polarSelectors'
 import type { RechartsScale } from '@/types/scale'

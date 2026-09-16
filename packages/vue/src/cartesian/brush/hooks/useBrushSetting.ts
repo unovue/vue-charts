@@ -1,8 +1,8 @@
-import { watchEffect } from 'vue'
+import { watch, watchEffect } from 'vue'
 import type { BrushProps } from '../type'
 import { useAppDispatch } from '@/state/hooks'
 import { setBrushSettings } from '@/state/brushSlice'
-import { setDataStartEndIndexes } from '@/state/chartDataSlice'
+import { useChartDataActions } from '@/state/chartContext'
 
 /**
  * setting brush settings
@@ -10,6 +10,7 @@ import { setDataStartEndIndexes } from '@/state/chartDataSlice'
  */
 export function useBrushSetting(props: BrushProps) {
   const dispatch = useAppDispatch()
+  const data = useChartDataActions()
   watchEffect((onCleanup) => {
     dispatch(setBrushSettings({
       x: props.x,
@@ -23,11 +24,7 @@ export function useBrushSetting(props: BrushProps) {
     })
   })
 
-  // start and end index can be controlled from props, and we need them to stay up-to-date in the Redux state too
-  watchEffect(() => {
-    dispatch(setDataStartEndIndexes({
-      startIndex: props.startIndex,
-      endIndex: props.endIndex,
-    }))
-  })
+  watch([() => props.startIndex, () => props.endIndex], ([startIndex, endIndex]) => {
+    data.setRange({ startIndex, endIndex })
+  }, { immediate: true })
 }

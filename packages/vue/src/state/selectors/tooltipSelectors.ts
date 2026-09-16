@@ -39,7 +39,7 @@ import {
   selectReferenceLines,
 } from './axisSelectors'
 import type { AxisId } from '../cartesianAxisSlice'
-import type { AppliedChartData, ChartData, ChartDataState } from '../chartDataSlice'
+import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import type { GraphicalItemSettings } from '../graphicalItemsSlice'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '../referenceElementsSlice'

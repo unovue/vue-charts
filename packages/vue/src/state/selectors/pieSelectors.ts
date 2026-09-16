@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
-import type { ChartData, ChartDataState } from '../chartDataSlice'
+import type { ChartData, ChartDataState } from '../chartData'
 import { selectChartOffset } from './selectChartOffset'
 import { selectUnfilteredPolarItems } from './polarSelectors'
 import type { ChartOffset, Coordinate, DataKey, TooltipType } from '@/types'

@@ -12,7 +12,7 @@ import {
 import type { RechartsRootState } from '../store'
 import type { AxisId } from '../cartesianAxisSlice'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
-import type { ChartData } from '../chartDataSlice'
+import type { ChartData } from '../chartData'
 import type { Point as CurvePoint } from '@/shape'
 import type { BaseValue } from '@/types/area'
 import type { Coordinate, DataKey } from '@/types'

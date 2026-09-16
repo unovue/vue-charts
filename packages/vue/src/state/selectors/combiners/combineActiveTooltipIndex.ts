@@ -1,5 +1,5 @@
 import type { TooltipIndex, TooltipInteractionState } from '../../tooltipSlice'
-import type { ChartData } from '../../chartDataSlice'
+import type { ChartData } from '../../chartData'
 import type { CategoricalDomain, DataKey } from '@/types'
 import type { NumberDomain } from '@/types/axis'
 import { isWellBehavedNumber } from '@/utils'

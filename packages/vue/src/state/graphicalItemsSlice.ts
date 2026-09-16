@@ -1,7 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice, current } from '@reduxjs/toolkit'
 import { castDraft } from 'immer'
-import type { ChartData } from './chartDataSlice'
+import type { ChartData } from './chartData'
 import type { AxisId } from './cartesianAxisSlice'
 import type { MaybeStackedGraphicalItem } from './selectors/barSelectors'
 import type { ErrorBarDirection } from '@/types/bar'

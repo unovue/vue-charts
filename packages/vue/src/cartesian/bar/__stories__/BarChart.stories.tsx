@@ -15,7 +15,7 @@ import { Brush } from '@/cartesian/brush'
 import { Rectangle } from '@/shape/Rectangle'
 import { LabelList } from '@/components/label'
 import { numberData, pageData, rangeData } from '@/storybook/data'
-import type { ChartData } from '@/state/chartDataSlice'
+import type { ChartData } from '@/state/chartData'
 
 const meta = {
   title: 'examples/BarChart',

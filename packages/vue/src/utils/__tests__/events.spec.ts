@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { TooltipSyncState } from '@/state/tooltipSlice'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
+import type { BrushStartEndIndex } from '@/state/chartData'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 
 const tooltipAction: PayloadAction<TooltipSyncState> = {

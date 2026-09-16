@@ -3,7 +3,7 @@ import { toRaw } from 'vue'
 import type { RechartsRootState } from '../store'
 import type { AxisId } from '../cartesianAxisSlice'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
-import type { ChartData, ChartDataState } from '../chartDataSlice'
+import type { ChartData, ChartDataState } from '../chartData'
 
 import {
   type BaseAxisWithScale,

@@ -1,6 +1,6 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { TooltipSyncState } from '../state/tooltipSlice'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
+import type { BrushStartEndIndex } from '@/state/chartData'
 
 export const TOOLTIP_SYNC_EVENT = 'recharts.syncEvent.tooltip'
 

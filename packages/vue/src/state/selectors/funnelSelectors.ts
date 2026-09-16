@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 // import type { FunnelTrapezoidItem } from '../../cartesian/Funnel'
 // import { computeFunnelTrapezoids } from '../../cartesian/Funnel'
-import type { ChartData } from '../chartDataSlice'
+import type { ChartData } from '../chartData'
 import type { RechartsRootState } from '../store'
 import { selectChartOffset } from './selectChartOffset'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'

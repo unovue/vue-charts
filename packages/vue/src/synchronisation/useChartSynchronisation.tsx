@@ -15,7 +15,7 @@ import { selectSynchronisedTooltipState } from '@/synchronisation/syncSelectors'
 import { selectEventEmitter, selectSyncId } from '@/state/selectors/rootPropsSelectors'
 import type { ChartCoordinate, TooltipEventType, TooltipIndex, TooltipTrigger } from '@/types'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
+import type { BrushStartEndIndex } from '@/state/chartData'
 
 export function useTooltipChartSynchronisation(
   {

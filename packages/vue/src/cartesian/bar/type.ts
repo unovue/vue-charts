@@ -1,4 +1,4 @@
-import type { ChartData } from '@/state/chartDataSlice'
+import type { ChartData } from '@/state/chartData'
 import type {
   Coordinate,
   DataKey,

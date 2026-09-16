@@ -1,8 +1,7 @@
 import type { PropType } from 'vue'
 import { defineComponent, onUnmounted, watch } from 'vue'
-import { useAppDispatch } from '@/state/hooks'
-import { setChartData } from '@/state/chartDataSlice'
-import type { ChartData } from '@/state/chartDataSlice'
+import { useChartDataActions } from '@/state/chartContext'
+import type { ChartData } from '@/state/chartData'
 
 /**
  * ChartDataContextProvider for Vue
@@ -17,14 +16,14 @@ export const ChartDataContextProvider = defineComponent({
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const data = useChartDataActions()
 
     watch(() => props.chartData, (val) => {
-      dispatch(setChartData(Array.from(val)))
+      data.setData(Array.from(val))
     }, { immediate: true })
 
     onUnmounted(() => {
-      dispatch(setChartData(undefined))
+      data.setData(undefined)
     })
 
     // Render nothing

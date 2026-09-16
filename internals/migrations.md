@@ -17,6 +17,10 @@
   view when all remaining domains and calculations have migrated.
 - Temporary code: `ChartStore` input and its subscription in
   `packages/vue/src/state/chartContext.ts` bridge the current Redux store to Vue.
+- Chart data and inclusive brush indexes now live in `chartData.ts` with direct
+  operations; Redux no longer owns this domain. The main-data reporter retains
+  its existing array snapshot behavior. The unused computed-data action is
+  removed; the undefined field remains while existing selector inputs read it.
 - Lifecycle: the subscription is owned by a synchronous Vue effect, whose
   cleanup runs on client unmount and successful SSR render completion. Scope
   disposal alone does not run when `renderToString` completes.
@@ -30,7 +34,7 @@
 
 ### Ownership cutover constraints
 
-- Eleven domains remain reducer-owned after the layout cutover. Existing identity-memoized
+- Ten domains remain reducer-owned after the layout/data cutovers. Existing identity-memoized
   selectors require structural replacement of every changed ancestor; mutating
   Vue state in place under those selectors would return stale calculations.
 - Move state types/defaults and typed operations together into one chart-local

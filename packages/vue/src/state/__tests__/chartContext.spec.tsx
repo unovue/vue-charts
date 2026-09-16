@@ -2,10 +2,9 @@ import { cleanup, render } from '@testing-library/vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, isProxy, nextTick, ref } from 'vue'
 import type { ComputedRef } from 'vue'
-import { provideChartContext, useAppDispatch, useAppSelector, useChartLayoutActions } from '../chartContext'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions } from '../chartContext'
 import { createRechartsStore } from '../store'
 import { createChartLayout } from '../chartLayout'
-import { setChartData } from '../chartDataSlice'
 
 afterEach(() => {
   cleanup()
@@ -112,9 +111,9 @@ describe('chart context', () => {
   it('preserves dataset identity without creating Vue proxies', () => {
     const store = createRechartsStore()
     const data = [{ value: 10 }]
-    store.dispatch(setChartData(data))
     const Reader = defineComponent({
       setup() {
+        useChartDataActions().setData(data)
         const selected = useAppSelector(state => state.chartData.chartData)
         expect(selected.value).toBe(data)
         expect(isProxy(selected.value)).toBe(false)

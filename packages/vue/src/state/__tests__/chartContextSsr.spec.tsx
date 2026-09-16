@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { provideChartContext, useAppDispatch, useAppSelector, useChartLayoutActions } from '../chartContext'
-import { setChartData } from '../chartDataSlice'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions } from '../chartContext'
+import { createEventEmitter } from '../optionsSlice'
 import { createRechartsStore } from '../store'
 
 describe('chart context SSR', () => {
@@ -22,7 +22,9 @@ describe('chart context SSR', () => {
         const width = useAppSelector(state => state.layout.width)
         const data = useAppSelector(state => state.chartData.chartData)
         useChartLayoutActions().setProps('horizontal', { width: 321, height: 200 }, {})
-        useAppDispatch()(setChartData([1, 2]))
+        useChartDataActions().setData([1, 2])
+        useAppDispatch()(createEventEmitter())
+        expect(useAppSelector(state => state.options.eventEmitter).value).toBeTypeOf('symbol')
         return () => <span>{`${width.value}:${data.value?.length}`}</span>
       },
     })

@@ -13,7 +13,7 @@ import {
   selectUnfilteredCartesianItems,
 } from './axisSelectors'
 import type { AxisId } from '../cartesianAxisSlice'
-import type { ChartData } from '../chartDataSlice'
+import type { ChartData } from '../chartData'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import { selectChartOffset } from './selectChartOffset'
 import { selectBarCategoryGap, selectBarGap, selectRootBarSize, selectRootMaxBarSize } from './rootPropsSelectors'

@@ -12,10 +12,10 @@ import { useBrushState } from './hooks/useBrushState'
 import { useBrushHandlers } from './hooks/useBrushHandlers'
 import { useBrushSetting } from '@/cartesian/brush/hooks/useBrushSetting'
 import { useBrushChartSynchronisation } from '@/synchronisation/useChartSynchronisation'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { selectBrushDimensions } from '@/state/selectors/brushSelectors'
-import { setDataStartEndIndexes } from '@/state/chartDataSlice'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
+import { useChartDataActions } from '@/state/chartContext'
+import type { BrushStartEndIndex } from '@/state/chartData'
 import { isNumber } from '@/utils'
 
 export const Brush = defineComponent<BrushPropsWithSVG>({
@@ -23,11 +23,10 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
   props: BrushVueProps,
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    // --- Redux integration ---
     useBrushSetting(props)
     useBrushChartSynchronisation()
 
-    const dispatch = useAppDispatch()
+    const dataActions = useChartDataActions()
     const chartData = useAppSelector(state => state.chartData.chartData)
     const dataStartIndex = useAppSelector(state => state.chartData.dataStartIndex)
     const dataEndIndex = useAppSelector(state => state.chartData.dataEndIndex)
@@ -44,7 +43,7 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
     // --- onChange handler ---
     const onChange = (nextState: BrushStartEndIndex) => {
       props.onChange?.(nextState)
-      dispatch(setDataStartEndIndexes(nextState))
+      dataActions.setRange(nextState)
     }
 
     // --- Hook wiring ---

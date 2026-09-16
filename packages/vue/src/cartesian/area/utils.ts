@@ -1,4 +1,4 @@
-import type { ChartData } from '@/state/chartDataSlice'
+import type { ChartData } from '@/state/chartData'
 import type { AreaPointItem, AreaSettings, ComputedArea } from '@/state/selectors/areaSelectors'
 import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
 import type { Coordinate, TickItem } from '@/types'

@@ -8,8 +8,8 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import { createEventEmitter } from '@/state/optionsSlice'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
-import { setDataStartEndIndexes } from '@/state/chartDataSlice'
+import type { BrushStartEndIndex } from '@/state/chartData'
+import { useChartDataActions } from '@/state/chartContext'
 
 function useTooltipSyncEventsListener() {
   const mySyncId = useAppSelector(selectSyncId)
@@ -110,7 +110,7 @@ function useTooltipSyncEventsListener() {
 function useBrushSyncEventsListener() {
   const mySyncId = useAppSelector(selectSyncId)
   const myEventEmitter = useAppSelector(selectEventEmitter)
-  const dispatch = useAppDispatch()
+  const data = useChartDataActions()
   watch([mySyncId, myEventEmitter], (v, o, onCleanup) => {
     if (mySyncId.value == null) {
       // This chart is not synchronised with any other chart so we don't need to listen for any events.
@@ -123,7 +123,7 @@ function useBrushSyncEventsListener() {
         return
       }
       if (mySyncId.value === incomingSyncId) {
-        dispatch(setDataStartEndIndexes(action))
+        data.setRange(action)
       }
     }
 
