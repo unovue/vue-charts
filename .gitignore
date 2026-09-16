@@ -9,6 +9,7 @@ storybook-static
 project_config.md
 
 dist
+coverage/
 
 .env
 

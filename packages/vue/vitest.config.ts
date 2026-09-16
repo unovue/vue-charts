@@ -1,41 +1,34 @@
 import { resolve } from 'node:path'
-import { defineConfig } from 'vitest/config'
+import { coverageConfigDefaults, defineConfig } from 'vitest/config'
 import Vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import dts from 'vite-plugin-dts'
-
-const r = (p: string) => resolve(__dirname, p)
 
 export default defineConfig({
+  root: __dirname,
   plugins: [
     Vue(),
-    vueJsx() as any,
-    dts({
-      cleanVueFileName: true,
-      outDir: 'dist/es',
-      exclude: ['src/test/*.ts', 'src/**/story/**', 'src/**/*.story.tsx'],
-      // afterBuild: async () => {
-      //   // pnpm build:plugins
-      //   execSync('pnpm build:plugins', { stdio: 'inherit', cwd: path.resolve(__dirname, '../plugins') })
-      // },
-    }),
-
+    vueJsx(),
   ],
   resolve: {
     alias: {
-      '@': r('./src'),
+      '@': resolve(__dirname, 'src'),
     },
   },
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    restoreMocks: true,
+    unstubGlobals: true,
+    unstubEnvs: true,
     exclude: ['**/node_modules/**'],
     include: ['./**/*.{test,spec}.{ts,js,tsx}'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
+      reporter: ['text-summary', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx,vue}'],
+      exclude: [...coverageConfigDefaults.exclude, 'src/test/**', 'src/**/__stories__/**', 'src/storybook/**'],
     },
-    // globalSetup: './vitest.global.ts',
-    // setupFiles: './vitest.setup.ts',
     server: {
       deps: {
         inline: ['vitest-canvas-mock'],

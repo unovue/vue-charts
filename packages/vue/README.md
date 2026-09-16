@@ -136,6 +136,12 @@ pnpm play             # Nuxt playground
 pnpm docs             # Documentation site
 ```
 
+Root and package test commands share the library Vitest configuration. Coverage
+uses Istanbul and includes library source, excluding stories and test helpers;
+reports are written to `packages/vue/coverage`. Tests restore DOM measurements,
+spies, global stubs, environment stubs, timers, and mounted components after each
+case. Declaration generation runs only during the library build.
+
 ## License
 
 [MIT](LICENSE)
