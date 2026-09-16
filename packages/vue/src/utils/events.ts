@@ -15,10 +15,10 @@ type Listener<Args extends unknown[] = any[]> = (...args: Args) => void
  * reference. Charts install listeners inside a component scope and remove them
  * on cleanup, so nothing request-specific is retained between SSR renders.
  */
-function createEventBus() {
-  const listeners = new Map<string, Set<Listener>>()
+function createEventBus<TEvents extends Record<string, (...args: any[]) => void>>() {
+  const listeners = new Map<keyof TEvents, Set<Listener>>()
 
-  function getListeners(event: string): Set<Listener> {
+  function getListeners(event: keyof TEvents): Set<Listener> {
     let eventListeners = listeners.get(event)
     if (!eventListeners) {
       eventListeners = new Set()
@@ -28,19 +28,19 @@ function createEventBus() {
   }
 
   return {
-    on(event: string, listener: Listener) {
+    on<K extends keyof TEvents>(event: K, listener: TEvents[K]) {
       getListeners(event).add(listener)
     },
-    off(event: string, listener: Listener) {
+    off<K extends keyof TEvents>(event: K, listener: TEvents[K]) {
       listeners.get(event)?.delete(listener)
     },
-    emit(event: string, ...args: any[]) {
+    emit<K extends keyof TEvents>(event: K, ...args: Parameters<TEvents[K]>) {
       const eventListeners = listeners.get(event)
       if (!eventListeners) {
         return
       }
       for (const listener of [...eventListeners]) {
-        listener(...args)
+        listener(...args as Parameters<TEvents[K]>)
       }
     },
   }
@@ -55,6 +55,6 @@ interface EventTypes {
   [BRUSH_SYNC_EVENT]: (syncId: number | string, data: BrushStartEndIndex, emitter: symbol) => void
 }
 
-export type SyncEventName = TOOLTIP_SYNC_EVENT | BRUSH_SYNC_EVENT
+export type SyncEventName = keyof EventTypes
 
-export type SyncListener<T extends SyncEventName> = EventTypes[T]
+export type SyncListener<T extends SyncEventName> = (...args: Parameters<EventTypes[T]>) => void
