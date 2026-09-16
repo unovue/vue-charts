@@ -12,7 +12,7 @@ export default defineAppConfig({
     },
   },
   socials: {
-    github: 'https://github.com/unovue/vue-charts',
+    // github: 'https://github.com/unovue/vue-charts',
   },
   github: {
     url: 'https://github.com/unovue/vue-charts',
