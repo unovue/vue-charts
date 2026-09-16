@@ -18,6 +18,7 @@ import ReportChartProps from '@/state/ReportChartProps'
 import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
 import { useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { provideIndependentChart } from '@/context/PanoramaContextProvider'
 
 const defaultLayout: LayoutType = 'horizontal'
 const defaultMargin: Margin = { top: 5, right: 5, bottom: 5, left: 5 }
@@ -161,6 +162,7 @@ export function generateCategoricalChart({
       }
       const store = createRechartsStore({ options }, props.id ?? chartName)
       provideChartContext(store)
+      provideIndependentChart()
 
       const clipPathId = provideClipPathId(props)
 

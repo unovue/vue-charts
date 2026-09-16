@@ -3,6 +3,10 @@ import { createContext } from '@/utils/createContext'
 
 const [injectPanorama, providePanoramaContext] = createContext<boolean>('PanoramaContext')
 
+export function provideIndependentChart() {
+  providePanoramaContext(false)
+}
+
 /**
  * useIsPanorama composable
  * Returns the injected isPanorama value (default: false)

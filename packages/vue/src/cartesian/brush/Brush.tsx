@@ -140,7 +140,7 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
             data={data as any[]}
             padding={props.padding}
           >
-            {slots.default?.()}
+            {{ default: slots.default }}
           </Panorama>
 
           <Slide
