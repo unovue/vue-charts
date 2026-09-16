@@ -7,8 +7,8 @@ import {
   symbolStar,
   symbolTriangle,
   symbolWye,
-} from 'victory-vendor/d3-shape'
-import type { SymbolType as D3SymbolType } from 'victory-vendor/d3-shape'
+} from 'd3-shape'
+import type { SymbolType as D3SymbolType } from 'd3-shape'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils/validate'
 import type { VueClassValue } from '@/types/common'

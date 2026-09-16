@@ -4,7 +4,7 @@ import type { LegendType } from '@/types/legend'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
 
 interface LegendContentProps {
-  layout?: LayoutType
+  layout?: LayoutType | 'auto'
   align?: HorizontalAlignmentType
   verticalAlign?: VerticalAlignmentType
   iconSize?: number

@@ -20,7 +20,7 @@ import {
   curveStepBefore,
   area as shapeArea,
   line as shapeLine,
-} from 'victory-vendor/d3-shape'
+} from 'd3-shape'
 import { classProp } from '@/types'
 import type { LayoutType, VuePropsToType, WithSVGProps } from '@/types'
 import { upperFirst } from 'es-toolkit/compat'

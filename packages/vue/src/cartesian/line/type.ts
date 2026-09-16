@@ -2,7 +2,7 @@ import type { DataKey, LayoutType, TooltipType, VueClassValue, VuePropsToType, W
 import type { AxisId } from '@/types/axis'
 import type { AnimationOptions } from 'motion-v'
 import type { LegendType } from '@/types/legend'
-import type { CurveFactory } from 'victory-vendor/d3-shape'
+import type { CurveFactory } from 'd3-shape'
 import type { CurveType, Point } from '@/shape/Curve'
 import type { PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'

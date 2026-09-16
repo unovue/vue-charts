@@ -1,6 +1,6 @@
 import type { StoryObj } from '@storybook/vue3-vite'
-import { scaleTime } from 'victory-vendor/d3-scale'
-import { timeDay, timeHour, timeMinute, timeMonth, timeSecond, timeWeek, timeYear } from 'victory-vendor/d3-time'
+import { scaleTime } from 'd3-scale'
+import { timeDay, timeHour, timeMinute, timeMonth, timeSecond, timeWeek, timeYear } from 'd3-time'
 import { timeData } from '@/storybook/data'
 import { ComposedChart } from '@/chart/ComposedChart'
 import { Line } from '@/cartesian/line'

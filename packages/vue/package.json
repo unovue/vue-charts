@@ -57,13 +57,18 @@
     "@vueuse/core": "^13.1.0",
     "d3-hierarchy": "^3.1.2",
     "d3-sankey": "^0.12.3",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0",
+    "d3-time": "^3.1.0",
     "decimal.js-light": "^2.5.1",
     "es-toolkit": "^1.39.3",
-    "immer": "^10.1.1",
-    "victory-vendor": "^37.3.6"
+    "immer": "^10.1.1"
   },
   "devDependencies": {
     "@types/d3-sankey": "^0.12.5",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-shape": "^3.1.7",
+    "@types/d3-time": "^3.0.4",
     "@vitejs/plugin-vue-jsx": "^5.0.0",
     "@vue/babel-plugin-jsx": "^1.1.1",
     "@vue/runtime-core": "^3.5.13",

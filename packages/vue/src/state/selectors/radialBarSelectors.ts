@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit'
-import type { Series } from 'victory-vendor/d3-shape'
+import type { Series } from 'd3-shape'
 import { selectChartDataAndAlwaysIgnoreIndexes, selectChartDataWithIndexes } from './dataSelectors'
 import type { RechartsRootState } from '../store'
 import type { ChartDataState } from '../chartDataSlice'

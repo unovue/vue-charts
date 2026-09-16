@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { range, upperFirst } from 'es-toolkit/compat'
-import type { Series } from 'victory-vendor/d3-shape'
-import * as d3Scales from 'victory-vendor/d3-scale'
+import type { Series } from 'd3-shape'
+import * as d3Scales from 'd3-scale'
 import type {
   AxisId,
   BaseCartesianAxis,
