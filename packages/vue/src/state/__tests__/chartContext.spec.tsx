@@ -2,9 +2,9 @@ import { cleanup, render } from '@testing-library/vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, isProxy, nextTick, ref } from 'vue'
 import type { ComputedRef } from 'vue'
-import { provideChartContext, useAppDispatch, useAppSelector } from '../chartContext'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartLayoutActions } from '../chartContext'
 import { createRechartsStore } from '../store'
-import { setChartSize } from '../layoutSlice'
+import { createChartLayout } from '../chartLayout'
 import { setChartData } from '../chartDataSlice'
 
 afterEach(() => {
@@ -15,6 +15,7 @@ afterEach(() => {
 describe('chart context', () => {
   it('updates synchronously and tracks reactive inputs without a dispatch', () => {
     const store = createRechartsStore()
+    const layout = createChartLayout()
     const dimension = ref<'width' | 'height'>('width')
     let selected: ComputedRef<number> | undefined
     const Reader = defineComponent({
@@ -22,13 +23,13 @@ describe('chart context', () => {
         selected = useAppSelector(state => state.layout[dimension.value])
         const dispatch = useAppDispatch()
         expect(dispatch).toBe(store.dispatch)
-        dispatch(setChartSize({ width: 100, height: 200 }))
+        useChartLayoutActions().setProps('horizontal', { width: 100, height: 200 }, {})
         return () => <span>{selected?.value}</span>
       },
     })
     const Fixture = defineComponent({
       setup() {
-        provideChartContext(store)
+        provideChartContext(store, layout)
         return () => <Reader />
       },
     })
@@ -36,15 +37,17 @@ describe('chart context', () => {
     expect(selected?.value).toBe(100)
     dimension.value = 'height'
     expect(selected?.value).toBe(200)
-    store.dispatch(setChartSize({ width: 300, height: 400 }))
+    layout.setProps('horizontal', { width: 300, height: 400 }, {})
     expect(selected?.value).toBe(400)
   })
 
   it('uses the nearest provider without leaking state to sibling charts', async () => {
     const outerStore = createRechartsStore()
     const innerStore = createRechartsStore()
-    outerStore.dispatch(setChartSize({ width: 100, height: 200 }))
-    innerStore.dispatch(setChartSize({ width: 300, height: 400 }))
+    const outerLayout = createChartLayout()
+    const innerLayout = createChartLayout()
+    outerLayout.setProps('horizontal', { width: 100, height: 200 }, {})
+    innerLayout.setProps('horizontal', { width: 300, height: 400 }, {})
     const Reader = defineComponent({
       setup() {
         const width = useAppSelector(state => state.layout.width)
@@ -53,13 +56,13 @@ describe('chart context', () => {
     })
     const Inner = defineComponent({
       setup() {
-        provideChartContext(innerStore)
+        provideChartContext(innerStore, innerLayout)
         return () => <Reader />
       },
     })
     const Outer = defineComponent({
       setup() {
-        provideChartContext(outerStore)
+        provideChartContext(outerStore, outerLayout)
         return () => (
           <div>
             <Reader />
@@ -71,7 +74,7 @@ describe('chart context', () => {
     })
     const { container } = render(Outer)
     expect([...container.querySelectorAll('span')].map(element => element.textContent)).toEqual(['100', '300', '100'])
-    innerStore.dispatch(setChartSize({ width: 500, height: 600 }))
+    innerLayout.setProps('horizontal', { width: 500, height: 600 }, {})
     await nextTick()
     expect([...container.querySelectorAll('span')].map(element => element.textContent)).toEqual(['100', '500', '100'])
   })

@@ -10,6 +10,11 @@
   no longer dispatch transport actions; pointer, keyboard, and touch handlers
   call the existing calculations directly. Their final state transitions still
   use the temporary Redux reducers.
+- Layout is now Vue-owned: dimensions, direction, margins, and scale live in
+  `chartLayout.ts`, not Redux. The context combines this immutable shallow
+  snapshot with remaining reducer state for existing pure selectors. There is
+  no mirrored layout slice or action-dispatch adapter. Remove this combined
+  view when all remaining domains and calculations have migrated.
 - Temporary code: `ChartStore` input and its subscription in
   `packages/vue/src/state/chartContext.ts` bridge the current Redux store to Vue.
 - Lifecycle: the subscription is owned by a synchronous Vue effect, whose
@@ -25,7 +30,7 @@
 
 ### Ownership cutover constraints
 
-- Current state has 12 reducer-owned domains. Existing identity-memoized
+- Eleven domains remain reducer-owned after the layout cutover. Existing identity-memoized
   selectors require structural replacement of every changed ancestor; mutating
   Vue state in place under those selectors would return stale calculations.
 - Move state types/defaults and typed operations together into one chart-local

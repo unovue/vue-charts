@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { provideChartContext, useAppDispatch, useAppSelector } from '../chartContext'
-import { setChartSize } from '../layoutSlice'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartLayoutActions } from '../chartContext'
+import { setChartData } from '../chartDataSlice'
 import { createRechartsStore } from '../store'
 
 describe('chart context SSR', () => {
@@ -20,8 +20,10 @@ describe('chart context SSR', () => {
     const Reader = defineComponent({
       setup() {
         const width = useAppSelector(state => state.layout.width)
-        useAppDispatch()(setChartSize({ width: 321, height: 200 }))
-        return () => <span>{width.value}</span>
+        const data = useAppSelector(state => state.chartData.chartData)
+        useChartLayoutActions().setProps('horizontal', { width: 321, height: 200 }, {})
+        useAppDispatch()(setChartData([1, 2]))
+        return () => <span>{`${width.value}:${data.value?.length}`}</span>
       },
     })
     const Fixture = defineComponent({
@@ -31,7 +33,7 @@ describe('chart context SSR', () => {
       },
     })
     const html = await renderToString(createSSRApp(Fixture))
-    expect(html).toBe('<span>321</span>')
+    expect(html).toBe('<span>321:2</span>')
     expect(subscription).toHaveBeenCalledTimes(1)
     expect(unsubscribe).toHaveBeenCalledTimes(1)
   })
@@ -41,9 +43,9 @@ describe('chart context SSR', () => {
       const Reader = defineComponent({
         async setup() {
           const selected = useAppSelector(state => state.layout.width)
-          const dispatch = useAppDispatch()
+          const layout = useChartLayoutActions()
           await Promise.resolve()
-          dispatch(setChartSize({ width, height: 200 }))
+          layout.setProps('horizontal', { width, height: 200 }, {})
           await Promise.resolve()
           return () => <span>{selected.value}</span>
         },

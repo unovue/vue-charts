@@ -1,6 +1,5 @@
-import { useAppDispatch } from '@/state/hooks'
-import { setChartSize, setLayout, setMargin } from '@/state/layoutSlice'
-import type { LayoutType } from '@/types'
+import { useChartLayoutActions } from '@/state/chartContext'
+import type { LayoutType, Margin } from '@/types'
 import type { PropType } from 'vue'
 import { defineComponent, watch } from 'vue'
 
@@ -20,12 +19,12 @@ export const ReportMainChartProps = defineComponent({
       required: true,
     },
     margin: {
-      type: Object,
+      type: Object as PropType<Margin>,
       required: true,
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const layout = useChartLayoutActions()
     /*
     * Skip dispatching properties in panorama chart for two reasons:
     * 1. The root chart should be deciding on these properties, and
@@ -35,9 +34,7 @@ export const ReportMainChartProps = defineComponent({
     const isPanorama = false
     watch([() => props.width, () => props.height, () => props.layout, () => props.margin], () => {
       if (!isPanorama) {
-        dispatch(setLayout(props.layout))
-        dispatch(setChartSize({ width: props.width, height: props.height }))
-        dispatch(setMargin(props.margin))
+        layout.setProps(props.layout, { width: props.width, height: props.height }, props.margin)
       }
     }, {
       immediate: true,

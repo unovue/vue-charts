@@ -1,9 +1,10 @@
 import { computed, inject, provide, shallowRef, watchSyncEffect } from 'vue'
 import type { InjectionKey, ShallowRef } from 'vue'
-import type { AppDispatch, RechartsRootState } from './store'
+import type { AppDispatch, LegacyChartState, RechartsRootState } from './store'
+import { createChartLayout } from './chartLayout'
 
 interface ChartStore {
-  getState: () => RechartsRootState
+  getState: () => LegacyChartState
   dispatch: AppDispatch
   subscribe: (listener: () => void) => () => void
 }
@@ -11,18 +12,20 @@ interface ChartStore {
 interface ChartContext {
   state: Readonly<ShallowRef<RechartsRootState>>
   dispatch: AppDispatch
+  layout: ReturnType<typeof createChartLayout>
 }
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
-export function provideChartContext(store: ChartStore) {
-  const state = shallowRef(store.getState())
+export function provideChartContext(store: ChartStore, layout = createChartLayout()) {
+  const legacyState = shallowRef(store.getState())
   watchSyncEffect((onCleanup) => {
     onCleanup(store.subscribe(() => {
-      state.value = store.getState()
+      legacyState.value = store.getState()
     }))
   })
-  provide(chartContextKey, { state, dispatch: store.dispatch })
+  const state = computed(() => ({ ...legacyState.value, layout: layout.state.value }))
+  provide(chartContextKey, { state, dispatch: store.dispatch, layout })
 }
 
 function useChartContext() {
@@ -35,6 +38,10 @@ function useChartContext() {
 
 export function useAppDispatch() {
   return useChartContext().dispatch
+}
+
+export function useChartLayoutActions() {
+  return useChartContext().layout
 }
 
 export function useAppSelector<Selected>(selector: (state: RechartsRootState) => Selected) {

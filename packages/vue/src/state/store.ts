@@ -3,7 +3,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { optionsReducer } from './optionsSlice'
 import { tooltipReducer } from './tooltipSlice'
 import { chartDataReducer } from './chartDataSlice'
-import { chartLayoutReducer } from './layoutSlice'
+import type { ChartLayoutState } from './chartLayout'
 import { reduxDevtoolsJsonStringifyReplacer } from './reduxDevtoolsJsonStringifyReplacer'
 import { cartesianAxisReducer } from './cartesianAxisSlice'
 import { graphicalItemsReducer } from './graphicalItemsSlice'
@@ -19,7 +19,6 @@ const rootReducer = combineReducers({
   cartesianAxis: cartesianAxisReducer,
   chartData: chartDataReducer,
   graphicalItems: graphicalItemsReducer,
-  layout: chartLayoutReducer,
   legend: legendReducer,
   options: optionsReducer,
   polarAxis: polarAxisReducer,
@@ -29,8 +28,8 @@ const rootReducer = combineReducers({
   tooltip: tooltipReducer,
 })
 
-export function createRechartsStore(preloadedState?: Partial<RechartsRootState>, chartName: string = 'Chart'): Store<RechartsRootState> {
-  return configureStore<RechartsRootState>({
+export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, chartName: string = 'Chart'): Store<LegacyChartState> {
+  return configureStore<LegacyChartState>({
     reducer: rootReducer,
     // redux-toolkit v1 types are unhappy with the preloadedState type. Remove the `as any` when bumping to v2
     preloadedState: preloadedState as any,
@@ -50,5 +49,6 @@ export function createRechartsStore(preloadedState?: Partial<RechartsRootState>,
   })
 }
 
-export type RechartsRootState = ReturnType<typeof rootReducer>
+export type LegacyChartState = ReturnType<typeof rootReducer>
+export type RechartsRootState = LegacyChartState & { layout: ChartLayoutState }
 export type AppDispatch = Dispatch<Action>
