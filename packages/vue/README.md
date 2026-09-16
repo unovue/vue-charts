@@ -113,7 +113,7 @@ const data = [
 ## Architecture
 
 - **State**: Redux Toolkit via [@reduxjs/vue-redux](https://github.com/nicepkg/reduxjs-vue-redux) — one store per chart
-- **Math**: D3 scales and shapes via [victory-vendor](https://github.com/FormidableLabs/victory)
+- **Math**: Direct D3 scale and shape modules
 - **Animation**: [Motion for Vue](https://motion.dev/docs/vue)
 
 ## Project Structure
