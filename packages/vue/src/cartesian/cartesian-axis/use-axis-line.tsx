@@ -1,6 +1,6 @@
 import type { CartesianAxisProps } from '@/cartesian/cartesian-axis/CartesianAxis'
 import { type SVGAttributes, useAttrs } from 'vue'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 
 /**
  *  render axis line

@@ -1,5 +1,5 @@
 import { isNan, isNumber, isPercent } from '@/utils/validate'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 
 export function mathSign(value: number) {
   if (value === 0) {

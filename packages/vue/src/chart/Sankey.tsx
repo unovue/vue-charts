@@ -1,5 +1,5 @@
 import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 import type { AnimationOptions } from 'motion-v'
 import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'

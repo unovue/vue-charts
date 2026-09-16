@@ -61,12 +61,10 @@
     "es-toolkit": "^1.39.3",
     "eventemitter3": "^5.0.1",
     "immer": "^10.1.1",
-    "lodash-es": "^4.17.21",
     "victory-vendor": "^37.3.6"
   },
   "devDependencies": {
     "@types/d3-sankey": "^0.12.5",
-    "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue-jsx": "^5.0.0",
     "@vue/babel-plugin-jsx": "^1.1.1",
     "@vue/runtime-core": "^3.5.13",

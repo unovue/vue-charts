@@ -1,5 +1,5 @@
 import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 import { provideChartContext } from '@/state/chartContext'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'

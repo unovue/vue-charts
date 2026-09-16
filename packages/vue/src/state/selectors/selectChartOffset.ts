@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 import { selectLegendSettings, selectLegendSize } from './legendSelectors'
 import type { XAxisSettings, YAxisSettings } from '../cartesianAxisSlice'
 import type { LegendSettings } from '../legendSlice'

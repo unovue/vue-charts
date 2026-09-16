@@ -9,7 +9,7 @@ import type { AxisPropsNeededForTicksGenerator, AxisTick, StackId } from '@/type
 import { findEntryInArray, mathSign } from '@/utils/data'
 import { formatAngleOfSector, getAngleOfPoint, polarToCartesian, reverseFormatAngleOfSector } from '@/utils/polar'
 import { isNan, isNullish, isNumOrStr, isNumber } from '@/utils/validate'
-import { get, isNaN, sortBy } from 'lodash-es'
+import { get, isNaN, sortBy } from 'es-toolkit/compat'
 import type { Series, SeriesPoint } from 'victory-vendor/d3-shape'
 import { stack as shapeStack, stackOffsetExpand, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderNone } from 'victory-vendor/d3-shape'
 import { toRaw } from 'vue'
