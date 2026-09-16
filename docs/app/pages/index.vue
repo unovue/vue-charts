@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { type Component, computed, defineAsyncComponent, defineComponent, h, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { AnimatePresence, LayoutGroup, motion } from 'motion-v'
-import { useColorMode } from '#imports'
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion-v'
 
 useSeoMeta({
   title: 'vccs — Vue 3 Charting Components',
@@ -138,7 +137,7 @@ const categoryGroups = computed(() => {
     const charts = allCharts.filter(c => c.category === cat.key)
     const col1 = charts.filter((_, i) => i % 2 === 0)
     const col2 = charts.filter((_, i) => i % 2 === 1)
-    const layout = categoryLayout[cat.key]
+    const layout = categoryLayout[cat.key]!
     return { key: cat.key, col1, col2, gridCol: layout.col + 1, gridRow: layout.row + 1 }
   })
 })
@@ -171,32 +170,28 @@ onBeforeUnmount(() => {
   clearTimeout(copyTimer)
 })
 
-// ─── Dot grid colors (canvas can't read CSS vars) ───
-const colorMode = useColorMode()
-const dotBaseColor = computed(() => colorMode.value === 'dark' ? '#404040' : '#c0c0c0')
-const dotActiveColor = computed(() => '#f97316')
+// ─── Reduced motion — gate ALL motion-v animations (CSS can't stop inline-style animation) ───
+const reduced = useReducedMotion()
 
-// ─── Hero stagger animation ───
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.15 },
-  },
-}
+// Ambient orb transitions — infinite drift, or a single instant fade when reduced
+const orbAnimate = computed(() => reduced.value
+  ? { opacity: 1 }
+  : { opacity: 1, x: [0, 60, -40, 20, 0], y: [0, -30, 50, -20, 0] })
+const orbTransition = computed(() => reduced.value
+  ? { opacity: { duration: 0 } }
+  : { opacity: { duration: 1.2, ease: 'easeOut' }, x: { duration: 23, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 19, repeat: Infinity, ease: 'easeInOut' } })
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 40, filter: 'blur(4px)' },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: { type: 'spring', stiffness: 120, damping: 20 },
-  },
-}
+const gridPanTransition = computed(() => reduced.value
+  ? { duration: 0 }
+  : { type: 'spring', stiffness: 75, damping: 25 })
+
+const featuredEnterTransition = computed(() => reduced.value
+  ? { duration: 0 }
+  : { duration: 0.3, ease: 'easeOut' })
 
 // ─── Scroll to showcase ───
 function scrollToShowcase() {
-  document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' })
+  document.getElementById('showcase')?.scrollIntoView({ behavior: reduced.value ? 'auto' : 'smooth' })
 }
 </script>
 
@@ -204,44 +199,26 @@ function scrollToShowcase() {
   <div>
     <!-- ═══════════ Section 1: Full-screen Hero ═══════════ -->
     <section class="landing-hero">
-      <!-- Interactive dot grid background (vue-bits inspired, motion-v powered) -->
+      <!-- Living chart background — real vccs chart with streaming data -->
       <ClientOnly>
-        <DotGrid
-          class="landing-hero-dotgrid"
-          :dot-size="5"
-          :gap="28"
-          :base-color="dotBaseColor"
-          :active-color="dotActiveColor"
-          :proximity="150"
-          :speed-trigger="80"
-          :shock-radius="250"
-          :shock-strength="5"
-        />
+        <HeroChartBackground />
       </ClientOnly>
 
-      <!-- Floating glow orbs — prime-number durations for organic drift -->
+      <!-- Floating glow orb — single brand-hue orb, subtle -->
       <motion.div
-        class="hero-glow hero-glow-orange"
+        class="hero-glow hero-glow-brand"
         :initial="{ opacity: 0 }"
-        :animate="{ opacity: 1, x: [0, 60, -40, 20, 0], y: [0, -30, 50, -20, 0] }"
-        :transition="{ opacity: { duration: 1.2, ease: 'easeOut' }, x: { duration: 23, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 19, repeat: Infinity, ease: 'easeInOut' } }"
-      />
-      <motion.div
-        class="hero-glow hero-glow-teal"
-        :initial="{ opacity: 0 }"
-        :animate="{ opacity: 1, x: [0, -50, 30, -60, 0], y: [0, 40, -30, 50, 0] }"
-        :transition="{ opacity: { duration: 1.4, ease: 'easeOut', delay: 0.2 }, x: { duration: 17, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 29, repeat: Infinity, ease: 'easeInOut' } }"
+        :animate="orbAnimate"
+        :transition="orbTransition"
       />
 
-      <!-- Staggered hero content -->
-      <motion.div
-        class="landing-hero-inner"
-        :variants="containerVariants"
-        initial="hidden"
-        animate="visible"
-      >
+      <!-- Hero content — pure CSS entrance: first paint, no hydration wait, no blur cost -->
+      <div class="landing-hero-inner">
         <!-- Install snippet -->
-        <motion.div :variants="itemVariants">
+        <div
+          class="hero-item"
+          style="--d: 0ms"
+        >
           <div
             class="landing-install"
             @click="copyInstall"
@@ -258,36 +235,46 @@ function scrollToShowcase() {
               />
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        <!-- Title -->
-        <motion.h1
-          :variants="itemVariants"
-          class="landing-title"
+        <!-- Title — masked line reveal -->
+        <h1
+          class="landing-title reveal-mask"
+          style="--d: 100ms"
         >
-          <span class="landing-title-name">vccs</span>
-          <span class="landing-title-version">v0.1</span>
-        </motion.h1>
+          <span class="reveal-inner">
+            <span class="landing-title-name">vccs</span>
+            <span class="landing-title-version">v0.6</span>
+          </span>
+        </h1>
 
-        <!-- Tagline -->
-        <motion.div :variants="itemVariants">
-          <p class="landing-tagline">
-            Composable charting components for Vue 3.
+        <!-- Tagline — masked line reveal, per line -->
+        <div>
+          <p
+            class="landing-tagline reveal-mask"
+            style="--d: 220ms"
+          >
+            <span class="reveal-inner">Composable charting components for Vue 3.</span>
           </p>
-          <p class="landing-sub">
-            An unofficial port of
-            <a
-              href="https://recharts.org"
-              target="_blank"
-              rel="noopener"
-            >Recharts</a>
+          <p
+            class="landing-sub reveal-mask"
+            style="--d: 300ms"
+          >
+            <span class="reveal-inner">
+              An unofficial port of
+              <a
+                href="https://recharts.org"
+                target="_blank"
+                rel="noopener"
+              >Recharts</a>
+            </span>
           </p>
-        </motion.div>
+        </div>
 
         <!-- CTA buttons -->
-        <motion.div
-          :variants="itemVariants"
-          class="landing-actions"
+        <div
+          class="landing-actions hero-item"
+          style="--d: 420ms"
         >
           <UButton
             size="xl"
@@ -308,19 +295,19 @@ function scrollToShowcase() {
           >
             GitHub
           </UButton>
-        </motion.div>
+        </div>
 
         <!-- Feature pills -->
-        <motion.div
-          :variants="itemVariants"
-          class="landing-features"
+        <div
+          class="landing-features hero-item"
+          style="--d: 500ms"
         >
           <span class="landing-pill">Vue 3</span>
           <span class="landing-pill">TypeScript</span>
           <span class="landing-pill">Composable</span>
           <span class="landing-pill">Animated</span>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       <!-- Scroll indicator -->
       <button
@@ -329,7 +316,7 @@ function scrollToShowcase() {
         @click="scrollToShowcase"
       >
         <motion.div
-          :animate="{ y: [0, 8, 0] }"
+          :animate="reduced ? {} : { y: [0, 8, 0] }"
           :transition="{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }"
         >
           <UIcon
@@ -389,8 +376,8 @@ function scrollToShowcase() {
         <!-- Background chart grid — 2D pan with spring animation -->
         <motion.div
           class="chart-grid"
-          :animate="{ x: gridOffset.x, y: gridOffset.y }"
-          :transition="{ type: 'spring', stiffness: 75, damping: 25 }"
+          :animate="{ x: gridOffset?.x ?? 0, y: gridOffset?.y ?? 0 }"
+          :transition="gridPanTransition"
           :style="{ willChange: 'transform' }"
         >
           <div
@@ -467,26 +454,26 @@ function scrollToShowcase() {
               v-if="featuredComponent"
               :key="activeCategory"
               class="featured-card-inner"
-              :initial="{ opacity: 0, scale: 0.95 }"
+              :initial="reduced ? false : { opacity: 0, scale: 0.95 }"
               :animate="{ opacity: 1, scale: 1 }"
-              :exit="{ opacity: 0, scale: 0.95 }"
-              :transition="{ duration: 0.3, ease: 'easeOut' }"
+              :exit="{ opacity: 0, scale: 0.98, transition: reduced ? { duration: 0 } : { duration: 0.18, ease: 'easeIn' } }"
+              :transition="featuredEnterTransition"
             >
               <div class="featured-card-header">
                 <div class="featured-card-title-row">
                   <div class="featured-card-title">
-                    {{ featuredInfo.title }}
+                    {{ featuredInfo?.title }}
                   </div>
                   <div
                     class="featured-card-trend"
-                    :class="featuredInfo.trendUp ? 'trend-up' : 'trend-down'"
+                    :class="featuredInfo?.trendUp ? 'trend-up' : 'trend-down'"
                   >
-                    <span class="trend-arrow">{{ featuredInfo.trendUp ? '↗' : '↘' }}</span>
-                    {{ featuredInfo.trend }}
+                    <span class="trend-arrow">{{ featuredInfo?.trendUp ? '↗' : '↘' }}</span>
+                    {{ featuredInfo?.trend }}
                   </div>
                 </div>
                 <div class="featured-card-desc">
-                  {{ featuredInfo.desc }}
+                  {{ featuredInfo?.desc }}
                 </div>
               </div>
               <div class="featured-card-body">
@@ -501,9 +488,11 @@ function scrollToShowcase() {
 </template>
 
 <style scoped>
-/* ─── Scroll-snap on Docus page scroll container ─── */
-:global(html) {
-  scroll-snap-type: y mandatory;
+/* ─── Scroll-snap on Docus page scroll container — desktop only, never for reduced-motion ─── */
+@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
+  :global(html) {
+    scroll-snap-type: y proximity;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -519,42 +508,28 @@ function scrollToShowcase() {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: var(--ui-bg);
+  /* 顶部一层极淡的品牌橙呼吸感，向下消散 —— 清新感来源 */
+  background:
+    linear-gradient(to bottom, var(--hero-wash, rgba(249, 115, 22, 0.045)) 0%, transparent 45%),
+    var(--ui-bg);
 }
 
-/* Interactive dot grid background */
-.landing-hero-dotgrid {
-  position: absolute;
-  inset: 0;
-  pointer-events: auto;
-  z-index: 0;
-}
-
-/* Floating glow orbs */
+/* Floating glow orb — single, brand-hue, large and soft */
 .hero-glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(10px);
+  filter: blur(30px);
   pointer-events: none;
   z-index: 0;
 }
 
-.hero-glow-orange {
-  top: 35%;
-  left: 45%;
-  width: 500px;
-  height: 300px;
+.hero-glow-brand {
+  top: 30%;
+  left: 42%;
+  width: 640px;
+  height: 380px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center, var(--glow-orange, rgba(249, 115, 22, 0.12)) 0%, transparent 70%);
-}
-
-.hero-glow-teal {
-  top: 20%;
-  left: 30%;
-  width: 400px;
-  height: 250px;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center, var(--glow-teal, rgba(16, 185, 129, 0.10)) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, var(--glow-brand, rgba(249, 115, 22, 0.09)) 0%, transparent 70%);
 }
 
 .landing-hero-inner {
@@ -566,6 +541,47 @@ function scrollToShowcase() {
   text-align: center;
   padding: 2rem;
   max-width: 48rem;
+}
+
+/* CSS entrance — transform/opacity only, starts at first paint (no hydration wait) */
+.hero-item {
+  animation: hero-item-in 480ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Masked line reveal — text rises from behind an overflow mask (editorial feel).
+   The 0.12em padding trick keeps descenders (p, g…) visible at rest. */
+.reveal-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.reveal-inner {
+  display: block;
+  animation: reveal-up 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes reveal-up {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* Install snippet */
@@ -986,9 +1002,7 @@ function scrollToShowcase() {
 .chart-cell-trend,
 .featured-card-trend {
   font-size: 0.6875rem;
-  font-weight: 500;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.125rem;
@@ -997,17 +1011,16 @@ function scrollToShowcase() {
 
 .featured-card-trend {
   font-size: 0.75rem;
-  padding: 0.1875rem 0.625rem;
 }
 
 .trend-up {
-  background: var(--trend-up-bg, #dcfce7);
-  color: var(--trend-up-color, #16a34a);
+  background: none;
+  color: var(--trend-up-color, #15803d);
 }
 
 .trend-down {
-  background: var(--trend-down-bg, #fee2e2);
-  color: var(--trend-down-color, #ef4444);
+  background: none;
+  color: var(--trend-down-color, #dc2626);
 }
 
 .trend-arrow {
@@ -1065,9 +1078,6 @@ function scrollToShowcase() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chart-grid {
-    transform: translateY(-850px) !important;
-  }
   .hero-glow {
     animation: none !important;
     transition: none !important;
@@ -1090,12 +1100,12 @@ function scrollToShowcase() {
 
 <!-- Unscoped dark mode overrides — :global(.dark) in scoped <style> is stripped by Nuxt/Vite -->
 <style>
-.dark .hero-glow-orange {
-  --glow-orange: rgba(249, 115, 22, 0.08);
+.dark .landing-hero {
+  --hero-wash: rgba(249, 115, 22, 0.055);
 }
 
-.dark .hero-glow-teal {
-  --glow-teal: rgba(16, 185, 129, 0.06);
+.dark .hero-glow-brand {
+  --glow-brand: rgba(249, 115, 22, 0.08);
 }
 
 .dark .chart-cell {
@@ -1110,12 +1120,10 @@ function scrollToShowcase() {
 }
 
 .dark .trend-up {
-  --trend-up-bg: rgba(22, 163, 74, 0.15);
   --trend-up-color: #4ade80;
 }
 
 .dark .trend-down {
-  --trend-down-bg: rgba(239, 68, 68, 0.15);
   --trend-down-color: #f87171;
 }
 </style>
