@@ -4,7 +4,10 @@ import type { TooltipSyncState } from '@/state/tooltipSlice'
 import type { BrushStartEndIndex } from '@/state/chartDataSlice'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 
-const tooltipAction = { payload: { active: true } } as PayloadAction<TooltipSyncState>
+const tooltipAction: PayloadAction<TooltipSyncState> = {
+  type: 'tooltip/setSyncInteraction',
+  payload: { active: true, coordinate: undefined, dataKey: undefined, index: '0', label: 'A' },
+}
 const brushIndexes: BrushStartEndIndex = { startIndex: 0, endIndex: 2 }
 
 describe('eventCenter', () => {
@@ -21,6 +24,10 @@ describe('eventCenter', () => {
 
     expect(tooltipListener).toHaveBeenCalledWith('sync-id', tooltipAction, emitter)
     expect(brushListener).toHaveBeenCalledWith('sync-id', brushIndexes, emitter)
+    expect(tooltipListener).toHaveBeenCalledTimes(1)
+    expect(brushListener).toHaveBeenCalledTimes(1)
+    eventCenter.off(TOOLTIP_SYNC_EVENT, tooltipListener)
+    eventCenter.off(BRUSH_SYNC_EVENT, brushListener)
   })
 
   it('removes only the exact listener reference on cleanup', () => {
@@ -38,5 +45,35 @@ describe('eventCenter', () => {
     eventCenter.off(TOOLTIP_SYNC_EVENT, secondListener)
     eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipAction, Symbol('emitter'))
     expect(secondListener).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves duplicate registrations and removes all matching references', () => {
+    const listener = vi.fn()
+    eventCenter.on(BRUSH_SYNC_EVENT, listener)
+    eventCenter.on(BRUSH_SYNC_EVENT, listener)
+    eventCenter.emit(BRUSH_SYNC_EVENT, 0, brushIndexes, Symbol('chart'))
+    expect(listener).toHaveBeenCalledTimes(2)
+    eventCenter.off(BRUSH_SYNC_EVENT, listener)
+    eventCenter.emit(BRUSH_SYNC_EVENT, 0, brushIndexes, Symbol('chart'))
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
+  it('applies listener changes to the next dispatch', () => {
+    const removedListener = vi.fn()
+    const addedListener = vi.fn()
+    const changeListeners = () => {
+      eventCenter.off(BRUSH_SYNC_EVENT, removedListener)
+      eventCenter.on(BRUSH_SYNC_EVENT, addedListener)
+    }
+    eventCenter.on(BRUSH_SYNC_EVENT, changeListeners)
+    eventCenter.on(BRUSH_SYNC_EVENT, removedListener)
+    eventCenter.emit(BRUSH_SYNC_EVENT, 0, brushIndexes, Symbol('chart'))
+    expect(removedListener).toHaveBeenCalledTimes(1)
+    expect(addedListener).not.toHaveBeenCalled()
+    eventCenter.off(BRUSH_SYNC_EVENT, changeListeners)
+    eventCenter.emit(BRUSH_SYNC_EVENT, 0, brushIndexes, Symbol('chart'))
+    expect(removedListener).toHaveBeenCalledTimes(1)
+    expect(addedListener).toHaveBeenCalledTimes(1)
+    eventCenter.off(BRUSH_SYNC_EVENT, addedListener)
   })
 })

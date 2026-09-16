@@ -6,49 +6,23 @@ export const TOOLTIP_SYNC_EVENT = 'recharts.syncEvent.tooltip'
 
 export const BRUSH_SYNC_EVENT = 'recharts.syncEvent.brush'
 
-type Listener<Args extends unknown[] = any[]> = (...args: Args) => void
-
-/**
- * Minimal typed pub/sub used for cross-chart synchronisation.
- *
- * Listeners are scoped per event name; `off` only removes the exact listener
- * reference. Charts install listeners inside a component scope and remove them
- * on cleanup, so nothing request-specific is retained between SSR renders.
- */
-function createEventBus<TEvents extends Record<string, (...args: any[]) => void>>() {
-  const listeners = new Map<keyof TEvents, Set<Listener>>()
-
-  function getListeners(event: keyof TEvents): Set<Listener> {
-    let eventListeners = listeners.get(event)
-    if (!eventListeners) {
-      eventListeners = new Set()
-      listeners.set(event, eventListeners)
-    }
-    return eventListeners
-  }
-
+function createChannel<Arguments extends unknown[]>() {
+  type Listener = (...args: Arguments) => void
+  let listeners: Listener[] = []
   return {
-    on<K extends keyof TEvents>(event: K, listener: TEvents[K]) {
-      getListeners(event).add(listener)
+    on(listener: Listener) {
+      listeners.push(listener)
     },
-    off<K extends keyof TEvents>(event: K, listener: TEvents[K]) {
-      listeners.get(event)?.delete(listener)
+    off(listener: Listener) {
+      listeners = listeners.filter(registered => registered !== listener)
     },
-    emit<K extends keyof TEvents>(event: K, ...args: Parameters<TEvents[K]>) {
-      const eventListeners = listeners.get(event)
-      if (!eventListeners) {
-        return
-      }
-      for (const listener of [...eventListeners]) {
-        listener(...args as Parameters<TEvents[K]>)
+    emit(...args: Arguments) {
+      for (const listener of [...listeners]) {
+        listener(...args)
       }
     },
   }
 }
-
-const eventCenter = createEventBus()
-
-export { eventCenter }
 
 interface EventTypes {
   [TOOLTIP_SYNC_EVENT]: (syncId: number | string, data: PayloadAction<TooltipSyncState>, emitter: symbol) => void
@@ -58,3 +32,20 @@ interface EventTypes {
 export type SyncEventName = keyof EventTypes
 
 export type SyncListener<T extends SyncEventName> = (...args: Parameters<EventTypes[T]>) => void
+
+const channels: { [Event in SyncEventName]: ReturnType<typeof createChannel<Parameters<EventTypes[Event]>>> } = {
+  [TOOLTIP_SYNC_EVENT]: createChannel(),
+  [BRUSH_SYNC_EVENT]: createChannel(),
+}
+
+export const eventCenter = {
+  on<Event extends SyncEventName>(event: Event, listener: SyncListener<NoInfer<Event>>) {
+    channels[event].on(listener)
+  },
+  off<Event extends SyncEventName>(event: Event, listener: SyncListener<NoInfer<Event>>) {
+    channels[event].off(listener)
+  },
+  emit<Event extends SyncEventName>(event: Event, ...args: Parameters<EventTypes[NoInfer<Event>]>) {
+    channels[event].emit(...args)
+  },
+}
