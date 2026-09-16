@@ -9,10 +9,9 @@ describe('animate', () => {
     const { container } = render(() => (
       <Animate isActive={false}>
         {
-          (t: number) => (
+          (value: number) => (
             <div>
-              Progress:
-              {t}
+              {`Progress: ${value}`}
             </div>
           )
         }
@@ -30,10 +29,9 @@ describe('animate', () => {
     render(() => (
       <Animate isActive={true} onAnimationStart={onStart}>
         {
-          (t: number) => (
+          (value: number) => (
             <div>
-              Progress:
-              {t}
+              {`Progress: ${value}`}
             </div>
           )
         }
@@ -50,8 +48,7 @@ describe('animate', () => {
         {
           (value: number) => (
             <div>
-              Value:
-              {Math.round(value)}
+              {`Value: ${Math.round(value)}`}
             </div>
           )
         }
@@ -70,8 +67,7 @@ describe('animate', () => {
         {
           (value: number) => (
             <div>
-              Value:
-              {Math.round(value)}
+              {`Value: ${Math.round(value)}`}
             </div>
           )
         }
@@ -91,8 +87,7 @@ describe('animate', () => {
         {
           (value: number) => (
             <div>
-              Value:
-              {Math.round(value)}
+              {`Value: ${Math.round(value)}`}
             </div>
           )
         }
@@ -115,8 +110,7 @@ describe('animate', () => {
         {
           (value: number) => (
             <div>
-              Value:
-              {Math.round(value)}
+              {`Value: ${Math.round(value)}`}
             </div>
           )
         }
