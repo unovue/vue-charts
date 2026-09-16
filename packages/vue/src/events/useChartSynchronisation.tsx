@@ -112,7 +112,7 @@ function useBrushSyncEventsListener() {
   const myEventEmitter = useAppSelector(selectEventEmitter)
   const dispatch = useAppDispatch()
   watch([mySyncId, myEventEmitter], (v, o, onCleanup) => {
-    if (mySyncId == null) {
+    if (mySyncId.value == null) {
       // This chart is not synchronised with any other chart so we don't need to listen for any events.
       return
     }
