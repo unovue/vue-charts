@@ -169,9 +169,6 @@ importers:
       es-toolkit:
         specifier: ^1.39.3
         version: 1.39.3
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       immer:
         specifier: ^10.1.1
         version: 10.1.1
