@@ -1,7 +1,7 @@
 import { computed, defineComponent, type PropType, ref, type SlotsType, watchEffect } from 'vue'
 import { get } from 'lodash-es'
 import type { AnimationOptions } from 'motion-v'
-import { provideStore } from '@reduxjs/vue-redux'
+import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
@@ -436,7 +436,7 @@ export const Treemap = defineComponent({
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: treemapOptions }, 'Treemap')
-    provideStore({ store })
+    provideChartContext(store)
 
     return () => {
       if (!props.data || props.data.length === 0) return null

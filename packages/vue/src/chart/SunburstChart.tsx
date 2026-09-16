@@ -1,6 +1,6 @@
 import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
 import { get } from 'lodash-es'
-import { provideStore } from '@reduxjs/vue-redux'
+import { provideChartContext } from '@/state/chartContext'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
@@ -219,7 +219,7 @@ export const SunburstChart = defineComponent({
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: sunburstOptions }, 'SunburstChart')
-    provideStore({ store })
+    provideChartContext(store)
 
     return () => {
       if (!props.data?.children || props.data.children.length === 0) return null

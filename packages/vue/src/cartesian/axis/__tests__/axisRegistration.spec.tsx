@@ -1,4 +1,4 @@
-import { provideStore } from '@reduxjs/vue-redux'
+import { provideChartContext } from '@/state/chartContext'
 import { render } from '@testing-library/vue'
 import { createSSRApp, defineComponent, h, nextTick, reactive } from 'vue'
 import { renderToString } from 'vue/server-renderer'
@@ -32,7 +32,7 @@ describe.each(axes)('$axisType registration', ({ renderAxis, axisType }) => {
     const Fixture = defineComponent({
       props: { axisId: { type: [String, Number], default: 0 }, tickCount: { type: Number, default: 5 } },
       setup(props) {
-        provideStore({ store })
+        provideChartContext(store)
         return () => renderAxis(props)
       },
     })

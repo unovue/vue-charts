@@ -1,9 +1,7 @@
-import { useDispatch, useSelector } from '@reduxjs/vue-redux'
-import type { AppDispatch, RechartsRootState } from './store'
+import { useAppSelector } from './chartContext'
 import { selectActiveTooltipDataPoints } from '@/state/selectors/tooltipSelectors'
 
-export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
-export const useAppSelector = useSelector.withTypes<RechartsRootState>()
+export { useAppDispatch, useAppSelector } from './chartContext'
 
 /**
  * Returns the currently active data points being displayed in the Tooltip.

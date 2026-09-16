@@ -1,7 +1,7 @@
 import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
 import { get } from 'lodash-es'
 import type { AnimationOptions } from 'motion-v'
-import { provideStore } from '@reduxjs/vue-redux'
+import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
@@ -372,7 +372,7 @@ const _Sankey = defineComponent({
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: sankeyOptions }, 'Sankey')
-    provideStore({ store })
+    provideChartContext(store)
 
     return () => {
       if (!props.data || !props.data.nodes || props.data.nodes.length === 0)

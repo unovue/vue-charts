@@ -31,9 +31,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^19.8.0
         version: 19.8.0
-      '@reduxjs/vue-redux':
-        specifier: ^1.0.1
-        version: 1.0.1(redux@5.0.1)(vue@3.5.18(typescript@5.9.3))
       '@size-limit/preset-small-lib':
         specifier: ^11.2.0
         version: 11.2.0(size-limit@11.2.0)
@@ -157,9 +154,6 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.8.2
         version: 2.8.2(react@19.1.0)
-      '@reduxjs/vue-redux':
-        specifier: ^1.0.1
-        version: 1.0.1(redux@5.0.1)(vue@3.5.18(typescript@5.9.3))
       '@vueuse/core':
         specifier: ^13.1.0
         version: 13.1.0(vue@3.5.18(typescript@5.9.3))
@@ -3296,15 +3290,6 @@ packages:
       react:
         optional: true
       react-redux:
-        optional: true
-
-  '@reduxjs/vue-redux@1.0.1':
-    resolution: {integrity: sha512-lCIULhzuPYGFryp+WF6TCTTPCvTCflO3QaDdBqtjyK6c+77j0zVtVXayiyyna/O/H2k7EpqvTL3O/urq3I09aQ==}
-    peerDependencies:
-      redux: ^5.0.0
-      vue: 3.5.18
-    peerDependenciesMeta:
-      redux:
         optional: true
 
   '@remirror/core-constants@3.0.0':
@@ -11976,6 +11961,9 @@ packages:
   vue-component-type-helpers@3.2.6:
     resolution: {integrity: sha512-O02tnvIfOQVmnvoWwuSydwRoHjZVt8UEBR+2p4rT35p8GAy5VTlWP8o5qXfJR/GWCN0nVZoYWsVUvx2jwgdBmQ==}
 
+  vue-component-type-helpers@3.3.11:
+    resolution: {integrity: sha512-LwcxzeliO9fkQcpJG0PoX8X5kmAhKmH9wkpDLxNabwzkQ9Zeib2YVHwFV4pcWmMLfXVfjr/dSV+DaJ3cIPgSNA==}
+
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
     engines: {node: '>=12'}
@@ -15740,12 +15728,6 @@ snapshots:
     optionalDependencies:
       react: 19.1.0
 
-  '@reduxjs/vue-redux@1.0.1(redux@5.0.1)(vue@3.5.18(typescript@5.9.3))':
-    dependencies:
-      vue: 3.5.18(typescript@5.9.3)
-    optionalDependencies:
-      redux: 5.0.1
-
   '@remirror/core-constants@3.0.0': {}
 
   '@resvg/resvg-js-android-arm-eabi@2.6.2':
@@ -16416,7 +16398,7 @@ snapshots:
       storybook: 10.2.19(@testing-library/dom@10.4.0)(prettier@3.8.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       type-fest: 2.19.0
       vue: 3.5.18(typescript@5.9.3)
-      vue-component-type-helpers: 3.2.6
+      vue-component-type-helpers: 3.3.11
 
   '@stylistic/eslint-plugin@2.13.0(eslint@9.9.1(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -26471,6 +26453,8 @@ snapshots:
   vue-component-type-helpers@2.2.8: {}
 
   vue-component-type-helpers@3.2.6: {}
+
+  vue-component-type-helpers@3.3.11: {}
 
   vue-demi@0.14.10(vue@3.5.18(typescript@5.9.3)):
     dependencies:
