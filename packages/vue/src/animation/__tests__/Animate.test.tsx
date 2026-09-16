@@ -3,13 +3,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { Animate } from '@/animation/Animate'
 
-describe('Animate', () => {
+describe('animate', () => {
   it('renders with default props (isActive=false sets value to "to")', async () => {
     // Animate passes currentValue (a number) directly to the default slot
     const { container } = render(() => (
       <Animate isActive={false}>
         {
-          (t: number) => <div>Progress: {t}</div>
+          (t: number) => (
+            <div>
+              Progress:
+              {t}
+            </div>
+          )
         }
       </Animate>
     ))
@@ -25,7 +30,12 @@ describe('Animate', () => {
     render(() => (
       <Animate isActive={true} onAnimationStart={onStart}>
         {
-          (t: number) => <div>Progress: {t}</div>
+          (t: number) => (
+            <div>
+              Progress:
+              {t}
+            </div>
+          )
         }
       </Animate>
     ))
@@ -38,7 +48,12 @@ describe('Animate', () => {
     const { container } = render(() => (
       <Animate isActive={true} from={0} to={100}>
         {
-          (value: number) => <div>Value: {Math.round(value)}</div>
+          (value: number) => (
+            <div>
+              Value:
+              {Math.round(value)}
+            </div>
+          )
         }
       </Animate>
     ))
@@ -53,7 +68,12 @@ describe('Animate', () => {
     const { container } = render(() => (
       <Animate from={0} to={100} isActive={false}>
         {
-          (value: number) => <div>Value: {Math.round(value)}</div>
+          (value: number) => (
+            <div>
+              Value:
+              {Math.round(value)}
+            </div>
+          )
         }
       </Animate>
     ))
@@ -69,7 +89,12 @@ describe('Animate', () => {
     const { container } = render(() => (
       <Animate from={0} to={100} isActive={true} onAnimationEnd={onAnimationEnd}>
         {
-          (value: number) => <div>Value: {Math.round(value)}</div>
+          (value: number) => (
+            <div>
+              Value:
+              {Math.round(value)}
+            </div>
+          )
         }
       </Animate>
     ))
@@ -80,5 +105,28 @@ describe('Animate', () => {
 
     // onComplete must set currentValue to props.to (100), not the hardcoded 1
     expect(container.textContent).toContain('Value: 100')
+  })
+
+  it('completes at a decreasing target value', async () => {
+    const onAnimationEnd = vi.fn()
+
+    const { container } = render(() => (
+      <Animate from={80} to={20} isActive={true} onAnimationEnd={onAnimationEnd}>
+        {
+          (value: number) => (
+            <div>
+              Value:
+              {Math.round(value)}
+            </div>
+          )
+        }
+      </Animate>
+    ))
+
+    await vi.waitFor(() => {
+      expect(onAnimationEnd).toHaveBeenCalledTimes(1)
+    })
+
+    expect(container.textContent).toContain('Value: 20')
   })
 })
