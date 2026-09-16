@@ -73,7 +73,7 @@ const Animate = defineComponent({
           }
         },
         onComplete: () => {
-          currentValue.value = 1
+          currentValue.value = props.to
           if (props.onAnimationEnd) {
             props.onAnimationEnd()
           }

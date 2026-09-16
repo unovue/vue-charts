@@ -23,10 +23,7 @@ describe('Animate', () => {
     const onStart = vi.fn()
 
     render(() => (
-      <Animate
-        isActive={true}
-        onAnimationStart={onStart}
-      >
+      <Animate isActive={true} onAnimationStart={onStart}>
         {
           (t: number) => <div>Progress: {t}</div>
         }
@@ -39,11 +36,7 @@ describe('Animate', () => {
 
   it('starts animation with from=0 and renders initial value', async () => {
     const { container } = render(() => (
-      <Animate
-        isActive={true}
-        from={0}
-        to={100}
-      >
+      <Animate isActive={true} from={0} to={100}>
         {
           (value: number) => <div>Value: {Math.round(value)}</div>
         }
@@ -58,11 +51,7 @@ describe('Animate', () => {
 
   it('renders slot with final value when animation is inactive', async () => {
     const { container } = render(() => (
-      <Animate
-        from={0}
-        to={100}
-        isActive={false}
-      >
+      <Animate from={0} to={100} isActive={false}>
         {
           (value: number) => <div>Value: {Math.round(value)}</div>
         }
@@ -71,6 +60,25 @@ describe('Animate', () => {
 
     await nextTick()
     // When isActive=false, currentValue is set to props.to = 100
+    expect(container.textContent).toContain('Value: 100')
+  })
+
+  it('completes at the target value, not at 1', async () => {
+    const onAnimationEnd = vi.fn()
+
+    const { container } = render(() => (
+      <Animate from={0} to={100} isActive={true} onAnimationEnd={onAnimationEnd}>
+        {
+          (value: number) => <div>Value: {Math.round(value)}</div>
+        }
+      </Animate>
+    ))
+
+    await vi.waitFor(() => {
+      expect(onAnimationEnd).toHaveBeenCalledTimes(1)
+    })
+
+    // onComplete must set currentValue to props.to (100), not the hardcoded 1
     expect(container.textContent).toContain('Value: 100')
   })
 })
