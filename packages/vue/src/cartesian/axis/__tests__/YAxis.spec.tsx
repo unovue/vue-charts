@@ -251,15 +251,22 @@ describe('yAxis', () => {
       expect(yAxis1).toBeTruthy()
       expect(yAxis2).toBeTruthy()
 
-      // The wider YAxis must shrink the plot area, moving the first bar right.
+      const axisLine1 = yAxis1!.querySelector('.v-charts-cartesian-axis-line')
+      const axisLine2 = yAxis2!.querySelector('.v-charts-cartesian-axis-line')
+      expect(axisLine1!.getAttribute('width')).toBe('30')
+      expect(axisLine1!.getAttribute('x1')).toBe('35')
+      expect(axisLine2!.getAttribute('width')).toBe('100')
+      expect(axisLine2!.getAttribute('x1')).toBe('105')
+
+      // The wider YAxis must shrink the plot area and make each bar narrower.
       const rect1 = getBarRects(container1)[0]
       const rect2 = getBarRects(container2)[0]
-      const x1 = Number.parseFloat(rect1!.getAttribute('x') ?? '')
-      const x2 = Number.parseFloat(rect2!.getAttribute('x') ?? '')
+      const width1 = Number.parseFloat(rect1!.getAttribute('width') ?? '')
+      const width2 = Number.parseFloat(rect2!.getAttribute('width') ?? '')
 
-      expect(x1).not.toBeNaN()
-      expect(x2).not.toBeNaN()
-      expect(x2).toBeGreaterThan(x1)
+      expect(Number.isFinite(width1)).toBe(true)
+      expect(Number.isFinite(width2)).toBe(true)
+      expect(width2).toBeLessThan(width1)
     })
 
     it('should render the y-axis with given width in the prop', () => {
