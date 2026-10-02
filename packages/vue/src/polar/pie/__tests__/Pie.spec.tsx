@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
+import { Cell } from '@/components/Cell'
 import { Animate } from '@/animation/Animate'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -45,6 +46,26 @@ describe('Pie', () => {
     const paths = container.querySelectorAll('.v-charts-sector')
     expect(paths[0].getAttribute('fill')).toBe('#8884d8')
     expect(paths[1].getAttribute('fill')).toBe('#a683ed')
+  })
+
+  it('Cell fill overrides data item and Pie fill', () => {
+    const cellColors = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
+    const { container } = render({
+      components: { PieChart, Pie, Cell },
+      template: `
+        <PieChart :width="500" :height="500">
+          <Pie dataKey="value" :data="data" :outerRadius="200" fill="#000000" :isAnimationActive="false">
+            <Cell v-for="(c, i) in cellColors" :key="i" :fill="c" />
+          </Pie>
+        </PieChart>
+      `,
+      setup() { return { data, cellColors } },
+    })
+    const paths = container.querySelectorAll('.v-charts-sector')
+    expect(paths.length).toBe(4)
+    cellColors.forEach((c, i) => {
+      expect(paths[i].getAttribute('fill')).toBe(c)
+    })
   })
 
   it('passes transition prop through to Animate', () => {

@@ -7,6 +7,7 @@ import { Animate } from '@/animation/Animate'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
+import { extractCellProps } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/pieSelectors'
 import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
@@ -23,6 +24,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
   inheritAttrs: false,
   slots: Object as SlotsType<{
     shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
+    default?: () => any
   }>,
   setup(props, { attrs, slots }) {
     const dispatch = useAppDispatch()
@@ -70,11 +72,19 @@ export const Pie = defineComponent<PiePropsWithSVG>({
       if (synchronisedSettings.value == null || displayedData.value == null) {
         return undefined
       }
-      return computePieSectors({
+      const result = computePieSectors({
         offset: offset.value,
         pieSettings: pieSettings.value,
         displayedData: displayedData.value,
       })
+      // Cell fills override the selector's entry/pie fill (Bar pattern)
+      const cells = extractCellProps(slots.default?.() ?? [])
+      if (cells.length === 0) {
+        return result
+      }
+      return result?.map((sector, i) =>
+        cells[i]?.fill != null ? { ...sector, fill: cells[i].fill } : sector,
+      )
     })
 
     SetTooltipEntrySettings({
