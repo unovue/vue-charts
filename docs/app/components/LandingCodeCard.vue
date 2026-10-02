@@ -20,6 +20,7 @@ const charts = [
   {
     key: 'area',
     label: 'Area',
+    desc: '',
     code: `<template>
   <AreaChart
     :data="data"
@@ -37,6 +38,7 @@ const charts = [
   {
     key: 'bar',
     label: 'Bar',
+    desc: '',
     code: `<template>
   <BarChart
     :data="data"
@@ -53,6 +55,7 @@ const charts = [
   {
     key: 'pie',
     label: 'Pie',
+    desc: '',
     code: `<template>
   <PieChart responsive>
     <Pie
@@ -72,6 +75,7 @@ const charts = [
   {
     key: 'radar',
     label: 'Radar',
+    desc: '',
     code: `<template>
   <RadarChart
     :data="data"
@@ -210,7 +214,7 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
     </div>
 
     <figcaption class="px-3 pb-1.5 pt-3 font-mono text-xs text-(--ds-dim)">
-      {{ current.label }} · the component and its code, always in sync
+      {{ current.label }}{{ current.desc ? ` · ${current.desc}` : '' }}
     </figcaption>
   </motion.figure>
 </template>
