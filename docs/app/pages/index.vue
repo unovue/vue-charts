@@ -26,15 +26,16 @@ const appConfig = useAppConfig()
 
 <template>
   <div class="min-h-dvh bg-(--ds-bg) font-[var(--font-sans)] text-(--ds-text) antialiased">
-    <!-- chart background — parked for now (ADR-0006); re-enable by uncommenting
-    <div class="pointer-events-none fixed inset-y-0 right-16 left-[42%] z-0 max-[900px]:inset-x-0">
-      <LandingBackground :type="heroChart" />
+    <!-- WebGL radar background — ambient, pointer-events-none -->
+    <div class="pointer-events-none fixed inset-0 z-0">
+      <ClientOnly>
+        <LandingRadarBackground />
+      </ClientOnly>
       <div
-        class="absolute inset-0 bg-[linear-gradient(to_bottom,var(--ds-bg)_0%,transparent_30%,transparent_70%,var(--ds-bg)_100%),linear-gradient(to_right,var(--ds-bg)_0%,transparent_55%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_right,var(--ds-bg)_0%,transparent_45%)]"
         aria-hidden="true"
       />
     </div>
-    -->
 
     <div class="relative z-1">
       <LandingHeader />

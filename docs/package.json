@@ -12,9 +12,9 @@
     "better-sqlite3": "^12.5.0",
     "docus": "latest",
     "nuxt": "^4.2.2",
+    "ogl": "^1.0.11",
     "shiki": "^4.0.2",
     "shiki-magic-move": "^1.4.0",
     "vccs": "workspace:*"
-  },
-  "devDependencies": {}
+  }
 }
