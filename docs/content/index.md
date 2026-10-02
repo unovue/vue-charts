@@ -27,7 +27,7 @@ Composable charting components for Vue 3 — an unofficial port of [Recharts](ht
   color: neutral
   icon: i-simple-icons-github
   size: xl
-  to: https://github.com/nicepkg/vccs
+  to: https://github.com/unovue/vue-charts
   target: _blank
   variant: outline
   ---

@@ -105,10 +105,6 @@ const nestLabel = computed(() => {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
-:global(.dark) .chart-tooltip {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-}
-
 .chart-tooltip-label {
   font-weight: 500;
 }
@@ -180,5 +176,13 @@ const nestLabel = computed(() => {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--ui-text, #111827);
+}
+</style>
+
+<style>
+/* Unscoped on purpose: scoped `:global(.dark) .x` compiles to a bare `.dark`
+   selector and never matches (see ADR-0008 / tasks/lessons.md). */
+.dark .chart-tooltip {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
 }
 </style>

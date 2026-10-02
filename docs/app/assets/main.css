@@ -1,11 +1,47 @@
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Chart color palette */
+  /* ── Design tokens (ADR-0002: cube-motion system, Vue-green accent) ── */
+  /* Neutrals (zinc) */
+  --ds-bg: #fafafa;
+  --ds-surface: #ffffff;
+  --ds-block: #f4f4f5;
+  --ds-border: #e4e4e7;
+  --ds-text: #18181b;
+  --ds-text-2: #3f3f46;
+  --ds-muted: #71717a;
+  --ds-dim: #a1a1aa;
+
+  /* Accent — Vue green. accent-strong for small text (#42b883 fails AA) */
+  --ds-accent: #42b883;
+  --ds-accent-strong: #2b7a56;
+  --ds-accent-wash: rgba(66, 184, 131, 0.12);
+
+  /* Type scale: 15 body · 17 lede · 14 ui · 13 sm · 12 mono-spec */
+
+  /* Shape — inner radius = outer − pad */
+  --ds-radius-card: 24px;
+  --ds-card-pad: 10px;
+  --ds-radius-inner: 14px;
+  --ds-radius-pill: 999px;
+
+  /* Elevation — ghosts use inset rings, never real borders */
+  --ds-shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 6px -2px rgba(0, 0, 0, 0.12);
+  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 16px -8px rgba(0, 0, 0, 0.1);
+
+  /* Motion — exit = ½ enter */
+  --ds-ease: cubic-bezier(0.2, 0, 0, 1);
+  --ds-enter: 640ms;
+  --ds-stagger: 70ms;
+  --ds-exit: 320ms;
+  --ds-t-colour: 160ms;
+
+  /* Chart data palette — chrome ≠ data, untouched by the accent change */
   --chart-1: #f97316;
   --chart-2: #14b8a6;
   --chart-3: #f59e0b;
@@ -14,6 +50,21 @@
 }
 
 .dark {
+  /* Dark remap (derived — cube-motion ships light-only) */
+  --ds-bg: #09090b;
+  --ds-surface: #131316;
+  --ds-block: #1c1c20;
+  --ds-border: #27272a;
+  --ds-text: #fafafa;
+  --ds-text-2: #d4d4d8;
+  --ds-muted: #a1a1aa;
+  --ds-dim: #52525b;
+  --ds-accent: #42d392;
+  --ds-accent-strong: #42d392;
+  --ds-accent-wash: rgba(66, 211, 146, 0.14);
+  --ds-shadow-btn: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --ds-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
+
   --chart-1: #fb923c;
   --chart-2: #2dd4bf;
   --chart-3: #fbbf24;
@@ -32,9 +83,70 @@ body {
 
 /* Focus-visible styles for keyboard navigation (WCAG 2.4.7) */
 :focus-visible {
-  outline: 2px solid var(--chart-1, #f97316);
+  outline: 2px solid var(--ds-accent, #42b883);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ── Small components (ADR-0002 cube recipe on --ds-* tokens) ──
+   Buttons live in the DsButton component; these remain global classes.
+   Visual sizes stay compact like cube's; hit areas extend invisibly. */
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 6px 0 12px;
+  background: var(--ds-surface);
+  border-radius: var(--ds-radius-pill);
+  corner-shape: squircle;
+  box-shadow: inset 0 0 0 1px var(--ds-border), var(--ds-shadow-card);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ds-text);
+}
+.ds-pill i { font-style: normal; color: var(--ds-dim); }
+
+.ds-copy {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ds-radius-pill);
+  corner-shape: squircle;
+  background: var(--ds-surface);
+  color: var(--ds-muted);
+  box-shadow: inset 0 0 0 1px var(--ds-border), 0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color var(--ds-t-colour) var(--ds-ease), color var(--ds-t-colour) var(--ds-ease);
+}
+.ds-copy svg { width: 12px; height: 12px; }
+.ds-copy::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+.ds-copy:hover { color: var(--ds-text); background: var(--ds-block); }
+.ds-copy:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.ds-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--ds-radius-pill);
+  corner-shape: squircle;
+  background: var(--ds-accent-wash);
+  color: var(--ds-accent-strong);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* Reduced motion: disable all animations for users who prefer it */
@@ -47,4 +159,19 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Vue-green ramp for Nuxt UI primary (ADR-0002) */
+@theme inline {
+  --color-vue-50: #effaf4;
+  --color-vue-100: #d7f2e3;
+  --color-vue-200: #b2e5cb;
+  --color-vue-300: #83d2ac;
+  --color-vue-400: #56c294;
+  --color-vue-500: #42b883;
+  --color-vue-600: #2f9c6d;
+  --color-vue-700: #277d59;
+  --color-vue-800: #216449;
+  --color-vue-900: #1c533d;
+  --color-vue-950: #0b2e21;
 }
