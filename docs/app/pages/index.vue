@@ -25,38 +25,38 @@ const appConfig = useAppConfig()
 </script>
 
 <template>
-  <div class="sp">
+  <div class="min-h-dvh bg-(--ds-bg) font-[var(--font-sans)] text-(--ds-text) antialiased">
     <!-- chart background — parked for now (ADR-0006); re-enable by uncommenting
-    <div class="sp-bg">
+    <div class="pointer-events-none fixed inset-y-0 right-16 left-[42%] z-0 max-[900px]:inset-x-0">
       <LandingBackground :type="heroChart" />
       <div
-        class="sp-bg-wash"
+        class="absolute inset-0 bg-[linear-gradient(to_bottom,var(--ds-bg)_0%,transparent_30%,transparent_70%,var(--ds-bg)_100%),linear-gradient(to_right,var(--ds-bg)_0%,transparent_55%)]"
         aria-hidden="true"
       />
     </div>
     -->
 
-    <div class="sp-content">
+    <div class="relative z-1">
       <LandingHeader />
 
-      <section class="sp-hero">
-        <div class="sp-grid">
-          <div class="sp-copy">
+      <section class="flex min-h-[calc(100dvh-108px)] items-center px-6 pb-8 pt-12">
+        <div class="mx-auto grid w-full max-w-[1080px] grid-cols-[5fr_7fr] items-center gap-12 max-[900px]:grid-cols-1 max-[900px]:gap-10">
+          <div>
             <h1
-              class="sp-title sp-rise"
+              class="sp-rise mb-5 text-balance text-[clamp(2.5rem,5vw,3.75rem)] font-semibold leading-[1.05] tracking-[-0.03em]"
               style="--d: 70ms"
             >
               Composable charting components for Vue&nbsp;3.
             </h1>
             <p
-              class="sp-lede sp-rise"
+              class="sp-rise mb-9 max-w-[30rem] text-pretty text-[17px] leading-[1.6] text-(--ds-muted)"
               style="--d: 140ms"
             >
               An unofficial port of Recharts — React's most popular charting
               library, rebuilt for the Vue ecosystem.
             </p>
             <div
-              class="sp-actions sp-rise"
+              class="sp-rise flex flex-wrap items-center gap-2.5"
               style="--d: 210ms"
             >
               <DsButton
@@ -82,15 +82,15 @@ const appConfig = useAppConfig()
       </section>
 
       <!-- stat strip — hidden for now; re-enable by uncommenting
-      <section class="sp-stats">
+      <section class="mx-auto grid max-w-[1080px] grid-cols-4 gap-4 px-6 pb-20 max-[900px]:grid-cols-2">
         <div
           v-for="(s, i) in stats"
           :key="s.label"
-          class="sp-stat sp-rise"
+          class="sp-rise flex flex-col gap-1.5 rounded-(--ds-radius-card) bg-(--ds-surface) p-6 shadow-(--ds-shadow-card)"
           :style="{ '--d': `${350 + i * 70}ms` }"
         >
-          <span class="sp-stat-n">{{ s.n }}</span>
-          <span class="sp-stat-label">{{ s.label }}</span>
+          <span class="font-mono text-[1.75rem] font-semibold tabular-nums tracking-[-0.02em]">{{ s.n }}</span>
+          <span class="text-[13px] text-(--ds-muted)">{{ s.label }}</span>
         </div>
       </section>
       -->
@@ -99,34 +99,7 @@ const appConfig = useAppConfig()
 </template>
 
 <style scoped>
-.sp {
-  background: var(--ds-bg);
-  color: var(--ds-text);
-  font-family: var(--font-sans);
-  min-height: 100dvh;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* chart background — right-side region behind the card, not full-bleed;
-   wash for legibility; right inset keeps the edge off the viewport */
-.sp-bg {
-  position: fixed;
-  inset: 0 64px 0 42%;
-  z-index: 0;
-  pointer-events: none;
-}
-.sp-bg-wash {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, var(--ds-bg) 0%, transparent 30%, transparent 70%, var(--ds-bg) 100%),
-    linear-gradient(to right, var(--ds-bg) 0%, transparent 55%);
-}
-.sp-content {
-  position: relative;
-  z-index: 1;
-}
-
+/* entrance rise — keyframes can't be utilities; everything else is Tailwind */
 .sp-rise {
   animation: sp-rise var(--ds-enter) var(--ds-ease) both;
   animation-delay: var(--d, 0ms);
@@ -135,101 +108,6 @@ const appConfig = useAppConfig()
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
-
-.sp-hero {
-  display: flex;
-  align-items: center;
-  min-height: calc(100dvh - 108px);
-  padding: 3rem 1.5rem 2rem;
-}
-.sp-grid {
-  display: grid;
-  grid-template-columns: 5fr 7fr;
-  gap: 3rem;
-  align-items: center;
-  width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-}
-
-.sp-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ds-muted);
-  margin: 0 0 1.75rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--ds-surface);
-  border-radius: var(--ds-radius-pill);
-  corner-shape: squircle;
-  box-shadow: inset 0 0 0 1px var(--ds-border);
-}
-.sp-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ds-accent);
-}
-
-.sp-title {
-  font-size: clamp(2.5rem, 5vw, 3.75rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  margin: 0 0 1.25rem;
-  text-wrap: balance;
-}
-.sp-lede {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--ds-muted);
-  max-width: 30rem;
-  margin: 0 0 2.25rem;
-  text-wrap: pretty;
-}
-
-.sp-actions {
-  display: flex;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-/* stats */
-.sp-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0 1.5rem 5rem;
-}
-.sp-stat {
-  background: var(--ds-surface);
-  border-radius: var(--ds-radius-card);
-  padding: 1.5rem;
-  box-shadow: var(--ds-shadow-card);
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-.sp-stat-n {
-  font-family: var(--font-mono);
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-.sp-stat-label { font-size: 13px; color: var(--ds-muted); }
-
-@media (max-width: 900px) {
-  .sp-grid { grid-template-columns: 1fr; gap: 2.5rem; }
-  .sp-stats { grid-template-columns: repeat(2, 1fr); }
-  .sp-bg { inset: 0; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .sp-rise { animation: none; }
 }

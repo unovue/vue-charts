@@ -69,7 +69,6 @@ const radarData = [
       stroke="#f97316"
       fill="url(#cd-fill)"
       :stroke-width="1.5"
-      :is-animation-active="false"
     />
   </AreaChart>
   <!-- Bar -->
@@ -89,7 +88,6 @@ const radarData = [
       data-key="v"
       fill="#f97316"
       :radius="[4, 4, 0, 0]"
-      :is-animation-active="false"
     />
   </BarChart>
   <!-- Pie -->
@@ -103,7 +101,6 @@ const radarData = [
       data-key="value"
       :inner-radius="50"
       :outer-radius="80"
-      :is-animation-active="false"
     >
       <Cell
         v-for="(c, i) in pieColors"
@@ -125,7 +122,6 @@ const radarData = [
       stroke="#f97316"
       fill="#f97316"
       :fill-opacity="0.3"
-      :is-animation-active="false"
     />
   </RadarChart>
 </template>

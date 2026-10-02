@@ -24,7 +24,7 @@ const appConfig = useAppConfig()
         width="16"
         height="16"
         class="block"
-      >vccs
+      >vue-charts
     </NuxtLink>
     <div class="flex items-center gap-2.5">
       <nav

@@ -123,6 +123,11 @@ const chartExit = computed(() => reduced.value
   ? { duration: 0 }
   : { duration: 0.16, ease: [0.2, 0, 0, 1] as const })
 
+// Tab underline slides between tabs via shared layout (layoutId)
+const lineTransition = computed(() => reduced.value
+  ? { duration: 0 }
+  : { duration: 0.3, ease: [0.2, 0, 0, 1] as const })
+
 // Auto-rotate through chart types; pauses on hover, off under reduced motion
 const keys = charts.map(c => c.key)
 const paused = ref(false)
@@ -162,9 +167,11 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
         :aria-selected="active === c.key"
         @click="active = c.key"
       >
-        <span
+        <motion.span
           v-if="active === c.key"
-          class="cd-chip absolute inset-0 rounded-full bg-(--ds-block) [corner-shape:squircle]"
+          layout-id="cd-tab-line"
+          class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-(--ds-text)"
+          :transition="lineTransition"
         />
         <span class="relative">{{ c.label }}</span>
       </button>
@@ -207,18 +214,3 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
     </figcaption>
   </motion.figure>
 </template>
-
-<style scoped>
-/* tab chip wipe — replays on every mount (tab switch remounts the chip).
-   keyframes because motion-v does not interpolate clip-path */
-.cd-chip {
-  animation: cd-chip-wipe 300ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-@keyframes cd-chip-wipe {
-  from { clip-path: inset(0% 100% 0% 0%); }
-  to { clip-path: inset(0% 0% 0% 0%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cd-chip { animation: none; }
-}
-</style>
