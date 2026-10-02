@@ -1,10 +1,9 @@
 <script setup lang="ts">
-// Landing (ADR-0005 layout, ADR-0006 hero card + background): Specimen
-// split — copy left, code+chart card right, stat strip below — with a
-// morphing area chart rendering live behind the whole page.
-// layout/header/footer disabled — the landing uses its own cube-style
+// Landing (ADR-0005 layout, ADR-0006 hero card, ADR-0007 install pill):
+// Specimen split — copy left, code+chart card right.
+// layout/header disabled — the landing uses its own cube-style
 // header (LandingHeader); docs pages keep the Docus chrome.
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 
 definePageMeta({ layout: false, header: false })
 
@@ -12,16 +11,6 @@ useSeoMeta({
   title: 'vccs — Vue 3 Charting Components',
   description: 'Composable charting components for Vue 3, ported from Recharts',
 })
-
-const copied = ref(false)
-let timer: ReturnType<typeof setTimeout> | undefined
-function copyInstall() {
-  navigator.clipboard?.writeText('npm install vccs')
-  copied.value = true
-  clearTimeout(timer)
-  timer = setTimeout(() => { copied.value = false }, 2000)
-}
-onBeforeUnmount(() => clearTimeout(timer))
 
 // Hero card's active chart type — the background follows it
 const heroChart = ref('area')
@@ -53,12 +42,6 @@ const appConfig = useAppConfig()
       <section class="sp-hero">
         <div class="sp-grid">
           <div class="sp-copy">
-            <p
-              class="sp-eyebrow sp-rise"
-              style="--d: 0ms"
-            >
-              <span class="sp-dot" />v0.6.0 · vue &gt;= 3.0 · mit
-            </p>
             <h1
               class="sp-title sp-rise"
               style="--d: 70ms"
@@ -90,27 +73,7 @@ const appConfig = useAppConfig()
               >
                 GitHub
               </DsButton>
-              <span class="ds-pill">
-                <i>$</i> npm install vccs
-                <button
-                  class="ds-copy"
-                  :aria-label="copied ? 'Copied' : 'Copy install command'"
-                  @click="copyInstall"
-                >
-                  <span class="sp-faces">
-                    <UIcon
-                      name="i-lucide-copy"
-                      class="sp-face"
-                      :class="{ 'sp-face-off': copied }"
-                    />
-                    <UIcon
-                      name="i-lucide-check"
-                      class="sp-face sp-face-check"
-                      :class="{ 'sp-face-off': !copied }"
-                    />
-                  </span>
-                </button>
-              </span>
+              <InstallCommand />
             </div>
           </div>
 
@@ -234,25 +197,6 @@ const appConfig = useAppConfig()
   align-items: center;
 }
 
-/* copy icon crossfade — cube's face morph on the shared ease */
-.sp-faces {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 12px;
-  height: 12px;
-}
-.sp-face {
-  position: absolute;
-  inset: 0;
-  transition: opacity var(--ds-t-colour) var(--ds-ease), transform var(--ds-t-colour) var(--ds-ease);
-}
-.sp-face-check { color: var(--ds-accent-strong); }
-.sp-face-off {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
 /* stats */
 .sp-stats {
   display: grid;
@@ -288,6 +232,5 @@ const appConfig = useAppConfig()
 
 @media (prefers-reduced-motion: reduce) {
   .sp-rise { animation: none; }
-  .sp-face { transition: none; }
 }
 </style>
