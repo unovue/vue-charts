@@ -13,6 +13,8 @@
     "docus": "latest",
     "nuxt": "^4.2.2",
     "shiki": "^4.0.2",
+    "shiki-magic-move": "^1.4.0",
     "vccs": "workspace:*"
-  }
+  },
+  "devDependencies": {}
 }

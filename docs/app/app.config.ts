@@ -32,7 +32,7 @@ export default defineAppConfig({
   },
   ui: {
     colors: {
-      primary: 'orange',
+      primary: 'vue',
       neutral: 'zinc',
     },
   },
