@@ -53,6 +53,9 @@ export default defineConfig({
       ],
       exclude: [
         'src/**/__tests__/**',
+        'src/**/*.spec.*',
+        'src/**/*.test.*',
+        'src/__breakit__/**',
         'src/test/*.ts',
         'src/storybook/**/*',
         'src/**/*.stories.*',

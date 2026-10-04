@@ -38,4 +38,6 @@ it.each([
   await nextTick()
   const messages = [...errors.mock.calls, ...warnings.mock.calls].map(call => String(call[0]))
   expect(messages.filter(message => /recursive/i.test(message))).toEqual([])
-})
+  // Rendering 90 series in JSDOM takes several seconds on a busy or slow runner; this test
+  // guards the recursion limit, not speed.
+}, 30_000)
