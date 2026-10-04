@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, reactive } from 'vue'
+import { computed, defineComponent, h, nextTick, reactive, watch } from 'vue'
 import type { CSSProperties, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { BrushProps, BrushTravellerId } from './type'
@@ -20,6 +20,8 @@ import type { BrushStartEndIndex } from '@/state/chartData'
 import { isNumber } from '@/utils'
 
 const brushEmits = {
+  'update:startIndex': (_index: number) => true,
+  'update:endIndex': (_index: number) => true,
   'change': (_indexes: BrushStartEndIndex) => true,
   'drag-end': (_indexes: BrushStartEndIndex) => true,
 }
@@ -52,8 +54,15 @@ const BrushView = defineComponent({
 
     // --- onChange handler ---
     const onChange = (nextState: BrushStartEndIndex) => {
+      if (nextState.startIndex !== startIndex.value)
+        emit('update:startIndex', nextState.startIndex)
+      if (nextState.endIndex !== endIndex.value)
+        emit('update:endIndex', nextState.endIndex)
       emit('change', nextState)
-      dataActions.setRange(nextState)
+      dataActions.setRange({
+        startIndex: props.startIndex ?? nextState.startIndex,
+        endIndex: props.endIndex ?? nextState.endIndex,
+      })
     }
 
     // --- Hook wiring ---
@@ -66,6 +75,15 @@ const BrushView = defineComponent({
       () => endIndex.value,
     )
 
+    // Wait for the parent to accept the proposal before restoring controlled travellers.
+    const restoreControlledPositions = () => {
+      if (props.startIndex !== undefined)
+        brushState.value.startX = brushState.value.scale?.(props.startIndex)
+      if (props.endIndex !== undefined)
+        brushState.value.endX = brushState.value.scale?.(props.endIndex)
+    }
+    watch([() => props.startIndex, () => props.endIndex], restoreControlledPositions)
+
     // Reactive props object for useBrushHandlers — getters ensure values are current when accessed during event handlers
     const handlerProps = reactive({
       get x() { return x.value! },
@@ -75,7 +93,10 @@ const BrushView = defineComponent({
       get startIndex() { return startIndex.value },
       get endIndex() { return endIndex.value },
       get leaveTimeOut() { return props.leaveTimeOut! },
-      onDragEnd: (indexes: BrushStartEndIndex) => emit('drag-end', indexes),
+      onDragEnd: (indexes: BrushStartEndIndex) => {
+        emit('drag-end', indexes)
+        nextTick(restoreControlledPositions)
+      },
       get data() { return props.data },
     })
 
@@ -85,6 +106,11 @@ const BrushView = defineComponent({
       onChange,
       () => chartData.value ?? [],
     )
+
+    const moveKeyboard = (direction: 1 | -1, id: BrushTravellerId) => {
+      handlers.handleTravellerMoveKeyboard(direction, id)
+      nextTick(restoreControlledPositions)
+    }
 
     // --- Bound traveller drag start handlers ---
     const startXDragStart = (e: MouseEvent | TouchEvent) => handlers.handleTravellerDragStart('startX', e)
@@ -173,7 +199,7 @@ const BrushView = defineComponent({
             onMouseleave={handlers.handleLeaveSlideOrTraveller}
             onMousedown={startXDragStart}
             onTouchstart={startXDragStart}
-            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => handlers.handleTravellerMoveKeyboard(direction, id) }}
+            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => moveKeyboard(direction, id) }}
             onFocus={() => { brushState.value.isTravellerFocused = true }}
             onBlur={() => { brushState.value.isTravellerFocused = false }}
           />
@@ -186,7 +212,7 @@ const BrushView = defineComponent({
             onMouseleave={handlers.handleLeaveSlideOrTraveller}
             onMousedown={endXDragStart}
             onTouchstart={endXDragStart}
-            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => handlers.handleTravellerMoveKeyboard(direction, id) }}
+            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => moveKeyboard(direction, id) }}
             onFocus={() => { brushState.value.isTravellerFocused = true }}
             onBlur={() => { brushState.value.isTravellerFocused = false }}
           />
@@ -221,6 +247,6 @@ export const Brush = defineComponent({
     useBrushSetting(props)
     useBrushChartSynchronisation()
     const View = useDeferredView(BrushView)
-    return () => h(View, { 'item': props, 'svgAttrs': attrs, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes) }, slots)
+    return () => h(View, { 'item': props, 'svgAttrs': attrs, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes), 'onUpdate:startIndex': index => emit('update:startIndex', index), 'onUpdate:endIndex': index => emit('update:endIndex', index) }, slots)
   },
 })

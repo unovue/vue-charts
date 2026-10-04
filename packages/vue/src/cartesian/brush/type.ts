@@ -4,6 +4,7 @@ import type { DataKey, Padding, VuePropsToType, WithSVGProps } from '../../types
 import type { PropType } from 'vue'
 
 export type { BrushStartEndIndex }
+export type BrushIndex = number
 
 export const BrushVueProps = {
   height: {

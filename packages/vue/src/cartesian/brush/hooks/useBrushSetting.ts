@@ -22,7 +22,7 @@ export function useBrushSetting(props: BrushProps) {
   // SSR stops watches immediately; clear settings only on an actual unmount.
   onUnmounted(() => setBrushSettings(null))
 
-  watch([() => props.startIndex, () => props.endIndex], ([startIndex, endIndex]) => {
+  watch([() => props.startIndex, () => props.endIndex, () => data.state.value.chartData], ([startIndex, endIndex]) => {
     data.setRange({ startIndex, endIndex })
   }, { immediate: true })
 }

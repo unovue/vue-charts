@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Treemap } from '../index'
 import type { ChartPointerState } from '../index'
+
+const from = ref(0)
+const to = ref(2)
+const wrongBrush = {} as InstanceType<typeof Brush>
+// @ts-expect-error Brush model values are numeric.
+wrongBrush.$emit('update:startIndex', '0')
 
 const data = [{ name: 'A', value: 10 }]
 const state = {} as ChartPointerState
@@ -38,6 +45,8 @@ brush.$emit('change', { startIndex: 0 })
       @animation-start="() => {}"
     />
     <Brush
+      v-model:start-index="from"
+      v-model:end-index="to"
       @change="({ startIndex }) => startIndex.toFixed()"
       @drag-end="({ endIndex }) => endIndex.toFixed()"
     />

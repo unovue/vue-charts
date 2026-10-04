@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { BarChart, Brush, LineChart } from '@/index'
+import { nextTick, ref } from 'vue'
+import { Bar, BarChart, Brush, LineChart } from '@/index'
 import { Line } from '@/cartesian/line'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -180,4 +181,57 @@ it('emits the changed range and final drag range', async () => {
   expect(change.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
   await fireEvent.mouseUp(window)
   expect(end.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
+})
+
+// Catches a rejected controlled proposal leaking into the chart range or traveller position.
+it.each([true, false])('keeps brush ownership when controlled=%s', async (controlled) => {
+  const from = ref<number | undefined>(controlled ? 0 : undefined)
+  const to = ref<number | undefined>(controlled ? 2 : undefined)
+  const updateStart = vi.fn()
+  const updateEnd = vi.fn()
+  const change = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={[{ value: 10 }, { value: 20 }, { value: 30 }]}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush
+        x={0}
+        y={0}
+        width={100}
+        height={40}
+        startIndex={from.value}
+        endIndex={to.value}
+        onChange={change}
+        {...{ 'onUpdate:startIndex': updateStart, 'onUpdate:endIndex': updateEnd }}
+      />
+    </BarChart>
+  ))
+  await nextTick()
+  const travellers = container.querySelectorAll('.v-charts-brush-traveller')
+  const bars = () => container.querySelectorAll('.v-charts-bar-rectangle').length
+  expect(bars()).toBe(3)
+  await fireEvent.focus(travellers[0])
+  await fireEvent.keyDown(travellers[0], { key: 'ArrowRight' })
+  expect(updateStart.mock.calls).toEqual([[1]])
+  expect(updateEnd.mock.calls).toEqual([])
+  expect(change.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
+  await nextTick()
+  expect(travellers[0].getAttribute('aria-valuenow')).toBe(controlled ? '0' : '47.5')
+  expect(bars()).toBe(controlled ? 3 : 2)
+  if (controlled) {
+    from.value = 1
+    to.value = 1
+    await nextTick()
+    expect(bars()).toBe(1)
+    expect(travellers[0].getAttribute('aria-valuenow')).toBe('47.5')
+    expect(travellers[1].getAttribute('aria-valuenow')).toBe('47.5')
+    to.value = 2
+    await nextTick()
+    await fireEvent.mouseDown(travellers[0], { clientX: 47.5 })
+    await fireEvent.mouseMove(window, { clientX: 0 })
+    await fireEvent.mouseUp(window)
+    await nextTick()
+    expect(updateStart.mock.calls).toEqual([[1], [0]])
+    expect(travellers[0].getAttribute('aria-valuenow')).toBe('47.5')
+    expect(bars()).toBe(2)
+  }
 })
