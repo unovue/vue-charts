@@ -160,10 +160,10 @@ const _CalendarHeatmap = defineComponent({
       // Drop a label that would collide with the next one (usually a partial first month).
       const visibleMonths = months.filter((month, i) => i === months.length - 1 || months[i + 1].column - month.column >= 3)
       const weekdays = props.weekdayLabels
-        ? [1, 3, 5].map(row => ({
-            y: top.value + row * step + cellSize / 2,
-            // 1970-01-04 was a Sunday (day 3).
-            text: formatDay(3 + (props.weekStart + row) % 7, props.locale, { weekday: 'short' }),
+        // Monday, Wednesday and Friday, wherever the week start puts them. 1970-01-04 (day 3) was a Sunday.
+        ? [1, 3, 5].map(weekday => ({
+            y: top.value + ((weekday - props.weekStart + 7) % 7) * step + cellSize / 2,
+            text: formatDay(3 + weekday, props.locale, { weekday: 'short' }),
           }))
         : []
       return {

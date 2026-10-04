@@ -25,6 +25,16 @@ export interface CellGridSlots<P = unknown> {
   cell?: (props: CellSlotProps<P>) => any
 }
 
+function isFocusVisible(element: Element) {
+  try {
+    return element.matches(':focus-visible')
+  }
+  catch {
+    // Engines without :focus-visible (older test DOMs) treat every focus as keyboard focus.
+    return true
+  }
+}
+
 const cellPayloadSearcher: TooltipPayloadSearcher = (data, activeIndex) =>
   data == null || activeIndex == null ? undefined : get(data, activeIndex as string)
 
@@ -91,19 +101,71 @@ export const CellGridLayer = defineComponent({
       : { ...cell, x: cell.x + cell.width / 2, y: cell.y + cell.height / 2, width: 0, height: 0 }
     const shiftOf = (move?: Move<GridCell>) => move ? { x: move.to.x - move.from.x, y: move.to.y - move.from.y } : undefined
     const isShift = (shift?: { x: number, y: number }): shift is { x: number, y: number } => !!shift && Math.abs(shift.x) + Math.abs(shift.y) > 0.5
+    const lerp = (from: GridCell, to: GridCell, t: number): GridCell => ({
+      ...to,
+      x: from.x + (to.x - from.x) * t,
+      y: from.y + (to.y - from.y) * t,
+      width: from.width + (to.width - from.width) * t,
+      height: from.height + (to.height - from.height) * t,
+    })
+
+    // Identity on screen. Usually the cell's own key, with two exceptions decided per change:
+    // - Nothing stays (a different year): new cells take over the node at the same grid position,
+    //   so the grid recolors in place instead of every cell shrinking and growing.
+    // - A few cells move against the common grid move (Sundays wrapping to the last row when
+    //   the week start changes): they shrink and regrow in place instead of streaking across.
+    let screenKeys = new Map<string, string>()
+    const jumping = new Set<string>()
+    let generation = 0
+    watch(() => props.cells, (next, previous = []) => {
+      const before = new Map(previous.map(cell => [cell.key, cell]))
+      const overlap = next.some(cell => before.has(cell.key))
+      const byPosition = new Map(previous.map(cell => [`${cell.row}:${cell.column}`, screenKeys.get(cell.key) ?? cell.key]))
+      const keys = new Map<string, string>()
+      const used = new Set<string>()
+      generation++
+      for (const cell of next) {
+        let key = overlap || previous.length === 0
+          ? screenKeys.get(cell.key) ?? cell.key
+          : byPosition.get(`${cell.row}:${cell.column}`) ?? cell.key
+        if (used.has(key))
+          key = `${cell.key}\u0000${generation}`
+        used.add(key)
+        keys.set(cell.key, key)
+      }
+      screenKeys = keys
+
+      jumping.clear()
+      const moves = new Map<string, number>()
+      for (const cell of next) {
+        const old = before.get(cell.key)
+        if (old) {
+          const move = `${cell.column - old.column}:${cell.row - old.row}`
+          moves.set(move, (moves.get(move) ?? 0) + 1)
+        }
+      }
+      const common = [...moves].reduce<[string, number] | undefined>((best, entry) => !best || entry[1] > best[1] ? entry : best, undefined)?.[0]
+      if (common !== undefined) {
+        for (const cell of next) {
+          const old = before.get(cell.key)
+          if (old && `${cell.column - old.column}:${cell.row - old.row}` !== common)
+            jumping.add(cell.key)
+        }
+      }
+    }, { immediate: true, flush: 'sync' })
+
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     // When the window moves (a new day appended, the oldest dropped), cells travel with their
     // staying neighbours like a conveyor belt and pass the clipped edge, so nothing overlaps.
     // Without a moving neighbour they grow and shrink in place.
     const { items } = useKeyedTransition<GridCell>(() => props.cells, {
-      key: cell => cell.key,
-      interpolate: (from, to, t) => ({
-        ...to,
-        x: from.x + (to.x - from.x) * t,
-        y: from.y + (to.y - from.y) * t,
-        width: from.width + (to.width - from.width) * t,
-        height: from.height + (to.height - from.height) * t,
-      }),
+      key: cell => screenKeys.get(cell.key) ?? cell.key,
+      interpolate: (from, to, t) => {
+        if (!jumping.has(to.key))
+          return lerp(from, to, t)
+        // Shrink where it was, then grow where it goes.
+        return t < 0.5 ? lerp(from, collapse(from), t * 2) : lerp(collapse(to), to, t * 2 - 1)
+      },
       enterFrom: (to, neighbors) => {
         const shift = shiftOf(neighbors.previousMove) ?? shiftOf(neighbors.nextMove)
         return isShift(shift) ? { ...to, x: to.x - shift.x, y: to.y - shift.y } : collapse(to)
@@ -200,6 +262,14 @@ export const CellGridLayer = defineComponent({
       return undefined
     }
 
+    // Keyboard focus must show where it is: start on the latest cell, the one people look for first.
+    function onFocus(event: FocusEvent) {
+      if (activeKey.value !== undefined || props.cells.length === 0 || !isFocusVisible(event.target as Element))
+        return
+      keyboard.value = true
+      activate(props.cells[props.cells.length - 1], props.cells.length - 1)
+    }
+
     function onKeydown(event: KeyboardEvent) {
       if (props.cells.length === 0)
         return
@@ -234,14 +304,15 @@ export const CellGridLayer = defineComponent({
       return { x: x0 - 2, y: y0 - 2, width: x1 - x0 + 4, height: y1 - y0 + 4 }
     })
     const clipId = `${baseId}-clip`
-    const cellId = (key: string) => `${baseId}-${key}`
+    // By position, so user keys never end up in an element id.
+    const cellId = (key: string) => `${baseId}-cell-${indexByKey.value.get(key)}`
     const radiusOf = (rect: Rect) => Math.max(0, Math.min(props.radius, rect.width / 2, rect.height / 2))
 
     return () => {
       const fillTransition = reducedMotion.value === 'reduce' ? undefined : 'fill 300ms ease-out, opacity 150ms ease-out'
       const half = props.gap / 2
       const active = activeKey.value
-      const activeCell = active === undefined ? undefined : items.value.find(item => item.key === active && item.phase !== 'exit')?.value
+      const activeCell = active === undefined ? undefined : items.value.find(item => item.value.key === active && item.phase !== 'exit')?.value
       return (
         <g
           class="v-charts-cell-grid"
@@ -250,6 +321,7 @@ export const CellGridLayer = defineComponent({
           aria-label={props.ariaLabel}
           aria-activedescendant={active === undefined ? undefined : cellId(active)}
           style={{ outline: 'none' }}
+          onFocus={onFocus}
           onKeydown={onKeydown}
           onBlur={() => {
             if (keyboard.value)

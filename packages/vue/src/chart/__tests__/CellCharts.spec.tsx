@@ -93,13 +93,14 @@ describe('<Tracker />', () => {
     expect(cells[1].style.opacity).toBe('0.45')
   })
 
-  it('moves the active bar with the arrow keys and clears it with Escape', async () => {
+  it('starts keyboard focus on the latest bar, moves with the arrow keys and clears with Escape', async () => {
     const { container } = render(() => (
       <Tracker width={300} height={20} isAnimationActive={false} data={[{ date: 'a', status: 'up' }, { date: 'b', status: 'up' }, { date: 'c', status: 'down' }]} />
     ))
-    const grid = container.querySelector('.v-charts-cell-grid')!
+    const grid = container.querySelector<SVGGElement>('.v-charts-cell-grid')!
     const active = () => container.querySelector('[aria-selected="true"]')?.getAttribute('aria-label')
-    await fireEvent.keyDown(grid, { key: 'ArrowLeft' })
+    grid.focus()
+    await nextTick()
     expect(active()).toBe('c: Down')
     await fireEvent.keyDown(grid, { key: 'ArrowLeft' })
     expect(active()).toBe('b: Operational')
@@ -161,6 +162,29 @@ describe('<CalendarHeatmap />', () => {
     const labels = cellsOf(container).map(cell => cell.label)
     expect(labels.at(-1)).toBe('Wed, Jun 10, 2020: 1')
     expect(labels).toHaveLength(52 * 7 + 4)
+  })
+
+  it.each([
+    { change: 'the year', next: { start: '2027-01-01', end: '2027-03-31', weekStart: 0 as const } },
+    { change: 'the week start', next: { start: '2026-01-01', end: '2026-03-31', weekStart: 1 as const } },
+  ])('changes $change without cells crossing each other', async ({ next }) => {
+    const range = ref<{ start: string, end: string, weekStart: 0 | 1 }>({ start: '2026-01-01', end: '2026-03-31', weekStart: 0 })
+    const { container } = render(() => <CalendarHeatmap width={400} height={120} monthLabels={false} weekdayLabels={false} data={[]} {...range.value} />)
+    await frame()
+    range.value = next
+    await nextTick()
+    for (const progress of [0.1, 0.25, 0.5, 0.75, 0.9]) {
+      await frame(progress)
+      const rects = Array.from(container.querySelectorAll<SVGRectElement>('.v-charts-cell-rect'), rect => ['x', 'y', 'width', 'height'].map(name => Number(rect.getAttribute(name))))
+      for (let i = 0; i < rects.length; i++) {
+        for (let j = i + 1; j < rects.length; j++) {
+          const [ax, ay, aw, ah] = rects[i]
+          const [bx, by, bw, bh] = rects[j]
+          const area = Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx)) * Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, by))
+          expect(area).toBeLessThan(0.01)
+        }
+      }
+    }
   })
 
   it('never draws two month labels on top of each other', () => {
