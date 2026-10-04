@@ -7,7 +7,6 @@ import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
 import { Layer } from '@/container/Layer'
 import { StaticArea } from '@/cartesian/area/RenderArea'
-import { ClipRect } from './ClipRect'
 import { ActivePoints } from '@/cartesian/area/ActivePoints'
 import type { ActivePointsSlots } from './ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
@@ -31,7 +30,7 @@ const AreaView = defineComponent({
     const props = view.item
     const attrs = view.svgAttrs
     const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
-    const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(trackedProps, attrs, slots.dot)
+    const { shouldRender, areaData } = useArea(trackedProps, attrs, slots.dot)
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
@@ -46,29 +45,10 @@ const AreaView = defineComponent({
         }
       }
 
-      const renderAreaContent = () => {
-        if (shouldShowAnimation.value) {
-          return (
-            <Layer key="area-with-animation">
-              <defs>
-                <clipPath id={`animationClipPath-${clipPathId.value}`}>
-                  <ClipRect />
-                </clipPath>
-              </defs>
-              <Layer clip-path={`url(#animationClipPath-${clipPathId.value})`}>
-                <StaticArea />
-              </Layer>
-            </Layer>
-          )
-        }
-
-        return <StaticArea key="static-area" />
-      }
-
       const areaContent = (
         <Fragment>
           <Layer class={['v-charts-area', attrs.class]}>
-            {renderAreaContent()}
+            <StaticArea />
           </Layer>
           <ActivePoints
             points={areaData.value?.points ?? []}

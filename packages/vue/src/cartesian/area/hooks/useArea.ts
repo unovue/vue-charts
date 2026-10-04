@@ -2,7 +2,7 @@ import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartName } from '@/state/selectors/selectors'
 import type { AreaDotSlotProps, AreaProps } from '@/cartesian/area/type'
-import { computed, inject, provide, ref, watch } from 'vue'
+import { computed, inject, provide } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
@@ -35,8 +35,6 @@ export interface AreaContext {
 
   // is Area animating
   isAnimating: Ref<boolean>
-
-  isClipRectAnimating: Ref<boolean>
 }
 
 // Injection Key
@@ -86,15 +84,6 @@ export function useArea(props: AreaProps, attrs: SVGAttributes = {}, dotSlot?: (
     }),
   )
   const areaData = useAppSelector(state => selectArea(state, props.xAxisId!, props.yAxisId!, isPanorama, areaSettings.value))
-  const isClipRectAnimating = ref(true)
-  watch(() => props.hide, (v) => {
-    if (!v) {
-      isClipRectAnimating.value = true
-    }
-  })
-  const shouldShowAnimation = computed(() => {
-    return props.isAnimationActive && areaData.value?.points?.length && isClipRectAnimating.value
-  })
   // Dot related logic
   const dot = props.dot
   const clipDot = isClipDot(dot)
@@ -114,7 +103,6 @@ export function useArea(props: AreaProps, attrs: SVGAttributes = {}, dotSlot?: (
     dotSlot,
     areaData,
     isAnimating,
-    isClipRectAnimating,
   }
 
   // Provide context
@@ -125,6 +113,5 @@ export function useArea(props: AreaProps, attrs: SVGAttributes = {}, dotSlot?: (
     areaData,
     points: areaContext.points,
     clipPathId,
-    shouldShowAnimation,
   }
 }

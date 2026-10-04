@@ -56,10 +56,7 @@ export const AreaVueProps = {
   },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: {
-      duration: 0.8,
-      ease: 'easeOut',
-    },
+    default: undefined,
   },
   needClip: { type: Boolean, default: false },
   stackId: {
