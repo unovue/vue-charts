@@ -234,7 +234,7 @@ for (const s of scenarios.length ? scenarios : all) {
     report[s][step] = await film(page, `${String(i + 1).padStart(2, '0')}-${step}`, dir, `window.lab.step(${JSON.stringify(step)})`)
   }
   // Interrupt: two changes 150 ms apart.
-  if (steps.includes('values') && (!only || only.includes('interrupt'))) {
+  if (['values', 'fromOne', 'removeMiddle'].every(step => steps.includes(step)) && (!only || only.includes('interrupt'))) {
     await page.evaluate(() => window.lab.step('fromOne'))
     await page.clock.runFor(1000)
     await page.evaluate(() => window.lab.step('values'))
