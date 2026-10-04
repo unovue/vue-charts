@@ -12,7 +12,7 @@ const dark = process.argv.includes('--dark')
 const every = Number(flag('every', 3))
 const out = flag('out', join(repo, '.evidence/motion-film'))
 const WINDOW = Number(flag('window', 900))
-const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'sunburst', 'resize']
+const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'sunburst', 'resize']
 const scenarios = positional()
 const only = flag('steps', '')
 
@@ -47,7 +47,7 @@ function capture() {
     counts[base] = (counts[base] ?? 0) + 1
     const id = `${base}@${counts[base]}`
     const attrs = {}
-    for (const name of ['x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity', 'fill-opacity', 'x1', 'x2', 'y1', 'y2']) {
+    for (const name of ['x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'stroke-width', 'opacity', 'fill-opacity', 'x1', 'x2', 'y1', 'y2']) {
       const v = el.getAttribute(name)
       if (v == null)
         continue
@@ -93,7 +93,7 @@ function analyse(frames) {
     const present = frames.map(f => f.shapes[id])
     const firstIdx = present.findIndex(Boolean)
     const lastIdx = present.length - 1 - [...present].reverse().findIndex(Boolean)
-    for (const attr of ['d', 'points', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'opacity']) {
+    for (const attr of ['d', 'points', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'stroke-width', 'opacity']) {
       const series = present.map(s => s?.[attr])
       if (series.every(v => v == null))
         continue
@@ -206,7 +206,7 @@ try {
     const dir = join(out, '_frames', s + (dark ? '-dark' : ''))
     rmSync(dir, { recursive: true, force: true })
     mkdirSync(dir, { recursive: true })
-    const page = await browser.newPage({ viewport: { width: 800, height: 480 }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' })
+    const page = await browser.newPage({ viewport: { width: 800, height: s === 'journey' ? 560 : 480 }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' })
     const errors = collectErrors(page)
     await page.addInitScript(installHTMLGeometry)
     await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })

@@ -14,6 +14,7 @@ import {
   Funnel,
   FunnelChart,
   Heatmap,
+  JourneySankey,
   LabelList,
   Legend,
   Line,
@@ -109,6 +110,28 @@ function shiftSpark(count) {
 const listData = () => months.slice(0, 6).map((name, i) => ({ name, value: 600 - i * 75 }))
 const listRows = shallowRef(listData())
 
+const journeyBase = [
+  { path: ['/', '/pricing'], count: 6 },
+  { path: ['/', '/pricing', '/', '/docs'], count: 1 },
+  { path: ['/', '/pricing', '/', '/docs/guides/wordpress'], count: 1 },
+  { path: ['/', '/pricing', '/docs/self-hosting'], count: 1 },
+  { path: ['/', '/pricing', '/features/session-replay', '/features/web-analytics'], count: 1 },
+  { path: ['/', '/pricing', '/docs/mcp', '/docs/hiding-own-traffic'], count: 1 },
+  { path: ['/', '/docs'], count: 2 },
+  { path: ['/', '/docs', '/pricing', '/features/session-replay'], count: 1 },
+  { path: ['/de', '/de/pricing', '/de', '/de/compare/fathom'], count: 1 },
+  { path: ['/de', '/de/pricing', '/de', '/de/pricing'], count: 1 },
+  { path: ['/de', '/de/pricing', '/de'], count: 1 },
+  { path: ['/de', '/features/web-analytics', '/de/docs/self-hosting', '/de/docs/managing-your-installation'], count: 1 },
+  { path: ['/de', '/de/docs/self-hosting'], count: 1 },
+  { path: ['/compare/plausible', '/compare/google-analytics', '/compare/posthog', '/compare/umami'], count: 1 },
+  { path: ['/de', '/de/for-european-companies', '/de/docs/self-hosting', '/de/docs/managing-your-installation'], count: 1 },
+]
+const journeyValues = () => journeyBase.map((row, i) => ({ ...row, count: row.count * (i % 3 + 1) + i % 2 }))
+const journeyRows = shallowRef(journeyBase)
+const journeySteps = ref(4)
+const addedJourney = { path: ['/lab/start', '/lab/browse', '/lab/compare', '/lab/finish'], count: 3 }
+
 // Steps shared by most categorical scenarios.
 const categorical = [
   ['values', () => { rows.value = mk(rows.value.map(r => r.name), alt) }],
@@ -138,6 +161,17 @@ const scatterRows = computed(() => rows.value.map((r, i) => ({ name: r.name, x: 
 
 const nullGap = ['nullGap', () => { rows.value = rows.value.map((r, i) => i === 2 ? { ...r, a: null } : r) }]
 const steps = {
+  journey: [
+    ['values', () => { journeyRows.value = journeyValues() }],
+    ['top8', () => { journeyRows.value = [...journeyValues()].sort((a, b) => b.count - a.count).slice(0, 8) }],
+    ['top15', () => { journeyRows.value = journeyValues() }],
+    ['steps3', () => { journeySteps.value = 3 }],
+    ['steps4', () => { journeySteps.value = 4 }],
+    ['addJourney', () => { journeyRows.value = [...journeyRows.value.filter(row => row !== addedJourney), addedJourney] }],
+    ['removeJourney', () => { journeyRows.value = journeyRows.value.filter(row => row !== addedJourney) }],
+    ['empty', () => { journeyRows.value = [] }],
+    ['refill', () => { journeyRows.value = journeyBase }],
+  ],
   heatmap: [
     ['values', () => { heatRows.value = heatData(heatDays, 1) }],
     ['dropDay', () => { heatRows.value = heatRows.value.filter(row => row.y !== 'Wed') }],
@@ -608,6 +642,12 @@ if (scenario === 'stress') {
         data-key="size"
         :fill="palette.a"
         stroke="#fff"
+      />
+      <JourneySankey
+        v-else-if="scenario === 'journey'"
+        :height="480"
+        :data="journeyRows"
+        :steps="journeySteps"
       />
       <Sankey
         v-else-if="scenario === 'sankey'"

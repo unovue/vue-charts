@@ -45,3 +45,18 @@ rows retain their keyed identities and contribute translateY progress; their bar
 percentage widths resolve to pixels for progress and jump thresholds. Films also
 capture row opacity. HTML rows do not participate in the SVG overlap metric.
 Color-only heatmap/cohort changes are visible in films but have no geometry curves.
+
+Journey scenario: `journey` uses the playground's 15 journeys at 720×480, initially
+with four columns and the original counts. `values` changes counts without changing
+paths; `top8` keeps the eight largest updated journeys (stable input order breaks ties),
+`top15` restores all updated journeys, and `steps3`/`steps4` change column count.
+`addJourney` adds a count-three path with a new page in every column;
+`removeJourney` removes it, `empty` clears the data, and `refill` restores original counts.
+Report and film capture cubic path coordinates and `stroke-width` for stroked bands
+(including Sankey links). Journey continue/exit rects participate in the existing
+`overlap bars` metric. Hover's 150ms CSS opacity fade is not a geometry transition;
+this scenario exercises data and column changes, without pointer steps.
+
+Journey captures use a 560px viewport height so all columns and labels remain visible.
+The 480px chart leaves band space after the densest column’s minimum label slots,
+including the added journey; a 360px chart would collapse the full layout to zero scale.

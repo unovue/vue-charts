@@ -15,7 +15,7 @@ const out = flag('out', join(repo, '.evidence/motion-report'))
 const only = flag('steps', '')
 const throttle = !has('no-throttle')
 const WINDOW = 900
-const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
+const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
 const scenarios = positional()
 
 // cubic-bezier(0.22, 1, 0.36, 1) sampled by Newton iteration, as the motion tokens define it.
@@ -76,7 +76,7 @@ function SAMPLER() {
       const prefix = surface > 0 ? `svg${surface}/` : ''
       const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
       counts[base] = (counts[base] ?? 0) + 1
-      shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
+      shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|')
     }
     for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
       shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
@@ -87,7 +87,7 @@ function SAMPLER() {
   }
   // The largest area (px²) two bars or cells cover at once; touching shapes do not count.
   window.__overlap = () => {
-    const elements = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect')]
+    const elements = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect, svg.v-charts-surface .v-charts-journey-node-continue, svg.v-charts-surface .v-charts-journey-node-exit')]
     let worst = 0
     for (const svg of document.querySelectorAll('svg.v-charts-surface')) {
       const boxes = elements.filter(el => el.ownerSVGElement === svg)
@@ -142,7 +142,7 @@ function SAMPLER() {
         const prefix = surface > 0 ? `svg${surface}/` : ''
         const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
         counts[base] = (counts[base] ?? 0) + 1
-        shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
+        shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|')
       }
       for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
         shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
@@ -221,9 +221,10 @@ async function record(page, dir, name, act) {
 
 mkdirSync(out, { recursive: true })
 const report = []
+const JOURNEY_BACK = { top8: 'top15', top15: 'top8', steps3: 'steps4', steps4: 'steps3', addJourney: 'removeJourney', removeJourney: 'addJourney' }
 const BACK = { values: 'refill', append2: 'fromOne', removeMiddle: 'fromOne', shift: 'fromOne', hideA: 'showA', showA: 'hideA', toOne: 'fromOne', fromOne: 'toOne', empty: 'refill', refill: 'empty', nullGap: 'fromOne', narrow: 'wide', wide: 'narrow', negative: 'positive', positive: 'negative', grow: 'reset', reset: 'grow' }
 async function openPage(s, fake) {
-  const context = await browser.newContext({ viewport: { width: 800, height: 440 }, deviceScaleFactor: 1 })
+  const context = await browser.newContext({ viewport: { width: 800, height: s === 'journey' ? 560 : 440 }, deviceScaleFactor: 1 })
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
@@ -262,6 +263,7 @@ function actions(page, box) {
 }
 
 for (const s of scenarios.length ? scenarios : all) {
+  const backSteps = s === 'journey' ? { ...BACK, ...JOURNEY_BACK } : BACK
   const dir = join(out, s)
   rmSync(dir, { recursive: true, force: true })
   mkdirSync(dir, { recursive: true })
@@ -290,10 +292,10 @@ for (const s of scenarios.length ? scenarios : all) {
     // Real-clock frame timing of the same step, at normal speed and with the CPU slowed 4x.
     const timing = {}
     // Timing replays the step on a second page, so it needs a step that returns to the start.
-    const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(BACK[step])
+    const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(backSteps[step])
     if (step !== 'entrance' && replayable && flag('browser', 'chromium') === 'chromium') {
       for (const rate of throttle ? [1, 4] : [1]) {
-        const back = labSteps.includes(BACK[step]) ? BACK[step] : undefined
+        const back = labSteps.includes(backSteps[step]) ? backSteps[step] : undefined
         if (back) {
           await timingPage.page.evaluate(name => window.lab.step(name), back)
           await timingPage.page.waitForTimeout(900)
