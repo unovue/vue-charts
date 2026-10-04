@@ -235,3 +235,20 @@ it.each([true, false])('keeps brush ownership when controlled=%s', async (contro
     expect(bars()).toBe(2)
   }
 })
+
+it('treats start/end indexes without v-model as where the brush starts, like defineModel', async () => {
+  mockGetBoundingClientRect({ width: 100, height: 100 })
+  const { container } = render(() => (
+    <BarChart width={100} height={100} data={[{ value: 1 }, { value: 2 }, { value: 3 }]}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush x={0} y={0} width={100} height={40} startIndex={0} endIndex={2} />
+    </BarChart>
+  ))
+  await nextTick()
+  const traveller = container.querySelectorAll('.v-charts-brush-traveller')[0]
+  await fireEvent.focus(traveller)
+  await fireEvent.keyDown(traveller, { key: 'ArrowRight' })
+  await nextTick()
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(2)
+  expect(traveller.getAttribute('aria-valuenow')).toBe('47.5')
+})

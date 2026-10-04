@@ -5,7 +5,7 @@ import type { ShallowRef } from 'vue'
 import { onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { motionTokens } from './motion'
-import { shouldSkipEntrance, useChartSize, useSeriesMotion } from './renderPhase'
+import { shouldSkipEntrance, useChartGesture, useChartSize, useSeriesMotion } from './renderPhase'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
 
@@ -90,6 +90,7 @@ export function useKeyedTransition<T>(
   // A resize moves everything at once and repeats every frame while a box eases its size; the
   // chart then follows its box directly instead of trailing it.
   const chartSize = useChartSize()
+  const gesture = useChartGesture()
   let lastSize: string | undefined
   if (!options.followsSeries)
     useSeriesMotion().register(options.isActive)
@@ -196,17 +197,17 @@ export function useKeyedTransition<T>(
     return [...staying.flatMap(item => [...(exitsBefore.get(item.key) ?? []), item]), ...trailingExits]
   }
 
-  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value, size: chartSize() }), (state) => {
+  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value, size: chartSize(), dragging: gesture.value }), (state) => {
     // A getter that throws (e.g. a user dataKey function) leaves no state; keep what is drawn.
     if (!state)
       return
-    const { next, active, reduced, size } = state
+    const { next, active, reduced, size, dragging } = state
     const nextItems = next ?? []
     const skip = skipEntrance && !hasEntered
     const resized = lastSize !== undefined && size !== undefined && size !== lastSize
     lastSize = size ?? lastSize
     skipEntrance = false
-    if (skip || !active || reduced === 'reduce' || resized) {
+    if (skip || !active || reduced === 'reduce' || resized || dragging) {
       hasEntered = true
       snap(nextItems)
       return

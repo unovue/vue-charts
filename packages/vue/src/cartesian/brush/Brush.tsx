@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, reactive, watch } from 'vue'
+import { computed, defineComponent, getCurrentInstance, h, nextTick, reactive, shallowRef, watch } from 'vue'
 import type { CSSProperties, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { BrushProps, BrushTravellerId } from './type'
@@ -18,6 +18,7 @@ import { selectBrushDimensions } from '@/state/selectors/brushSelectors'
 import { useChartDataActions } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
 import { isNumber } from '@/utils'
+import { useChartGesture } from '@/animation/renderPhase'
 
 const brushEmits = {
   'update:startIndex': (_index: number) => true,
@@ -33,6 +34,8 @@ const BrushView = defineComponent({
   props: {
     item: { type: Object as PropType<BrushProps>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    /** Which indexes the parent owns through v-model; the others are starting values. */
+    controlled: { type: Function as PropType<() => { start: boolean, end: boolean }>, required: true },
   },
   setup(view, { slots, emit }) {
     const props = view.item
@@ -48,8 +51,14 @@ const BrushView = defineComponent({
     const x = computed(() => props.x ?? brushDimensions.value?.x)
     const y = computed(() => props.y ?? brushDimensions.value?.y)
     const width = computed(() => props.width ?? brushDimensions.value?.width)
-    const startIndex = computed(() => props.startIndex ?? dataStartIndex.value ?? 0)
-    const endIndex = computed(() => props.endIndex ?? dataEndIndex.value ?? 0)
+    // As with Vue's defineModel: an index bound with v-model is owned by the parent; a plain
+    // :start-index is where the brush starts, and dragging moves it.
+    const localStart = shallowRef<number>()
+    const localEnd = shallowRef<number>()
+    watch(() => props.startIndex, () => { localStart.value = undefined })
+    watch(() => props.endIndex, () => { localEnd.value = undefined })
+    const startIndex = computed(() => (view.controlled().start ? props.startIndex : localStart.value ?? props.startIndex) ?? dataStartIndex.value ?? 0)
+    const endIndex = computed(() => (view.controlled().end ? props.endIndex : localEnd.value ?? props.endIndex) ?? dataEndIndex.value ?? 0)
     const calculatedY = computed(() => (y.value ?? 0) + (props.dy ?? 0))
 
     // --- onChange handler ---
@@ -59,9 +68,14 @@ const BrushView = defineComponent({
       if (nextState.endIndex !== endIndex.value)
         emit('update:endIndex', nextState.endIndex)
       emit('change', nextState)
+      const { start, end } = view.controlled()
+      if (!start)
+        localStart.value = nextState.startIndex
+      if (!end)
+        localEnd.value = nextState.endIndex
       dataActions.setRange({
-        startIndex: props.startIndex ?? nextState.startIndex,
-        endIndex: props.endIndex ?? nextState.endIndex,
+        startIndex: start && props.startIndex !== undefined ? props.startIndex : nextState.startIndex,
+        endIndex: end && props.endIndex !== undefined ? props.endIndex : nextState.endIndex,
       })
     }
 
@@ -75,11 +89,18 @@ const BrushView = defineComponent({
       () => endIndex.value,
     )
 
+    // While a traveller or the slide is dragged, the chart follows the brush directly.
+    const gesture = useChartGesture()
+    watch(() => brushState.value.isSlideMoving || brushState.value.isTravellerMoving, (moving) => {
+      gesture.value = moving
+    })
+
     // Wait for the parent to accept the proposal before restoring controlled travellers.
     const restoreControlledPositions = () => {
-      if (props.startIndex !== undefined)
+      const { start, end } = view.controlled()
+      if (start && props.startIndex !== undefined)
         brushState.value.startX = brushState.value.scale?.(props.startIndex)
-      if (props.endIndex !== undefined)
+      if (end && props.endIndex !== undefined)
         brushState.value.endX = brushState.value.scale?.(props.endIndex)
     }
     watch([() => props.startIndex, () => props.endIndex], restoreControlledPositions)
@@ -247,7 +268,16 @@ const _Brush = defineComponent({
     useBrushSetting(props)
     useBrushChartSynchronisation()
     const View = useDeferredView(BrushView)
-    return () => h(View, { 'item': props, 'svgAttrs': attrs, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes), 'onUpdate:startIndex': index => emit('update:startIndex', index), 'onUpdate:endIndex': index => emit('update:endIndex', index) }, slots)
+    const instance = getCurrentInstance()!
+    const listens = (name: string) => {
+      const vnodeProps = instance.vnode.props ?? {}
+      return `onUpdate:${name}` in vnodeProps || `onUpdate:${name.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}` in vnodeProps
+    }
+    const controlled = () => ({
+      start: props.startIndex !== undefined && listens('startIndex'),
+      end: props.endIndex !== undefined && listens('endIndex'),
+    })
+    return () => h(View, { 'item': props, 'svgAttrs': attrs, controlled, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes), 'onUpdate:startIndex': index => emit('update:startIndex', index), 'onUpdate:endIndex': index => emit('update:endIndex', index) }, slots)
   },
 })
 

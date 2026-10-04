@@ -5,6 +5,15 @@ import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, o
 const renderPhaseKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-render-phase')
 const chartSizeKey: InjectionKey<() => string | undefined> = Symbol('v-charts-size')
 const seriesMotionKey: InjectionKey<Set<() => boolean>> = Symbol('v-charts-series-motion')
+const gestureKey: InjectionKey<Ref<boolean>> = Symbol('v-charts-gesture')
+
+/**
+ * True while the user drags something that changes the chart continuously (a brush). Like a
+ * resize, the chart then follows the pointer directly instead of trailing it.
+ */
+export function useChartGesture(): Ref<boolean> {
+  return (hasInjectionContext() ? inject(gestureKey, null) : null) ?? ref(false)
+}
 
 /**
  * Whether the chart's series animate. Each animated series registers its `isActive`; axes and
@@ -61,6 +70,7 @@ export function provideRenderPhase() {
   }
   provide(renderPhaseKey, skip)
   provide(seriesMotionKey, new Set())
+  provide(gestureKey, ref(false))
 }
 
 /** True when an element created now must appear in its final state. Call during setup. */
