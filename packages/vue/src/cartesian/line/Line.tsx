@@ -1,5 +1,7 @@
-import { Fragment, Teleport, computed, defineComponent, proxyRefs, toRefs } from 'vue'
-import type { SVGAttributes, SlotsType } from 'vue'
+import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { LineProps } from './type'
 import { LineVueProps } from './type'
 import { useLine } from '@/cartesian/line/hooks/useLine'
@@ -12,15 +14,22 @@ import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 
-export const Line = defineComponent({
-  name: 'Line',
-  props: LineVueProps,
+const LineView = defineComponent({
+  name: 'LineView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<LineProps>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+  },
   slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
-  setup(props: LineProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
-    const data = useSetupGraphicalItem(props, 'line')
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, needClip, clipPathId, lineData, points } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
+    const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
     // Provide label list data so LabelList children can consume it via context
@@ -63,10 +72,19 @@ export const Line = defineComponent({
       )
 
       // Teleport into graphical layer so lines render above cursor
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{lineContent}</Teleport>
-      }
-      return lineContent
+      return teleport(lineContent, graphicalLayerRef)
     }
+  },
+})
+
+export const Line = defineComponent({
+  name: 'Line',
+  props: LineVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
+  setup(props: LineProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
+    const data = useSetupGraphicalItem(props, 'line')
+    const View = useDeferredView(LineView)
+    return () => h(View, { item: props, svgAttrs: attrs, data }, slots)
   },
 })

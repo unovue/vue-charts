@@ -1,4 +1,6 @@
-import { defineComponent } from 'vue'
+import { defineComponent, h } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
@@ -66,45 +68,52 @@ const defaultProps = {
   yAxisId: 0,
 } as const satisfies Partial<CartesianGridProps>
 
-export const CartesianGrid = defineComponent({
-  name: 'CartesianGrid',
-  inheritAttrs: false,
-  props: {
-    xAxisId: {
-      type: [String, Number],
-      default: 0,
-    },
-    yAxisId: {
-      type: [String, Number],
-      default: 0,
-    },
-    x: Number,
-    y: Number,
-    width: Number,
-    height: Number,
-    syncWithTicks: {
-      type: Boolean,
-      default: undefined,
-    },
-    horizontal: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    vertical: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    horizontalPoints: Array,
-    verticalPoints: Array,
-    horizontalValues: Array,
-    verticalValues: Array,
-    fill: String,
-    fillOpacity: Number,
-    ry: Number,
-    verticalCoordinatesGenerator: Function,
-    horizontalCoordinatesGenerator: Function,
+const CartesianGridViewProps = {
+  xAxisId: {
+    type: [String, Number],
+    default: 0,
   },
-  setup(props, { attrs, slots }) {
+  yAxisId: {
+    type: [String, Number],
+    default: 0,
+  },
+  x: Number,
+  y: Number,
+  width: Number,
+  height: Number,
+  syncWithTicks: {
+    type: Boolean,
+    default: undefined,
+  },
+  horizontal: {
+    type: [Boolean, Object],
+    default: true,
+  },
+  vertical: {
+    type: [Boolean, Object],
+    default: true,
+  },
+  horizontalPoints: Array,
+  verticalPoints: Array,
+  horizontalValues: Array,
+  verticalValues: Array,
+  fill: String,
+  fillOpacity: Number,
+  ry: Number,
+  verticalCoordinatesGenerator: Function,
+  horizontalCoordinatesGenerator: Function,
+}
+
+const CartesianGridView = defineComponent({
+  name: 'CartesianGridView',
+  inheritAttrs: true,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof CartesianGridViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes & Pick<CartesianGridProps, 'verticalFill' | 'horizontalFill'> & { ry?: number }>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const chartWidth = useChartWidth()
     const chartHeight = useChartHeight()
     const offset = useOffset()
@@ -119,10 +128,7 @@ export const CartesianGrid = defineComponent({
 
     return () => {
       const propsIncludingDefaults = {
-        ...resolveDefaultProps({
-          ...props,
-          ...attrs,
-        }, defaultProps as any),
+        ...resolveDefaultProps({ ...props, ...attrs }, defaultProps),
         x: isNumber(props.x) ? props.x : offset.value.left,
         y: isNumber(props.y) ? props.y : offset.value.top,
         width: isNumber(props.width) ? props.width : offset.value.width,
@@ -236,5 +242,15 @@ export const CartesianGrid = defineComponent({
         </g>
       )
     }
+  },
+})
+
+export const CartesianGrid = defineComponent({
+  name: 'CartesianGrid',
+  inheritAttrs: false,
+  props: CartesianGridViewProps,
+  setup(props, { attrs, slots }) {
+    const View = useDeferredView(CartesianGridView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

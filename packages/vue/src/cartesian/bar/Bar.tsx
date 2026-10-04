@@ -1,5 +1,7 @@
-import { Teleport, computed, defineComponent, proxyRefs, toRefs } from 'vue'
-import type { SVGAttributes, SlotsType } from 'vue'
+import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { BarProps, BarPropsWithSVG } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
@@ -32,22 +34,26 @@ const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> =
   }
 }
 
-export const Bar = defineComponent<BarPropsWithSVG>({
-  name: 'Bar',
-  props: BarVueProps,
+const BarView = defineComponent({
+  name: 'BarView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<BarPropsWithSVG>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+  },
   slots: Object as SlotsType<{
     default?: () => any
     activeDot?: (props: any) => any
     shape?: (props: any) => any
     activeBar?: (props: any) => any
   }>,
-  setup(props: BarProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
-    const errorBarRegistry = createErrorBarRegistry()
-    provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(trackedProps, slots.shape, slots.activeBar)
+    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(trackedProps, attrs, slots.shape, slots.activeBar)
     const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
     const layout = useChartLayout()
 
@@ -85,21 +91,13 @@ export const Bar = defineComponent<BarPropsWithSVG>({
     })
     provideCartesianLabelListData(labelListData)
 
-    const graphicalLayerRef = useGraphicalLayerRef(null)
-
-    return () => {
+    const renderGeometry = () => {
       if (!shouldRender.value) {
         return null
       }
 
-      // Extract Cell props from default slot before rendering
-      const defaultContent = slots.default?.() ?? []
-      const cells = extractCellProps(defaultContent)
-      cellPropsRef.value = cells
-      const nonCellContent = cells.length > 0 ? filterOutCells(defaultContent) : defaultContent
-
-      const barContent = (
-        <Layer class={['v-charts-bar', attrs.class]}>
+      return (
+        <Fragment>
           {
             needClip.value && (
               <defs>
@@ -117,15 +115,49 @@ export const Bar = defineComponent<BarPropsWithSVG>({
               data={barData.value}
             />
           )}
-          {nonCellContent}
-        </Layer>
+        </Fragment>
       )
-
-      // Teleport bars into graphical layer so they render above cursor but below labels
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{barContent}</Teleport>
-      }
-      return barContent
     }
+
+    // Default children (notably ErrorBar) must register before any deferred geometry runs.
+    // Keep their context in this synchronous shell; defer only the geometry render.
+    const Geometry = useDeferredView(defineComponent({
+      name: 'BarGeometry',
+      setup: () => renderGeometry,
+    }))
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useGraphicalLayerRef(null)
+    return () => {
+      if (!shouldRender.value)
+        return null
+      const children = slots.default?.() ?? []
+      const cells = extractCellProps(children)
+      cellPropsRef.value = cells
+      return teleport((
+        <Layer class={['v-charts-bar', attrs.class]}>
+          {h(Geometry)}
+          {cells.length > 0 ? filterOutCells(children) : children}
+        </Layer>
+      ), graphicalLayerRef,
+      )
+    }
+  },
+})
+
+export const Bar = defineComponent<BarPropsWithSVG>({
+  name: 'Bar',
+  props: BarVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<{
+    default?: () => any
+    activeDot?: (props: any) => any
+    shape?: (props: any) => any
+    activeBar?: (props: any) => any
+  }>,
+  setup(props: BarProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
+    const errorBarRegistry = createErrorBarRegistry()
+    provideErrorBarRegistry(errorBarRegistry)
+    const data = useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
+    return () => h(BarView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })

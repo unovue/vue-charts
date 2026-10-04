@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, nextTick } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 import { Bar, BarChart, ResponsiveContainer, Sankey, SunburstChart, Treemap, XAxis, YAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
@@ -50,6 +51,7 @@ describe('responsive server rendering', () => {
     const errors = vi.spyOn(console, 'error')
     const app = createSSRApp({ render })
     app.mount(container)
+    await flushPromises()
     await nextTick()
     expect(warnings).not.toHaveBeenCalled()
     expect(errors).not.toHaveBeenCalled()

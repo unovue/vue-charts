@@ -1,5 +1,6 @@
-import type { CSSProperties } from 'vue'
-import { computed, defineComponent, reactive } from 'vue'
+import { computed, defineComponent, h, reactive } from 'vue'
+import type { CSSProperties, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { BrushPropsWithSVG, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
 import { Layer } from '../../container/Layer'
@@ -18,13 +19,16 @@ import { useChartDataActions } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
 import { isNumber } from '@/utils'
 
-export const Brush = defineComponent<BrushPropsWithSVG>({
-  name: 'Brush',
-  props: BrushVueProps,
+const BrushView = defineComponent({
+  name: 'BrushView',
   inheritAttrs: false,
-  setup(props, { attrs, slots }) {
-    useBrushSetting(props)
-    useBrushChartSynchronisation()
+  props: {
+    item: { type: Object as PropType<BrushPropsWithSVG>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
 
     const dataActions = useChartDataActions()
     const chartData = useAppSelector(state => state.chartData.chartData)
@@ -200,5 +204,17 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
         </Layer>
       )
     }
+  },
+})
+
+export const Brush = defineComponent<BrushPropsWithSVG>({
+  name: 'Brush',
+  props: BrushVueProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    useBrushSetting(props)
+    useBrushChartSynchronisation()
+    const View = useDeferredView(BrushView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

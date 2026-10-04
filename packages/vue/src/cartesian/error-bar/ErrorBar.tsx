@@ -1,5 +1,6 @@
-import type { PropType } from 'vue'
-import { defineComponent, onUnmounted } from 'vue'
+import { defineComponent, h, onUnmounted } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
 import { useErrorBarContext, useErrorBarRegistry } from './ErrorBarContext'
 import { useAppSelector } from '@/state/hooks'
@@ -23,22 +24,18 @@ export const ErrorBarVueProps = {
   strokeWidth: { type: [Number, String], default: 1.5 },
 }
 
-export const ErrorBar = defineComponent({
-  name: 'ErrorBar',
-  props: ErrorBarVueProps,
-  setup(props) {
+const ErrorBarView = defineComponent({
+  name: 'ErrorBarView',
+  inheritAttrs: true,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ErrorBarVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const layout = useChartLayout()
     const { data, dataPointFormatter, xAxisId, yAxisId, errorBarOffset } = useErrorBarContext()
-
-    // Register this ErrorBar's settings into the parent's registry so the graphical item
-    // can report them to chart state, allowing axis domain to extend for error bar ranges.
-    const registry = useErrorBarRegistry(null)
-    if (registry) {
-      const direction: ErrorBarDirection = props.direction ?? (layout.value === 'horizontal' ? 'y' : 'x')
-      const settings: ErrorBarsSettings = { direction, dataKey: props.dataKey! }
-      registry.register(settings)
-      onUnmounted(() => registry.unregister(settings))
-    }
 
     const xAxis = useAppSelector(state => selectAxisWithScale(state, 'xAxis', xAxisId, false))
     const yAxis = useAppSelector(state => selectAxisWithScale(state, 'yAxis', yAxisId, false))
@@ -133,5 +130,25 @@ export const ErrorBar = defineComponent({
 
       return <Layer class="v-charts-error-bars">{errorBars}</Layer>
     }
+  },
+})
+
+export const ErrorBar = defineComponent({
+  name: 'ErrorBar',
+  props: ErrorBarVueProps,
+  setup(props, { attrs, slots }) {
+    const layout = useChartLayout()
+    // Register this ErrorBar's settings into the parent's registry so the graphical item
+    // can report them to chart state, allowing axis domain to extend for error bar ranges.
+    const registry = useErrorBarRegistry(null)
+    if (registry) {
+      const direction: ErrorBarDirection = props.direction ?? (layout.value === 'horizontal' ? 'y' : 'x')
+      const settings: ErrorBarsSettings = { direction, dataKey: props.dataKey! }
+      registry.register(settings)
+      onUnmounted(() => registry.unregister(settings))
+    }
+
+    const View = useDeferredView(ErrorBarView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

@@ -1,3 +1,4 @@
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
 /**
  * @fileOverview X Axis
@@ -132,10 +133,11 @@ const XAxisSettingsDispatcher = defineComponent({
         registeredSettings = undefined
       }
     })
+    const View = useDeferredView(XAxisImpl)
     return () => (
-      <XAxisImpl {...props}>
+      <View {...props}>
         {dispatcherSlots.tick ? { tick: dispatcherSlots.tick } : undefined}
-      </XAxisImpl>
+      </View>
     )
   },
 })

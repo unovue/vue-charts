@@ -1,6 +1,7 @@
-import type { PropType, SVGAttributes } from 'vue'
+import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
 import { Rectangle } from '@/shape/Rectangle'
@@ -31,31 +32,18 @@ export const ReferenceAreaVueProps = {
   class: classProp,
 }
 
-export const ReferenceArea = defineComponent({
-  name: 'ReferenceArea',
-  props: ReferenceAreaVueProps,
+const ReferenceAreaView = defineComponent({
+  name: 'ReferenceAreaView',
   inheritAttrs: false,
-  setup(props, { attrs }) {
-    const { addArea, removeArea } = useChartReferenceElements()
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceAreaVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
-
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x1: props.x1,
-      x2: props.x2,
-      y1: props.y1,
-      y2: props.y2,
-    })
-
-    onMounted(() => {
-      addArea(settings)
-    })
-    onUnmounted(() => {
-      removeArea(settings)
-    })
 
     const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
     const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
@@ -132,5 +120,31 @@ export const ReferenceArea = defineComponent({
         </Layer>
       )
     }
+  },
+})
+
+export const ReferenceArea = defineComponent({
+  name: 'ReferenceArea',
+  props: ReferenceAreaVueProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    const { addArea, removeArea } = useChartReferenceElements()
+    const settings = reactive({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x1: props.x1,
+      x2: props.x2,
+      y1: props.y1,
+      y2: props.y2,
+    })
+
+    addArea(settings)
+    onUnmounted(() => {
+      removeArea(settings)
+    })
+
+    const View = useDeferredView(ReferenceAreaView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

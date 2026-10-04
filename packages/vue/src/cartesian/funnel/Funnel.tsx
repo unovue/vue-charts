@@ -1,7 +1,8 @@
+import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
+import { computed, defineComponent, h, shallowRef } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { computed, defineComponent, shallowRef } from 'vue'
-import type { SlotsType } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
@@ -16,60 +17,28 @@ import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelPropsWithSVG, FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 
-export const Funnel = defineComponent<FunnelPropsWithSVG>({
-  name: 'Funnel',
-  props: FunnelVueProps,
+const FunnelView = defineComponent({
+  name: 'FunnelView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<FunnelPropsWithSVG>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    trapezoids: { type: Object as PropType<ComputedRef<readonly FunnelTrapezoidItem[]>>, required: true },
+    cellPropsRef: { type: Object as PropType<ShallowRef<ReturnType<typeof extractCellProps>>>, required: true },
+  },
   slots: Object as SlotsType<{
     shape?: (props: FunnelTrapezoidItem) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
-    const data = useTrackedData(() => props.data)
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
+    const trapezoids = view.trapezoids
+    const cellPropsRef = view.cellPropsRef
     const tooltip = useChartTooltip()
     const isAnimating = useIsAnimating(() => props.isAnimationActive)
-    const cellPropsRef = shallowRef<Record<string, any>[]>([])
-
-    const funnelSettings = computed<ResolvedFunnelSettings>(() => ({
-      data: data.value,
-      dataKey: props.dataKey,
-      nameKey: props.nameKey,
-      tooltipType: props.tooltipType,
-      lastShapeType: props.lastShapeType,
-      reversed: props.reversed,
-      customWidth: props.width,
-      presentationProps: {
-        fill: props.fill,
-        stroke: props.stroke,
-      },
-    }))
-
-    SetPolarGraphicalItem(computed(() => ({
-      type: 'funnel' as const,
-      data: data.value ?? [],
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: 0,
-      radiusAxisId: 0,
-    })))
-
-    const composedData = useAppSelector(state => selectFunnelTrapezoids(state, funnelSettings.value))
-
-    const trapezoids = computed(() => composedData.value?.trapezoids ?? [])
-    // Legend payload: built from trapezoids, with Cell fill overrides applied
-    const legendPayload = computed(() => {
-      const trapList = trapezoids.value
-      if (!trapList || trapList.length === 0)
-        return []
-      const cells = cellPropsRef.value
-      return trapList.map((trap: any, i: number) => ({
-        type: props.legendType,
-        value: String(trap.name ?? ''),
-        color: cells[i]?.fill ?? trap.fill ?? props.fill,
-        payload: trap.payload,
-      }))
-    })
-    SetLegendPayload(computed(() => legendPayload.value))
 
     SetTooltipEntrySettings({
       fn: v => v,
@@ -205,5 +174,62 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
         </Layer>
       )
     }
+  },
+})
+
+export const Funnel = defineComponent<FunnelPropsWithSVG>({
+  name: 'Funnel',
+  props: FunnelVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<{
+    shape?: (props: FunnelTrapezoidItem) => any
+    default?: () => any
+  }>,
+  setup(props, { attrs, slots }) {
+    const data = useTrackedData(() => props.data)
+    const cellPropsRef = shallowRef<Record<string, any>[]>([])
+    const funnelSettings = computed<ResolvedFunnelSettings>(() => ({
+      data: data.value,
+      dataKey: props.dataKey,
+      nameKey: props.nameKey,
+      tooltipType: props.tooltipType,
+      lastShapeType: props.lastShapeType,
+      reversed: props.reversed,
+      customWidth: props.width,
+      presentationProps: {
+        fill: props.fill,
+        stroke: props.stroke,
+      },
+    }))
+
+    SetPolarGraphicalItem(computed(() => ({
+      type: 'funnel' as const,
+      data: data.value ?? [],
+      dataKey: props.dataKey,
+      hide: props.hide,
+      angleAxisId: 0,
+      radiusAxisId: 0,
+    })))
+
+    const composedData = useAppSelector(state => selectFunnelTrapezoids(state, funnelSettings.value))
+
+    const trapezoids = computed(() => composedData.value?.trapezoids ?? [])
+    // Legend payload: built from trapezoids, with Cell fill overrides applied
+    const legendPayload = computed(() => {
+      const trapList = trapezoids.value
+      if (!trapList || trapList.length === 0)
+        return []
+      const cells = cellPropsRef.value
+      return trapList.map((trap: any, i: number) => ({
+        type: props.legendType,
+        value: String(trap.name ?? ''),
+        color: cells[i]?.fill ?? trap.fill ?? props.fill,
+        payload: trap.payload,
+      }))
+    })
+    SetLegendPayload(computed(() => legendPayload.value))
+
+    const View = useDeferredView(FunnelView)
+    return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)
   },
 })

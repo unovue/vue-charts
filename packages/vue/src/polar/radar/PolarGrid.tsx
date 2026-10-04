@@ -1,5 +1,6 @@
-import { computed, defineComponent } from 'vue'
-import type { PropType } from 'vue'
+import { computed, defineComponent, h } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useAppSelector } from '@/state/hooks'
 import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
 import { selectPolarGridAngles, selectPolarGridRadii } from '@/state/selectors/polarGridSelectors'
@@ -14,20 +15,27 @@ function getPolygonPath(radius: number, cx: number, cy: number, polarAngles: Rea
   return `${path}Z`
 }
 
-export const PolarGrid = defineComponent({
-  name: 'PolarGrid',
+const PolarGridViewProps = {
+  angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  gridType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
+  radialLines: { type: Boolean, default: true },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
+  fill: { type: String, default: 'none' },
+  polarRadius: { type: Array as PropType<number[]>, default: undefined },
+  strokeWidth: { type: Number, default: undefined },
+}
+
+const PolarGridView = defineComponent({
+  name: 'PolarGridView',
+  inheritAttrs: true,
   props: {
-    angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    gridType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
-    radialLines: { type: Boolean, default: true },
-    stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
-    fill: { type: String, default: 'none' },
-    polarRadius: { type: Array as PropType<number[]>, default: undefined },
-    strokeWidth: { type: Number, default: undefined },
+    item: { type: Object as PropType<ExtractPropTypes<typeof PolarGridViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  inheritAttrs: false,
-  setup(props, { attrs }) {
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
     const polarAngles = useAppSelector(state => selectPolarGridAngles(state, props.angleAxisId))
     const selectedPolarRadii = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
@@ -129,5 +137,15 @@ export const PolarGrid = defineComponent({
         </g>
       )
     }
+  },
+})
+
+export const PolarGrid = defineComponent({
+  name: 'PolarGrid',
+  props: PolarGridViewProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    const View = useDeferredView(PolarGridView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

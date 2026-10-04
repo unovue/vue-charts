@@ -1,6 +1,6 @@
 import { useChartId } from '@/hooks/useChartId'
 import type { Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, ref, shallowRef, useAttrs } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { createContext } from 'motion-v'
 import type { BarProps } from '../type'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
@@ -25,9 +25,8 @@ export interface BarContext {
 }
 export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
 
-export function useBar(props: BarProps, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
+export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
   const isPanorama = useIsPanorama()
-  const attrs = useAttrs() as SVGAttributes
   const layout = useChartLayout()
   const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
   const barSettings = computed(() => ({

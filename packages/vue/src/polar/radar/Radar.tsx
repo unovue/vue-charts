@@ -1,5 +1,7 @@
-import { Fragment, Teleport, computed, defineComponent } from 'vue'
-import type { PropType } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useAppSelector } from '@/state/hooks'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
@@ -61,76 +63,47 @@ function interpolatePolarPoint(
   return { ...entry, x: interpolate(entry.cx ?? 0, entry.x, t), y: interpolate(entry.cy ?? 0, entry.y, t) }
 }
 
-export const Radar = defineComponent({
-  name: 'Radar',
+const RadarViewProps = {
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
+  name: { type: String, default: undefined },
+  angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  stroke: { type: String, default: undefined },
+  fillOpacity: { type: Number, default: 0.6 },
+  strokeWidth: { type: Number, default: undefined },
+  strokeDasharray: { type: String, default: undefined },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  hide: { type: Boolean, default: false },
+  legendType: { type: String as PropType<LegendType>, default: 'rect' },
+  tooltipType: { type: String as PropType<TooltipType>, default: undefined },
+  connectNulls: { type: Boolean, default: false },
+  label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  isAnimationActive: { type: Boolean, default: true },
+  transition: {
+    type: Object as PropType<ValueAnimationTransition<number>>,
+    default: () => ({ duration: 0.8, ease: 'easeOut' }),
+  },
+  activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
+}
+
+const RadarView = defineComponent({
+  name: 'RadarView',
   inheritAttrs: false,
   props: {
-    dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true },
-    name: { type: String, default: undefined },
-    angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    fill: { type: String, default: 'var(--v-charts-series, #808080)' },
-    stroke: { type: String, default: undefined },
-    fillOpacity: { type: Number, default: 0.6 },
-    strokeWidth: { type: Number, default: undefined },
-    strokeDasharray: { type: String, default: undefined },
-    dot: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-    hide: { type: Boolean, default: false },
-    legendType: { type: String as PropType<LegendType>, default: 'rect' },
-    tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-    connectNulls: { type: Boolean, default: false },
-    label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-    isAnimationActive: { type: Boolean, default: true },
-    transition: {
-      type: Object as PropType<ValueAnimationTransition<number>>,
-      default: () => ({ duration: 0.8, ease: 'easeOut' }),
-    },
-    activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
+    item: { type: Object as PropType<ExtractPropTypes<typeof RadarViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  setup(props) {
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const isPanorama = useIsPanorama()
-
-    SetPolarGraphicalItem(computed(() => ({
-      type: 'radar' as const,
-      data: undefined,
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: props.angleAxisId,
-      radiusAxisId: props.radiusAxisId,
-    })))
-
-    SetLegendPayload(computed(() => [{
-      dataKey: props.dataKey,
-      type: props.legendType,
-      color: getLegendItemColor(props.stroke, props.fill),
-      value: props.name ?? String(props.dataKey ?? ''),
-      payload: { ...props },
-      inactive: props.hide,
-    }]))
-
-    SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: undefined,
-        positions: undefined,
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: undefined,
-          name: props.name ?? String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: getLegendItemColor(props.stroke, props.fill),
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
-        },
-      })),
-    })
 
     const radarPoints = useAppSelector(state =>
       selectRadarPoints(state, props.radiusAxisId, props.angleAxisId, isPanorama, props.dataKey),
     )
 
+    const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef()
 
     const isAnimating = useIsAnimating(() => props.isAnimationActive)
@@ -260,9 +233,7 @@ export const Radar = defineComponent({
           activeDot={props.activeDot}
         />
       )
-      const activePoints = graphicalLayerRef?.value
-        ? <Teleport to={graphicalLayerRef.value}>{activePointsEl}</Teleport>
-        : activePointsEl
+      const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
       const labelEl = !isAnimating.value && props.label
         ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
@@ -320,5 +291,52 @@ export const Radar = defineComponent({
         </Fragment>
       )
     }
+  },
+})
+
+export const Radar = defineComponent({
+  name: 'Radar',
+  inheritAttrs: false,
+  props: RadarViewProps,
+  setup(props, { attrs, slots }) {
+    SetPolarGraphicalItem(computed(() => ({
+      type: 'radar' as const,
+      data: undefined,
+      dataKey: props.dataKey,
+      hide: props.hide,
+      angleAxisId: props.angleAxisId,
+      radiusAxisId: props.radiusAxisId,
+    })))
+
+    SetLegendPayload(computed(() => [{
+      dataKey: props.dataKey,
+      type: props.legendType,
+      color: getLegendItemColor(props.stroke, props.fill),
+      value: props.name ?? String(props.dataKey ?? ''),
+      payload: { ...props },
+      inactive: props.hide,
+    }]))
+
+    SetTooltipEntrySettings({
+      fn: v => v,
+      args: computed(() => ({
+        dataDefinedOnItem: undefined,
+        positions: undefined,
+        settings: {
+          dataKey: props.dataKey,
+          nameKey: undefined,
+          name: props.name ?? String(props.dataKey ?? ''),
+          hide: props.hide,
+          type: props.tooltipType,
+          color: getLegendItemColor(props.stroke, props.fill),
+          fill: props.fill,
+          stroke: props.stroke,
+          unit: '',
+        },
+      })),
+    })
+
+    const View = useDeferredView(RadarView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

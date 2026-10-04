@@ -1,3 +1,4 @@
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
 import type { ComponentPublicInstance, PropType } from 'vue'
 import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch } from 'vue'
@@ -173,8 +174,9 @@ const YAxisSettingsDispatcher = defineComponent({
         registeredSettings = undefined
       }
     })
+    const View = useDeferredView(YAxisImpl)
     return () => (
-      <YAxisImpl {...props} />
+      <View {...props} />
     )
   },
 })

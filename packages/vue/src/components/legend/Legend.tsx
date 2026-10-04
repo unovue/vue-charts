@@ -1,16 +1,27 @@
-import type { DefineSetupFnComponent, SlotsType } from 'vue'
-import { Teleport, defineComponent, watch } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { defineComponent, h, watch } from 'vue'
+import type { DefineSetupFnComponent, ExtractPropTypes, PropType, SlotsType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { LegendPropsWithSVG, LegendSlots } from './type'
 import { LegendVueProps } from './type'
 import { useLegend } from './hooks/useLegend'
+import { useChartLegend } from '@/state/chartContext'
+import { getLayoutForPosition } from './utils'
 import { useLegendContent } from './hooks/useLegendContent'
 import Surface from '@/container/Surface'
 import { LegendSymbol, SIZE } from './LegendSymbol'
 
-export default defineComponent({
-  name: 'Legend',
-  props: LegendVueProps,
-  setup(props, { slots }) {
+const LegendView = defineComponent({
+  name: 'LegendView',
+  inheritAttrs: true,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof LegendVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const teleport = useLayerTeleport()
+    const props = view.item
+    const attrs = view.svgAttrs
     const {
       legendRef,
       processedPayload,
@@ -18,10 +29,11 @@ export default defineComponent({
       legendPortal,
       resolvedLayout,
       positionViewBox,
-      syncSettings,
       syncSize,
       boundingBox,
     } = useLegend(props)
+
+    watch([resolvedLayout, () => props.align, () => props.verticalAlign, () => props.position, () => props.offset, () => props.portal, boundingBox], syncSize, { immediate: true })
 
     const {
       getItemStyle,
@@ -31,12 +43,6 @@ export default defineComponent({
       handleMouseEnter,
       handleMouseLeave,
     } = useLegendContent(props)
-
-    // Watch report inputs so chart-state writes do not become dependencies.
-    watch([resolvedLayout, () => props.align, () => props.verticalAlign, () => props.position, () => props.offset, () => props.portal, boundingBox], () => {
-      syncSettings()
-      syncSize()
-    }, { immediate: true })
 
     const renderDefaultContent = () => {
       if (!processedPayload.value || processedPayload.value.length === 0) {
@@ -123,7 +129,7 @@ export default defineComponent({
     }
 
     return () => {
-      if (legendPortal.value == null || (props.position != null && positionViewBox.value == null)) {
+      if (props.position != null && positionViewBox.value == null) {
         return null
       }
 
@@ -139,11 +145,27 @@ export default defineComponent({
 
       return (
         <foreignObject>
-          <Teleport to={legendPortal.value}>
-            {legendElement}
-          </Teleport>
+          {teleport(legendElement, legendPortal)}
         </foreignObject>
       )
     }
+  },
+})
+
+export default defineComponent({
+  name: 'Legend',
+  props: LegendVueProps,
+  setup(props, { attrs, slots }) {
+    const { setLegendSettings } = useChartLegend()
+    watch(() => ({
+      layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
+      align: props.align,
+      verticalAlign: props.verticalAlign,
+      position: props.position,
+      offset: props.offset,
+    }), setLegendSettings, { immediate: true })
+
+    const View = useDeferredView(LegendView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 }) as unknown as DefineSetupFnComponent<LegendPropsWithSVG, {}, SlotsType<LegendSlots>>

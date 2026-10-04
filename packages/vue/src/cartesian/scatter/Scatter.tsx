@@ -1,6 +1,8 @@
+import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
-import { Teleport, computed, defineComponent, proxyRefs, toRefs, useAttrs } from 'vue'
-import type { PropType, SVGAttributes, SlotsType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
@@ -57,21 +59,24 @@ const ScatterVueProps = {
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
 
-export const Scatter = defineComponent({
-  name: 'Scatter',
-  props: ScatterVueProps,
+const ScatterView = defineComponent({
+  name: 'ScatterView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ScatterVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+  },
   slots: Object as SlotsType<{
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
-    const errorBarRegistry = createErrorBarRegistry()
-    provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, points } = useScatter(trackedProps)
-    const graphicalLayerRef = useGraphicalLayerRef()
-    const svgAttrs = useAttrs() as SVGAttributes
+    const svgAttrs = attrs as SVGAttributes
     const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
@@ -202,7 +207,7 @@ export const Scatter = defineComponent({
       )
     }
 
-    return () => {
+    const renderGeometry = () => {
       if (!shouldRender.value) {
         return null
       }
@@ -262,9 +267,8 @@ export const Scatter = defineComponent({
         )
       }
 
-      const content = (
-        <Layer class="v-charts-scatter">
-          {slots.default?.()}
+      return (
+        <Fragment>
           {symbolsContent}
           {props.label && (() => {
             const labelData = data.map(point => ({
@@ -282,13 +286,43 @@ export const Scatter = defineComponent({
               />
             )
           })()}
-        </Layer>
+        </Fragment>
       )
-
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{content}</Teleport>
-      }
-      return content
     }
+
+    // Default children (notably ErrorBar) must register before any deferred geometry runs.
+    // Keep their context in this synchronous shell; defer only the geometry render.
+    const Geometry = useDeferredView(defineComponent({
+      name: 'ScatterGeometry',
+      setup: () => renderGeometry,
+    }))
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useGraphicalLayerRef(null)
+    return () => {
+      if (props.hide)
+        return null
+      return teleport((
+        <Layer class="v-charts-scatter">
+          {slots.default?.()}
+          {h(Geometry)}
+        </Layer>
+      ), graphicalLayerRef,
+      )
+    }
+  },
+})
+
+export const Scatter = defineComponent({
+  name: 'Scatter',
+  props: ScatterVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<{
+    default?: () => any
+  }>,
+  setup(props, { attrs, slots }) {
+    const errorBarRegistry = createErrorBarRegistry()
+    provideErrorBarRegistry(errorBarRegistry)
+    const data = useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })

@@ -1,4 +1,5 @@
-import { Fragment, Teleport, defineComponent, h, onMounted, proxyRefs, ref, toRefs } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { AreaDotSlotProps, AreaProps, AreaPropsWithSVG } from './type'
@@ -31,12 +32,8 @@ const AreaView = defineComponent({
     const attrs = view.svgAttrs
     const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
     const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(trackedProps, attrs, slots.dot)
+    const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
-    // The first render must match the server HTML, where content is inline.
-    const mounted = ref(false)
-    onMounted(() => {
-      mounted.value = true
-    })
 
     return () => {
       if (!shouldRender.value) {
@@ -85,10 +82,7 @@ const AreaView = defineComponent({
       )
 
       // Teleport into graphical layer so areas render above cursor
-      if (mounted.value && graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{areaContent}</Teleport>
-      }
-      return areaContent
+      return teleport(areaContent, graphicalLayerRef)
     }
   },
 })

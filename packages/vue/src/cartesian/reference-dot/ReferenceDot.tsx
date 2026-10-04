@@ -1,5 +1,6 @@
-import type { PropType, SVGAttributes, SlotsType } from 'vue'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
+import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { Label } from '@/components/label/Label'
@@ -38,31 +39,19 @@ export const ReferenceDotVueProps = {
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
 }
 
-const _ReferenceDot = defineComponent({
-  name: 'ReferenceDot',
-  props: ReferenceDotVueProps,
+const ReferenceDotView = defineComponent({
+  name: 'ReferenceDotView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceDotVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
   slots: Object as SlotsType<ReferenceDotSlots>,
-  setup(props, { attrs, slots }) {
-    const { addDot, removeDot } = useChartReferenceElements()
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
-
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x: props.x,
-      y: props.y,
-      r: props.r,
-    })
-
-    onMounted(() => {
-      addDot(settings)
-    })
-    onUnmounted(() => {
-      removeDot(settings)
-    })
 
     const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
     const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
@@ -146,6 +135,32 @@ const _ReferenceDot = defineComponent({
         </Layer>
       )
     }
+  },
+})
+
+const _ReferenceDot = defineComponent({
+  name: 'ReferenceDot',
+  props: ReferenceDotVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ReferenceDotSlots>,
+  setup(props, { attrs, slots }) {
+    const { addDot, removeDot } = useChartReferenceElements()
+    const settings = reactive({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x: props.x,
+      y: props.y,
+      r: props.r,
+    })
+
+    addDot(settings)
+    onUnmounted(() => {
+      removeDot(settings)
+    })
+
+    const View = useDeferredView(ReferenceDotView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
 

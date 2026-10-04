@@ -1,6 +1,7 @@
-import type { PropType, SVGAttributes } from 'vue'
+import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
 import { useAppSelector } from '@/state/hooks'
@@ -27,30 +28,19 @@ export const ReferenceLineVueProps = {
   class: classProp,
 }
 
-export const ReferenceLine = defineComponent({
-  name: 'ReferenceLine',
-  props: ReferenceLineVueProps,
+const ReferenceLineView = defineComponent({
+  name: 'ReferenceLineView',
   inheritAttrs: false,
-  setup(props, { attrs }) {
-    const { addLine, removeLine } = useChartReferenceElements()
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceLineVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
     const viewBox = useViewBox()
-
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x: props.x,
-      y: props.y,
-    })
-
-    onMounted(() => {
-      addLine(settings)
-    })
-    onUnmounted(() => {
-      removeLine(settings)
-    })
 
     const xAxisSettings = useAppSelector(state => selectXAxisSettings(state, props.xAxisId))
     const yAxisSettings = useAppSelector(state => selectYAxisSettings(state, props.yAxisId))
@@ -148,5 +138,29 @@ export const ReferenceLine = defineComponent({
         </Layer>
       )
     }
+  },
+})
+
+export const ReferenceLine = defineComponent({
+  name: 'ReferenceLine',
+  props: ReferenceLineVueProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    const { addLine, removeLine } = useChartReferenceElements()
+    const settings = reactive({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x: props.x,
+      y: props.y,
+    })
+
+    addLine(settings)
+    onUnmounted(() => {
+      removeLine(settings)
+    })
+
+    const View = useDeferredView(ReferenceLineView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

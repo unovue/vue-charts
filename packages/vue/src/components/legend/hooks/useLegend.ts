@@ -18,7 +18,7 @@ import type { LegendProps } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
 export function useLegend(props: LegendProps) {
-  const { setLegendSize, setLegendSettings } = useChartLegend()
+  const { setLegendSize } = useChartLegend()
   const contextPayload = useAppSelector(selectLegendPayload)
   const legendPortalFromContext = useLegendPortal()
   const margin = useMargin()
@@ -148,17 +148,6 @@ export function useLegend(props: LegendProps) {
   // Determine portal target
   const legendPortal = computed(() => props.portal ?? legendPortalFromContext?.value)
 
-  // Report settings to chart state
-  const syncSettings = () => {
-    setLegendSettings({
-      layout: resolvedLayout.value,
-      align: props.align!,
-      verticalAlign: props.verticalAlign!,
-      position: props.position,
-      offset: props.offset,
-    })
-  }
-
   // Report size to chart state
   const syncSize = () => {
     if (!shouldReportDimensions.value) {
@@ -179,7 +168,6 @@ export function useLegend(props: LegendProps) {
     legendPortal,
     resolvedLayout,
     positionViewBox,
-    syncSettings,
     syncSize,
   }
 }

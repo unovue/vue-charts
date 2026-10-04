@@ -1,5 +1,7 @@
+import { Fragment, computed, defineComponent, h } from 'vue'
+import type { PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
-import { Fragment, computed, defineComponent } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -20,11 +22,16 @@ function getLegendItemColor(stroke: string | undefined, fill: string | undefined
   return fill
 }
 
-export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
-  name: 'RadialBar',
-  props: RadialBarVueProps,
+const RadialBarView = defineComponent({
+  name: 'RadialBarView',
   inheritAttrs: false,
-  setup(props, { slots }) {
+  props: {
+    item: { type: Object as PropType<RadialBarPropsWithSVG>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const tooltip = useChartTooltip()
 
     const radialBarSettings = computed<RadialBarSettings>(() => ({
@@ -34,24 +41,6 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
       maxBarSize: props.maxBarSize,
       barSize: props.barSize,
     }))
-
-    SetPolarGraphicalItem(computed(() => ({
-      type: 'radialBar' as const,
-      data: undefined,
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: props.angleAxisId,
-      radiusAxisId: props.radiusAxisId,
-      barSize: props.barSize,
-      stackId: props.stackId,
-      minPointSize: props.minPointSize,
-      maxBarSize: props.maxBarSize,
-    })))
-
-    const legendPayload = useAppSelector(state =>
-      selectRadialBarLegendPayload(state, props.legendType),
-    )
-    SetLegendPayload(computed(() => legendPayload.value ?? []))
 
     const sectors = useAppSelector(state =>
       selectRadialBarSectors(
@@ -254,5 +243,33 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
         </Fragment>
       )
     }
+  },
+})
+
+export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
+  name: 'RadialBar',
+  props: RadialBarVueProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    SetPolarGraphicalItem(computed(() => ({
+      type: 'radialBar' as const,
+      data: undefined,
+      dataKey: props.dataKey,
+      hide: props.hide,
+      angleAxisId: props.angleAxisId,
+      radiusAxisId: props.radiusAxisId,
+      barSize: props.barSize,
+      stackId: props.stackId,
+      minPointSize: props.minPointSize,
+      maxBarSize: props.maxBarSize,
+    })))
+
+    const legendPayload = useAppSelector(state =>
+      selectRadialBarLegendPayload(state, props.legendType),
+    )
+    SetLegendPayload(computed(() => legendPayload.value ?? []))
+
+    const View = useDeferredView(RadialBarView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

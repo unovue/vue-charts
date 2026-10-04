@@ -1,4 +1,7 @@
-import { Teleport, defineComponent } from 'vue'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { defineComponent, h } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { Label } from '@/components/label/Label'
 import { LabelListVueProps } from '@/components/label/types'
 import { parseViewBox } from '@/components/label/utils'
@@ -8,9 +11,17 @@ import { Layer } from '@/container/Layer'
 import { isNullish } from '@/utils'
 import { getValueByDataKey } from '@/utils/chart'
 
-export const LabelList = defineComponent({
-  props: LabelListVueProps,
-  setup(props, { attrs, slots }) {
+const LabelListView = defineComponent({
+  name: 'LabelListView',
+  inheritAttrs: true,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof LabelListVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const teleport = useLayerTeleport()
     const labelLayerRef = useLabelLayerRef(null)
     const contextData = useCartesianLabelListData(null)
 
@@ -52,11 +63,15 @@ export const LabelList = defineComponent({
         </Layer>
       )
 
-      if (labelLayerRef?.value) {
-        return <Teleport to={labelLayerRef.value}>{content}</Teleport>
-      }
-
-      return content
+      return teleport(content, labelLayerRef)
     }
+  },
+})
+
+export const LabelList = defineComponent({
+  props: LabelListVueProps,
+  setup(props, { attrs, slots }) {
+    const View = useDeferredView(LabelListView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

@@ -1,7 +1,8 @@
+import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
+import { computed, defineComponent, h, ref, watch } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { computed, defineComponent, ref, watch } from 'vue'
-import type { SlotsType } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
@@ -19,16 +20,24 @@ import { PieVueProps } from './type'
 
 const LABEL_OFFSET = 20
 
-export const Pie = defineComponent<PiePropsWithSVG>({
-  name: 'Pie',
-  props: PieVueProps,
+const PieView = defineComponent({
+  name: 'PieView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<PiePropsWithSVG>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
+  },
   slots: Object as SlotsType<{
     shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
-    const data = useTrackedData(() => props.data)
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
+    const pieSettings = view.pieSettings
     const tooltip = useChartTooltip()
     const isControlled = computed(() => props.activeIndex !== -1)
     const activeIndex = ref(props.activeIndex)
@@ -36,39 +45,9 @@ export const Pie = defineComponent<PiePropsWithSVG>({
       activeIndex.value = val
     })
 
-    const pieSettings = computed<ResolvedPieSettings>(() => ({
-      data: data.value,
-      dataKey: props.dataKey,
-      nameKey: props.nameKey,
-      cx: props.cx,
-      cy: props.cy,
-      innerRadius: props.innerRadius,
-      outerRadius: props.outerRadius,
-      startAngle: props.startAngle,
-      endAngle: props.endAngle,
-      paddingAngle: props.paddingAngle,
-      minAngle: props.minAngle,
-      fill: props.fill,
-      legendType: props.legendType,
-      tooltipType: props.tooltipType,
-      presentationProps: {},
-    }))
-
-    SetPolarGraphicalItem(computed(() => ({
-      type: 'pie' as const,
-      data: data.value ?? [],
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: 0,
-      radiusAxisId: 0,
-    })))
-
     const displayedData = useAppSelector(state => selectDisplayedData(state, pieSettings.value))
     const synchronisedSettings = useAppSelector(state => selectSynchronisedPieSettings(state, pieSettings.value))
     const offset = useAppSelector(state => selectChartOffset(state))
-
-    const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
-    SetLegendPayload(computed(() => legendPayload.value ?? []))
 
     const sectors = computed(() => {
       if (synchronisedSettings.value == null || displayedData.value == null) {
@@ -210,5 +189,50 @@ export const Pie = defineComponent<PiePropsWithSVG>({
         </Layer>
       )
     }
+  },
+})
+
+export const Pie = defineComponent<PiePropsWithSVG>({
+  name: 'Pie',
+  props: PieVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<{
+    shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
+    default?: () => any
+  }>,
+  setup(props, { attrs, slots }) {
+    const data = useTrackedData(() => props.data)
+    const pieSettings = computed<ResolvedPieSettings>(() => ({
+      data: data.value,
+      dataKey: props.dataKey,
+      nameKey: props.nameKey,
+      cx: props.cx,
+      cy: props.cy,
+      innerRadius: props.innerRadius,
+      outerRadius: props.outerRadius,
+      startAngle: props.startAngle,
+      endAngle: props.endAngle,
+      paddingAngle: props.paddingAngle,
+      minAngle: props.minAngle,
+      fill: props.fill,
+      legendType: props.legendType,
+      tooltipType: props.tooltipType,
+      presentationProps: {},
+    }))
+
+    SetPolarGraphicalItem(computed(() => ({
+      type: 'pie' as const,
+      data: data.value ?? [],
+      dataKey: props.dataKey,
+      hide: props.hide,
+      angleAxisId: 0,
+      radiusAxisId: 0,
+    })))
+
+    const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
+    SetLegendPayload(computed(() => legendPayload.value ?? []))
+
+    const View = useDeferredView(PieView)
+    return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)
   },
 })

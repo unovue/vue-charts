@@ -1,5 +1,6 @@
-import { defineComponent, onUnmounted, watch } from 'vue'
-import type { PropType, SlotsType } from 'vue'
+import { defineComponent, h, onUnmounted, watch } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useAppSelector } from '@/state/hooks'
 import { useChartPolarAxis } from '@/state/chartContext'
 import type { AngleAxisSettings } from '@/state/chartPolarAxis'
@@ -32,59 +33,36 @@ function getTickVerticalAnchor(coordinate: number): string {
   return 'middle'
 }
 
-export const PolarAngleAxis = defineComponent({
-  name: 'PolarAngleAxis',
+const PolarAngleAxisViewProps = {
+  angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
+  tick: { type: Boolean, default: true },
+  tickLine: { type: Boolean, default: true },
+  tickSize: { type: Number, default: 8 },
+  axisLine: { type: Boolean, default: true },
+  axisLineType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
+  orientation: { type: String as PropType<'inner' | 'outer'>, default: 'outer' },
+  tickFormatter: { type: Function as PropType<(value: any, index: number) => string>, default: undefined },
+  ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
+  stroke: { type: String, default: undefined },
+  type: { type: String as PropType<'category' | 'number'>, default: 'category' },
+  domain: { type: Array as PropType<AxisDomain>, default: undefined },
+  tickCount: { type: Number, default: undefined },
+}
+
+const PolarAngleAxisView = defineComponent({
+  name: 'PolarAngleAxisView',
+  inheritAttrs: true,
   props: {
-    angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
-    tick: { type: Boolean, default: true },
-    tickLine: { type: Boolean, default: true },
-    tickSize: { type: Number, default: 8 },
-    axisLine: { type: Boolean, default: true },
-    axisLineType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
-    orientation: { type: String as PropType<'inner' | 'outer'>, default: 'outer' },
-    tickFormatter: { type: Function as PropType<(value: any, index: number) => string>, default: undefined },
-    ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
-    stroke: { type: String, default: undefined },
-    type: { type: String as PropType<'category' | 'number'>, default: 'category' },
-    domain: { type: Array as PropType<AxisDomain>, default: undefined },
-    tickCount: { type: Number, default: undefined },
+    item: { type: Object as PropType<ExtractPropTypes<typeof PolarAngleAxisViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   slots: Object as SlotsType<{
     tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
   }>,
-  setup(props, { slots }) {
-    const { addAngleAxis, removeAngleAxis } = useChartPolarAxis()
-
-    let prevSettings: AngleAxisSettings | null = null
-    watch(() => ({
-      id: props.angleAxisId,
-      type: props.type,
-      dataKey: props.dataKey,
-      scale: 'auto' as const,
-      allowDuplicatedCategory: true,
-      allowDataOverflow: false,
-      reversed: false,
-      includeHidden: false,
-      domain: props.domain,
-      unit: undefined,
-      name: undefined,
-      allowDecimals: false,
-      tickCount: props.tickCount,
-      ticks: props.ticks,
-      tick: props.tick,
-    }), (settings) => {
-      addAngleAxis(settings)
-      prevSettings = settings
-    }, { immediate: true })
-
-    onUnmounted(() => {
-      if (prevSettings) {
-        removeAngleAxis(prevSettings)
-        prevSettings = null
-      }
-    })
-
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
     const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
     const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'angleAxis', props.angleAxisId, false))
 
@@ -167,5 +145,48 @@ export const PolarAngleAxis = defineComponent({
         </g>
       )
     }
+  },
+})
+
+export const PolarAngleAxis = defineComponent({
+  name: 'PolarAngleAxis',
+  props: PolarAngleAxisViewProps,
+  slots: Object as SlotsType<{
+    tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
+  }>,
+  setup(props, { attrs, slots }) {
+    const { addAngleAxis, removeAngleAxis } = useChartPolarAxis()
+
+    let prevSettings: AngleAxisSettings | null = null
+    watch(() => ({
+      id: props.angleAxisId,
+      type: props.type,
+      dataKey: props.dataKey,
+      scale: 'auto' as const,
+      allowDuplicatedCategory: true,
+      allowDataOverflow: false,
+      reversed: false,
+      includeHidden: false,
+      domain: props.domain,
+      unit: undefined,
+      name: undefined,
+      allowDecimals: false,
+      tickCount: props.tickCount,
+      ticks: props.ticks,
+      tick: props.tick,
+    }), (settings) => {
+      addAngleAxis(settings)
+      prevSettings = settings
+    }, { immediate: true })
+
+    onUnmounted(() => {
+      if (prevSettings) {
+        removeAngleAxis(prevSettings)
+        prevSettings = null
+      }
+    })
+
+    const View = useDeferredView(PolarAngleAxisView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })

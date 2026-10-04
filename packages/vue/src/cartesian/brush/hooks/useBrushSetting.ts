@@ -1,4 +1,4 @@
-import { watch } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import type { BrushProps } from '../type'
 import { useChartBrush, useChartDataActions } from '@/state/chartContext'
 
@@ -15,12 +15,12 @@ export function useBrushSetting(props: BrushProps) {
     width: props.width,
     height: props.height!,
     padding: props.padding!,
-  }), (settings, _, onCleanup) => {
+  }), (settings) => {
     setBrushSettings(settings)
-    onCleanup(() => {
-      setBrushSettings(null)
-    })
   }, { immediate: true })
+
+  // SSR stops watches immediately; clear settings only on an actual unmount.
+  onUnmounted(() => setBrushSettings(null))
 
   watch([() => props.startIndex, () => props.endIndex], ([startIndex, endIndex]) => {
     data.setRange({ startIndex, endIndex })

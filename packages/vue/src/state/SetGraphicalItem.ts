@@ -13,6 +13,8 @@ type SetCartesianGraphicalItemProps = Partial<Omit<CartesianGraphicalItemSetting
 export function SetCartesianGraphicalItem(_props: MaybeRef<SetCartesianGraphicalItemProps>) {
   const { addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem } = useChartGraphicalItems()
   let preSetting: CartesianGraphicalItemSettings | null = null
+  // Nested ErrorBars register after the series shell. Sync watches stay active during SSR
+  // and update the domain inputs before any deferred geometry is rendered.
   watch(() => ({ ...unref(_props) }), (props) => {
     const settings: CartesianGraphicalItemSettings = {
       ...(props as CartesianGraphicalItemSettings),
@@ -25,7 +27,7 @@ export function SetCartesianGraphicalItem(_props: MaybeRef<SetCartesianGraphical
     else if (preSetting !== settings) {
       preSetting = replaceCartesianGraphicalItem({ prev: preSetting, next: settings })
     }
-  }, { immediate: true })
+  }, { immediate: true, flush: 'sync' })
   onUnmounted(() => {
     if (preSetting) {
       removeCartesianGraphicalItem(preSetting)
