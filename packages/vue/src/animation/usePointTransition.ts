@@ -1,6 +1,6 @@
 import { computed, shallowRef, watch } from 'vue'
 import type { Point } from '@/shape/Curve'
-import type { ChartTransition } from './motion'
+import type { ChartTransition, PhaseTiming } from './motion'
 import { useAnimationCallbacks } from './useAnimationCallbacks'
 import { useKeyedTransition } from './useKeyedTransition'
 
@@ -38,6 +38,10 @@ export function usePointTransition<T extends Point>(
     valueAxis?: () => 'x' | 'y'
     isActive: () => boolean
     transition: () => ChartTransition | undefined
+    /** Timing of the first appearance, e.g. a line drawing itself. */
+    entrance?: PhaseTiming
+    /** Play the first appearance after hydration; the server renders it undrawn. */
+    entranceAfterHydration?: boolean
     onStart: () => void
     onEnd: () => void
   },
@@ -97,6 +101,8 @@ export function usePointTransition<T extends Point>(
     isActive: options.isActive,
     connected: true,
     transition: options.transition,
+    entrance: options.entrance,
+    entranceAfterHydration: options.entranceAfterHydration,
     onStart: () => {
       if (target()?.length || appeared)
         callbacks.onStart()

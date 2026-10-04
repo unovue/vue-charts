@@ -2,10 +2,10 @@ import type { AnimationPlaybackControls } from 'motion-dom'
 import { animate } from 'motion-v'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import type { ShallowRef } from 'vue'
-import { onScopeDispose, shallowRef, watch } from 'vue'
+import { nextTick, onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { motionTokens } from './motion'
-import { shouldSkipEntrance, useChartGesture, useChartSize, useSeriesMotion } from './renderPhase'
+import { isServerRender, shouldSkipEntrance, useChartGesture, useChartSize, useSeriesMotion } from './renderPhase'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
 
@@ -41,6 +41,13 @@ export interface KeyedTransitionOptions<T> {
   followsSeries?: boolean
   /** A user `transition` prop. When set, every phase follows it instead of the motion tokens. */
   transition?: () => ChartTransition | undefined
+  /** Timing of the first appearance instead of the `enter` token, e.g. a line drawing itself. */
+  entrance?: PhaseTiming
+  /**
+   * Play the entrance after hydration instead of showing the final state at once. The server
+   * renders the entrance's start (e.g. a line not drawn yet), so hydration matches it.
+   */
+  entranceAfterHydration?: boolean
   onStart?: () => void
   onEnd?: () => void
 }
@@ -88,6 +95,7 @@ export function useKeyedTransition<T>(
   const isAnimating = shallowRef(false)
   const reducedMotion = usePreferredReducedMotion()
   let skipEntrance = shouldSkipEntrance()
+  const onServer = isServerRender()
   let hasEntered = false
   // A resize moves everything at once and repeats every frame while a box eases its size; the
   // chart then follows its box directly instead of trailing it.
@@ -212,7 +220,33 @@ export function useKeyedTransition<T>(
       return
     const { next, active, reduced, size, dragging } = state
     const nextItems = next ?? []
-    const skip = skipEntrance && !hasEntered
+    let skip = skipEntrance && !hasEntered
+    if (skip && options.entranceAfterHydration && active && nextItems.length) {
+      const start = plan(nextItems).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
+      if (onServer) {
+        // The server sends the entrance's start; the client plays it after hydration.
+        items.value = start
+        skipEntrance = false
+        return
+      }
+      if (reduced === 'reduce') {
+        // Hydrate the server's start state, then show the final state at once.
+        items.value = start
+        skipEntrance = false
+        nextTick(() => snap(nextItems))
+        hasEntered = true
+        return
+      }
+      if (size === undefined) {
+        // Hydrated but not measured yet: keep the server's start and draw once the real size
+        // is known, so the entrance does not slide from the initial size.
+        items.value = start
+        return
+      }
+      // Start the entrance from the measured layout, not from the server's initial one.
+      items.value = []
+      skip = false
+    }
     // A new size snaps. The first measurement replaces the initial size: an entrance still in
     // flight re-targets to it, but anything else (a hydrated server render, or a small update
     // after mount) snaps, instead of sliding from the initial size to the measured one.
@@ -228,7 +262,7 @@ export function useKeyedTransition<T>(
     const steps = plan(nextItems)
     // The very first appearance uses the enter timing for every item.
     const first = !hasEntered
-    const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[first ? 'enter' : options.connected ? 'update' : phase]
+    const timing = (phase: TransitionPhase): PhaseTiming => first ? options.entrance ?? motionTokens.enter : motionTokens[options.connected ? 'update' : phase]
     hasEntered = true
     stop()
     // A change that interrupts the entrance (axes registering after mount) continues it.

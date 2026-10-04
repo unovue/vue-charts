@@ -56,8 +56,12 @@ describe('responsive server rendering', () => {
     expect(warnings).not.toHaveBeenCalled()
     expect(errors).not.toHaveBeenCalled()
     const before = container.querySelector('.v-charts-bar-rectangle path')!.outerHTML
+    // Shown only at its real size: the server's guessed size would draw a squashed chart.
+    const box = container.querySelector('svg')!.parentElement as HTMLElement
+    expect(box.style.visibility).toBe('hidden')
     MockResizeObserver.instances.at(-1)!.trigger(800, 400)
     await nextTick()
+    expect(box.style.visibility).toBe('')
     expect(container.querySelector('svg')!.getAttribute('width')).toBe('800')
     expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 800 400')
     expect(container.querySelector('.v-charts-bar-rectangle path')!.outerHTML).not.toBe(before)

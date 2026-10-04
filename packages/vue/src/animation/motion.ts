@@ -21,6 +21,11 @@ export const motionTokens = {
   enter: { duration: 0.6, ease: easeOutQuint },
   /** Data changes: same curve, shorter, so interruptions feel responsive. */
   update: { duration: 0.5, ease: easeOutQuint },
+  /**
+   * A line drawing itself on first appearance: its tip travels the curve, so it starts gently,
+   * moves evenly and lands softly, slow enough to follow.
+   */
+  draw: { duration: 1, ease: cubicBezier(0.65, 0, 0.35, 1) },
   /** Removed elements: the same curve, shorter still, so they clear the way for the rest. */
   exit: { duration: 0.3, ease: easeOutQuint },
 } satisfies Record<string, PhaseTiming>

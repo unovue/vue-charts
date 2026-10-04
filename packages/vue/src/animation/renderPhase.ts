@@ -46,7 +46,7 @@ export function useChartSize(): () => string | undefined {
 }
 
 /** Vue's server renderer provides an SSR context to the app; a client app has none. */
-function isServerRender(): boolean {
+export function isServerRender(): boolean {
   return inject(ssrContextKey, null) != null
 }
 

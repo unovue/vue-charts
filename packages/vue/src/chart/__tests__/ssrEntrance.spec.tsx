@@ -39,8 +39,7 @@ function parse(html: string) {
 function geometry(container: HTMLElement) {
   return {
     bars: Array.from(container.querySelectorAll('.v-charts-bar-rectangle path'), p => p.getAttribute('d')),
-    line: container.querySelector('.v-charts-line-curve')?.getAttribute('stroke-dashoffset') ?? null,
-    lineSweep: container.querySelector('clipPath[id^="line-anim-"] rect')?.getAttribute('width') ?? null,
+    lineDrawn: container.querySelector('.v-charts-line-curve')?.getAttribute('stroke-dasharray') ?? 'complete',
     lineVisible: container.querySelector('.v-charts-line-curve') != null,
     area: container.querySelector('.v-charts-area-area')?.getAttribute('d') ?? null,
   }
@@ -50,12 +49,13 @@ describe('entrance animation and server rendering', () => {
   it('renders the final chart on the server with animations enabled', async () => {
     const shown = geometry(parse(await renderToString(createSSRApp({ render }))))
     expect(shown.bars).toHaveLength(2)
-    expect(shown.lineVisible).toBe(true)
-    expect(shown.line).toBeNull()
     expect(shown.area).not.toBeNull()
+    // Lines draw themselves after hydration, like Recharts; the server sends them undrawn.
+    expect(shown.lineVisible).toBe(true)
+    expect(shown.lineDrawn).toBe('0 1')
   })
 
-  it('keeps hydrated content in place instead of replaying the entrance', async () => {
+  it('keeps hydrated content in place and lets the line draw itself', async () => {
     const render = renderLines
     const html = await renderToString(createSSRApp({ render }))
     const container = parse(html)
@@ -65,7 +65,11 @@ describe('entrance animation and server rendering', () => {
     await nextTick()
     await new Promise(resolve => requestAnimationFrame(resolve))
     await nextTick()
-    expect(geometry(container)).toEqual(geometry(parse(html)))
+    const server = geometry(parse(html))
+    const hydrated = geometry(container)
+    expect(hydrated.area).toBe(server.area)
+    // Drawing has just begun.
+    expect(Number(hydrated.lineDrawn.split(' ')[0])).toBeLessThan(0.1)
     app.unmount()
     container.remove()
   })
@@ -117,8 +121,7 @@ describe('entrance animation and server rendering', () => {
     // motion-v does not advance in JSDOM: an entering chart stays at its start frame.
     const start = geometry(container)
     expect(start.bars).toHaveLength(0)
-    expect(start.line).toBeNull()
-    expect(start.lineSweep).toBe('0')
+    expect(start.lineDrawn).toBe('0 1')
     app.unmount()
     container.remove()
     vi.restoreAllMocks()

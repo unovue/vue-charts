@@ -271,25 +271,50 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
         const path = container.querySelector(`.v-charts-${kind}-curve`)!.getAttribute('d')!
         expect(path.match(/M/g)).toHaveLength(2)
       })
-      it('sweeps the curve and dots together with no dashoffset reveal', async () => {
-        const view = setup()
-        await nextTick()
-        const dot = view.nodes()[0]
-        const swept = dot.closest('g[clip-path*="anim"]')!
-        expect(swept).not.toBeNull()
-        expect(swept.querySelector(`.v-charts-${kind}-curve`)).not.toBeNull()
-        expect(view.container.querySelector('[stroke-dashoffset]')).toBeNull()
-        const rect = view.container.querySelector('clipPath[id*="anim"] rect')!
-        expect(rect.getAttribute('width')).toBe('0')
-        await frame(0.3)
-        expect(Number(rect.getAttribute('width'))).toBeGreaterThan(0)
-        expect(Number(rect.getAttribute('width'))).toBeLessThan(351)
-        await frame()
-        expect(view.nodes()[0]).toBe(dot)
-        expect(Number(rect.getAttribute('width'))).toBeGreaterThan(300)
-        expect(view.start).toHaveBeenCalledTimes(1)
-        expect(view.end).toHaveBeenCalledTimes(1)
-      })
+      // Lines draw themselves along their length; areas sweep their fill and outline.
+      if (kind === 'line') {
+        it('draws the curve along its length and shows each dot when the tip reaches it', async () => {
+          const view = setup()
+          await nextTick()
+          const curve = view.container.querySelector(`.v-charts-${kind}-curve`)!
+          const dots = () => [...view.container.querySelectorAll('.v-charts-line-dots > g')].map(dot => dot.getAttribute('opacity'))
+          expect(curve.getAttribute('pathLength')).toBe('1')
+          expect(curve.getAttribute('stroke-dasharray')).toBe('0 1')
+          expect(dots().every(opacity => opacity === '0')).toBe(true)
+          await frame(0.5)
+          const drawn = Number(curve.getAttribute('stroke-dasharray')!.split(' ')[0])
+          expect(drawn).toBeGreaterThan(0.2)
+          expect(drawn).toBeLessThan(0.8)
+          expect(dots()[0]).toBe('1')
+          expect(dots().at(-1)).toBe('0')
+          await frame()
+          expect(curve.getAttribute('stroke-dasharray')).toBeNull()
+          expect(dots().every(opacity => opacity == null)).toBe(true)
+          expect(view.start).toHaveBeenCalledTimes(1)
+          expect(view.end).toHaveBeenCalledTimes(1)
+        })
+      }
+      else {
+        it('sweeps the curve and dots together with no dashoffset reveal', async () => {
+          const view = setup()
+          await nextTick()
+          const dot = view.nodes()[0]
+          const swept = dot.closest('g[clip-path*="anim"]')!
+          expect(swept).not.toBeNull()
+          expect(swept.querySelector(`.v-charts-${kind}-curve`)).not.toBeNull()
+          expect(view.container.querySelector('[stroke-dashoffset]')).toBeNull()
+          const rect = view.container.querySelector('clipPath[id*="anim"] rect')!
+          expect(rect.getAttribute('width')).toBe('0')
+          await frame(0.3)
+          expect(Number(rect.getAttribute('width'))).toBeGreaterThan(0)
+          expect(Number(rect.getAttribute('width'))).toBeLessThan(351)
+          await frame()
+          expect(view.nodes()[0]).toBe(dot)
+          expect(Number(rect.getAttribute('width'))).toBeGreaterThan(300)
+          expect(view.start).toHaveBeenCalledTimes(1)
+          expect(view.end).toHaveBeenCalledTimes(1)
+        })
+      }
     }
   })
 }

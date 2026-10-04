@@ -10,7 +10,7 @@ import { getValueByDataKey, isClipDot } from '@/utils/chart'
 import { Dot } from '@/shape/Dot'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
-import { labelOpacity, sweptLabels } from '@/animation/ridingLabels'
+import { labelOpacity, sweepShare, sweptLabels } from '@/animation/ridingLabels'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
 import { useAreaContext } from './hooks/useArea'
@@ -106,7 +106,7 @@ export const StaticArea = defineComponent({
     const labels = computed(() => sweptLabels(display.items.value.map((item) => {
       const opacity = props.hide ? 1 - (item.progress ?? 1) : labelOpacity(item)
       return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
-    }), display.reveal.value, sweep.value))
+    }), display.reveal.value, point => sweepShare(sweep.value.vertical ? point.y : point.x, sweep.value.start, sweep.value.size)))
 
     return () => {
       // Folded flat, a hidden area would still draw its stroke along the baseline.

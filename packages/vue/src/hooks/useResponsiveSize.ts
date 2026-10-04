@@ -43,10 +43,16 @@ export function useResponsiveSize(props: ChartSizeProps) {
   const hasValidSize = computed(() => validateWidthHeight({ width: effectiveWidth.value, height: effectiveHeight.value }))
   // The first measurement replaces the initial size; it is not a resize the user sees.
   provideChartSize(() => !isResponsive.value || measured.value ? `${effectiveWidth.value}x${effectiveHeight.value}` : undefined)
-  /** Style of the measured box: fixed dimensions in px, the others fill the parent or follow `aspect`. */
+  /**
+   * Style of the measured box: fixed dimensions in px, the others fill the parent or follow
+   * `aspect`. A responsive chart stays invisible until it has measured itself: the server's
+   * guess at its size would show as a squashed or stretched chart, so it appears at its real
+   * size and plays its entrance there. The box keeps its place in the layout meanwhile.
+   */
   const boxStyle = computed<CSSProperties>(() => ({
     position: 'relative',
     cursor: 'default',
+    ...(isResponsive.value && !measured.value ? { visibility: 'hidden' as const } : {}),
     width: fixedWidth.value === undefined ? '100%' : `${fixedWidth.value}px`,
     height: fixedHeight.value === undefined ? (props.aspect ? 'auto' : '100%') : `${fixedHeight.value}px`,
     aspectRatio: fixedHeight.value === undefined ? props.aspect : undefined,

@@ -11,7 +11,8 @@ import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
 import { usePointTransition } from '@/animation/usePointTransition'
-import { labelOpacity, sweptLabels } from '@/animation/ridingLabels'
+import { labelOpacity, lengthShares, sweptLabels } from '@/animation/ridingLabels'
+import { motionTokens } from '@/animation/motion'
 import { SweepClip } from '@/animation/SweepClip'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
@@ -23,6 +24,8 @@ export const Dots = defineComponent({
     keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },
     indices: { type: Array as PropType<number[]>, default: () => [] },
     exiting: { type: Array as PropType<boolean[]>, default: () => [] },
+    /** Below 1 while a dot appears behind the tip of a line drawing itself. */
+    opacities: { type: Array as PropType<(number | undefined)[]>, default: () => [] },
     points: {
       type: Array as PropType<ReadonlyArray<Point>>,
       default: () => [],
@@ -57,9 +60,9 @@ export const Dots = defineComponent({
               const handlers = exiting ? {} : listeners(point as LinePointItem, index)
               const pointAsLine = point as LinePointItem
               if (dotSlot) {
-                return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
+                return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
               }
-              return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
+              return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
             })
           }
         </Layer>
@@ -87,21 +90,31 @@ export const StaticLine = defineComponent({
       },
       isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
+      // The line draws itself along its length, also after hydration (the server sends it
+      // undrawn), like Recharts.
+      entrance: motionTokens.draw,
+      entranceAfterHydration: true,
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),
     })
     watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
-    const sweep = computed(() => layout.value === 'vertical'
-      ? { start: offset.value.top - 8, size: offset.value.height + 16, vertical: true }
-      : { start: offset.value.left - 8, size: offset.value.width + 16, vertical: false })
-    // Labels ride along with the points as drawn, appear as the sweep reaches them and fade
+    // Where the tip of the drawing line reaches each point, as a share of the line's length.
+    const reached = computed(() => lengthShares(display.points.value))
+    // Labels ride along with the points as drawn, appear as the tip reaches them and fade
     // with points that enter or leave.
     watch(() => sweptLabels(display.items.value.map((item) => {
       const opacity = labelOpacity(item)
       return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
-    }), display.reveal.value, sweep.value), (value) => {
+    }), display.reveal.value, (_, index) => reached.value[index]), (value) => {
       labelData.value = value
     }, { immediate: true, flush: 'sync' })
+    /** Dots pop in just behind the tip while the line draws itself. */
+    const dotOpacities = computed(() => {
+      const reveal = display.reveal.value
+      if (reveal >= 1)
+        return []
+      return reached.value.map(at => at == null ? 0 : Math.min(1, Math.max(0, (reveal - at) / 0.04)))
+    })
     return () => {
       const curveProps = {
         ...attrs,
@@ -114,6 +127,11 @@ export const StaticLine = defineComponent({
         'layout': layout.value === 'vertical' ? 'vertical' as const : 'horizontal' as const,
         'class': 'v-charts-line-curve',
       }
+      const reveal = display.reveal.value
+      // A drawn line: the stroke grows along the normalised path length, so its tip travels the
+      // curve. A custom shape may not pass dash attributes on, so it keeps the sweep clip.
+      const drawing = reveal < 1 && !shapeSlot
+      const drawnCurveProps = drawing ? { ...curveProps, 'pathLength': 1, 'stroke-dasharray': `${reveal} 1` } : curveProps
       const sweepId = `line-anim-${clipPathId.value}`
       const labelProps = typeof props.label === 'object' ? props.label : {}
       return (
@@ -129,11 +147,11 @@ export const StaticLine = defineComponent({
               height={offset.value.height + 16}
             />
           </defs>
-          <g clip-path={display.reveal.value < 1 ? `url(#${sweepId})` : undefined}>
+          <g clip-path={reveal < 1 && shapeSlot ? `url(#${sweepId})` : undefined}>
             <Layer {...seriesListeners} clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
-              {display.points.value.length > 1 && (shapeSlot ? shapeSlot(curveProps) : <Curve {...curveProps} />)}
+              {display.points.value.length > 1 && (shapeSlot ? shapeSlot(curveProps) : <Curve {...drawnCurveProps} />)}
             </Layer>
-            <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} />
+            <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} opacities={dotOpacities.value} />
           </g>
           {(props.label || labelSlot) && (
             <LabelList
