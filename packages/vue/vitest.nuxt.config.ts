@@ -7,6 +7,5 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 300_000,
     maxWorkers: 1,
-    minWorkers: 1,
   },
 })
