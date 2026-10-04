@@ -226,9 +226,8 @@ const CartesianGridView = defineComponent({
             horizontalPoints={horizontalPoints}
             xAxis={xAxis.value!}
             yAxis={yAxis.value!}
-          >
-            {slots.horizontal ? { horizontal: slots.horizontal } : undefined}
-          </HorizontalGridLines>
+            v-slots={slots.horizontal ? { horizontal: slots.horizontal } : undefined}
+          />
 
           <VerticalGridLines
             {...propsIncludingDefaults}
@@ -236,9 +235,8 @@ const CartesianGridView = defineComponent({
             verticalPoints={verticalPoints}
             xAxis={xAxis}
             yAxis={yAxis}
-          >
-            {slots.vertical ? { vertical: slots.vertical } : undefined}
-          </VerticalGridLines>
+            v-slots={slots.vertical ? { vertical: slots.vertical } : undefined}
+          />
         </g>
       )
     }

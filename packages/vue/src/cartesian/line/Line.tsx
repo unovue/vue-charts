@@ -51,13 +51,6 @@ const LineView = defineComponent({
         return null
       }
 
-      let activeDot
-      if (slots.activeDot) {
-        activeDot = {
-          activeDot: slots.activeDot,
-        }
-      }
-
       const defaultContent = slots.default?.()
 
       const lineContent = (
@@ -77,9 +70,8 @@ const LineView = defineComponent({
               mainColor={attrs.stroke ?? props.stroke!}
               itemDataKey={props.dataKey}
               activeDot={props.activeDot}
-            >
-              {activeDot}
-            </ActivePoints>
+              v-slots={{ activeDot: slots.activeDot }}
+            />
           </Layer>
         </Fragment>
       )

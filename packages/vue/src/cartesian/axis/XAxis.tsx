@@ -50,9 +50,8 @@ const XAxisImpl = defineComponent({
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
           class="v-charts-x-axis"
-        >
-          {slots.tick ? { tick: slots.tick } : undefined}
-        </CartesianAxis>
+          v-slots={slots.tick ? { tick: slots.tick } : undefined}
+        />
       )
     }
   },
@@ -135,9 +134,10 @@ const XAxisSettingsDispatcher = defineComponent({
     })
     const View = useDeferredView(XAxisImpl)
     return () => (
-      <View {...props}>
-        {dispatcherSlots.tick ? { tick: dispatcherSlots.tick } : undefined}
-      </View>
+      <View
+        {...props}
+        v-slots={dispatcherSlots.tick ? { tick: dispatcherSlots.tick } : undefined}
+      />
     )
   },
 })
@@ -230,9 +230,11 @@ const _XAxis = defineComponent({
   },
   setup(props, { attrs, slots }) {
     return () => (
-      <XAxisSettingsDispatcher {...props} {...attrs}>
-        {slots.tick ? { tick: slots.tick } : undefined}
-      </XAxisSettingsDispatcher>
+      <XAxisSettingsDispatcher
+        {...props}
+        {...attrs}
+        v-slots={slots.tick ? { tick: slots.tick } : undefined}
+      />
     )
   },
 })
