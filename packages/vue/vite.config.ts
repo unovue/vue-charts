@@ -45,6 +45,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         nuxt: resolve(__dirname, 'src/nuxt.ts'),
+        resolver: resolve(__dirname, 'src/resolver.ts'),
       },
       formats: ['es'],
     },
