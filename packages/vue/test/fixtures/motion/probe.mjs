@@ -16,6 +16,11 @@ const selectors = {
 function vnodeKey(element) {
   if (element.__vnode?.key != null)
     return String(element.__vnode.key)
+  // The keyed SVG wrapper is a DOM ancestor, not the Dot component's owner.
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    if (parent.__vnode?.key != null)
+      return String(parent.__vnode.key)
+  }
   let owner = element.__vueParentComponent
   while (owner) {
     if (owner.vnode.key != null)
