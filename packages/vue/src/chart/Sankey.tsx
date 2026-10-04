@@ -412,7 +412,7 @@ const _Sankey = defineComponent({
   setup(props, { slots }) {
     provideChartContext(sankeyOptions)
     provideRenderPhase()
-    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
+    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
 
     return () => {
       const { aspect, initialDimension, ...innerProps } = props
@@ -420,7 +420,7 @@ const _Sankey = defineComponent({
         return null
 
       return (
-        <ChartsWrapper isResponsive={isResponsive.value} aspect={props.aspect} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
+        <ChartsWrapper isResponsive={isResponsive.value} boxStyle={boxStyle.value} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
           <SankeyInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>

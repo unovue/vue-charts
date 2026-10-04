@@ -220,7 +220,7 @@ export const SunburstChart = defineComponent({
   setup(props, { slots }) {
     provideChartContext(sunburstOptions)
     provideRenderPhase()
-    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
+    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
 
     return () => {
       const { aspect, initialDimension, ...innerProps } = props
@@ -230,7 +230,7 @@ export const SunburstChart = defineComponent({
       return (
         <ChartsWrapper
           isResponsive={isResponsive.value}
-          aspect={props.aspect}
+          boxStyle={boxStyle.value}
           interactive={!isResponsive.value || measured.value}
           onResize={handleResize}
           width={effectiveWidth.value}

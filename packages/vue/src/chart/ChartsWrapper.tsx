@@ -1,5 +1,5 @@
 import { useChartTooltip } from '@/state/chartContext'
-import { type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { type CSSProperties, type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
@@ -28,7 +28,8 @@ export const ChartsWrapper = defineComponent({
     onTouchMove: { type: Function as PropType<CategoricalChartFunc> },
     onTouchStart: { type: Function as PropType<CategoricalChartFunc> },
     isResponsive: { type: Boolean, default: false },
-    aspect: { type: Number },
+    /** Box style from useResponsiveSize. */
+    boxStyle: { type: Object as PropType<CSSProperties>, required: true },
     interactive: { type: Boolean, default: true },
     style: { type: [String, Object, Array] as PropType<StyleValue> },
     width: { type: Number, required: true },
@@ -138,9 +139,7 @@ export const ChartsWrapper = defineComponent({
       <div
         class={['v-charts-wrapper', props.class]}
         style={[
-          props.isResponsive
-            ? { position: 'relative', cursor: 'default', width: '100%', height: props.aspect ? 'auto' : '100%', aspectRatio: props.aspect }
-            : { position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` },
+          props.boxStyle,
           props.style,
           // Before the first measurement the SVG is scaled by its viewBox, so pointer
           // coordinates would not match chart coordinates.

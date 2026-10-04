@@ -157,7 +157,7 @@ export function generateCategoricalChart({
 
       const clipPathId = provideClipPathId(props)
 
-      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured } = useResponsiveSize(props)
+      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured, boxStyle } = useResponsiveSize(props)
 
       function renderPolarOptions(isPolarChart: boolean) {
         if (!isPolarChart) {
@@ -225,7 +225,7 @@ export function generateCategoricalChart({
             {hasValidSize.value && renderPolarOptions(isPolarChart)}
             <ChartsWrapper
               isResponsive={isResponsive.value}
-              aspect={props.aspect}
+              boxStyle={boxStyle.value}
               interactive={!isResponsive.value || measured.value}
               onResize={handleResize}
               style={props.style}

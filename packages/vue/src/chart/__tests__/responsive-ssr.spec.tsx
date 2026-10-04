@@ -100,3 +100,31 @@ describe('specialized responsive charts', () => {
     container.remove()
   })
 })
+
+// The most common sizing: a fixed height, the width follows the container.
+describe('one fixed dimension', () => {
+  it('keeps a fixed height while the width follows the box', async () => {
+    class DeferredObserver extends MockResizeObserver {
+      observe() {}
+    }
+    MockResizeObserver.instances = []
+    vi.stubGlobal('ResizeObserver', DeferredObserver)
+    const render = () => chart({ height: 300 })
+    const html = await renderToString(createSSRApp({ render }))
+    expect(html).toContain('viewBox="0 0 640 300"')
+    const container = document.createElement('div')
+    container.innerHTML = html
+    document.body.append(container)
+    const app = createSSRApp({ render })
+    app.mount(container)
+    await nextTick()
+    const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+    expect(wrapper.style.height).toBe('300px')
+    expect(wrapper.style.width).toBe('100%')
+    MockResizeObserver.instances.at(-1)!.trigger(800, 0)
+    await nextTick()
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 800 300')
+    app.unmount()
+    container.remove()
+  })
+})

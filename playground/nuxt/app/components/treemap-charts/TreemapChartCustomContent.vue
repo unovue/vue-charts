@@ -38,7 +38,6 @@ const colors = ['#f97316', '#14b8a6', '#f59e0b']
     </CardHeader>
     <CardContent class="flex-1 pb-0">
       <Treemap
-        :width="400"
         :height="250"
         :data="chartData"
         data-key="value"

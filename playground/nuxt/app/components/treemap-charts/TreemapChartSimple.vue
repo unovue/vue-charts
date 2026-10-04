@@ -52,7 +52,6 @@ const chartData = [
     </CardHeader>
     <CardContent class="flex-1 pb-0">
       <Treemap
-        :width="400"
         :height="250"
         :data="chartData"
         data-key="value"
