@@ -70,8 +70,6 @@ export const ChartsWrapper = defineComponent({
     onUnmounted(() => observer?.disconnect())
 
     const myOnClick = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.click(chartPointer)
@@ -80,8 +78,6 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseEnter = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.move(chartPointer)
@@ -90,15 +86,11 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       dispatch(mouseLeaveChart())
       callHandler(props.onMouseLeave, e)
     }
 
     const myOnMouseMove = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.move(chartPointer)
@@ -115,45 +107,31 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnContextMenu = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onContextMenu, e)
     }
 
     const myOnDoubleClick = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onDoubleClick, e)
     }
 
     const myOnMouseDown = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onMouseDown, e)
     }
 
     const myOnMouseUp = (e: MouseEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onMouseUp, e)
     }
 
     const myOnTouchStart = (e: TouchEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onTouchStart, e)
     }
 
     const myOnTouchMove = (e: TouchEvent) => {
-      if (!props.interactive)
-        return
       interactions.touchMove(e)
       callHandler(props.onTouchMove, e)
     }
 
     const myOnTouchEnd = (e: TouchEvent) => {
-      if (!props.interactive)
-        return
       callHandler(props.onTouchEnd, e)
     }
 
@@ -165,6 +143,8 @@ export const ChartsWrapper = defineComponent({
             ? { position: 'relative', cursor: 'default', width: '100%', height: props.aspect ? 'auto' : '100%', aspectRatio: props.aspect }
             : { position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` },
           props.style,
+          // Before the first measurement the SVG is scaled by its viewBox, so pointer
+          // coordinates would not match chart coordinates.
           !props.interactive && { pointerEvents: 'none' },
         ]}
         role="application"
