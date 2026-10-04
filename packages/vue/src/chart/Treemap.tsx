@@ -2,10 +2,11 @@ import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, ref, watch } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent, ref, toRaw, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
@@ -113,8 +114,10 @@ export const TreemapVueProps = {
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
   colorPanel: { type: Array as PropType<string[]>, default: undefined },
+  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
+  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
-  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: () => ({ duration: 0.8, ease: 'easeOut' as const }) },
+  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
   onClick: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
   onMouseEnter: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
   onMouseLeave: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
@@ -136,8 +139,6 @@ const TreemapInner = defineComponent({
     const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
     const currentData = ref<Record<string, any>[] | null>(null)
     const trackedData = useTrackedData(() => props.type === 'nest' ? currentData.value ?? props.data : props.data)
-    // Increment to re-trigger entrance animation on nest navigation
-    const animationKey = ref(0)
 
     const isNestMode = computed(() => props.type === 'nest')
 
@@ -169,6 +170,32 @@ const TreemapInner = defineComponent({
         aspectRatio: props.aspectRatio,
         colorPanel: colors.value,
       })
+    })
+
+    const nodePaths = computed(() => {
+      const paths = new Map<object, string>()
+      const visit = (data: Record<string, unknown>[], parent: string) => {
+        data.forEach((item, index) => {
+          const path = `${parent}/${String(item[props.nameKey] ?? index)}`
+          paths.set(toRaw(item), path)
+          if (Array.isArray(item.children))
+            visit(item.children, path)
+        })
+      }
+      visit(props.data, 'root')
+      return paths
+    })
+    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => item[props.nameKey] === node.name) ?? {})) ?? node.name })), {
+      key: (node, index) => node.path || index,
+      interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, width: from.width + (to.width - from.width) * t, height: from.height + (to.height - from.height) * t }),
+      enterFrom: to => ({ ...to, x: to.x + to.width / 2, y: to.y + to.height / 2, width: 0, height: 0 }),
+      exitTo: from => ({ ...from, x: from.x + from.width / 2, y: from.y + from.height / 2, width: 0, height: 0 }),
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+      onStart: callbacks.onStart,
+
     })
 
     // Build node tree for tooltip payload lookup
@@ -230,7 +257,6 @@ const TreemapInner = defineComponent({
           { name: clickedItem[props.nameKey] ?? clickedItem.name, data: sourceData },
         ]
         currentData.value = clickedItem.children
-        animationKey.value++
       }
 
       props.onClick?.(node, e)
@@ -246,7 +272,6 @@ const TreemapInner = defineComponent({
         currentData.value = entry.data
         breadcrumbTrail.value = breadcrumbTrail.value.slice(0, index)
       }
-      animationKey.value++
     }
 
     function getNodeFill(node: TreemapLayoutNode) {
@@ -291,12 +316,8 @@ const TreemapInner = defineComponent({
       }
     }
 
-    function renderNodeAtProgress(node: TreemapLayoutNode, index: number, progress: number) {
+    function renderNode(node: TreemapLayoutNode, index: number, key: PropertyKey) {
       const nodeFill = getNodeFill(node)
-
-      // Slide-in from left (matching Recharts): translate from (-x - width, 0) to (0, 0)
-      const translateX = (-node.x - node.width) * (1 - progress)
-      const transform = progress < 1 ? `translate(${translateX}, 0)` : undefined
 
       const nodeProps: TreemapContentSlotProps = {
         ...node,
@@ -308,10 +329,9 @@ const TreemapInner = defineComponent({
       if (slots.content) {
         return (
           <g
-            key={`node-${index}`}
+            key={key}
             class="v-charts-treemap-node"
             style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-            transform={transform}
             onClick={(e: MouseEvent) => handleNodeClick(node, e)}
             onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
             onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
@@ -357,10 +377,9 @@ const TreemapInner = defineComponent({
 
       return (
         <g
-          key={`node-${index}`}
+          key={key}
           class="v-charts-treemap-node"
           style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-          transform={transform}
           onClick={(e: MouseEvent) => handleNodeClick(node, e)}
           onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
           onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
@@ -413,18 +432,7 @@ const TreemapInner = defineComponent({
         {renderBreadcrumb()}
         <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
           <Layer class="v-charts-treemap">
-            <Animate
-              key={animationKey.value}
-              isActive={props.isAnimationActive}
-              from={0}
-              to={1}
-              transition={props.transition}
-            >
-              {(progress: number) =>
-                nodes.value.map((node, index) =>
-                  renderNodeAtProgress(node, index, progress),
-                )}
-            </Animate>
+            {items.value.map(({ key, value }, index) => renderNode(value, index, key))}
           </Layer>
         </Surface>
       </>
