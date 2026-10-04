@@ -6,7 +6,8 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
@@ -66,6 +67,27 @@ const PieView = defineComponent({
       return result?.map((sector, i) =>
         cells[i]?.fill != null ? { ...sector, fill: cells[i].fill } : sector,
       )
+    })
+
+    let appeared = false
+    const { items, isAnimating } = useKeyedTransition(() => sectors.value, {
+      key: (sector, index) => sector.name ?? index,
+      connected: true,
+      interpolate: (from, to, t) => ({ ...to, startAngle: from.startAngle + (to.startAngle - from.startAngle) * t, endAngle: from.endAngle + (to.endAngle - from.endAngle) * t, innerRadius: from.innerRadius + (to.innerRadius - from.innerRadius) * t, outerRadius: from.outerRadius + (to.outerRadius - from.outerRadius) * t, paddingAngle: from.paddingAngle + (to.paddingAngle - from.paddingAngle) * t }),
+      enterFrom: (to, { previous, next }) => {
+        const angle = appeared ? previous?.endAngle ?? next?.startAngle ?? to.startAngle : sectors.value?.[0]?.startAngle ?? to.startAngle
+        return { ...to, startAngle: angle, endAngle: angle, paddingAngle: 0 }
+      },
+      exitTo: (from, { previous, next }) => {
+        const angle = previous?.endAngle ?? next?.startAngle ?? from.startAngle
+        return { ...from, startAngle: angle, endAngle: angle, paddingAngle: 0 }
+      },
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onStart: () => {
+        if (sectors.value?.length)
+          appeared = true
+      },
     })
 
     SetTooltipEntrySettings({
@@ -134,58 +156,44 @@ const PieView = defineComponent({
     }
 
     return () => {
-      const sectorList = sectors.value
+      const sectorList = items.value
       if (!sectorList || sectorList.length === 0) {
         return null
       }
       const stroke = (attrs.stroke as string) ?? props.stroke
       return (
         <Layer class={['v-charts-pie', props.class]}>
-          <Animate isActive={props.isAnimationActive} from={0} to={1} transition={props.transition}>
-            {(progress: number) => {
-              // Chain animation: curAngle accumulates so all sectors sweep as one continuous arc
-              let curAngle = sectorList[0]?.startAngle ?? 0
-              const sectorNodes = sectorList.map((sector, i) => {
-                const paddingAngle = i > 0 ? sector.paddingAngle : 0
-                const deltaAngle = (sector.endAngle - sector.startAngle) * progress
-                const animatedStartAngle = curAngle + paddingAngle
-                const animatedEndAngle = curAngle + deltaAngle + paddingAngle
-                curAngle = animatedEndAngle
-
-                const content = slots.shape
-                  ? slots.shape({ ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === i })
-                  : (
-                      <Sector
-                        {...attrs}
-                        cx={sector.cx}
-                        cy={sector.cy}
-                        innerRadius={sector.innerRadius}
-                        outerRadius={sector.outerRadius}
-                        startAngle={animatedStartAngle}
-                        endAngle={animatedEndAngle}
-                        fill={sector.fill}
-                        stroke={stroke}
-                      />
-                    )
-
-                return (
-                  <g
-                    key={`sector-${i}`}
-                    onMouseenter={() => handleSectorEnter(sector, i)}
-                    onMouseleave={handleSectorLeave}
-                  >
-                    {content}
-                  </g>
+          {sectorList.map(({ key, value: sector }, i) => {
+            const animatedStartAngle = sector.startAngle
+            const animatedEndAngle = sector.endAngle
+            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === i }
+            const content = slots.shape
+              ? slots.shape(shapeProps)
+              : (
+                  <Sector
+                    {...attrs}
+                    cx={sector.cx}
+                    cy={sector.cy}
+                    innerRadius={sector.innerRadius}
+                    outerRadius={sector.outerRadius}
+                    startAngle={animatedStartAngle}
+                    endAngle={animatedEndAngle}
+                    fill={sector.fill}
+                    stroke={stroke}
+                  />
                 )
-              })
 
-              if (progress >= 1 && props.label) {
-                sectorNodes.push(...sectorList.map(renderLabel))
-              }
-
-              return sectorNodes
-            }}
-          </Animate>
+            return (
+              <g
+                key={key}
+                onMouseenter={() => handleSectorEnter(sector, i)}
+                onMouseleave={handleSectorLeave}
+              >
+                {content}
+              </g>
+            )
+          })}
+          {!isAnimating.value && props.label && <FadeIn isActive={props.isAnimationActive}>{sectorList.map(({ value }, index) => renderLabel(value, index))}</FadeIn>}
         </Layer>
       )
     }

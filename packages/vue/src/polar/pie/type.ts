@@ -26,7 +26,7 @@ export const PieVueProps = {
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: () => ({ duration: 1.2, ease: 'easeOut' }),
+    default: undefined,
   },
   label: { type: Boolean, default: false },
   class: classProp,
