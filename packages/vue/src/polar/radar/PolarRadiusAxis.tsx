@@ -38,7 +38,7 @@ export const PolarRadiusAxis = defineComponent({
     tickCount: { type: Number, default: 5 },
     domain: { type: Array as PropType<AxisDomain>, default: undefined },
     type: { type: String as PropType<'number' | 'category' | 'auto'>, default: 'auto' },
-    stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
+    stroke: { type: String, default: undefined },
     allowDecimals: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
@@ -116,7 +116,7 @@ export const PolarRadiusAxis = defineComponent({
                   y1={p0.y}
                   x2={p1.x}
                   y2={p1.y}
-                  stroke={stroke}
+                  stroke={stroke ?? 'var(--v-charts-grid, #ccc)'}
                   fill="none"
                 />
               )
@@ -135,7 +135,7 @@ export const PolarRadiusAxis = defineComponent({
                     y={coord.y}
                     textAnchor={textAnchor}
                     verticalAnchor="middle"
-                    fill={stroke}
+                    fill={stroke ?? 'var(--v-charts-text, #ccc)'}
                     angle={90 - angle}
                     value={String(value)}
                   />
