@@ -1,4 +1,4 @@
-import { useId } from 'vue'
+import { useChartId } from '@/hooks/useChartId'
 import { createContext } from '@/utils/createContext'
 import type { CategoricalChartProps } from '@/types'
 
@@ -12,7 +12,7 @@ const [useClipPathId, provideClipPathIdRaw] = createContext<string>(
  * @param props - The props object from the chart component
  */
 export function provideClipPathId(props: CategoricalChartProps) {
-  const generatedId = `v-charts${useId().replace(/[^\w-]/g, '_')}`
+  const generatedId = useChartId('v-charts')
   const clipPathId = `${props.id ?? generatedId}-clip`
   provideClipPathIdRaw(clipPathId)
   return clipPathId

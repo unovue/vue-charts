@@ -1,7 +1,8 @@
+import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartName } from '@/state/selectors/selectors'
 import type { AreaDotSlotProps, AreaProps } from '@/cartesian/area/type'
-import { computed, inject, provide, ref, useId, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
@@ -58,7 +59,7 @@ export function useAreaContext() {
 export function useArea(props: AreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => any) {
   const layout = useChartLayout()
   const chartName = useChartName()
-  const localId = `v-charts-area-${useId().replace(/[^\w-]/g, '_')}`
+  const localId = useChartId('v-charts-area')
   const clipPathId = computed(() => props.id || localId)
   const isPanorama = useIsPanorama()
 

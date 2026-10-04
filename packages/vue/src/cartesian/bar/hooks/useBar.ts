@@ -1,5 +1,6 @@
+import { useChartId } from '@/hooks/useChartId'
 import type { Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, ref, shallowRef, useAttrs, useId } from 'vue'
+import { computed, ref, shallowRef, useAttrs } from 'vue'
 import { createContext } from 'motion-v'
 import type { BarProps } from '../type'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
@@ -43,7 +44,7 @@ export function useBar(props: BarProps, shapeSlot?: (props: any) => any, activeB
     return (layout.value === 'vertical' || layout.value === 'horizontal') && !props.hide
   })
 
-  const clipPathId = `v-charts-bar-${useId().replace(/[^\w-]/g, '_')}`
+  const clipPathId = useChartId('v-charts-bar')
   const isAnimating = ref(false)
   const cellPropsRef = shallowRef<Record<string, any>[]>([])
 

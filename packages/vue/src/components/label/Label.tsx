@@ -1,5 +1,6 @@
+import { useChartId } from '@/hooks/useChartId'
 import type { SlotsType } from 'vue'
-import { defineComponent, useId } from 'vue'
+import { defineComponent } from 'vue'
 import type { LabelSlots } from './types'
 import { LabelVueProps } from './types'
 import { useViewBox } from '@/context/chartLayoutContext'
@@ -13,7 +14,7 @@ export const Label = defineComponent({
   props: LabelVueProps,
   slots: Object as SlotsType<LabelSlots>,
   setup(props, { slots, attrs }) {
-    const radialLabelId = `v-charts-radial-line-${useId().replace(/[^\w-]/g, '_')}`
+    const radialLabelId = useChartId('v-charts-radial-line')
     const viewBoxFromContext = useViewBox()
     const polarLabelViewBox = usePolarLabelViewBox()
 

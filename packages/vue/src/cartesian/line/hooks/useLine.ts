@@ -1,8 +1,9 @@
+import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartName } from '@/state/selectors/selectors'
 import type { LinePointItem, LinePropsInternal } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, inject, provide, useId } from 'vue'
+import { computed, inject, provide } from 'vue'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectLinePoints } from '@/state/selectors/lineSelectors'
@@ -49,7 +50,7 @@ export function useLineContext() {
 export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
   const layout = useChartLayout()
   const chartName = useChartName()
-  const localId = `v-charts-line-${useId().replace(/[^\w-]/g, '_')}`
+  const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
   const isPanorama = useIsPanorama()
 
