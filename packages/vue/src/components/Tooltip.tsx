@@ -1,12 +1,12 @@
 import { useChartTooltip } from '@/state/chartContext'
-import { Fragment, Teleport, computed, defineComponent, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
+import { Fragment, Teleport, computed, defineComponent, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { useChartLayout, useOffsetInternal, useViewBox } from '@/context/chartLayoutContext'
 import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
-import { animate } from 'motion-v'
+import { animate, useSpring } from 'motion-v'
 import type { AnimationOptions, AnimationPlaybackControls } from 'motion-dom'
 import type { TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
 import {
@@ -226,7 +226,7 @@ const TooltipBoundingBox = defineComponent({
   props: {
     allowEscapeViewBox: Object as PropType<AllowInDimension>,
     isAnimationActive: Boolean,
-    transition: { type: Object as PropType<AnimationOptions>, default: () => ({ duration: 0.4, ease: 'easeOut' }) },
+    transition: { type: Object as PropType<AnimationOptions>, default: undefined },
     active: Boolean,
     coordinate: Object as PropType<ChartCoordinate>,
     hasPayload: Boolean,
@@ -261,13 +261,68 @@ const TooltipBoundingBox = defineComponent({
       }
     })
     const el = ref<HTMLDivElement>()
-    // Measured after every transform write instead of through `useElementBounding`:
-    // its ResizeObserver fires on the tooltip's own layout, which feeds back into the
-    // transform that caused it and can loop on every pointer move.
     const tooltipSize = ref({ width: 0, height: 0 })
     let preTransform: CSSProperties | undefined
-    let animationControls: AnimationPlaybackControls | undefined
     const reducedMotion = usePreferredReducedMotion()
+    const spring = computed(() => ({ type: 'spring' as const, stiffness: 500, damping: 40, mass: 1, ...props.transition }))
+    const x = useSpring(0, spring)
+    const y = useSpring(0, spring)
+    const writePosition = () => {
+      if (el.value)
+        el.value.style.transform = `translate(${x.get()}px, ${y.get()}px)`
+    }
+    const offX = x.on('change', writePosition)
+    const offY = y.on('change', writePosition)
+    watch(el, (element, _, cleanup) => {
+      if (!element)
+        return
+      if (typeof ResizeObserver === 'undefined') {
+        const { width, height } = element.getBoundingClientRect()
+        tooltipSize.value = { width, height }
+        return
+      }
+      const observer = new ResizeObserver(([entry]) => {
+        const box = entry.borderBoxSize?.[0]
+        tooltipSize.value = { width: box?.inlineSize ?? entry.contentRect.width, height: box?.blockSize ?? entry.contentRect.height }
+      })
+      observer.observe(element)
+      cleanup(() => observer.disconnect())
+    }, { flush: 'post' })
+    const visible = computed(() => !dismissed.value && props.active && props.hasPayload)
+    const present = ref(false)
+    const content = ref<HTMLDivElement>()
+    let fade: AnimationPlaybackControls | undefined
+    let cachedContent: VNode[] | undefined
+    watchPostEffect(() => {
+      const element = content.value
+      const show = visible.value
+      if (!element)
+        return
+      fade?.stop()
+      if (show)
+        present.value = true
+      if (!props.isAnimationActive) {
+        element.style.opacity = show ? '1' : '0'
+        element.style.transform = 'none'
+        present.value = !!show
+        return
+      }
+      const reduced = reducedMotion.value === 'reduce'
+      fade = animate(element, {
+        opacity: show ? [0, 1] : 0,
+        ...(reduced ? {} : { scale: show ? [0.96, 1] : 1 }),
+      }, { duration: show ? 0.12 : 0.1, onComplete: () => {
+        if (!show)
+          present.value = false
+      } })
+    })
+    onScopeDispose(() => {
+      offX()
+      offY()
+      x.destroy()
+      y.destroy()
+      fade?.stop()
+    })
 
     const currentTransform = computed(() => {
       const { allowEscapeViewBox, coordinate, position, reverseDirection, viewBox } = props
@@ -289,40 +344,35 @@ const TooltipBoundingBox = defineComponent({
       return { cssClasses, cssProperties, transform }
     })
 
-    // Animate transform changes using motion-v's animate()
-    watchPostEffect((onCleanup) => {
-      const element = el.value
-      const transform = currentTransform.value.transform
-      if (!element || !transform?.transform)
+    // Retarget persistent spring values; their current velocity survives pointer changes.
+    watchPostEffect(() => {
+      const transform = currentTransform.value.transform?.transform
+      if (!el.value || typeof transform !== 'string')
         return
-
+      const match = transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/)
+      if (!match)
+        return
+      const nextX = Number(match[1])
+      const nextY = Number(match[2])
       if (props.isAnimationActive && reducedMotion.value !== 'reduce') {
-        animationControls = animate(element, { transform: transform.transform }, props.transition)
+        x.set(nextX)
+        y.set(nextY)
       }
       else {
-        element.style.transform = transform.transform
+        x.jump(nextX)
+        y.jump(nextY)
+        writePosition()
       }
-
-      const width = element.offsetWidth
-      const height = element.offsetHeight
-      if (height > 0 && (width !== tooltipSize.value.width || height !== tooltipSize.value.height)) {
-        tooltipSize.value = { width, height }
-      }
-
-      onCleanup(() => {
-        animationControls?.stop()
-        animationControls = undefined
-      })
     })
 
     return () => {
-      const { active, hasPayload, style } = props
+      const { style } = props
       const { cssClasses, cssProperties } = currentTransform.value
 
       const boundingBoxStyle: CSSProperties = {
         ...cssProperties,
         pointerEvents: 'none',
-        visibility: !dismissed.value && active && hasPayload ? 'visible' : 'hidden',
+        visibility: present.value || visible.value ? 'visible' : 'hidden',
         position: 'absolute',
         top: '0px',
         left: '0px',
@@ -337,7 +387,9 @@ const TooltipBoundingBox = defineComponent({
           style={boundingBoxStyle}
           ref={el}
         >
-          {slots.default?.()}
+          <div ref={content}>
+            {visible.value ? (cachedContent = slots.default?.()) : cachedContent}
+          </div>
         </div>
       )
     }
@@ -492,6 +544,7 @@ const TooltipVueProps = {
     type: Boolean,
     default: true,
   },
+  transition: { type: Object as PropType<AnimationOptions>, default: undefined },
   offset: {
     type: Number,
     default: 10,
@@ -680,6 +733,7 @@ export const Tooltip = defineComponent({
               <TooltipBoundingBox
                 allowEscapeViewBox={props.allowEscapeViewBox}
                 isAnimationActive={props.isAnimationActive}
+                transition={props.transition}
                 active={finalIsActive.value}
                 coordinate={coordinate.value}
                 hasPayload={hasPayload.value}
