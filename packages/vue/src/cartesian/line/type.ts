@@ -65,10 +65,7 @@ export const LineVueProps = {
   tooltipType: { type: String as PropType<TooltipType> },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: () => ({
-      duration: 0.8,
-      ease: 'easeOut',
-    }),
+    default: undefined,
   },
   type: { type: [String, Function] as PropType<CurveType | CurveFactory> },
   unit: { type: [String, Number] },

@@ -3,10 +3,11 @@ import { useDeferredView } from '@/hooks/deferredView'
 import { LabelListVueProps } from './types'
 import { LabelListView } from './LabelListView'
 
-export const LabelList = defineComponent({
+/** Internal opt-in used by series after their geometry settles. */
+export const AnimatedLabelList = defineComponent({
   props: LabelListVueProps,
   setup(props, { attrs, slots }) {
     const View = useDeferredView(LabelListView)
-    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+    return () => h(View, { item: props, svgAttrs: attrs, fade: true }, slots)
   },
 })

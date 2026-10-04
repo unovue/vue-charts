@@ -40,6 +40,7 @@ function geometry(container: HTMLElement) {
   return {
     bars: Array.from(container.querySelectorAll('.v-charts-bar-rectangle path'), p => p.getAttribute('d')),
     line: container.querySelector('.v-charts-line-curve')?.getAttribute('stroke-dashoffset') ?? null,
+    lineSweep: container.querySelector('clipPath[id^="line-anim-"] rect')?.getAttribute('width') ?? null,
     lineVisible: container.querySelector('.v-charts-line-curve') != null,
     area: container.querySelector('.v-charts-area-area')?.getAttribute('d') ?? null,
   }
@@ -116,7 +117,8 @@ describe('entrance animation and server rendering', () => {
     // motion-v does not advance in JSDOM: an entering chart stays at its start frame.
     const start = geometry(container)
     expect(start.bars).toHaveLength(0)
-    expect(start.line).toBe('1')
+    expect(start.line).toBeNull()
+    expect(start.lineSweep).toBe('0')
     app.unmount()
     container.remove()
     vi.restoreAllMocks()
