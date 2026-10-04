@@ -292,8 +292,11 @@ export function createChartTooltip() {
   }
 
   function activate(channel: 'itemInteraction' | 'axisInteraction', trigger: 'hover' | 'click', payload: TooltipActionPayload) {
-    if (proposeIndex(payload.activeIndex))
+    if (proposeIndex(payload.activeIndex)) {
+      if (state.value.keyboardInteraction.active)
+        state.value = { ...state.value, keyboardInteraction: { ...state.value.keyboardInteraction, active: false } }
       return
+    }
     const current = state.value
     const interaction: TooltipInteractionState = {
       active: true,
@@ -348,8 +351,7 @@ export function createChartTooltip() {
   }
 
   function setKeyboardInteraction(payload: TooltipActionPayload & { active: boolean }) {
-    if (proposeIndex(payload.active ? payload.activeIndex : null))
-      return
+    proposeIndex(payload.active ? payload.activeIndex : null)
     const interaction: TooltipInteractionState = {
       active: payload.active,
       index: payload.activeIndex,

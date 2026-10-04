@@ -4,7 +4,7 @@ import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import { provideChartContext } from '@/state/chartContext'
 import type { PropType, StyleValue } from 'vue'
-import { Fragment, defineComponent, useId } from 'vue'
+import { Fragment, defineComponent } from 'vue'
 import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
 import Surface from '@/chart/Surface.vue'
@@ -19,6 +19,7 @@ import ReportChartProps from '@/state/ReportChartProps'
 import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { useChartId } from '@/hooks/useChartId'
 import { provideIndependentChart } from '@/context/PanoramaContextProvider'
 
 const defaultLayout: LayoutType = 'horizontal'
@@ -159,7 +160,7 @@ export function generateCategoricalChart({
       provideIndependentChart()
 
       const clipPathId = provideClipPathId(props)
-      const descriptionId = `v-charts-desc-${useId()}`
+      const descriptionId = useChartId('v-charts-desc')
 
       const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured, boxStyle } = useResponsiveSize(props)
 
@@ -195,7 +196,7 @@ export function generateCategoricalChart({
               <ChartDataContextProvider chartData={props.data!} />
               <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin} />
               {renderPolarOptions(isPolarChart)}
-              <Surface {...attrs} {...rest} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
+              <Surface {...attrs} {...rest} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
                 <ClipPath clipPathId={clipPathId} />
                 {slots.default?.()}
               </Surface>

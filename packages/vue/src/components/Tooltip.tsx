@@ -707,10 +707,14 @@ const _Tooltip = defineComponent({
       () => tooltip.state.value.settings.activeIndex !== undefined
         ? tooltip.state.value.settings.activeIndex
         : tooltip.state.value.keyboardInteraction.index,
+      () => tooltip.state.value.keyboardInteraction.index,
     ], ([active, index], _, cleanup) => {
       if (!accessibilityLayer.value || !active || index == null)
         return
       const timer = setTimeout(() => {
+        // A controlled Tooltip announces only after its owner accepts the keyboard index.
+        if (props.activeIndex !== undefined && String(props.activeIndex) !== tooltip.state.value.keyboardInteraction.index)
+          return
         const entries = finalPayload.value.flatMap((entry, position, payload) => {
           const formatter = entry.formatter ?? props.formatter
           const formatted: unknown = formatter

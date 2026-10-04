@@ -2,7 +2,7 @@ import 'vitest-canvas-mock'
 import { fireEvent, render } from '@testing-library/vue'
 import { axe } from 'vitest-axe'
 import { describe, expect, it, vi } from 'vitest'
-import { createSSRApp, nextTick } from 'vue'
+import { createSSRApp, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { Bar, BarChart, Pie, PieChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -62,6 +62,40 @@ describe('chart accessibility', () => {
       await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
       await vi.advanceTimersByTimeAsync(200)
       expect(live.textContent?.trim()).toBe('B: Sales $20, Returns $15')
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
+  // Catches announcements of rejected proposals or silence after a controlled owner accepts one.
+  it('announces accepted controlled keyboard changes and ignores pointer changes', async () => {
+    mockGetBoundingClientRect({ width: 500, height: 300 })
+    vi.useFakeTimers()
+    try {
+      const activeIndex = ref<number | null>(0)
+      const { container } = render(() => (
+        <BarChart width={500} height={300} data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Bar dataKey="value" name="Sales" isAnimationActive={false} />
+          <Tooltip activeIndex={activeIndex.value} isAnimationActive={false} />
+        </BarChart>
+      ))
+      const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+      const live = container.querySelector('[aria-live]')!
+      await fireEvent.keyDown(wrapper, { key: 'ArrowRight' })
+      await vi.advanceTimersByTimeAsync(150)
+      expect(live.textContent?.trim()).toBe('')
+      activeIndex.value = 1
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(150)
+      expect(live.textContent?.trim()).toBe('B: Sales 20')
+      await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
+      activeIndex.value = 0
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(150)
+      expect(live.textContent?.trim()).toBe('B: Sales 20')
     }
     finally {
       vi.useRealTimers()
