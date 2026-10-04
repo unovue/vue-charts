@@ -41,6 +41,10 @@ export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSanke
     links: data.links.map(l => ({ ...toRaw(l) })),
   }
 
+  // Without any flow d3-sankey scales node heights by 0/0 and returns NaN coordinates.
+  if (!cloned.links.some(link => Number(link.value) > 0))
+    return { nodes: [], links: [] }
+
   const layout = sankey<SankeyInputNode, SankeyInputLink>()
     .nodeWidth(nodeWidth)
     .nodePadding(nodePadding)
