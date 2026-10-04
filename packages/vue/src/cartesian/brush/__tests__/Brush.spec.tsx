@@ -1,8 +1,7 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { BarChart, LineChart } from '@/index'
+import { BarChart, Brush, LineChart } from '@/index'
 import { Line } from '@/cartesian/line'
-import { Brush } from '@/cartesian/brush'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('<Brush />', () => {
@@ -28,6 +27,18 @@ describe('<Brush />', () => {
   ]
 
   describe('basic rendering', () => {
+    it('renders Brush from the public API with two travellers', () => {
+      const { container } = render(() => (
+        <BarChart width={400} height={300} data={data}>
+          <Brush dataKey="name" />
+        </BarChart>
+      ))
+
+      const brush = container.querySelector('.v-charts-brush')
+      expect(brush).not.toBeNull()
+      expect(brush!.querySelectorAll('.recharts-brush-traveller')).toHaveLength(2)
+    })
+
     it('renders 2 travellers and 1 slide in simple Brush', () => {
       const { container } = render(() => (
         <BarChart width={400} height={100} data={data}>

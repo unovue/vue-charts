@@ -1,6 +1,7 @@
 export * from './area'
 export * from './axis'
 export * from './bar'
+export * from './brush'
 export * from './cartesian-axis'
 export * from './cartesian-grid'
 export * from './error-bar'
