@@ -106,6 +106,7 @@
     "@vitejs/plugin-vue-jsx": "^5.0.0",
     "@vue/babel-plugin-jsx": "^1.1.1",
     "@vue/runtime-core": "^3.5.13",
+    "fast-check": "^4.10.2",
     "nuxt": "^4.4.2",
     "unplugin-vue-components": "^30.0.0",
     "vue": "^3.5.13"
