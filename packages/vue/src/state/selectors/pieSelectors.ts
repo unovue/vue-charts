@@ -196,14 +196,14 @@ export function computePieSectors({
   const absDeltaAngle = Math.abs(deltaAngle)
   const paddingAngle = displayedData.length <= 1 ? 0 : (pieSettings.paddingAngle ?? 0)
 
-  const notZeroItemCount = displayedData.filter(entry => getValueByDataKey(entry, dataKey, 0) !== 0).length
+  const values = displayedData.map((entry) => {
+    const value = getValueByDataKey(entry, dataKey)
+    return isNumber(value) ? value : 0
+  })
+  const notZeroItemCount = values.filter(value => value !== 0).length
   const totalPaddingAngle = (absDeltaAngle >= 360 ? notZeroItemCount : notZeroItemCount - 1) * paddingAngle
   const realTotalAngle = absDeltaAngle - notZeroItemCount * minAngle - totalPaddingAngle
-
-  const sum: number = displayedData.reduce<number>((result, entry: any) => {
-    const val = getValueByDataKey(entry, dataKey, 0)
-    return result + (isNumber(val) ? (val as number) : 0)
-  }, 0)
+  const sum = values.reduce((result, value) => result + value, 0)
 
   if (sum <= 0) {
     return undefined
@@ -211,10 +211,10 @@ export function computePieSectors({
 
   let prev: PieSectorDataItem
   const sectors = displayedData.map((entry: unknown, i: number) => {
-    const val = getValueByDataKey(entry, dataKey, 0) as number
+    const val = values[i]
     const name = getValueByDataKey(entry, nameKey, i) as string | number
     const coordinate: PieCoordinate = parseCoordinateOfPie(pieSettings, offset, entry)
-    const percent = (isNumber(val) ? val : 0) / sum
+    const percent = val / sum
 
     const entryWithInfo: Record<string, any> = { ...(entry as object) }
     const sectorColor: string

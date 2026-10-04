@@ -38,7 +38,7 @@ import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import type { DataKey, LayoutType, TickItem } from '@/types'
 import type { StackId } from '@/types/tick'
 import type { RechartsScale } from '@/types/scale'
-import { isCategoricalAxis, isNullish } from '@/utils'
+import { isCategoricalAxis, isNullish, toFiniteNumber } from '@/utils'
 import { getBandSizeOfAxis, getBaseValueOfBar, getCateCoordinateOfBar, getValueByDataKey, truncateByDomain } from '@/utils/chart'
 import type { BarPositionPosition } from '@/types/bar'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
@@ -375,7 +375,7 @@ export function computeRadialBarDataItems({
   startAngle: number
   endAngle: number
 }): ReadonlyArray<RadialBarDataItem> {
-  return (displayedData ?? []).map((entry: unknown, index: number) => {
+  return (displayedData ?? []).flatMap((entry: unknown, index: number) => {
     let value: any,
       innerRadius: number | null | undefined,
       outerRadius: number | undefined,
@@ -392,6 +392,14 @@ export function computeRadialBarDataItems({
       if (!Array.isArray(value)) {
         value = [baseValue, value]
       }
+    }
+
+    const valueAxis = layout === 'radial' ? angleAxis : radiusAxis
+    const invalidValue = value.some((part: unknown) => valueAxis.type === 'number'
+      ? toFiniteNumber(part) == null
+      : typeof part === 'number' && !Number.isFinite(part))
+    if (invalidValue) {
+      return []
     }
 
     if (layout === 'radial') {

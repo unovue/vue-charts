@@ -3,7 +3,7 @@ import type { AreaPointItem, AreaSettings, ComputedArea } from '@/state/selector
 import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
 import type { Coordinate, TickItem } from '@/types'
 import type { BaseValue } from '@/types/area'
-import { isNumber } from '@/utils'
+import { isNumber, toFiniteNumber } from '@/utils'
 import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
 
 export function getBaseValue(layout: 'horizontal' | 'vertical', chartBaseValue: BaseValue | undefined, itemBaseValue: BaseValue | undefined, xAxis: BaseAxisWithScale, yAxis: BaseAxisWithScale): number {
@@ -89,7 +89,8 @@ export function computeArea({
       }
     }
 
-    const isBreakPoint = value[1] == null || (hasStack && !connectNulls && getValueByDataKey(entry, dataKey) == null)
+    const isBreakPoint = toFiniteNumber(value[0]) == null || toFiniteNumber(value[1]) == null
+      || (hasStack && !connectNulls && toFiniteNumber(getValueByDataKey(entry, dataKey)) == null)
 
     if (isHorizontalLayout) {
       return {

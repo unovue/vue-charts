@@ -7,7 +7,19 @@ export function isNan(value: any): boolean {
 }
 
 export function isNumber(value: unknown): value is number {
-  return (typeof value === 'number' || value instanceof Number) && !isNan(value)
+  return (typeof value === 'number' || value instanceof Number) && Number.isFinite(Number(value))
+}
+
+/** Coerce finite numeric data while keeping missing and malformed values missing. */
+export function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    return undefined
+  }
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined
+  }
+  const number = Number(value)
+  return Number.isFinite(number) ? number : undefined
 }
 
 /**

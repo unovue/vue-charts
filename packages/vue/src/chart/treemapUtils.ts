@@ -1,5 +1,6 @@
 import type { DataKey } from '@/types'
 import { getValueByDataKey } from '@/utils/chart'
+import { isNumber } from '@/utils/validate'
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy'
 
 export interface TreemapLayoutNode {
@@ -36,7 +37,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
       if (d.children && d.children.length > 0)
         return 0
       const val = getValueByDataKey(d, dataKey)
-      return typeof val === 'number' && val > 0 ? val : 0
+      return isNumber(val) && val > 0 ? val : 0
     })
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 

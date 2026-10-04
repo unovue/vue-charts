@@ -1,7 +1,7 @@
 import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
 import type { TickItem } from '@/types'
 import type { LinePointItem, LineProps } from './type'
-import { isNullish } from '@/utils'
+import { toFiniteNumber } from '@/utils'
 import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
 
 export function computeLinePoints({
@@ -24,19 +24,19 @@ export function computeLinePoints({
   displayedData: any[]
 }): ReadonlyArray<LinePointItem> {
   return displayedData.map((entry, index): LinePointItem => {
-    const value = getValueByDataKey(entry, dataKey) as number
+    const value = toFiniteNumber(getValueByDataKey(entry, dataKey))
 
     if (layout === 'horizontal') {
       return {
         x: getCateCoordinateOfLine({ axis: xAxis, ticks: xAxisTicks, bandSize, entry, index })!,
-        y: (isNullish(value) ? null : yAxis.scale(value))!,
+        y: (value == null ? null : yAxis.scale(value))!,
         value,
         payload: entry,
       }
     }
 
     return {
-      x: (isNullish(value) ? null : xAxis.scale(value))!,
+      x: (value == null ? null : xAxis.scale(value))!,
       y: getCateCoordinateOfLine({ axis: yAxis, ticks: yAxisTicks, bandSize, entry, index })!,
       value,
       payload: entry,

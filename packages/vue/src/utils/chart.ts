@@ -8,7 +8,7 @@ import type { AxisRange, AxisType, NumberDomain } from '@/types/axis'
 import type { AxisPropsNeededForTicksGenerator, AxisTick, StackId } from '@/types/tick'
 import { findEntryInArray, mathSign } from '@/utils/data'
 import { formatAngleOfSector, getAngleOfPoint, polarToCartesian, reverseFormatAngleOfSector } from '@/utils/polar'
-import { isNan, isNullish, isNumOrStr, isNumber } from '@/utils/validate'
+import { isNan, isNullish, isNumOrStr, isNumber, toFiniteNumber } from '@/utils/validate'
 import { get, isNaN, sortBy } from 'es-toolkit/compat'
 import type { Series, SeriesPoint } from 'd3-shape'
 import { stack as shapeStack, stackOffsetExpand, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderNone } from 'd3-shape'
@@ -232,7 +232,8 @@ export function getCateCoordinateOfLine<T extends Record<string, unknown>>({
 
   const value = getValueByDataKey(entry, !isNullish(dataKey) ? dataKey! : axis.dataKey!)
 
-  return !isNullish(value) ? axis.scale(value) : null
+  const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
+  return number != null ? axis.scale(number) : null
 }
 
 export function getChartPointer(event: Pick<MouseEvent, 'clientX' | 'clientY' | 'currentTarget'>): ChartPointer | undefined {
@@ -629,7 +630,7 @@ export function getStackedData(data: ReadonlyArray<Record<string, unknown>>, dat
   const offsetAccessor: OffsetAccessor = STACK_OFFSET_MAP[offsetType]
   const stack = shapeStack<Record<string, unknown>, DataKey<any>>()
     .keys(dataKeys)
-    .value((d, key) => +getValueByDataKey(d, key, 0))
+    .value((d, key) => toFiniteNumber(getValueByDataKey(d, key)) ?? 0)
     .order(stackOrderNone)
     // @ts-expect-error definitelytyped types are incorrect
     .offset(offsetAccessor)
@@ -679,5 +680,6 @@ export function getCateCoordinateOfBar({
   }
   const value = getValueByDataKey(entry, axis.dataKey, axis.scale.domain()[index])
 
-  return !isNullish(value) ? axis.scale(value) - bandSize / 2 + offset : null
+  const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
+  return number != null ? axis.scale(number) - bandSize / 2 + offset : null
 }

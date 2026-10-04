@@ -1,6 +1,6 @@
 import type { ChartOffset, Coordinate, TooltipType } from '@/types'
 import type { FunnelComposedData, FunnelProps, FunnelTrapezoidItem } from './type'
-import { isNumber } from '@/utils'
+import { isNumber, toFiniteNumber } from '@/utils'
 import { getValueByDataKey } from '@/utils/chart'
 
 function getRealWidthHeight({ customWidth }: { customWidth?: number | string }, offset: ChartOffset) {
@@ -44,23 +44,24 @@ export function computeFunnelTrapezoids({
 }): FunnelComposedData {
   const { left, top } = offset
   const { realHeight, realWidth, offsetX, offsetY } = getRealWidthHeight({ customWidth }, offset)
-  const maxValue = Math.max.apply(
-    null,
-    displayedData.map((entry: any) => getValueByDataKey(entry, dataKey, 0)),
-  )
+  const values = displayedData.map((entry) => {
+    const value = getValueByDataKey(entry, dataKey)
+    return Array.isArray(value) ? value.map(part => toFiniteNumber(part) ?? 0) : toFiniteNumber(value) ?? 0
+  })
+  const maxValue = values.flat().reduce((max, value) => Math.max(max, value), 0) || 1
   const len = displayedData.length
   const rowHeight = realHeight / len
   const parentViewBox = { x: offset.left, y: offset.top, width: offset.width, height: offset.height }
 
   let trapezoids: ReadonlyArray<FunnelTrapezoidItem> = displayedData.map(
     (entry: any, i: number): FunnelTrapezoidItem => {
-      const rawVal = getValueByDataKey(entry, dataKey, 0)
+      const rawVal = values[i]
       const name = getValueByDataKey(entry, nameKey!, i)
-      let val = rawVal
+      let val = Array.isArray(rawVal) ? rawVal[0] : rawVal
       let nextVal
 
       if (i !== len - 1) {
-        nextVal = getValueByDataKey(displayedData[i + 1], dataKey, 0)
+        nextVal = values[i + 1]
 
         if (Array.isArray(nextVal)) {
           [nextVal] = nextVal

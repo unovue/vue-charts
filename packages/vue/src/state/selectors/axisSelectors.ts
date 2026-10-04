@@ -444,7 +444,7 @@ function onlyAllowNumbers(data: ReadonlyArray<unknown>): ReadonlyArray<number> {
   return data
     .filter(v => isNumOrStr(v) || v instanceof Date)
     .map(Number)
-    .filter(n => isNan(n) === false)
+    .filter(Number.isFinite)
 }
 
 /**
@@ -652,6 +652,9 @@ export function mergeDomains(...domains: ReadonlyArray<NumberDomain | undefined>
   }
   const allValues = allDomains.flat()
   const allNumbers = allValues.filter(isNumber)
+  if (allNumbers.length === 0) {
+    return undefined
+  }
   const min = Math.min(...allNumbers)
   const max = Math.max(...allNumbers)
   return [min, max]

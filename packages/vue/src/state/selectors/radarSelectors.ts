@@ -17,7 +17,7 @@ import { isCategoricalAxis } from '@/utils'
 import { getBandSizeOfAxis, getValueByDataKey } from '@/utils/chart'
 import { selectChartLayout } from '@/state/selectors/common'
 import { polarToCartesian } from '@/utils/polar'
-import { isNullish } from '@/utils/validate'
+import { toFiniteNumber } from '@/utils/validate'
 
 function selectRadiusAxisScale(state: RechartsRootState, radiusAxisId: AxisId): RechartsScale | undefined {
   return selectPolarAxisScale(state, 'radiusAxis', radiusAxisId)
@@ -170,8 +170,8 @@ export function computeRadarPoints({
     const name = getValueByDataKey(entry, angleAxis.dataKey, i)
     const value = getValueByDataKey(entry, dataKey)
     const angle: number = (angleAxis.scale(name) ?? 0) + angleBandSize
-    const pointValue = Array.isArray(value) ? last(value) : value
-    const radius: number = isNullish(pointValue) ? 0 : (radiusAxis.scale(pointValue) ?? 0)
+    const pointValue = toFiniteNumber(Array.isArray(value) ? last(value) : value)
+    const radius: number = pointValue == null ? 0 : (radiusAxis.scale(pointValue) ?? 0)
 
     if (Array.isArray(value) && value.length >= 2) {
       isRange = true
@@ -194,8 +194,8 @@ export function computeRadarPoints({
   if (isRange) {
     points.forEach((point: any) => {
       if (Array.isArray(point.value)) {
-        const baseValue = point.value[0]
-        const radius: number = isNullish(baseValue) ? 0 : (radiusAxis.scale(baseValue) ?? 0)
+        const baseValue = toFiniteNumber(point.value[0])
+        const radius: number = baseValue == null ? 0 : (radiusAxis.scale(baseValue) ?? 0)
         baseLinePoints.push({
           ...point,
           radius,

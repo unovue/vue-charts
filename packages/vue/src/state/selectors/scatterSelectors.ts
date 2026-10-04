@@ -17,7 +17,7 @@ import {
 import type { Coordinate, DataKey, ScatterPointItem, ScatterPointNode, TickItem, TooltipType } from '@/types'
 import type { TooltipPayloadEntry } from '@/state/chartTooltip'
 import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
-import { isNullish } from '@/utils/validate'
+import { isNullish, toFiniteNumber } from '@/utils/validate'
 
 export type ResolvedScatterSettings = {
   data: ChartData | undefined
@@ -154,7 +154,8 @@ export function computeScatterPoints({
       index,
       dataKey: yAxisDataKey,
     })
-    const size = z !== '-' && zAxis != null ? (zAxis.scale as any)(z) : defaultZ
+    const finiteZ = toFiniteNumber(z)
+    const size = finiteZ != null && zAxis != null ? (zAxis.scale as any)(finiteZ) : defaultZ
     const radius = size == null ? 0 : Math.sqrt(Math.max(size, 0) / Math.PI)
 
     return {
