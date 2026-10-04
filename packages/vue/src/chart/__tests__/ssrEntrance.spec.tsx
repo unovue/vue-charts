@@ -69,13 +69,42 @@ describe('entrance animation and server rendering', () => {
     container.remove()
   })
 
-  // Known limitation until chart registration moves to Vue (GOAL.md Phase 2): the server and the
-  // first client render compute a series before later siblings register, so an Area declared
-  // before a Bar is laid out without band padding and moves after mount.
-  it.fails('lays out a series with the padding of later-declared bars on the first render', async () => {
+  // Vue mounts depth-first: without deferring geometry, the Area would be laid out before the
+  // later-declared Bar registers its band padding.
+  it('lays out a series with the padding of later-declared bars on the first render', async () => {
     const html = await renderToString(createSSRApp({ render }))
     const area = parse(html).querySelector('.v-charts-area-area')!.getAttribute('d')
     expect(area).toBe('M147.5,135L312.5,5L312.5,265L147.5,265Z')
+  })
+
+  it('keeps the ordering fix on every server render, not only the first', async () => {
+    const areaOnly = () => (
+      <ComposedChart width={400} height={300} data={data}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Area dataKey="value" />
+      </ComposedChart>
+    )
+    await renderToString(createSSRApp({ render: areaOnly }))
+    const html = await renderToString(createSSRApp({ render }))
+    expect(parse(html).querySelector('.v-charts-area-area')!.getAttribute('d')).toBe('M147.5,135L312.5,5L312.5,265L147.5,265Z')
+  })
+
+  it('hydrates a series declared before a bar without warnings or layout change', async () => {
+    const html = await renderToString(createSSRApp({ render }))
+    const container = parse(html)
+    document.body.append(container)
+    const warn = vi.spyOn(console, 'warn')
+    const app = createSSRApp({ render })
+    app.mount(container)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    await nextTick()
+    expect(warn).not.toHaveBeenCalled()
+    expect(container.querySelector('.v-charts-area-area')!.getAttribute('d')).toBe('M147.5,135L312.5,5L312.5,265L147.5,265Z')
+    app.unmount()
+    container.remove()
+    warn.mockRestore()
   })
 
   it('still animates a chart that is first rendered on the client', async () => {

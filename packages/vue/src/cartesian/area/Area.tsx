@@ -1,5 +1,6 @@
-import { Fragment, Teleport, defineComponent, proxyRefs, toRefs } from 'vue'
-import type { SVGAttributes, SlotsType } from 'vue'
+import { Fragment, Teleport, defineComponent, h, onMounted, proxyRefs, ref, toRefs } from 'vue'
+import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import type { AreaDotSlotProps, AreaProps, AreaPropsWithSVG } from './type'
 import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
@@ -15,16 +16,27 @@ export type AreaSlots = ActivePointsSlots & {
   dot?: (props: AreaDotSlotProps) => any
 }
 
-const _Area = defineComponent<AreaPropsWithSVG>({
-  name: 'Area',
-  props: AreaVueProps,
+// Geometry and rendering, deferred so every sibling has registered first (see useDeferredView).
+const AreaView = defineComponent({
+  name: 'AreaView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<AreaProps>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+  },
   slots: Object as SlotsType<AreaSlots>,
-  setup(props: AreaProps, { attrs, slots }: { attrs: SVGAttributes, slots: AreaSlots }) {
-    const data = useSetupGraphicalItem(props, 'area')
-    const trackedProps = proxyRefs({ ...toRefs(props), data })
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
     const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(trackedProps, attrs, slots.dot)
     const graphicalLayerRef = useGraphicalLayerRef(null)
+    // The first render must match the server HTML, where content is inline.
+    const mounted = ref(false)
+    onMounted(() => {
+      mounted.value = true
+    })
 
     return () => {
       if (!shouldRender.value) {
@@ -73,11 +85,23 @@ const _Area = defineComponent<AreaPropsWithSVG>({
       )
 
       // Teleport into graphical layer so areas render above cursor
-      if (graphicalLayerRef?.value) {
+      if (mounted.value && graphicalLayerRef?.value) {
         return <Teleport to={graphicalLayerRef.value}>{areaContent}</Teleport>
       }
       return areaContent
     }
+  },
+})
+
+const _Area = defineComponent<AreaPropsWithSVG>({
+  name: 'Area',
+  props: AreaVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<AreaSlots>,
+  setup(props: AreaProps, { attrs, slots }: { attrs: SVGAttributes, slots: AreaSlots }) {
+    const data = useSetupGraphicalItem(props, 'area')
+    const View = useDeferredView(AreaView)
+    return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
   },
 })
 
