@@ -1,0 +1,35 @@
+import { usePreferredReducedMotion } from '@vueuse/core'
+import { animate } from 'motion-v'
+import type { AnimationPlaybackControls } from 'motion-dom'
+import { defineComponent, onScopeDispose, ref, watch } from 'vue'
+import { shouldSkipEntrance } from './renderPhase'
+
+/** Radius and opacity appear together; pointer retargeting keeps the mounted dot. */
+export const ActiveDot = defineComponent({
+  setup(_, { slots }) {
+    const element = ref<SVGGElement>()
+    const reduced = usePreferredReducedMotion()
+    const skip = shouldSkipEntrance()
+    let controls: AnimationPlaybackControls | undefined
+    watch(element, (el) => {
+      if (!el || skip || reduced.value === 'reduce')
+        return
+      const circle = el.querySelector('circle')
+      const radius = circle?.getAttribute('r')
+      controls = animate(0, 1, {
+        duration: 0.15,
+        ease: 'easeOut',
+        onUpdate: (t) => {
+          el.style.opacity = String(t)
+          if (circle && radius)
+            circle.setAttribute('r', String(Number(radius) * t))
+        },
+      })
+      el.style.opacity = '0'
+      if (circle)
+        circle.setAttribute('r', '0')
+    }, { flush: 'post' })
+    onScopeDispose(() => controls?.stop())
+    return () => <g ref={element}>{slots.default?.()}</g>
+  },
+})

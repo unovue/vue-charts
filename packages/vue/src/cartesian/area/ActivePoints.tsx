@@ -7,6 +7,7 @@ import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
 import { Dot } from '@/shape/Dot'
 import { Layer } from '@/container/Layer'
+import { ActiveDot } from '@/animation/ActiveDot'
 
 export interface PointType {
   readonly x: number
@@ -113,7 +114,7 @@ function renderActivePoint({
 
   return (
     <Layer class="v-charts-active-dot">
-      {dot}
+      <ActiveDot>{dot}</ActiveDot>
     </Layer>
   )
 }
