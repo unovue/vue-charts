@@ -67,12 +67,6 @@ export const BrushVueProps = {
   tickFormatter: {
     type: Function as PropType<(value: any, index: number) => string>,
   },
-  onChange: {
-    type: Function as PropType<(state: BrushStartEndIndex) => void>,
-  },
-  onDragEnd: {
-    type: Function as PropType<(state: BrushStartEndIndex) => void>,
-  },
 }
 export type BrushProps = VuePropsToType<typeof BrushVueProps>
 

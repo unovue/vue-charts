@@ -1,7 +1,7 @@
 import { computed, defineComponent, h, reactive } from 'vue'
 import type { CSSProperties, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { BrushPropsWithSVG, BrushTravellerId } from './type'
+import type { BrushProps, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
 import { Layer } from '../../container/Layer'
 import { Background } from './components/Background'
@@ -19,14 +19,20 @@ import { useChartDataActions } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
 import { isNumber } from '@/utils'
 
+const brushEmits = {
+  'change': (_indexes: BrushStartEndIndex) => true,
+  'drag-end': (_indexes: BrushStartEndIndex) => true,
+}
+
 const BrushView = defineComponent({
   name: 'BrushView',
+  emits: brushEmits,
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<BrushPropsWithSVG>, required: true },
+    item: { type: Object as PropType<BrushProps>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  setup(view, { slots }) {
+  setup(view, { slots, emit }) {
     const props = view.item
     const attrs = view.svgAttrs
 
@@ -46,7 +52,7 @@ const BrushView = defineComponent({
 
     // --- onChange handler ---
     const onChange = (nextState: BrushStartEndIndex) => {
-      props.onChange?.(nextState)
+      emit('change', nextState)
       dataActions.setRange(nextState)
     }
 
@@ -69,8 +75,7 @@ const BrushView = defineComponent({
       get startIndex() { return startIndex.value },
       get endIndex() { return endIndex.value },
       get leaveTimeOut() { return props.leaveTimeOut! },
-      get onChange() { return props.onChange },
-      get onDragEnd() { return props.onDragEnd },
+      onDragEnd: (indexes: BrushStartEndIndex) => emit('drag-end', indexes),
       get data() { return props.data },
     })
 
@@ -207,14 +212,15 @@ const BrushView = defineComponent({
   },
 })
 
-export const Brush = defineComponent<BrushPropsWithSVG>({
+export const Brush = defineComponent({
   name: 'Brush',
+  emits: brushEmits,
   props: BrushVueProps,
   inheritAttrs: false,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
     useBrushSetting(props)
     useBrushChartSynchronisation()
     const View = useDeferredView(BrushView)
-    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+    return () => h(View, { 'item': props, 'svgAttrs': attrs, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes) }, slots)
   },
 })

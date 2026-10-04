@@ -1,5 +1,5 @@
-import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render } from '@testing-library/vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BarChart, Brush, LineChart } from '@/index'
 import { Line } from '@/cartesian/line'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -163,4 +163,21 @@ describe('<Brush />', () => {
       expect(travellers).toHaveLength(2)
     })
   })
+})
+
+// Catches missing/duplicate Vue callbacks and a stale drag-end range.
+it('emits the changed range and final drag range', async () => {
+  const change = vi.fn()
+  const end = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={[{ value: 10 }, { value: 20 }, { value: 30 }]}>
+      <Brush x={0} y={0} width={100} height={40} onChange={change} {...{ 'onDrag-end': end }} />
+    </BarChart>
+  ))
+  const traveller = container.querySelector('.v-charts-brush-traveller')!
+  await fireEvent.mouseDown(traveller, { clientX: 0 })
+  await fireEvent.mouseMove(window, { clientX: 50 })
+  expect(change.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
+  await fireEvent.mouseUp(window)
+  expect(end.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
 })
