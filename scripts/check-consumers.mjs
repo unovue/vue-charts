@@ -134,12 +134,11 @@ try {
     files: [],
     references: ['app', 'server', 'shared', 'node'].map(context => ({ path: `./.nuxt/tsconfig.${context}.json` })),
   })
-  // Components stay auto-imported; the explicit slot type also checks the packed public types.
+  // Auto-imported components must infer slots from the packed public declarations.
   await write(nuxt, 'app/app.vue', chart
-    .replace('IMPORTS', 'import type { TooltipContentProps } from \'vccs\'')
+    .replace('IMPORTS', '')
     .replace('const data =', 'const rows: { name: string, value: number }[] =')
     .replaceAll(':data="data"', ':data="rows"')
-    .replace('#content="{ active, payload, label }"', '#content="{ active, payload, label }: TooltipContentProps"')
     .replace('payload.map(item => item.value).join(\', \')', 'payload?.[0]?.value'))
   run(nuxt, ['install', '--prod=false', '--no-frozen-lockfile'])
   run(nuxt, ['exec', 'nuxi', 'prepare'])

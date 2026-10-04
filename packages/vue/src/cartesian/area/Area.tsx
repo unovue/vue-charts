@@ -16,6 +16,7 @@ import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
 
 export type AreaSlots = ActivePointsSlots & {
+  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
   dot?: (props: AreaDotSlotProps) => any
 }
 

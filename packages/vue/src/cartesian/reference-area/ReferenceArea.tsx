@@ -123,7 +123,7 @@ const ReferenceAreaView = defineComponent({
   },
 })
 
-export const ReferenceArea = defineComponent({
+const _ReferenceArea = defineComponent({
   name: 'ReferenceArea',
   props: ReferenceAreaVueProps,
   inheritAttrs: false,
@@ -148,3 +148,6 @@ export const ReferenceArea = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const ReferenceArea: typeof _ReferenceArea & { new (): { $slots: { shape?: (props: { x: number, y: number, width: number, height: number }) => import('vue').VNodeChild } } } = _ReferenceArea

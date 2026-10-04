@@ -208,7 +208,7 @@ const SunburstInner = defineComponent({
   },
 })
 
-export const SunburstChart = defineComponent({
+const _SunburstChart = defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -243,3 +243,6 @@ export const SunburstChart = defineComponent({
     }
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const SunburstChart: typeof _SunburstChart & { new (): { $slots: SunburstSlots } } = _SunburstChart

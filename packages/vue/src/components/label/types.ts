@@ -114,3 +114,14 @@ export type LabelProps = VuePropsToType<typeof LabelVueProps>
 export interface LabelSlots {
   content: (props: LabelProps & { viewBox: ViewBox }) => VNode
 }
+
+export type LabelListSlotProps = Omit<LabelProps, 'viewBox'> & ViewBox & {
+  value?: string | number
+  index: number
+  key: string
+}
+
+export interface LabelListSlots {
+  content?: (props: LabelListSlotProps) => import('vue').VNodeChild
+  label?: (props: LabelListSlotProps) => import('vue').VNodeChild
+}

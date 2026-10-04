@@ -1,3 +1,4 @@
+import type { AxisSlots, AxisTick, TickFormatter } from '@/types/tick'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
 /**
@@ -13,7 +14,6 @@ import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
-import type { AxisTick, TickFormatter } from '@/types/tick'
 
 const XAxisImpl = defineComponent({
   props: {
@@ -142,7 +142,7 @@ const XAxisSettingsDispatcher = defineComponent({
   },
 })
 
-export const XAxis = defineComponent({
+const _XAxis = defineComponent({
   name: 'XAxis',
   props: {
     allowDataOverflow: {
@@ -236,3 +236,6 @@ export const XAxis = defineComponent({
     )
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const XAxis: typeof _XAxis & { new (): { $slots: AxisSlots } } = _XAxis

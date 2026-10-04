@@ -614,7 +614,7 @@ const TooltipVueProps = {
 } as const
 
 // Main Tooltip Component
-export const Tooltip = defineComponent({
+const _Tooltip = defineComponent({
   name: 'Tooltip',
   emits: { 'update:activeIndex': (_index: TooltipActiveIndex) => true },
   props: TooltipVueProps,
@@ -773,5 +773,14 @@ export const Tooltip = defineComponent({
     }
   },
 })
+
+export type TooltipSlots = {
+  content?: (props: TooltipContentProps) => import('vue').VNodeChild
+  cursor?: (props: CursorSlotProps) => import('vue').VNodeChild
+  default?: () => import('vue').VNodeChild
+}
+
+// Explicit constructor slots survive declaration generation for Volar consumers.
+export const Tooltip: typeof _Tooltip & { new (): { $slots: TooltipSlots } } = _Tooltip
 
 export default Tooltip

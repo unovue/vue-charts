@@ -20,6 +20,11 @@ import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 
+export interface FunnelSlots {
+  shape?: (props: FunnelTrapezoidItem) => import('vue').VNodeChild
+  default?: () => import('vue').VNodeChild
+}
+
 const FunnelView = defineComponent({
   name: 'FunnelView',
   inheritAttrs: false,
@@ -170,7 +175,7 @@ const FunnelView = defineComponent({
   },
 })
 
-export const Funnel = defineComponent({
+const _Funnel = defineComponent({
   name: 'Funnel',
   emits: funnelEvents.emits,
   props: FunnelVueProps,
@@ -231,3 +236,6 @@ export const Funnel = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Funnel: typeof _Funnel & { new (): { $slots: FunnelSlots } } = _Funnel

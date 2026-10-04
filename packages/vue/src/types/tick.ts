@@ -60,3 +60,16 @@ export type GetTicksInput = {
 }
 
 export type StackId = string | number
+
+export interface AxisTickSlotProps {
+  x: number
+  y: number
+  index: number
+  value: unknown
+  payload: CartesianTickItem
+  textAnchor: string
+}
+
+export interface AxisSlots {
+  tick?: (props: AxisTickSlotProps) => import('vue').VNodeChild
+}

@@ -290,7 +290,7 @@ const ScatterView = defineComponent({
   },
 })
 
-export const Scatter = defineComponent({
+const _Scatter = defineComponent({
   name: 'Scatter',
   emits: scatterEvents.emits,
   props: ScatterVueProps,
@@ -307,3 +307,6 @@ export const Scatter = defineComponent({
     return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Scatter: typeof _Scatter & { new (): { $slots: { default?: () => import('vue').VNode[], shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild } } } = _Scatter

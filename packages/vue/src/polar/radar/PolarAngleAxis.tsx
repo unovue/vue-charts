@@ -33,6 +33,10 @@ function getTickVerticalAnchor(coordinate: number): string {
   return 'middle'
 }
 
+export interface PolarAngleAxisSlots {
+  tick?: (props: import('@/types/tick').AxisTickSlotProps & { cx: number, cy: number }) => import('vue').VNodeChild
+}
+
 const PolarAngleAxisViewProps = {
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
@@ -148,7 +152,7 @@ const PolarAngleAxisView = defineComponent({
   },
 })
 
-export const PolarAngleAxis = defineComponent({
+const _PolarAngleAxis = defineComponent({
   name: 'PolarAngleAxis',
   props: PolarAngleAxisViewProps,
   slots: Object as SlotsType<{
@@ -190,3 +194,6 @@ export const PolarAngleAxis = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const PolarAngleAxis: typeof _PolarAngleAxis & { new (): { $slots: PolarAngleAxisSlots } } = _PolarAngleAxis

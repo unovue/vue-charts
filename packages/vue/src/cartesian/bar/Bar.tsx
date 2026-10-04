@@ -36,6 +36,13 @@ const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> =
   }
 }
 
+export interface BarSlots {
+  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
+  default?: () => import('vue').VNode[]
+  shape?: (props: BarRectangleItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
+  activeBar?: (props: BarRectangleItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
+}
+
 const BarView = defineComponent({
   name: 'BarView',
   inheritAttrs: false,
@@ -44,12 +51,7 @@ const BarView = defineComponent({
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
-  slots: Object as SlotsType<{
-    default?: () => any
-    activeDot?: (props: any) => any
-    shape?: (props: any) => any
-    activeBar?: (props: any) => any
-  }>,
+  slots: Object as SlotsType<BarSlots>,
   setup(view, { slots }) {
     const props = view.item
     const attrs = view.svgAttrs
@@ -146,17 +148,12 @@ const BarView = defineComponent({
   },
 })
 
-export const Bar = defineComponent({
+const _Bar = defineComponent({
   name: 'Bar',
   emits: barEvents.emits,
   props: BarVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<{
-    default?: () => any
-    activeDot?: (props: any) => any
-    shape?: (props: any) => any
-    activeBar?: (props: any) => any
-  }>,
+  slots: Object as SlotsType<BarSlots>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     barEvents.provide(emit)
@@ -166,3 +163,6 @@ export const Bar = defineComponent({
     return () => h(BarView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Bar: typeof _Bar & { new (): { $slots: BarSlots } } = _Bar

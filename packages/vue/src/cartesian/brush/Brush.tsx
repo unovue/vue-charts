@@ -238,7 +238,7 @@ const BrushView = defineComponent({
   },
 })
 
-export const Brush = defineComponent({
+const _Brush = defineComponent({
   name: 'Brush',
   emits: brushEmits,
   props: BrushVueProps,
@@ -250,3 +250,6 @@ export const Brush = defineComponent({
     return () => h(View, { 'item': props, 'svgAttrs': attrs, 'onChange': indexes => emit('change', indexes), 'onDrag-end': indexes => emit('drag-end', indexes), 'onUpdate:startIndex': index => emit('update:startIndex', index), 'onUpdate:endIndex': index => emit('update:endIndex', index) }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Brush: typeof _Brush & { new (): { $slots: { default?: () => import('vue').VNodeChild } } } = _Brush

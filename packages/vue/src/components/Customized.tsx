@@ -24,7 +24,7 @@ export interface CustomizedSlots {
   default?: (props: CustomizedSlotProps) => any
 }
 
-export const Customized = defineComponent({
+const _Customized = defineComponent({
   name: 'Customized',
   inheritAttrs: false,
   slots: Object as SlotsType<CustomizedSlots>,
@@ -67,3 +67,6 @@ export const Customized = defineComponent({
     }
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Customized: typeof _Customized & { new (): { $slots: CustomizedSlots } } = _Customized

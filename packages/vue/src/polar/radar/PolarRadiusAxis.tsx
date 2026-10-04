@@ -124,7 +124,7 @@ const PolarRadiusAxisView = defineComponent({
   },
 })
 
-export const PolarRadiusAxis = defineComponent({
+const _PolarRadiusAxis = defineComponent({
   name: 'PolarRadiusAxis',
   props: PolarRadiusAxisViewProps,
   setup(props, { attrs, slots }) {
@@ -166,3 +166,6 @@ export const PolarRadiusAxis = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const PolarRadiusAxis: typeof _PolarRadiusAxis & { new (): { $slots: import('@/types/tick').AxisSlots } } = _PolarRadiusAxis

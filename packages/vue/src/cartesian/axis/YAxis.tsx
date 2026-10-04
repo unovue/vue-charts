@@ -1,3 +1,4 @@
+import type { AxisSlots, TickFormatter } from '@/types/tick'
 import { useCanMeasureText } from '@/animation/renderPhase'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
@@ -10,7 +11,6 @@ import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { CartesianAxis } from '@/cartesian'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
-import type { TickFormatter } from '@/types/tick'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
@@ -183,7 +183,7 @@ const YAxisSettingsDispatcher = defineComponent({
   },
 })
 
-export const YAxis = defineComponent({
+const _YAxis = defineComponent({
   name: 'YAxis',
   props: {
     allowDataOverflow: {
@@ -274,3 +274,6 @@ export const YAxis = defineComponent({
     return () => <YAxisSettingsDispatcher {...props} {...attrs} />
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const YAxis: typeof _YAxis & { new (): { $slots: AxisSlots } } = _YAxis

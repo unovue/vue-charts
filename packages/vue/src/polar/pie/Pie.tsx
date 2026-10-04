@@ -24,6 +24,13 @@ import { PieVueProps } from './type'
 
 const LABEL_OFFSET = 20
 
+export interface PieSlots {
+  label?: (props: PieSectorDataItem & { index: number }) => import('vue').VNodeChild
+  activeShape?: (props: PieSectorDataItem & { isActive: boolean }) => import('vue').VNodeChild
+  shape?: (props: PieSectorDataItem & { isActive: boolean }) => import('vue').VNodeChild
+  default?: () => import('vue').VNodeChild
+}
+
 const PieView = defineComponent({
   name: 'PieView',
   inheritAttrs: false,
@@ -211,7 +218,7 @@ const PieView = defineComponent({
   },
 })
 
-export const Pie = defineComponent({
+const _Pie = defineComponent({
   name: 'Pie',
   emits: pieEvents.emits,
   props: PieVueProps,
@@ -258,3 +265,6 @@ export const Pie = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Pie: typeof _Pie & { new (): { $slots: PieSlots } } = _Pie

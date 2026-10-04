@@ -141,7 +141,7 @@ const ReferenceLineView = defineComponent({
   },
 })
 
-export const ReferenceLine = defineComponent({
+const _ReferenceLine = defineComponent({
   name: 'ReferenceLine',
   props: ReferenceLineVueProps,
   inheritAttrs: false,
@@ -164,3 +164,6 @@ export const ReferenceLine = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const ReferenceLine: typeof _ReferenceLine & { new (): { $slots: { shape?: (props: { x1: number, y1: number, x2: number, y2: number }) => import('vue').VNodeChild } } } = _ReferenceLine

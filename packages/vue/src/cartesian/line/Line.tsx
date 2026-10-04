@@ -17,6 +17,13 @@ import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 
+export type LineSlots = ActivePointsSlots & {
+  default?: () => import('vue').VNodeChild
+  shape?: (props: import('@/shape/Curve').CurveProps) => import('vue').VNodeChild
+  dot?: (props: { cx: number, cy: number, index: number, value?: number, payload?: unknown }) => import('vue').VNodeChild
+  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
+}
+
 const LineView = defineComponent({
   name: 'LineView',
   inheritAttrs: false,
@@ -25,7 +32,7 @@ const LineView = defineComponent({
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
-  slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
+  slots: Object as SlotsType<LineSlots>,
   setup(view, { slots }) {
     const props = view.item
     const attrs = view.svgAttrs
@@ -83,12 +90,12 @@ const LineView = defineComponent({
   },
 })
 
-export const Line = defineComponent({
+const _Line = defineComponent({
   name: 'Line',
   emits: lineEvents.emits,
   props: LineVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
+  slots: Object as SlotsType<LineSlots>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     lineEvents.provide(emit)
@@ -97,3 +104,6 @@ export const Line = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Line: typeof _Line & { new (): { $slots: LineSlots } } = _Line

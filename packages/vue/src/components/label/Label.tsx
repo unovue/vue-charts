@@ -9,7 +9,7 @@ import { isNullish } from '@/utils'
 import { getAttrsOfCartesianLabel, getAttrsOfPolarLabel, isPolar, renderRadialLabel } from '@/components/label/utils'
 import Text from '@/components/Text.vue'
 
-export const Label = defineComponent({
+const _Label = defineComponent({
   name: 'Label',
   props: LabelVueProps,
   slots: Object as SlotsType<LabelSlots>,
@@ -66,3 +66,6 @@ export const Label = defineComponent({
     }
   },
 })
+
+// Preserve template slot inference in published declarations.
+export const Label: typeof _Label & { new (): { $slots: LabelSlots } } = _Label
