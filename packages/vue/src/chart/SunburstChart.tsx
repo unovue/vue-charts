@@ -1,3 +1,4 @@
+import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
@@ -66,9 +67,6 @@ export const SunburstChartVueProps = {
   padding: { type: Number, default: 2 },
   fill: { type: String, default: 'var(--v-charts-text, #333)' },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
-  onClick: { type: Function as PropType<(node: SunburstData, e: MouseEvent) => void>, default: undefined },
-  onMouseEnter: { type: Function as PropType<(node: SunburstData, e: MouseEvent) => void>, default: undefined },
-  onMouseLeave: { type: Function as PropType<(node: SunburstData, e: MouseEvent) => void>, default: undefined },
 }
 
 const SunburstInner = defineComponent({
@@ -145,12 +143,10 @@ const SunburstInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: getTooltipCoordinate(node),
       })
-      props.onMouseEnter?.(node.payload, e)
     }
 
     function handleMouseLeave(node: SunburstLayoutNode, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      props.onMouseLeave?.(node.payload, e)
     }
 
     function handleClick(node: SunburstLayoutNode, e: MouseEvent) {
@@ -159,7 +155,6 @@ const SunburstInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: getTooltipCoordinate(node),
       })
-      props.onClick?.(node.payload, e)
     }
 
     function renderSector(node: SunburstLayoutNode, index: number) {
@@ -216,8 +211,10 @@ const SunburstInner = defineComponent({
 export const SunburstChart = defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
+  inheritAttrs: false,
+  emits: { ...chartEmits },
   slots: Object as SlotsType<SunburstSlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     provideChartContext(sunburstOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -229,6 +226,7 @@ export const SunburstChart = defineComponent({
 
       return (
         <ChartsWrapper
+          {...chartListeners(emit)}
           isResponsive={isResponsive.value}
           boxStyle={boxStyle.value}
           interactive={!isResponsive.value || measured.value}

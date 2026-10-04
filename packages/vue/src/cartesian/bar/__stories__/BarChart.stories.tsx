@@ -71,7 +71,7 @@ const StackedAndDynamicWrapper = defineComponent({
           <CartesianGrid stroke-dasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
-          <Legend onMouseEnter={onLegendMouseEnter} onMouseLeave={onLegendMouseLeave} onClick={onLegendClick} />
+          <Legend onMouseenter={onLegendMouseEnter} onMouseleave={onLegendMouseLeave} onClick={onLegendClick} />
           <Bar
             hide={focusedDataKey.value != null && focusedDataKey.value !== 'pv'}
             dataKey="pv"

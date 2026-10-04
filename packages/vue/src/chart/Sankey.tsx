@@ -1,3 +1,4 @@
+import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
@@ -87,32 +88,30 @@ export const SankeyVueProps = {
   nodeStroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   linkFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
   linkStroke: { type: String, default: 'none' },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,
   },
-  onClick: {
-    type: Function as PropType<(item: any, type: 'node' | 'link', e: MouseEvent) => void>,
-    default: undefined,
-  },
-  onMouseEnter: {
-    type: Function as PropType<(item: any, type: 'node' | 'link', e: MouseEvent) => void>,
-    default: undefined,
-  },
-  onMouseLeave: {
-    type: Function as PropType<(item: any, type: 'node' | 'link', e: MouseEvent) => void>,
-    default: undefined,
-  },
+}
+
+const sankeyEmits = {
+  'node-click': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
+  'node-mouseenter': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
+  'node-mouseleave': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
+  'link-click': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
+  'link-mouseenter': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
+  'link-mouseleave': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
+  'animation-start': () => true,
+  'animation-end': () => true,
 }
 
 const SankeyInner = defineComponent({
   name: 'SankeyInner',
   props: SankeyVueProps,
+  emits: sankeyEmits,
   slots: Object as SlotsType<SankeySlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     const nodes = useTrackedData(() => props.data.nodes)
     const links = useTrackedData(() => props.data.links)
     const tooltip = useChartTooltip()
@@ -141,7 +140,7 @@ const SankeyInner = defineComponent({
     const collapse = (item: Geometry): Geometry => item.kind === 'node'
       ? { ...item, node: { ...item.node, y1: item.node.y0 } }
       : { ...item, link: { ...item.link, width: 0 } }
-    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition<Geometry>(() => [
       ...layout.value.nodes.map(node => ({ kind: 'node' as const, node })),
       ...layout.value.links.map((link) => {
@@ -242,7 +241,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      props.onMouseEnter?.(node, 'node', e)
+      emit('node-mouseenter', node, e)
     }
 
     function handleLinkMouseEnter(link: SankeyLayoutLink, index: number, e: MouseEvent) {
@@ -256,12 +255,17 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      props.onMouseEnter?.(link, 'link', e)
+      emit('link-mouseenter', link, e)
     }
 
-    function handleMouseLeave(item: any, type: 'node' | 'link', e: MouseEvent) {
+    function handleNodeMouseLeave(node: SankeyLayoutNode, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      props.onMouseLeave?.(item, type, e)
+      emit('node-mouseleave', node, e)
+    }
+
+    function handleLinkMouseLeave(link: SankeyLayoutLink, e: MouseEvent) {
+      tooltip.mouseLeaveItem()
+      emit('link-mouseleave', link, e)
     }
 
     function handleNodeClick(node: SankeyLayoutNode, index: number, e: MouseEvent) {
@@ -274,7 +278,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      props.onClick?.(node, 'node', e)
+      emit('node-click', node, e)
     }
 
     function handleLinkClick(link: SankeyLayoutLink, index: number, e: MouseEvent) {
@@ -289,7 +293,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      props.onClick?.(link, 'link', e)
+      emit('link-click', link, e)
     }
 
     function renderNode(node: SankeyLayoutNode, index: number, opacity: number, key: PropertyKey) {
@@ -315,7 +319,7 @@ const SankeyInner = defineComponent({
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
             onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
-            onMouseleave={(e: MouseEvent) => handleMouseLeave(node, 'node', e)}
+            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
           >
             {slots.node(slotProps)}
           </g>
@@ -329,7 +333,7 @@ const SankeyInner = defineComponent({
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
           onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
-          onMouseleave={(e: MouseEvent) => handleMouseLeave(node, 'node', e)}
+          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
         >
           <rect
             x={x}
@@ -361,7 +365,7 @@ const SankeyInner = defineComponent({
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
             onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
-            onMouseleave={(e: MouseEvent) => handleMouseLeave(link, 'link', e)}
+            onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, e)}
           >
             {slots.link(slotProps)}
           </g>
@@ -380,7 +384,7 @@ const SankeyInner = defineComponent({
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
           onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
-          onMouseleave={(e: MouseEvent) => handleMouseLeave(link, 'link', e)}
+          onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, e)}
         />
       )
     }
@@ -408,8 +412,10 @@ const SankeyInner = defineComponent({
 const _Sankey = defineComponent({
   name: 'Sankey',
   props: { ...SankeyVueProps, ...chartSizeProps },
+  inheritAttrs: false,
+  emits: { ...chartEmits, ...sankeyEmits },
   slots: Object as SlotsType<SankeySlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     provideChartContext(sankeyOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -420,8 +426,8 @@ const _Sankey = defineComponent({
         return null
 
       return (
-        <ChartsWrapper isResponsive={isResponsive.value} boxStyle={boxStyle.value} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
-          <SankeyInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
+        <ChartsWrapper {...chartListeners(emit)} isResponsive={isResponsive.value} boxStyle={boxStyle.value} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <SankeyInner {...{ 'onNode-click': (entry, event) => emit('node-click', entry, event) }} {...{ 'onNode-mouseenter': (entry, event) => emit('node-mouseenter', entry, event) }} {...{ 'onNode-mouseleave': (entry, event) => emit('node-mouseleave', entry, event) }} {...{ 'onLink-click': (entry, event) => emit('link-click', entry, event) }} {...{ 'onLink-mouseenter': (entry, event) => emit('link-mouseenter', entry, event) }} {...{ 'onLink-mouseleave': (entry, event) => emit('link-mouseleave', entry, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>
           {slots.default?.()}

@@ -18,7 +18,7 @@ export function useChartCallbacks() {
     isTooltipActive: selectIsTooltipActive(state),
   }))
 
-  return (handler: CategoricalChartFunc | undefined, event: Event) => {
+  return (handler: CategoricalChartFunc | undefined, event: MouseEvent | TouchEvent) => {
     if (handler) {
       handler({ ...callbackState.value }, event)
     }

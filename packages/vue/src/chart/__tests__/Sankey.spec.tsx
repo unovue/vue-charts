@@ -92,23 +92,25 @@ describe('<Sankey />', () => {
   it('fires onClick with type "node" when a node is clicked', async () => {
     const onClick = vi.fn()
     const { container } = render(() => (
-      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onNodeClick={onClick} />
     ))
     const node = container.querySelector('.v-charts-sankey-node')!
     await fireEvent.click(node)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][1]).toBe('node')
+    expect(onClick.mock.calls[0][0]).toMatchObject({ name: 'A' })
+    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
   })
 
   it('fires onClick with type "link" when a link is clicked', async () => {
     const onClick = vi.fn()
     const { container } = render(() => (
-      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onLinkClick={onClick} />
     ))
     const link = container.querySelector('.v-charts-sankey-link')!
     await fireEvent.click(link)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][1]).toBe('link')
+    expect(onClick.mock.calls[0][0]).toMatchObject({ value: 10 })
+    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
   })
 
   it('shows tooltip with node payload on node hover', async () => {

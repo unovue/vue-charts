@@ -85,9 +85,9 @@ const DraggablePieWrapper = defineComponent({
           width={500}
           height={500}
           margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
-          onMouseDown={onMouseDown}
-          onMouseUp={onMouseUp}
-          onMouseMove={onMouseMove}
+          onMousedown={onMouseDown}
+          onMouseup={onMouseUp}
+          onMousemove={onMouseMove}
         >
           <Pie
             dataKey="value"

@@ -1,3 +1,4 @@
+import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
@@ -114,23 +115,27 @@ export const TreemapVueProps = {
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
   colorPanel: { type: Array as PropType<string[]>, default: undefined },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
-  onClick: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
-  onMouseEnter: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
-  onMouseLeave: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
 }
 
 /**
  * Inner component that has access to chart-local Vue state (provided by Treemap wrapper).
  */
+const treemapEmits = {
+  'node-click': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
+  'node-mouseenter': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
+  'node-mouseleave': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
+  'animation-start': () => true,
+  'animation-end': () => true,
+}
+
 const TreemapInner = defineComponent({
   name: 'TreemapInner',
   props: TreemapVueProps,
+  emits: treemapEmits,
   slots: Object as SlotsType<TreemapSlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     const canMeasureText = useCanMeasureText()
     const tooltip = useChartTooltip()
     const colors = computed(() => props.colorPanel ?? DEFAULT_COLORS)
@@ -185,7 +190,7 @@ const TreemapInner = defineComponent({
       visit(props.data, 'root')
       return paths
     })
-    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => item[props.nameKey] === node.name) ?? {})) ?? node.name })), {
       key: (node, index) => node.path || index,
       interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, width: from.width + (to.width - from.width) * t, height: from.height + (to.height - from.height) * t }),
@@ -259,7 +264,7 @@ const TreemapInner = defineComponent({
         currentData.value = clickedItem.children
       }
 
-      props.onClick?.(node, e)
+      emit('node-click', node, e)
     }
 
     function navigateToBreadcrumb(index: number) {
@@ -289,12 +294,12 @@ const TreemapInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate,
       })
-      props.onMouseEnter?.(node, e)
+      emit('node-mouseenter', node, e)
     }
 
     function handleNodeMouseLeave(node: TreemapLayoutNode, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      props.onMouseLeave?.(node, e)
+      emit('node-mouseleave', node, e)
     }
 
     function handleNodeClick(node: TreemapLayoutNode, e: MouseEvent) {
@@ -312,7 +317,7 @@ const TreemapInner = defineComponent({
           activeDataKey: props.dataKey,
           activeCoordinate,
         })
-        props.onClick?.(node, e)
+        emit('node-click', node, e)
       }
     }
 
@@ -455,8 +460,10 @@ const TreemapInner = defineComponent({
 export const Treemap = defineComponent({
   name: 'Treemap',
   props: { ...TreemapVueProps, ...chartSizeProps },
+  inheritAttrs: false,
+  emits: { ...chartEmits, ...treemapEmits },
   slots: Object as SlotsType<TreemapSlots>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     provideChartContext(treemapOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -468,6 +475,7 @@ export const Treemap = defineComponent({
 
       return (
         <ChartsWrapper
+          {...chartListeners(emit)}
           isResponsive={isResponsive.value}
           boxStyle={boxStyle.value}
           interactive={!isResponsive.value || measured.value}
@@ -475,7 +483,7 @@ export const Treemap = defineComponent({
           width={effectiveWidth.value}
           height={effectiveHeight.value}
         >
-          <TreemapInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <TreemapInner {...{ 'onNode-click': (entry, event) => emit('node-click', entry, event) }} {...{ 'onNode-mouseenter': (entry, event) => emit('node-mouseenter', entry, event) }} {...{ 'onNode-mouseleave': (entry, event) => emit('node-mouseleave', entry, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ content: slots.content }}
           </TreemapInner>
           {slots.default?.()}

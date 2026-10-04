@@ -1,10 +1,10 @@
+import { chartEmits } from '@/events/componentEvents'
 import { useChartTooltip } from '@/state/chartContext'
 import { type CSSProperties, type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
 import { classProp } from '@/types'
-import type { CategoricalChartFunc } from '@/types'
 import { useReportScale } from '@/state/utils/useReportScale'
 import { providePortalRaw } from '@/chart/TooltipPortalContext'
 import { provideLegendPortalRaw } from '@/chart/LegendPortalContext'
@@ -15,18 +15,6 @@ export const ChartsWrapper = defineComponent({
   props: {
     class: classProp,
     height: { type: Number, required: true },
-    onClick: { type: Function as PropType<CategoricalChartFunc> },
-    onContextMenu: { type: Function as PropType<CategoricalChartFunc> },
-    onDoubleClick: { type: Function as PropType<CategoricalChartFunc> },
-    onMouseDown: { type: Function as PropType<CategoricalChartFunc> },
-    onMouseEnter: { type: Function as PropType<CategoricalChartFunc> },
-    onMouseLeave: { type: Function as PropType<CategoricalChartFunc> },
-    onMouseMove: { type: Function as PropType<CategoricalChartFunc> },
-    onMouseUp: { type: Function as PropType<CategoricalChartFunc> },
-    onResize: { type: Function as PropType<(width: number, height: number) => void> },
-    onTouchEnd: { type: Function as PropType<CategoricalChartFunc> },
-    onTouchMove: { type: Function as PropType<CategoricalChartFunc> },
-    onTouchStart: { type: Function as PropType<CategoricalChartFunc> },
     isResponsive: { type: Boolean, default: false },
     /** Box style from useResponsiveSize. */
     boxStyle: { type: Object as PropType<CSSProperties>, required: true },
@@ -34,7 +22,9 @@ export const ChartsWrapper = defineComponent({
     style: { type: [String, Object, Array] as PropType<StyleValue> },
     width: { type: Number, required: true },
   },
-  setup(props, { slots }) {
+  inheritAttrs: false,
+  emits: { ...chartEmits, resize: (_width: number, _height: number) => true },
+  setup(props, { slots, emit }) {
     const tooltip = useChartTooltip()
     const callHandler = useChartCallbacks()
     const interactions = useChartInteractions()
@@ -61,7 +51,7 @@ export const ChartsWrapper = defineComponent({
           return
         observer = new ResizeObserver((entries) => {
           const { width, height } = entries[0].contentRect
-          props.onResize?.(width, height)
+          emit('resize', width, height)
         })
         observer.observe(wrapperEl.value)
         onCleanup(() => observer?.disconnect())
@@ -74,7 +64,7 @@ export const ChartsWrapper = defineComponent({
       if (chartPointer) {
         interactions.click(chartPointer)
       }
-      callHandler(props.onClick, e)
+      callHandler((state, event) => emit('click', state, event), e)
     }
 
     const myOnMouseEnter = (e: MouseEvent) => {
@@ -82,12 +72,12 @@ export const ChartsWrapper = defineComponent({
       if (chartPointer) {
         interactions.move(chartPointer)
       }
-      callHandler(props.onMouseEnter, e)
+      callHandler((state, event) => emit('mouseenter', state, event), e)
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
       tooltip.mouseLeaveChart()
-      callHandler(props.onMouseLeave, e)
+      callHandler((state, event) => emit('mouseleave', state, event), e)
     }
 
     const myOnMouseMove = (e: MouseEvent) => {
@@ -95,7 +85,7 @@ export const ChartsWrapper = defineComponent({
       if (chartPointer) {
         interactions.move(chartPointer)
       }
-      callHandler(props.onMouseMove, e)
+      callHandler((state, event) => emit('mousemove', state, event), e)
     }
 
     const onFocus = () => {
@@ -107,32 +97,32 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnContextMenu = (e: MouseEvent) => {
-      callHandler(props.onContextMenu, e)
+      callHandler((state, event) => emit('contextmenu', state, event), e)
     }
 
     const myOnDoubleClick = (e: MouseEvent) => {
-      callHandler(props.onDoubleClick, e)
+      callHandler((state, event) => emit('dblclick', state, event), e)
     }
 
     const myOnMouseDown = (e: MouseEvent) => {
-      callHandler(props.onMouseDown, e)
+      callHandler((state, event) => emit('mousedown', state, event), e)
     }
 
     const myOnMouseUp = (e: MouseEvent) => {
-      callHandler(props.onMouseUp, e)
+      callHandler((state, event) => emit('mouseup', state, event), e)
     }
 
     const myOnTouchStart = (e: TouchEvent) => {
-      callHandler(props.onTouchStart, e)
+      callHandler((state, event) => emit('touchstart', state, event), e)
     }
 
     const myOnTouchMove = (e: TouchEvent) => {
       interactions.touchMove(e)
-      callHandler(props.onTouchMove, e)
+      callHandler((state, event) => emit('touchmove', state, event), e)
     }
 
     const myOnTouchEnd = (e: TouchEvent) => {
-      callHandler(props.onTouchEnd, e)
+      callHandler((state, event) => emit('touchend', state, event), e)
     }
 
     return () => (

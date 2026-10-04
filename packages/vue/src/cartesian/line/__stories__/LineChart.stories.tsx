@@ -768,8 +768,8 @@ export const UndefinedEventHandlers: Story = {
             dataKey="pv"
             stroke="#8884d8"
             activeDot={{ r: 8 }}
-            onMouseEnter={undefined}
-            onMouseLeave={undefined}
+            onMouseenter={undefined}
+            onMouseleave={undefined}
           />
           <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
           <Tooltip />
@@ -972,17 +972,17 @@ const HighlightAndZoomWrapper = defineComponent({
             <LineChart
               {...props.args}
               data={impressionsData}
-              onMouseDown={(e: any) => {
+              onMousedown={(e: any) => {
                 if (e?.activeLabel != null) {
                   state.value = { ...state.value, refAreaLeft: e.activeLabel }
                 }
               }}
-              onMouseMove={(e: any) => {
+              onMousemove={(e: any) => {
                 if (state.value.refAreaLeft && e?.activeLabel != null) {
                   state.value = { ...state.value, refAreaRight: e.activeLabel }
                 }
               }}
-              onMouseUp={zoom}
+              onMouseup={zoom}
             >
               <CartesianGrid yAxisId="1" stroke-dasharray="3 3" />
               <XAxis allowDataOverflow dataKey="name" domain={left && right ? [left, right] : undefined} type="number" />

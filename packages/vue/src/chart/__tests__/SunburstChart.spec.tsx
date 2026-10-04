@@ -32,7 +32,7 @@ const nestedData = {
   ],
 }
 
-describe('SunburstChart', () => {
+describe('sunburstChart', () => {
   it('renders sectors for simple data', () => {
     const { container } = render(() => (
       <SunburstChart data={simpleData} width={500} height={500} />
@@ -70,7 +70,8 @@ describe('SunburstChart', () => {
     const sector = container.querySelector('.v-charts-sunburst-sector')!
     await fireEvent.click(sector)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][0]).toHaveProperty('name')
+    expect(onClick.mock.calls[0][0]).toHaveProperty('activeIndex')
+    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
   })
 
   it('fires onMouseEnter and onMouseLeave', async () => {
@@ -81,16 +82,16 @@ describe('SunburstChart', () => {
         data={simpleData}
         width={500}
         height={500}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        onMouseenter={onMouseEnter}
+        onMouseleave={onMouseLeave}
       />
     ))
 
     const sector = container.querySelector('.v-charts-sunburst-sector')!
-    await fireEvent.mouseEnter(sector)
+    await fireEvent.mouseEnter(container.querySelector('.v-charts-wrapper')!)
     expect(onMouseEnter).toHaveBeenCalledTimes(1)
 
-    await fireEvent.mouseLeave(sector)
+    await fireEvent.mouseLeave(container.querySelector('.v-charts-wrapper')!)
     expect(onMouseLeave).toHaveBeenCalledTimes(1)
   })
 

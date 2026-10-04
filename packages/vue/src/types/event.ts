@@ -1,6 +1,6 @@
 import type { MouseHandlerDataParam } from './common'
 
-export type CategoricalChartFunc = (nextState: MouseHandlerDataParam, event: Event) => void
+export type CategoricalChartFunc = (nextState: MouseHandlerDataParam, event: MouseEvent | TouchEvent) => void
 
 export interface ExternalMouseEvents {
   onClick: CategoricalChartFunc

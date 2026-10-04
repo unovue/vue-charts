@@ -23,7 +23,7 @@ describe('public chart callbacks', () => {
   it('resolves bubbled touch coordinates against the chart wrapper', async () => {
     const onTouchMove = vi.fn<CategoricalChartFunc>()
     const { container } = render(() => (
-      <BarChart width={500} height={300} data={data} onTouchMove={onTouchMove}>
+      <BarChart width={500} height={300} data={data} onTouchmove={onTouchMove}>
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
@@ -74,16 +74,16 @@ describe('public chart callbacks', () => {
 
   it.each([
     ['click', 'onClick'],
-    ['mouseenter', 'onMouseEnter'],
-    ['mouseleave', 'onMouseLeave'],
-    ['mousemove', 'onMouseMove'],
-    ['mousedown', 'onMouseDown'],
-    ['mouseup', 'onMouseUp'],
-    ['contextmenu', 'onContextMenu'],
-    ['dblclick', 'onDoubleClick'],
-    ['touchstart', 'onTouchStart'],
-    ['touchmove', 'onTouchMove'],
-    ['touchend', 'onTouchEnd'],
+    ['mouseenter', 'onMouseenter'],
+    ['mouseleave', 'onMouseleave'],
+    ['mousemove', 'onMousemove'],
+    ['mousedown', 'onMousedown'],
+    ['mouseup', 'onMouseup'],
+    ['contextmenu', 'onContextmenu'],
+    ['dblclick', 'onDblclick'],
+    ['touchstart', 'onTouchstart'],
+    ['touchmove', 'onTouchmove'],
+    ['touchend', 'onTouchend'],
   ] as const)('delivers %s synchronously with the native currentTarget', async (eventName, propName) => {
     let currentTarget: EventTarget | null = null
     const callback = vi.fn<CategoricalChartFunc>((_state, event) => {
@@ -116,7 +116,7 @@ describe('public chart callbacks', () => {
     const onMouseMove = vi.fn<CategoricalChartFunc>()
     const onMouseLeave = vi.fn<CategoricalChartFunc>()
     const { container } = render(() => (
-      <BarChart width={500} height={300} data={data} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <BarChart width={500} height={300} data={data} onMousemove={onMouseMove} onMouseleave={onMouseLeave}>
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
@@ -145,13 +145,13 @@ describe('public chart callbacks', () => {
     const secondCallback = vi.fn<CategoricalChartFunc>()
     const { container } = render(() => (
       <div>
-        <BarChart width={500} height={300} data={data} onMouseMove={firstCallback}>
+        <BarChart width={500} height={300} data={data} onMousemove={firstCallback}>
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
           <Bar dataKey="value" isAnimationActive={false} />
         </BarChart>
-        <BarChart width={500} height={300} data={[{ name: 'Other', value: 30 }]} onMouseMove={secondCallback}>
+        <BarChart width={500} height={300} data={[{ name: 'Other', value: 30 }]} onMousemove={secondCallback}>
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />

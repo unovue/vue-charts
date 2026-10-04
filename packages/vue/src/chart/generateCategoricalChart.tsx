@@ -1,3 +1,4 @@
+import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
@@ -140,10 +141,12 @@ export function generateCategoricalChart({
   validateTooltipEventTypes = ['axis' as TooltipEventType],
   tooltipPayloadSearcher,
 }: CategoricalChartOptions) {
-  return defineComponent<CategoricalChartProps>({
+  return defineComponent({
     name: chartName,
     props: applyDefaultProps(CategoricalProps, defaultProps),
-    setup(props: CategoricalChartPropsWithOutSvg, { attrs, slots }) {
+    inheritAttrs: false,
+    emits: chartEmits,
+    setup(props, { attrs, slots, emit }) {
       const options: ChartOptions = {
         chartName,
         defaultTooltipEventType,
@@ -233,6 +236,7 @@ export function generateCategoricalChart({
               width={effectiveWidth.value}
               height={effectiveHeight.value}
               {...eventHandlerAttrs}
+              {...chartListeners(emit)}
             >
               {hasValidSize.value && (
                 <Surface
