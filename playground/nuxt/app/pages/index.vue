@@ -80,6 +80,13 @@ const routes = [
     count: 1,
   },
   {
+    path: '/journey-charts',
+    name: 'Journeys',
+    description: 'User journeys with path highlighting, drop-off and pinning.',
+    icon: GitBranch,
+    count: 1,
+  },
+  {
     path: '/dashboard-charts',
     name: 'Dashboard Charts',
     description: 'Sparkline cards, bar list, donut, gauge and funnel.',

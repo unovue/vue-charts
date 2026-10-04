@@ -31,6 +31,8 @@ exports[`keeps the reviewed runtime export surface for every public entry 1`] = 
     "Global",
     "Heatmap",
     "HeatmapVueProps",
+    "JourneySankey",
+    "JourneySankeyVueProps",
     "Label",
     "LabelList",
     "Legend",

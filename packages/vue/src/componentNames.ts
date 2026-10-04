@@ -20,6 +20,7 @@ export const componentNames = [
   'Funnel',
   'FunnelChart',
   'Heatmap',
+  'JourneySankey',
   'Label',
   'LabelList',
   'Legend',

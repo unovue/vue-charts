@@ -252,9 +252,9 @@ rectangles with a color scale, a tooltip and arrow-key navigation. They share
 |---|---|---|
 | 1 | Tracker (uptime, status history) | shipped on `feat/cell-grid` |
 | 1 | CalendarHeatmap (contributions) | shipped on `feat/cell-grid` |
-| 1 | Journey Sankey: path highlight, ended-here segment, step headers, `paths` input | after the `feat/vision` release; builds on its keyed Sankey motion |
-| 1 | Matrix heatmap and cohort retention grid | next on the cell grid |
-| 1 | Sparkline cards, bar list, donut with center value, gauge, funnel drop-off | mostly recipes on existing charts |
+| 1 | JourneySankey: path highlight, ended-here segment, step headers, pinning, journey input | shipped on `feat/cell-grid` as its own component; `Sankey` stays the general flow chart |
+| 1 | Heatmap and CohortChart | shipped on `feat/cell-grid` |
+| 1 | Sparkline, BarList; donut, gauge and funnel as documented recipes | shipped on `feat/cell-grid` |
 | 2 | Histogram, waterfall, bullet, status timeline, box plot | when Tier 1 is stable |
 | 3 | Slope, bump, stream, icicle, circle packing, candlestick, violin, map | on a real request |
 | skip | Marimekko, chord, force network, parallel coordinates, full Gantt | high cost, no named user |
