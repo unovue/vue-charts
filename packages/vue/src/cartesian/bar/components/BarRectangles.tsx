@@ -12,7 +12,7 @@ import { getValueByDataKey } from '@/utils/chart'
 import { interpolate } from '@/utils'
 import { Layer } from '@/container/Layer'
 import { Rectangle } from '@/shape/Rectangle'
-import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import type { BarRectangleItem } from '@/types/bar'
 import { useBarContext } from '../hooks/useBar'
 
@@ -43,6 +43,19 @@ export const BarRectangles = defineComponent({
       ? { ...bar, x: bar.stackedBarStart, width: 0 }
       : { ...bar, y: bar.stackedBarStart, height: 0 }
 
+    // How far the neighbouring bars travel along the category axis. Entering and leaving bars
+    // travel with them, so a shifted window slides in and out instead of growing in place.
+    const travel = ({ previousMove, nextMove }: Neighbors<IndexedBar>) => {
+      const axis = layout.value === 'vertical' ? 'y' : 'x'
+      const moves = [previousMove, nextMove].filter(move => move != null)
+      if (!moves.length)
+        return 0
+      return moves.reduce((sum, { from, to }) => sum + (to.bar[axis] ?? 0) - (from.bar[axis] ?? 0), 0) / moves.length
+    }
+    const shifted = (bar: BarRectangleItem, by: number): BarRectangleItem => layout.value === 'vertical'
+      ? { ...bar, y: (bar.y ?? 0) + by }
+      : { ...bar, x: (bar.x ?? 0) + by }
+
     const { items, isAnimating: transitioning } = useKeyedTransition<IndexedBar>(
       () => barData.value?.map((bar, index) => ({ bar, index })),
       {
@@ -61,8 +74,10 @@ export const BarRectangles = defineComponent({
             height: interpolate(from.height ?? 0, to.height ?? 0, t),
           },
         }),
-        enterFrom: ({ bar, index }) => ({ index, bar: atBaseline(bar) }),
-        exitTo: ({ bar, index }) => ({ index, bar: atBaseline(bar) }),
+        enterFrom: ({ bar, index }, neighbors) => ({ index, bar: shifted(atBaseline(bar), -travel(neighbors)) }),
+        exitTo: ({ bar, index }, neighbors) => ({ index, bar: shifted(atBaseline(bar), travel(neighbors)) }),
+        // Leaving bars travel with their neighbours, so they share their timing.
+        connected: true,
         isActive: () => props.isAnimationActive !== false,
         transition: () => props.transition,
         onStart: () => emit('animation-start'),

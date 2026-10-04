@@ -100,16 +100,18 @@ const BarView = defineComponent({
         return null
       }
 
+      // Bars entering or leaving a shifted window travel past the plot edges while they animate.
+      const clip = needClip.value || isAnimating.value
       return (
         <Fragment>
           {
-            needClip.value && (
+            clip && (
               <defs>
                 <GraphicalItemClipPath clipPathId={clipPathId} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />
               </defs>
             )
           }
-          <Layer class="v-charts-bar-rectangles" clip-path={needClip.value ? `url(#clipPath-${clipPathId})` : null}>
+          <Layer class="v-charts-bar-rectangles" clip-path={clip ? `url(#clipPath-${clipPathId})` : null}>
             {props.background && <BarBackground />}
             <BarRectangles />
           </Layer>

@@ -44,6 +44,17 @@ export interface KeyedTransitionOptions<T> {
 export interface Neighbors<T> {
   previous?: T
   next?: T
+  /**
+   * How the closest staying neighbours move in this change (on-screen value → target), so an
+   * entering or leaving item can travel with them, e.g. bars sliding along a shifted window.
+   */
+  previousMove?: Move<T>
+  nextMove?: Move<T>
+}
+
+export interface Move<T> {
+  from: T
+  to: T
 }
 
 interface PlanItem<T> {
@@ -115,13 +126,19 @@ export function useKeyedTransition<T>(
 
     // Closest neighbours in the new order that are already on screen.
     const neighborsInNext = (index: number): Neighbors<T> => {
-      let previous: T | undefined
-      let following: T | undefined
-      for (let i = index - 1; i >= 0 && previous === undefined; i--)
-        previous = onScreen.get(nextItems[i].key)
-      for (let i = index + 1; i < nextItems.length && following === undefined; i++)
-        following = onScreen.get(nextItems[i].key)
-      return { previous, next: following }
+      let previousMove: Move<T> | undefined
+      let nextMove: Move<T> | undefined
+      for (let i = index - 1; i >= 0 && !previousMove; i--) {
+        const from = onScreen.get(nextItems[i].key)
+        if (from !== undefined)
+          previousMove = { from, to: nextItems[i].value }
+      }
+      for (let i = index + 1; i < nextItems.length && !nextMove; i++) {
+        const from = onScreen.get(nextItems[i].key)
+        if (from !== undefined)
+          nextMove = { from, to: nextItems[i].value }
+      }
+      return { previous: previousMove?.from, next: nextMove?.from, previousMove, nextMove }
     }
     const staying: PlanItem<T>[] = nextItems.map(({ key, value: to }, index) => {
       const from = onScreen.get(key)
@@ -133,13 +150,19 @@ export function useKeyedTransition<T>(
     // Closest neighbours in the old order that stay, at their new positions.
     const targetOf = new Map(staying.map(item => [item.key, item.to]))
     const neighborsInDrawn = (index: number): Neighbors<T> => {
-      let previous: T | undefined
-      let following: T | undefined
-      for (let i = index - 1; i >= 0 && previous === undefined; i--)
-        previous = targetOf.get(drawn[i].key)
-      for (let i = index + 1; i < drawn.length && following === undefined; i++)
-        following = targetOf.get(drawn[i].key)
-      return { previous, next: following }
+      let previousMove: Move<T> | undefined
+      let nextMove: Move<T> | undefined
+      for (let i = index - 1; i >= 0 && !previousMove; i--) {
+        const to = targetOf.get(drawn[i].key)
+        if (to !== undefined)
+          previousMove = { from: drawn[i].value, to }
+      }
+      for (let i = index + 1; i < drawn.length && !nextMove; i++) {
+        const to = targetOf.get(drawn[i].key)
+        if (to !== undefined)
+          nextMove = { from: drawn[i].value, to }
+      }
+      return { previous: previousMove?.to, next: nextMove?.to, previousMove, nextMove }
     }
 
     // Exiting items keep their place relative to the items that stay, so a path drawn through
