@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { useCanMeasureText } from '@/animation/renderPhase'
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { getStringSize } from '@/utils/attrs'
+import { svgAttrs } from '@/utils/VueUtils'
 import { reduceCSSCalc } from '@/utils/ReduceCSSCalc'
+
+// Labels and ticks pass their whole entry along; only SVG attributes reach the element.
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   x: { type: [Number, String], default: 0 },
@@ -22,6 +26,9 @@ const props = defineProps({
   width: { type: [Number, String], default: undefined },
   value: { type: [String, Number], default: '' },
 })
+
+const attrs = useAttrs()
+const elementAttrs = computed(() => svgAttrs(attrs))
 
 const canMeasureText = useCanMeasureText()
 
@@ -164,6 +171,7 @@ const transforms = computed(() => {
 
 <template>
   <text
+    v-bind="elementAttrs"
     :x="x"
     :y="y"
     :transform="transforms || undefined"

@@ -3,6 +3,7 @@
  */
 import { defineComponent } from 'vue'
 import type { WithSVGProps } from '@/types'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const DotVueProps = {
   cx: { type: [Number, String] },
@@ -16,13 +17,15 @@ export type DotProps = WithSVGProps<typeof DotVueProps>
 export const Dot = defineComponent<DotProps>({
   name: 'Dot',
   props: DotVueProps,
-  setup(props) {
+  inheritAttrs: false,
+  setup(props, { attrs }) {
     return () => {
       const { cx, cy, r } = props
 
       if (cx === +cx! && cy === +cy! && r === +r!) {
         return (
           <circle
+            {...svgAttrs(attrs)}
             class={['v-charts-dot', props.class]}
             cx={cx}
             cy={cy}

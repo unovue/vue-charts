@@ -5,6 +5,7 @@ import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
 import type { VuePropsToType, WithSVGProps } from '@/types'
 import type { RectRadius } from '@/types/bar'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const RectangleVueProps = {
   x: { type: Number as PropType<number>, default: 0 },
@@ -65,27 +66,18 @@ function getRectanglePath(x: number, y: number, width: number, height: number, r
   return `M ${x},${y} h ${width} v ${height} h ${-width} Z`
 }
 
+/** The rectangle as a plain element; `attrs` must already be SVG attributes (see svgAttrs). */
+export function rectanglePath(attrs: Record<string, unknown>, x: number, y: number, width: number, height: number, radius?: number | RectRadius) {
+  if (x !== +x || y !== +y || width !== +width || height !== +height || width === 0 || height === 0)
+    return null
+  return <path {...attrs} x={x} y={y} width={width} height={height} d={getRectanglePath(x, y, width, height, radius)} />
+}
+
 export const Rectangle = defineComponent<RectanglePropsWithSVG>({
   name: 'Rectangle',
   props: RectangleVueProps,
+  inheritAttrs: false,
   setup(props, { attrs }) {
-    return () => {
-      const { x, y, width, height, radius } = props
-
-      if (x !== +x! || y !== +y! || width !== +width! || height !== +height! || width === 0 || height === 0) {
-        return null
-      }
-
-      return (
-        <path
-          {...attrs}
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          d={getRectanglePath(x, y, width, height, radius)}
-        />
-      )
-    }
+    return () => rectanglePath(svgAttrs(attrs), props.x, props.y, props.width, props.height, props.radius)
   },
 })

@@ -25,6 +25,7 @@ import { classProp } from '@/types'
 import type { LayoutType, VuePropsToType, WithSVGProps } from '@/types'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils'
+import { svgAttrs } from '@/utils/VueUtils'
 
 interface CurveFactories {
   [index: string]: CurveFactory
@@ -170,7 +171,7 @@ export const Curve = defineComponent<CurveProps>({
 
       return (
         <path
-          {...attrs}
+          {...svgAttrs(attrs)}
           class={['v-charts-curve', props.class]}
           d={realPath.value}
         />

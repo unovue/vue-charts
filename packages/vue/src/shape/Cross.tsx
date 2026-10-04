@@ -1,5 +1,6 @@
 import type { SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
+import { svgAttrs } from '@/utils/VueUtils'
 
 export interface CrossProps {
   x?: number
@@ -23,7 +24,7 @@ export function Cross(props: CrossProps & SVGAttributes) {
 
   return (
     <path
-      {...rest}
+      {...svgAttrs(rest)}
       class="v-charts-cross"
       d={getCrossPath(x, y, width, height, top, left)}
     />

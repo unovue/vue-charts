@@ -12,6 +12,7 @@ import type { SymbolType as D3SymbolType } from 'd3-shape'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils/validate'
 import type { VueClassValue } from '@/types/common'
+import { svgAttrs } from '@/utils/VueUtils'
 
 export type SymbolType = 'circle' | 'cross' | 'diamond' | 'square' | 'star' | 'triangle' | 'wye'
 
@@ -107,7 +108,7 @@ export function Symbols(props: SymbolsProps) {
   if (isNumber(cx) && isNumber(cy) && isNumber(size)) {
     return (
       <path
-        {...rest}
+        {...svgAttrs(rest)}
         class={['v-charts-symbols', className].filter(Boolean).join(' ')}
         transform={`translate(${cx}, ${cy})`}
         d={getPath()}

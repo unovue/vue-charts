@@ -138,6 +138,8 @@ function defaultFormatter<TValue extends ValueType>(value: TValue) {
 // Default Tooltip Content Component
 const DefaultTooltipContent = defineComponent({
   name: 'DefaultTooltipContent',
+  // It receives the whole tooltip state; none of it belongs on the element.
+  inheritAttrs: false,
   props: {
     label: [String, Number],
     payload: Array as PropType<TooltipPayload>,

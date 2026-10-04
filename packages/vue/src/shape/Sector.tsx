@@ -7,6 +7,7 @@ import { classProp } from '@/types'
 import type { VuePropsToType, WithSVGProps } from '@/types'
 import { getPercentValue, mathSign } from '@/utils/data'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const SectorVueProps = {
   cx: { type: Number as PropType<number>, default: 0 },
@@ -202,6 +203,7 @@ function getSectorWithCorner(
 export const Sector = defineComponent<SectorPropsWithSVG>({
   name: 'Sector',
   props: SectorVueProps,
+  inheritAttrs: false,
   setup(props, { attrs }) {
     return () => {
       const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, cornerRadius, forceCornerRadius, cornerIsExternal } = props
@@ -232,7 +234,7 @@ export const Sector = defineComponent<SectorPropsWithSVG>({
 
       return (
         <path
-          {...attrs}
+          {...svgAttrs(attrs)}
           class={['v-charts-sector', props.class]}
           d={path}
         />

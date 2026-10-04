@@ -7,11 +7,10 @@ import {
   selectActiveTooltipIndex,
 } from '@/state/selectors/tooltipSelectors'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
-import { filterProps } from '@/utils/VueUtils'
+import { filterProps, svgAttrs } from '@/utils/VueUtils'
 import { getValueByDataKey } from '@/utils/chart'
 import { interpolate } from '@/utils'
-import { Layer } from '@/container/Layer'
-import { Rectangle } from '@/shape/Rectangle'
+import { Rectangle, rectanglePath } from '@/shape/Rectangle'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import type { BarRectangleItem } from '@/types/bar'
 import { useBarContext } from '../hooks/useBar'
@@ -103,6 +102,9 @@ export const BarRectangles = defineComponent({
 
     return () => {
       const baseProps = filterProps(props, false)
+      // Without custom shapes every bar is a plain path: the series attributes are sanitised once
+      // per frame instead of once per bar, and no component updates per bar per frame.
+      const baseAttrs = shapeSlot || activeBarSlot ? undefined : svgAttrs(baseProps)
       const activeEnabled = props.activeBar !== false || props.activeIndex != null || !!activeBarSlot
 
       return (
@@ -130,18 +132,20 @@ export const BarRectangles = defineComponent({
               ? activeBarSlot(barRectangleProps)
               : shapeSlot
                 ? shapeSlot(barRectangleProps)
-                : <Rectangle {...barRectangleProps} />
+                : baseAttrs
+                  ? rectanglePath({ ...baseAttrs, ...(entryFill ? { fill: entryFill } : {}), ...svgAttrs(cellProps.value?.[index]), ...svgAttrs(activeBarProps) }, bar.x!, bar.y!, bar.width!, bar.height!, (activeBarProps as { radius?: number }).radius ?? props.radius)
+                  : <Rectangle {...barRectangleProps} />
 
             return (
-              <Layer
+              <g
                 key={key}
-                class="v-charts-bar-rectangle"
+                class="v-charts-layer v-charts-bar-rectangle"
                 onMouseenter={(event: MouseEvent) => { activate('hover', bar, index); emit('mouseenter', bar, index, event) }}
                 onMouseleave={(event: MouseEvent) => { tooltip.mouseLeaveItem(); emit('mouseleave', bar, index, event) }}
                 onClick={(event: MouseEvent) => { activate('click', bar, index); emit('click', bar, index, event) }}
               >
                 {shape}
-              </Layer>
+              </g>
             )
           })}
         </g>
