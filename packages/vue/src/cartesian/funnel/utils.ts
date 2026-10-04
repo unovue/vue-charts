@@ -2,7 +2,6 @@ import type { ChartOffset, Coordinate, TooltipType } from '@/types'
 import type { FunnelComposedData, FunnelProps, FunnelTrapezoidItem } from './type'
 import { isNumber } from '@/utils'
 import { getValueByDataKey } from '@/utils/chart'
-import { omit } from 'es-toolkit/compat'
 
 function getRealWidthHeight({ customWidth }: { customWidth?: number | string }, offset: ChartOffset) {
   const { width, height, left, right, top, bottom } = offset
@@ -89,6 +88,7 @@ export function computeFunnelTrapezoids({
       }
 
       return {
+        ...entry,
         x,
         y,
         width: Math.max(upperWidth, lowerWidth),
@@ -99,7 +99,6 @@ export function computeFunnelTrapezoids({
         val,
         tooltipPayload,
         tooltipPosition,
-        ...omit(entry, 'width'),
         payload: entry,
         parentViewBox,
         labelViewBox: {

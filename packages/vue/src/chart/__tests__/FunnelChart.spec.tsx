@@ -8,7 +8,6 @@ import { Legend } from '@/components/legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
 
 describe('funnelChart', () => {
   beforeEach(() => {
@@ -62,6 +61,29 @@ describe('funnelChart', () => {
       const funnel = container.querySelector('.v-charts-funnel')
       expect(funnel).toBeNull()
     })
+  })
+
+  it('keeps computed geometry when payload fields collide', () => {
+    const control = render(() => (
+      <FunnelChart width={500} height={300}>
+        <Funnel dataKey="value" data={data} isAnimationActive={false} />
+      </FunnelChart>
+    ))
+    const expected = [...control.container.querySelectorAll('.v-charts-trapezoid')].map(el => el.getAttribute('d'))
+    control.unmount()
+    const collided = data.map(entry => ({ ...entry, x: -999, y: Infinity, width: -99, height: -99, upperWidth: -99, lowerWidth: -99 }))
+    const shape = vi.fn((props: { x: number, y: number, upperWidth: number, height: number, payload: unknown }) => (
+      <rect x={props.x} y={props.y} width={props.upperWidth} height={props.height} />
+    ))
+    const view = render(() => (
+      <FunnelChart width={500} height={300}>
+        <Funnel dataKey="value" data={collided} isAnimationActive={false} />
+        <Funnel dataKey="value" data={collided} isAnimationActive={false}>{{ shape }}</Funnel>
+      </FunnelChart>
+    ))
+    expect([...view.container.querySelectorAll('.v-charts-trapezoid')].map(el => el.getAttribute('d'))).toEqual(expected)
+    expect(shape.mock.calls[0][0].payload).toMatchObject(collided[0])
+    expect(shape.mock.calls[0][0].y).toBe(5)
   })
 
   describe('lastShapeType', () => {
