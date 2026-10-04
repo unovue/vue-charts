@@ -42,7 +42,13 @@ export interface KeyedTransitionOptions<T> {
   /** A user `transition` prop. When set, every phase follows it instead of the motion tokens. */
   transition?: () => ChartTransition | undefined
   /** Timing of the first appearance instead of the `enter` token, e.g. a line drawing itself. */
-  entrance?: PhaseTiming
+  entrance?: () => PhaseTiming
+  /**
+   * A resize during the entrance: the item at its new place (`target`) that keeps the
+   * entrance's own progress from `current` (e.g. how far a line is drawn). Without it a resize
+   * ends the entrance at once.
+   */
+  keepEntrance?: (current: T, target: T) => T
   /**
    * Play the entrance after hydration instead of showing the final state at once. The server
    * renders the entrance's start (e.g. a line not drawn yet), so hydration matches it.
@@ -102,8 +108,9 @@ export function useKeyedTransition<T>(
   const chartSize = useChartSize()
   const gesture = useChartGesture()
   let lastSize: string | undefined
-  // The first appearance is animating.
+  // The first appearance is animating, on this clock (ms) and timing.
   let entering = false
+  let entranceClock: { start: number, timing: PhaseTiming } | undefined
   if (!options.followsSeries)
     useSeriesMotion().register(options.isActive)
   let controls: AnimationPlaybackControls | undefined
@@ -253,7 +260,17 @@ export function useKeyedTransition<T>(
     const resized = size !== undefined && size !== lastSize && (lastSize !== undefined || (hasEntered && !entering))
     lastSize = size ?? lastSize
     skipEntrance = false
-    if (skip || !active || reduced === 'reduce' || resized || dragging) {
+    let keepDrawing = false
+    if (resized && entering && options.keepEntrance && active && reduced !== 'reduce' && !dragging) {
+      // Take the new layout at once and let the entrance carry on from where it was.
+      const current = new Map(items.value.map(item => [item.key, item.value]))
+      items.value = keyed(nextItems).map(({ key, value }) => {
+        const shown = current.get(key)
+        return { key, phase: 'update' as const, value: shown === undefined ? value : options.keepEntrance!(shown, value) }
+      })
+      keepDrawing = true
+    }
+    if (skip || !active || reduced === 'reduce' || (resized && !keepDrawing) || dragging) {
       hasEntered = true
       snap(nextItems)
       return
@@ -262,7 +279,16 @@ export function useKeyedTransition<T>(
     const steps = plan(nextItems)
     // The very first appearance uses the enter timing for every item.
     const first = !hasEntered
-    const timing = (phase: TransitionPhase): PhaseTiming => first ? options.entrance ?? motionTokens.enter : motionTokens[options.connected ? 'update' : phase]
+    let entrance = first ? options.entrance?.() ?? motionTokens.enter : undefined
+    if (first) {
+      entranceClock = { start: performance.now(), timing: entrance! }
+    }
+    else if (entering && entranceClock) {
+      // A change during the entrance continues it on the same clock and curve: no restart, no
+      // change of pace.
+      entrance = continueTiming(entranceClock.timing, (performance.now() - entranceClock.start) / 1000)
+    }
+    const timing = (phase: TransitionPhase): PhaseTiming => entrance ?? motionTokens[options.connected ? 'update' : phase]
     hasEntered = true
     stop()
     // A change that interrupts the entrance (axes registering after mount) continues it.
@@ -310,4 +336,19 @@ export function useKeyedTransition<T>(
 
   onScopeDispose(stop)
   return { items, isAnimating }
+}
+
+/**
+ * The rest of a timing already `elapsed` seconds in, as a timing of its own: eased progress
+ * from where it is now to 1 that follows the original curve exactly.
+ */
+function continueTiming({ duration, ease }: PhaseTiming, elapsed: number): PhaseTiming {
+  const done = Math.min(1, Math.max(0, elapsed / duration))
+  const from = ease(done)
+  if (done >= 1 || from >= 1)
+    return { duration: 0.001, ease: () => 1 }
+  return {
+    duration: duration * (1 - done),
+    ease: t => (ease(done + t * (1 - done)) - from) / (1 - from),
+  }
 }

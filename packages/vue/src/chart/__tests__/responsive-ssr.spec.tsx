@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
-import { createSSRApp, nextTick, ref } from 'vue'
+import { createApp, createSSRApp, nextTick, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Sankey, SunburstChart, Treemap, XAxis, YAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
@@ -105,6 +105,34 @@ it('snaps hydrated geometry to the first measured size', async () => {
   const ticks = [...container.querySelectorAll('.v-charts-cartesian-axis-tick-value')].map(tick => Number(tick.getAttribute('x')))
   expect(ticks.length).toBeGreaterThan(0)
   expect(Math.max(...ticks)).toBeLessThanOrEqual(320)
+  app.unmount()
+  container.remove()
+})
+
+// A scrollbar appearing while a line draws itself resized the chart and snapped the line to
+// fully drawn in one frame. A resize moves the line but lets it keep drawing.
+it('keeps drawing a line through a resize during its entrance', async () => {
+  MockResizeObserver.instances = []
+  vi.stubGlobal('ResizeObserver', MockResizeObserver)
+  const container = document.createElement('div')
+  document.body.append(container)
+  const app = createApp({ render: () => (
+    <LineChart data={data}>
+      <XAxis dataKey="name" />
+      <Line dataKey="value" />
+    </LineChart>
+  ) })
+  app.mount(container)
+  await nextTick()
+  MockResizeObserver.instances.at(-1)!.trigger(400, 300)
+  await nextTick()
+  MockResizeObserver.instances.at(-1)!.trigger(380, 300)
+  await nextTick()
+  await nextTick()
+  const curve = container.querySelector('.v-charts-line-curve')!
+  expect(curve.getAttribute('stroke-dasharray')).not.toBeNull()
+  const xs = (curve.getAttribute('d')!.match(/[ML]\s*(-?[\d.]+)/g) ?? []).map(part => Number(part.slice(1)))
+  expect(Math.max(...xs)).toBeLessThanOrEqual(380)
   app.unmount()
   container.remove()
 })

@@ -11,8 +11,8 @@ import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
 import { usePointTransition } from '@/animation/usePointTransition'
-import { labelOpacity, lengthShares, sweptLabels } from '@/animation/ridingLabels'
-import { motionTokens } from '@/animation/motion'
+import { labelOpacity, lengthShares, polylineLength, sweptLabels } from '@/animation/ridingLabels'
+import { drawTiming } from '@/animation/motion'
 import { SweepClip } from '@/animation/SweepClip'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
@@ -92,7 +92,7 @@ export const StaticLine = defineComponent({
       transition: () => props.transition,
       // The line draws itself along its length, also after hydration (the server sends it
       // undrawn), like Recharts.
-      entrance: motionTokens.draw,
+      entrance: () => drawTiming(polylineLength(points.value ?? [])),
       entranceAfterHydration: true,
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),

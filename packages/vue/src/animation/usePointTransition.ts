@@ -39,7 +39,7 @@ export function usePointTransition<T extends Point>(
     isActive: () => boolean
     transition: () => ChartTransition | undefined
     /** Timing of the first appearance, e.g. a line drawing itself. */
-    entrance?: PhaseTiming
+    entrance?: () => PhaseTiming
     /** Play the first appearance after hydration; the server renders it undrawn. */
     entranceAfterHydration?: boolean
     onStart: () => void
@@ -102,6 +102,8 @@ export function usePointTransition<T extends Point>(
     connected: true,
     transition: options.transition,
     entrance: options.entrance,
+    // A resize while the path sweeps or draws in moves it to its new place at the same progress.
+    keepEntrance: (current, target) => ({ ...target, reveal: current.reveal }),
     entranceAfterHydration: options.entranceAfterHydration,
     onStart: () => {
       if (target()?.length || appeared)

@@ -49,6 +49,16 @@ export function sweepShare(position: number | null | undefined, start: number, s
  * segments between the points approximate the curve. Gaps (null coordinates) are skipped.
  */
 export function lengthShares(points: readonly { x?: number | null, y?: number | null }[]): (number | undefined)[] {
+  const { shares, total } = measure(points)
+  return shares.map(share => share == null ? undefined : total > 0 ? share / total : 0)
+}
+
+/** The length of the straight segments through the points, skipping gaps. */
+export function polylineLength(points: readonly { x?: number | null, y?: number | null }[]): number {
+  return measure(points).total
+}
+
+function measure(points: readonly { x?: number | null, y?: number | null }[]) {
   const shares: (number | undefined)[] = []
   let total = 0
   let previous: { x: number, y: number } | undefined
@@ -62,5 +72,5 @@ export function lengthShares(points: readonly { x?: number | null, y?: number | 
     shares.push(total)
     previous = { x: point.x, y: point.y }
   }
-  return shares.map(share => share == null ? undefined : total > 0 ? share / total : 0)
+  return { shares, total }
 }
