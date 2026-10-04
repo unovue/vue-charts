@@ -9,16 +9,21 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "baseUrl": "./src",
     "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./*"],
-      "@nuxt/schema": ["../node_modules/@nuxt/schema"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@nuxt/schema": [
+        "./node_modules/@nuxt/schema"
+      ]
     },
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "allowImportingTsExtensions": true,
     "allowJs": true,
     "strict": false,
@@ -34,6 +39,12 @@
     "./src/**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/**/__tests__/**",
+    "src/test/**",
+    "src/**/__stories__/**",
+    "src/storybook/**",
+    "src/**/*.stories.*",
+    "src/**/*.story.*"
   ]
 }

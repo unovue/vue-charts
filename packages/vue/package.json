@@ -54,7 +54,8 @@
     "bumpp": "bumpp package.json",
     "pub:release": "pnpm publish --access public",
     "size": "size-limit",
-    "test:nuxt": "vitest run --config vitest.nuxt.config.ts"
+    "test:nuxt": "vitest run --config vitest.nuxt.config.ts",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
