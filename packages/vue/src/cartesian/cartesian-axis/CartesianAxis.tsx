@@ -1,3 +1,4 @@
+import { useCanMeasureText } from '@/animation/renderPhase'
 /**
  * @fileOverview Cartesian Axis
  */
@@ -75,6 +76,7 @@ export const CartesianAxis = defineComponent({
     tickTextProps: { type: Object, default: undefined },
   },
   setup(props, { slots }) {
+    const canMeasureText = useCanMeasureText()
     const instance = getCurrentInstance()!
     const state = reactive({
       fontSize: '',
@@ -207,7 +209,7 @@ export const CartesianAxis = defineComponent({
 
     const renderTicks = (props: any, fontSize: string, letterSpacing: string) => {
       const { tickLine, stroke, tick, tickFormatter, unit } = props
-      const finalTicks = getTicks(props as any, fontSize, letterSpacing)
+      const finalTicks = getTicks(props as any, fontSize, letterSpacing, canMeasureText.value)
       const textAnchor = getTickTextAnchor()
       const verticalAnchor = getTickVerticalAnchor()
       const axisProps = filterProps(props, false)

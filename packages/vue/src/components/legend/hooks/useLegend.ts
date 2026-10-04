@@ -1,3 +1,4 @@
+import { useCanMeasureText } from '@/animation/renderPhase'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
@@ -18,6 +19,7 @@ import type { LegendProps } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
 export function useLegend(props: LegendProps) {
+  const canMeasureText = useCanMeasureText()
   const { setLegendSize } = useChartLegend()
   const contextPayload = useAppSelector(selectLegendPayload)
   const legendPortalFromContext = useLegendPortal()
@@ -29,7 +31,8 @@ export function useLegend(props: LegendProps) {
 
   // Element ref for bounding box calculation
   const legendRef = ref<HTMLElement>()
-  const { width: boundingWidth, height: boundingHeight } = useElementBounding(legendRef)
+  const measuredLegendRef = computed(() => canMeasureText.value ? legendRef.value : undefined)
+  const { width: boundingWidth, height: boundingHeight } = useElementBounding(measuredLegendRef)
 
   // When `auto` the layout is decided based on the `position` prop:
   // left|right positions are vertical, everything else horizontal
@@ -48,8 +51,8 @@ export function useLegend(props: LegendProps) {
 
   // Calculate bounding box
   const boundingBox = computed(() => ({
-    width: boundingWidth.value,
-    height: boundingHeight.value,
+    width: canMeasureText.value ? boundingWidth.value : 0,
+    height: canMeasureText.value ? boundingHeight.value : 0,
   }))
 
   // Inside positions use the plot area; outside positions use the margin-inset chart area.

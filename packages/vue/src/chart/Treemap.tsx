@@ -1,5 +1,5 @@
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
-import { provideEntranceGate } from '@/animation/entranceGate'
+import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, ref, watch } from 'vue'
@@ -128,6 +128,7 @@ const TreemapInner = defineComponent({
   props: TreemapVueProps,
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
+    const canMeasureText = useCanMeasureText()
     const tooltip = useChartTooltip()
     const colors = computed(() => props.colorPanel ?? DEFAULT_COLORS)
 
@@ -339,7 +340,7 @@ const TreemapInner = defineComponent({
 
       // Text label — only render if text fits within node bounds
       const nameSize = node.width > 20 && node.height > 20
-        ? getStringSize(node.name, { fontSize: '14px' })
+        ? getStringSize(node.name, { fontSize: '14px' }, canMeasureText.value)
         : { width: Infinity, height: Infinity }
       const text = node.width > 20 && node.height > 20 && nameSize.width < node.width && nameSize.height < node.height
         ? (
@@ -449,7 +450,7 @@ export const Treemap = defineComponent({
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
     provideChartContext(treemapOptions)
-    provideEntranceGate()
+    provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {

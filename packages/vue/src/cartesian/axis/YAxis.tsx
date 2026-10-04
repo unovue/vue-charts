@@ -1,3 +1,4 @@
+import { useCanMeasureText } from '@/animation/renderPhase'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
 import type { ComponentPublicInstance, PropType } from 'vue'
@@ -24,6 +25,7 @@ const YAxisImpl = defineComponent({
   },
   inheritAttrs: false,
   setup(props, { attrs }) {
+    const canMeasureText = useCanMeasureText()
     const isPanorama = useIsPanorama()
     const axisType = 'yAxis'
     const { updateYAxisWidth } = useChartCartesianAxis()
@@ -60,7 +62,7 @@ const YAxisImpl = defineComponent({
     const updateAutoWidth = () => {
       // No dynamic width calculation is done when width !== 'auto'
       // or when a function/VNode is used for label
-      if (!isAutoWidth() || axisSize.value == null) {
+      if (!canMeasureText.value || !isAutoWidth() || axisSize.value == null) {
         return
       }
       const label = attrs.label
@@ -80,7 +82,7 @@ const YAxisImpl = defineComponent({
     // Measure in a deferred nextTick: updating state synchronously inside a watchPostEffect
     // would hit Vue's activeEffect self-trigger skip and the follow-up re-measure would never run.
     watch(
-      [axisSize, cartesianTickItems, () => attrs.label],
+      [canMeasureText, axisSize, cartesianTickItems, () => attrs.label],
       () => {
         nextTick(updateAutoWidth)
       },

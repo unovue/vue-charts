@@ -1,4 +1,4 @@
-import { provideEntranceGate } from '@/animation/entranceGate'
+import { provideRenderPhase } from '@/animation/renderPhase'
 import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import { provideChartContext } from '@/state/chartContext'
@@ -152,7 +152,7 @@ export function generateCategoricalChart({
         eventEmitter: undefined,
       }
       provideChartContext(options)
-      provideEntranceGate()
+      provideRenderPhase()
       provideIndependentChart()
 
       const clipPathId = provideClipPathId(props)

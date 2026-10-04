@@ -34,8 +34,8 @@ function removeInvalidKeys(obj: Record<string, any>) {
   return copyObj
 }
 
-export function getStringSize(text: string | number, style: CSSProperties = {}): Size {
-  if (text === undefined || text === null || Global.isSsr) {
+export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !Global.isSsr): Size {
+  if (text === undefined || text === null || !canMeasure) {
     return { width: 0, height: 0 }
   }
 

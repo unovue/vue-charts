@@ -10,7 +10,7 @@ import { animate } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-dom'
 import { interpolate } from '@/utils'
 import { LabelList } from '@/components/label'
-import { shouldSkipEntrance } from '@/animation/entranceGate'
+import { shouldSkipEntrance } from '@/animation/renderPhase'
 
 // Dots component
 export const Dots = defineComponent({

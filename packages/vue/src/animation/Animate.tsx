@@ -3,7 +3,7 @@ import { defineComponent, onUnmounted, ref, watch } from 'vue'
 import { animate } from 'motion-v'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { shouldSkipEntrance } from './entranceGate'
+import { shouldSkipEntrance } from './renderPhase'
 
 const DEFAULT_TRANSITION: ValueAnimationTransition<number> = {
   duration: 0.4,

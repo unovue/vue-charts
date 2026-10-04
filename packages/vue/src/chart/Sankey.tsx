@@ -1,5 +1,5 @@
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
-import { provideEntranceGate } from '@/animation/entranceGate'
+import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
@@ -370,7 +370,7 @@ const _Sankey = defineComponent({
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots }) {
     provideChartContext(sankeyOptions)
-    provideEntranceGate()
+    provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {

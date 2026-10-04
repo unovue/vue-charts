@@ -2,6 +2,7 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp, createSSRApp, nextTick } from 'vue'
 import type { VNode } from 'vue'
+import { Global } from '@/utils/Global'
 import { Area, Bar, Brush, CartesianGrid, ComposedChart, ErrorBar, Funnel, FunnelChart, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
 
 const data = [{ name: 'Alpha', value: 10, other: 15 }, { name: 'Beta', value: 20, other: 5 }, { name: 'Gamma', value: 15, other: 10 }]
@@ -168,5 +169,62 @@ describe('first-render geometry is independent of declaration order', () => {
         }
       })
     }
+  }
+})
+
+// Catches real-font hydration mismatches hidden by JSDOM's default zero bounds.
+describe('hydration with non-zero text measurements', () => {
+  for (const chart of charts) {
+    it(`${chart.name}: defers measured layout until the first frame`, async () => {
+      const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => {
+        return { x: 0, y: 0, top: 0, left: 0, right: 80, bottom: 20, width: 80, height: 20, toJSON: () => ({}) }
+      })
+      // Keep non-zero measurements separate from the zero-size matrix cache.
+      const computedStyle = vi.spyOn(window, 'getComputedStyle').mockReturnValue({ fontSize: '17px', letterSpacing: '1px' } as CSSStyleDeclaration)
+      const frames: FrameRequestCallback[] = []
+      vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback))
+      const render = () => chart.render(false)
+      const wasSsr = Global.isSsr
+      Global.set('isSsr', true)
+      const html = await renderToString(createSSRApp({ render }))
+      Global.set('isSsr', false)
+      const container = containerFor(html)
+      const server = geometry(container)
+      const app = createSSRApp({ render })
+      const warn = vi.spyOn(console, 'warn')
+      const error = vi.spyOn(console, 'error')
+      try {
+        app.mount(container)
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await nextTick()
+        expect(geometry(container)).toEqual(server)
+        expect(warn).not.toHaveBeenCalled()
+        expect(error).not.toHaveBeenCalled()
+        if (chart.name === 'ComposedChart') {
+          expect(container.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick:last-child .v-charts-cartesian-axis-tick-value')?.getAttribute('y')).toBe('5')
+        }
+        await nextTick()
+        frames.splice(0).forEach(callback => callback(0))
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await nextTick()
+        if (chart.name === 'ComposedChart') {
+          // Tick selection uses the full SVG viewBox: a 20px label is inset to y=10.
+          expect(container.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick:last-child .v-charts-cartesian-axis-tick-value')?.getAttribute('y')).toBe('10')
+          expect(geometry(container)).not.toEqual(server)
+        }
+        expect(warn).not.toHaveBeenCalled()
+        expect(error).not.toHaveBeenCalled()
+      }
+      finally {
+        app.unmount()
+        container.remove()
+        rect.mockRestore()
+        computedStyle.mockRestore()
+        Global.set('isSsr', wasSsr)
+        warn.mockRestore()
+        error.mockRestore()
+        vi.unstubAllGlobals()
+      }
+    })
   }
 })

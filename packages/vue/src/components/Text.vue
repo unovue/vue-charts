@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useCanMeasureText } from '@/animation/renderPhase'
 import { computed } from 'vue'
 import { getStringSize } from '@/utils/attrs'
 import { reduceCSSCalc } from '@/utils/ReduceCSSCalc'
@@ -22,6 +23,8 @@ const props = defineProps({
   value: { type: [String, Number], default: '' },
 })
 
+const canMeasureText = useCanMeasureText()
+
 const BREAKING_SPACES = /[ \f\n\r\t\v\u2028\u2029]+/
 
 function calculateWordWidths(children: string | number, breakAll: boolean, style: any) {
@@ -29,8 +32,8 @@ function calculateWordWidths(children: string | number, breakAll: boolean, style
   if (children !== undefined && children !== null) {
     words = breakAll ? children.toString().split('') : children.toString().split(BREAKING_SPACES)
   }
-  const wordsWithComputedWidth = words.map(word => ({ word, width: getStringSize(word, style).width }))
-  const spaceWidth = breakAll ? 0 : getStringSize('\u00A0', style).width
+  const wordsWithComputedWidth = words.map(word => ({ word, width: getStringSize(word, style, canMeasureText.value).width }))
+  const spaceWidth = breakAll ? 0 : getStringSize('\u00A0', style, canMeasureText.value).width
   return { wordsWithComputedWidth, spaceWidth }
 }
 
