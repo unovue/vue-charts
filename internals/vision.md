@@ -4,6 +4,15 @@ Status: proposal, 2026-10-04. Based on a full review of `refactor/vue-chart-cont
 (an Opus read plus an independent Codex review), the running Nuxt playground, shadcn-vue
 (`external/shadcn-vue`, v2.7.4), and the Vue/Nuxt reference repos in `~/Git/alignment`.
 
+## Status (2026-10-04)
+
+Accomplished on branch `feat/vision` (local, not pushed). All done-checks in the run's GOAL.md pass:
+1,089 tests in shuffled order, typecheck, build, size budgets, strict packed Vite and Nuxt consumers,
+Nuxt SSR fixture, browser motion check (12 scenarios, 0 recreated elements, ~60 fps), docs prerender,
+playground build. Redux and Immer are gone. Follow-ups: teleported series move into their z-order
+layer by remounting once after mount (a disabled-Teleport approach fails Vue's SSR hydration);
+the docs prerender logs a 404 for the landing content query; repository-wide lint has pre-existing errors.
+
 ## One sentence
 
 The chart library a Vue developer would design if Recharts did not exist: Vue reactivity and
