@@ -318,8 +318,13 @@ const JourneySankeyInner = defineComponent({
 
     return () => {
       const shapes = items.value
-      const links = shapes.flatMap(({ key, value, phase }) => value.kind === 'link' ? [{ key, link: value.link, phase }] : [])
-      const nodes = shapes.flatMap(({ key, value, phase }) => value.kind === 'node' ? [{ key, node: value.node, phase }] : [])
+      // Leaving shapes fade out in the first half of the move and arriving ones fade in during the
+      // second half, so their labels never pile up on the nodes sliding past them.
+      const presence = (phase: string, progress: number | undefined) => phase === 'exit'
+        ? Math.max(0, 1 - (progress ?? 1) * 2)
+        : phase === 'enter' ? Math.max(0, (progress ?? 1) * 2 - 1) : 1
+      const links = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'link' ? [{ key, link: value.link, phase, shown: presence(phase, progress), moving: progress !== undefined }] : [])
+      const nodes = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'node' ? [{ key, node: value.node, phase, shown: presence(phase, progress), moving: progress !== undefined }] : [])
       const labelChars = Math.floor((columnWidth.value - props.nodeWidth - 16) / CHAR_WIDTH)
       return (
         <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -353,8 +358,8 @@ const JourneySankeyInner = defineComponent({
               </g>
             )}
             <g class="v-charts-journey-links" fill="none">
-              {links.map(({ key, link, phase }) => (
-                <path key={`v${String(key)}`} class="v-charts-journey-link" d={linkPath(link)} stroke-width={Math.max(link.width, 0.5)} style={{ stroke: props.color, opacity: linkOpacity(link), transition: fade.value, pointerEvents: 'none' }} data-phase={phase} />
+              {links.map(({ key, link, shown, moving }) => (
+                <path key={`v${String(key)}`} class="v-charts-journey-link" d={linkPath(link)} stroke-width={Math.max(link.width, 0.5)} style={{ stroke: props.color, opacity: linkOpacity(link) * shown, transition: moving ? undefined : fade.value, pointerEvents: 'none' }} />
               ))}
               {/* Wider invisible bands catch the pointer on thin links. */}
               {links.map(({ key, link, phase }) => phase === 'exit'
@@ -374,14 +379,14 @@ const JourneySankeyInner = defineComponent({
                   ))}
             </g>
             <g class="v-charts-journey-nodes">
-              {nodes.map(({ key, node, phase }) => {
+              {nodes.map(({ key, node, phase, shown, moving }) => {
                 const height = node.continueHeight + node.exitHeight
                 const href = props.nodeHref?.(node.name, node)
                 const name = truncateMiddle(node.name, node.step === layout.value.steps.length - 1 ? Math.floor(labelWidth.value / CHAR_WIDTH) : labelChars)
                 const subtitle = subtitleOf(node)
                 const isFocused = focused.value === node.id
                 return (
-                  <g key={String(key)} class="v-charts-journey-node" style={{ opacity: nodeOpacity(node), transition: fade.value, pointerEvents: phase === 'exit' ? 'none' : undefined }}>
+                  <g key={String(key)} class="v-charts-journey-node" style={{ opacity: nodeOpacity(node) * shown, transition: moving ? undefined : fade.value, pointerEvents: phase === 'exit' ? 'none' : undefined }}>
                     <g style={{ cursor: 'pointer' }} onMouseenter={() => enterNode(node)} onMouseleave={leave} onClick={(event: MouseEvent) => clickNode(node, event)}>
                       <rect x={node.x - 4} y={node.y} width={props.nodeWidth + 8} height={Math.max(height, 4)} fill="transparent" />
                       {node.continueHeight > 0 && <rect class="v-charts-journey-node-continue" x={node.x} y={node.y} width={props.nodeWidth} height={node.continueHeight} rx={2} style={{ fill: props.color }} />}

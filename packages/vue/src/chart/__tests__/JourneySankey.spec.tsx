@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { JourneySankey } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -15,6 +15,28 @@ const journeys = [
   { path: ['/', '/docs'], count: 3 },
   { path: ['/de', '/de/pricing', '/de', '/de/docs'], count: 3 },
 ]
+
+const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean }> }))
+vi.mock('motion-v', async original => ({
+  ...await original<typeof import('motion-v')>(),
+  animate: (from: number, to: number, options: { onUpdate: (v: number) => void, onComplete?: () => void }) => {
+    if (typeof from !== 'number')
+      return { stop() {} }
+    const run = { to, update: options.onUpdate, complete: () => options.onComplete?.(), stopped: false }
+    clock.runs.push(run)
+    return { stop: () => { run.stopped = true } }
+  },
+}))
+async function frame(progress?: number) {
+  for (const run of clock.runs.filter(run => !run.stopped)) {
+    run.update(progress ?? run.to)
+    if (progress == null) {
+      run.stopped = true
+      run.complete()
+    }
+  }
+  await nextTick()
+}
 
 const options = { width: 900, height: 600, steps: 4, exitsKnown: true, nodeWidth: 8, nodePadding: 8, labelHeight: 34, labelWidth: 160, top: 28 }
 
@@ -88,6 +110,21 @@ describe('<JourneySankey />', () => {
     expect(links(container).filter(link => link.style.opacity === '0.45')).toHaveLength(3)
     await fireEvent.click(node)
     expect(pinned.value).toBeNull()
+  })
+
+  it('fades a removed journey out before the remaining nodes slide past it', async () => {
+    const data = ref(journeys)
+    const { container, getByText } = render(() => <JourneySankey width={900} height={600} data={data.value} />)
+    await frame()
+    const leaving = getByText('/de/pricing').closest<SVGGElement>('.v-charts-journey-node')!
+    data.value = journeys.filter(journey => journey.path[0] !== '/de')
+    await nextTick()
+    await frame(0.3)
+    expect(Number(leaving.style.opacity)).toBeLessThan(0.5)
+    await frame(0.6)
+    expect(Number(leaving.style.opacity)).toBe(0)
+    await frame()
+    expect(container.textContent).not.toContain('/de/pricing')
   })
 
   it('walks nodes with the arrow keys and pins with Enter', async () => {
