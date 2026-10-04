@@ -10,10 +10,10 @@ import type { RadialBarDataItem, RadialBarSettings } from '@/state/selectors/rad
 import { selectRadialBarLegendPayload, selectRadialBarSectors } from '@/state/selectors/radialBarSelectors'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { LabelList } from '@/components/label/LabelList'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { interpolate } from '@/utils/data-utils'
 import type { RadialBarPropsWithSVG } from './type'
 import { RadialBarVueProps } from './type'
@@ -70,7 +70,24 @@ const RadialBarView = defineComponent({
       })),
     })
 
-    const isAnimating = useIsAnimating(() => props.isAnimationActive)
+    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const { items, isAnimating } = useKeyedTransition(() => sectors.value, {
+      key: (sector, index) => sector.payload?.name ?? index,
+      interpolate: (from, to, t) => ({
+        ...to,
+        startAngle: interpolate(from.startAngle ?? 0, to.startAngle ?? 0, t),
+        endAngle: interpolate(from.endAngle, to.endAngle, t),
+        innerRadius: interpolate(from.innerRadius ?? 0, to.innerRadius ?? 0, t),
+        outerRadius: interpolate(from.outerRadius ?? 0, to.outerRadius ?? 0, t),
+      }),
+      enterFrom: to => ({ ...to, endAngle: to.startAngle ?? 0 }),
+      exitTo: from => ({ ...from, endAngle: from.startAngle ?? 0 }),
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+      onStart: callbacks.onStart,
+
+    })
 
     provideCartesianLabelListData(computed(() => {
       if (props.isAnimationActive && isAnimating.value)
@@ -94,10 +111,6 @@ const RadialBarView = defineComponent({
       }))
     }))
 
-    let prevSectors: RadialBarDataItem[] | null = null
-    let animationId = 0
-    let lastSectors: ReadonlyArray<RadialBarDataItem> | undefined
-
     const renderSectors = (sectorData: RadialBarDataItem[]) => {
       const defaultFill = props.fill
       const defaultStroke = props.stroke
@@ -106,13 +119,13 @@ const RadialBarView = defineComponent({
 
       return (
         <Layer class="v-charts-radial-bar">
-          {showBackground && sectorData.map((sector, i) => {
+          {showBackground && sectors.value?.map((sector, i) => {
             if (!sector.background)
               return null
             const bg = sector.background
             return (
               <Sector
-                key={`bg-${i}`}
+                key={`bg-${sector.payload?.name ?? i}`}
                 cx={bg.cx}
                 cy={bg.cy}
                 innerRadius={bg.innerRadius}
@@ -145,7 +158,7 @@ const RadialBarView = defineComponent({
             }
             return (
               <Sector
-                key={`sector-${i}`}
+                key={items.value[i].key}
                 cx={sector.cx}
                 cy={sector.cy}
                 innerRadius={sector.innerRadius}
@@ -173,71 +186,18 @@ const RadialBarView = defineComponent({
       if (props.hide)
         return null
 
-      const data = sectors.value
-      if (data == null || data.length === 0)
+      const data = items.value
+      if (data.length === 0)
         return null
-
-      const sectorData = data as RadialBarDataItem[]
 
       const labelEl = !isAnimating.value && props.label
         ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
         : null
       const slotChildren = !isAnimating.value ? slots.default?.() : null
 
-      if (!props.isAnimationActive) {
-        prevSectors = sectorData
-        return (
-          <Fragment>
-            {renderSectors(sectorData)}
-            {labelEl}
-            {slotChildren}
-          </Fragment>
-        )
-      }
-
-      const prevSects = prevSectors
-      if (data !== lastSectors) {
-        animationId++
-        lastSectors = data
-      }
-
       return (
         <Fragment>
-          <Animate
-            key={animationId}
-            isActive={true}
-            transition={props.transition}
-            onAnimationStart={() => { isAnimating.value = true }}
-            onAnimationEnd={() => { isAnimating.value = false }}
-          >
-            {(t: number) => {
-              const stepSectors: RadialBarDataItem[] = t === 1
-                ? sectorData
-                : sectorData.map((sector, i) => {
-                    const prev = prevSects && prevSects[i]
-                    if (!prev) {
-                    // New sector: animate arc sweep only, keep radius constant
-                      return {
-                        ...sector,
-                        endAngle: interpolate(sector.startAngle ?? 0, sector.endAngle, t),
-                      }
-                    }
-                    return {
-                      ...sector,
-                      startAngle: prev.startAngle != null && sector.startAngle != null
-                        ? interpolate(prev.startAngle, sector.startAngle, t)
-                        : sector.startAngle,
-                      endAngle: interpolate(prev.endAngle ?? 0, sector.endAngle, t),
-                    }
-                  })
-
-              if (t > 0) {
-                prevSectors = stepSectors
-              }
-
-              return renderSectors(stepSectors)
-            }}
-          </Animate>
+          {renderSectors(items.value.map(item => item.value))}
           {labelEl}
           {slotChildren}
         </Fragment>
