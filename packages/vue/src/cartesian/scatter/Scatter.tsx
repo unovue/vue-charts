@@ -12,12 +12,13 @@ import type { SymbolType, SymbolsProps } from '@/shape/Symbols'
 import { Curve } from '@/shape/Curve'
 import type { CurveType } from '@/shape/Curve'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
-import { LabelList } from '@/components/label'
+import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
 import type { DataKey } from '@/types'
 import type { TooltipType } from '@/types/tooltip'
 import type { ScatterPointItem } from '@/types/common'
 import type { ErrorBarDirection } from '@/types/bar'
-import { Animate } from '@/animation/Animate'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { getLinearRegression } from '@/utils/getLinearRegression'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
@@ -56,6 +57,8 @@ const ScatterVueProps = {
   label: { type: [Boolean, Object], default: false },
   legendType: { type: String, default: 'circle' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
+  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
+  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
 
@@ -123,8 +126,23 @@ const ScatterView = defineComponent({
       errorBarOffset: computed(() => 0),
     })
 
-    let previousPoints: ReadonlyArray<ScatterPointItem> | null = null
-    let animationId = 0
+    const createDisplay = () => {
+      const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+      return useKeyedTransition(() => points.value, {
+        key: (_point, index) => index,
+        interpolate: (from, to, t) => ({
+          ...to,
+          cx: to.cx == null ? to.cx : interpolateNumber(from.cx ?? to.cx, to.cx)(t),
+          cy: to.cy == null ? to.cy : interpolateNumber(from.cy ?? to.cy, to.cy)(t),
+          size: interpolateNumber(from.size ?? 0, to.size ?? 0)(t),
+        }),
+        enterFrom: to => ({ ...to, size: 0 }),
+        exitTo: from => ({ ...from, size: 0 }),
+        isActive: () => props.isAnimationActive,
+        transition: () => props.transition,
+        ...callbacks,
+      })
+    }
 
     const dispatchScatterHover = (point: ScatterPointItem, index: number) => {
       const payload = {
@@ -161,6 +179,7 @@ const ScatterView = defineComponent({
         }
         return (
           <g
+            key={i}
             class="v-charts-scatter-symbol"
             onMouseenter={() => dispatchScatterHover(point, i)}
             onMousemove={(e: MouseEvent) => {
@@ -207,70 +226,24 @@ const ScatterView = defineComponent({
       )
     }
 
-    const renderGeometry = () => {
+    const renderGeometry = (display: ReturnType<typeof createDisplay>) => {
       if (!shouldRender.value) {
         return null
       }
 
       const svgAttrs = attrs as SVGAttributes
-      const data = points.value!
-      const isAnimationActive = props.isAnimationActive
-
-      let symbolsContent: any
-
-      if (isAnimationActive && previousPoints !== data) {
-        const prevData = previousPoints
-        animationId++
-        symbolsContent = (
-          <Animate
-            key={animationId}
-            transition={props.transition}
-            isActive={isAnimationActive}
-          >
-            {(t: number) => {
-              const stepData: ReadonlyArray<ScatterPointItem> = t === 1
-                ? data
-                : data.map((entry, index) => {
-                    const prev = prevData && prevData[index]
-                    if (prev) {
-                      return {
-                        ...entry,
-                        cx: entry.cx == null ? undefined : interpolateNumber(prev.cx ?? 0, entry.cx)(t),
-                        cy: entry.cy == null ? undefined : interpolateNumber(prev.cy ?? 0, entry.cy)(t),
-                        size: interpolateNumber(prev.size ?? 0, entry.size ?? 0)(t),
-                      }
-                    }
-                    // New point: animate size from 0
-                    return { ...entry, size: interpolateNumber(0, entry.size ?? 0)(t) }
-                  })
-
-              if (t > 0) {
-                previousPoints = stepData
-              }
-              return (
-                <>
-                  {renderLine(stepData, svgAttrs)}
-                  {renderSymbols(stepData, svgAttrs)}
-                </>
-              )
-            }}
-          </Animate>
-        )
-      }
-      else {
-        previousPoints = data
-        symbolsContent = (
-          <>
-            {renderLine(data, svgAttrs)}
-            {renderSymbols(data, svgAttrs)}
-          </>
-        )
-      }
+      const data = display.items.value.map(item => item.value)
+      const symbolsContent = (
+        <>
+          {renderLine(data, svgAttrs)}
+          {renderSymbols(data, svgAttrs)}
+        </>
+      )
 
       return (
         <Fragment>
           {symbolsContent}
-          {props.label && (() => {
+          {props.label && !display.isAnimating.value && (() => {
             const labelData = data.map(point => ({
               x: point.cx ?? 0,
               y: point.cy ?? 0,
@@ -294,7 +267,10 @@ const ScatterView = defineComponent({
     // Keep their context in this synchronous shell; defer only the geometry render.
     const Geometry = useDeferredView(defineComponent({
       name: 'ScatterGeometry',
-      setup: () => renderGeometry,
+      setup: () => {
+        const display = createDisplay()
+        return () => renderGeometry(display)
+      },
     }))
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
