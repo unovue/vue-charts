@@ -24,6 +24,18 @@ export interface BarContext {
   cellProps: ShallowRef<Record<string, any>[]>
   /** Where the bars sit in their category band, so bars can enter and leave between categories. */
   band: Readonly<Ref<{ offset: number, size: number } | undefined>>
+  /** The bars as drawn on this frame, so labels can ride along with them. */
+  drawn: ShallowRef<readonly DrawnBar[]>
+}
+
+export interface DrawnBar {
+  bar: BarRectangleItem
+  /** Identity across data changes (the category). */
+  key?: PropertyKey
+  /** Position in the data. */
+  index: number
+  /** Below 1 while the bar fades in or out. */
+  opacity?: number
 }
 export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
 
@@ -52,6 +64,7 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
   const clipPathId = useChartId('v-charts-bar')
   const isAnimating = ref(false)
   const cellPropsRef = shallowRef<Record<string, any>[]>([])
+  const drawn = shallowRef<readonly DrawnBar[]>([])
 
   provideBarContext({
     clipPathId,
@@ -64,6 +77,7 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
     activeBarSlot,
     cellProps: cellPropsRef,
     band,
+    drawn,
   })
 
   return {
@@ -73,5 +87,6 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
     barData: rects,
     isAnimating,
     cellProps: cellPropsRef,
+    drawn,
   }
 }

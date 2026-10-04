@@ -20,8 +20,6 @@ export const LabelListView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
-    const props = view.item
-    const attrs = view.svgAttrs
     const teleport = useLayerTeleport()
     const labelLayerRef = useLabelLayerRef(null)
     const contextData = useCartesianLabelListData(null)
@@ -30,6 +28,9 @@ export const LabelListView = defineComponent({
     // labels present from the start (no animation, server render) show at once.
     let arrivedLate = false
     return () => {
+      // Read per render: series pass a new item object whenever their labels change.
+      const props = view.item
+      const attrs = view.svgAttrs
       const { dataKey, valueAccessor, clockWise, id, ...others } = props
       const data = props.data ?? contextData?.value
       if (!data || !data.length) {
@@ -46,9 +47,11 @@ export const LabelListView = defineComponent({
             const idProps = isNullish(id) ? undefined : `${id}-${index}`
             const viewBox = parseViewBox(isNullish(clockWise) ? entry : { ...entry, clockWise })
 
+            // A series fades the labels of shapes that enter or leave.
+            const entryOpacity = typeof entry.opacity === 'number' ? { opacity: entry.opacity } : undefined
             const contentSlot = slots.content ?? slots.label
             if (contentSlot) {
-              return contentSlot({ ...others, ...attrs, ...viewBox, value, index, key: `label-${index}` })
+              return contentSlot({ ...others, ...attrs, ...entryOpacity, ...viewBox, value, index, key: `label-${String(entry.key ?? index)}` })
             }
 
             const entryFill = entry.fill != null && !('fill' in others) && !('fill' in attrs) ? entry.fill : undefined
@@ -58,11 +61,12 @@ export const LabelListView = defineComponent({
                 {...others}
                 {...attrs}
                 {...(entryFill != null ? { fill: entryFill } : {})}
+                {...entryOpacity}
                 id={idProps!}
                 parentViewBox={entry.parentViewBox}
                 value={value}
                 viewBox={viewBox}
-                key={`label-${index}`}
+                key={`label-${String(entry.key ?? index)}`}
                 index={index}
               />
             )

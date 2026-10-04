@@ -13,16 +13,11 @@ import { interpolate } from '@/utils'
 import { Rectangle, rectanglePath } from '@/shape/Rectangle'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import type { BarRectangleItem } from '@/types/bar'
-import { useBarContext } from '../hooks/useBar'
+import { type DrawnBar, useBarContext } from '../hooks/useBar'
 
-/** A bar, its position in the data (which tooltips and cells address) and its category band. */
-interface IndexedBar {
-  bar: BarRectangleItem
-  index: number
-  /** The category band along the category axis: start and size in pixels. */
+/** A drawn bar plus its category band along the category axis: start and size in pixels. */
+interface IndexedBar extends DrawnBar {
   band?: { start: number, size: number }
-  /** Below 1 while the bar fades in or out. */
-  opacity?: number
 }
 
 export const BarRectangles = defineComponent({
@@ -34,7 +29,7 @@ export const BarRectangles = defineComponent({
     const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
-    const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps, band } = useBarContext()
+    const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps, band, drawn } = useBarContext()
 
     // Bars are matched across data changes by their category, so a shifted or extended
     // series slides instead of every bar morphing into its neighbour.
@@ -117,6 +112,9 @@ export const BarRectangles = defineComponent({
         onEnd: () => emit('animation-end'),
       },
     )
+    watch(items, (value) => {
+      drawn.value = value.map(({ key, value: bar }) => ({ ...bar, key }))
+    }, { immediate: true, flush: 'sync' })
     watch(() => items.value.length > 0, (value) => {
       shown ||= value
     }, { immediate: true })

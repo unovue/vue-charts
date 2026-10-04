@@ -46,6 +46,26 @@ it('lets removed categories close between their neighbours without covering any 
   }
 })
 
+it('keeps value labels on the moving bars and shows the new values at once', async () => {
+  const rows = ref([{ name: 'A', value: 10 }, { name: 'B', value: 20 }])
+  const { container } = render(() => (
+    <BarChart width={400} height={300} data={rows.value}>
+      <XAxis dataKey="name" />
+      <Bar dataKey="value" label />
+    </BarChart>
+  ))
+  await nextTick()
+  clock.update(clock.to)
+  await nextTick()
+  rows.value = [{ name: 'A', value: 30 }, { name: 'B', value: 5 }]
+  await nextTick()
+  clock.update(clock.to / 2)
+  await nextTick()
+  await nextTick()
+  const labels = [...container.querySelectorAll('.v-charts-label')].map(label => label.textContent)
+  expect(labels).toEqual(['30', '5'])
+})
+
 it('lets the bars of a series hidden from the legend collapse instead of vanishing', async () => {
   const hide = ref(false)
   const { container } = render(() => (

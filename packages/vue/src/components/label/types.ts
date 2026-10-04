@@ -11,6 +11,10 @@ export interface Data {
   payload?: any
   parentViewBox?: ViewBox
   fill?: string
+  /** Set by a series while the shape behind the label fades in or out. */
+  opacity?: number
+  /** Identity of the shape behind the label across data changes; defaults to the index. */
+  key?: PropertyKey
 }
 
 export type LabelPosition =

@@ -57,7 +57,7 @@ const BarView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(trackedProps, attrs, slots.shape, slots.activeBar)
+    const { shouldRender, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, attrs, slots.shape, slots.activeBar)
     const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
     const layout = useChartLayout()
 
@@ -76,23 +76,23 @@ const BarView = defineComponent({
       errorBarOffset,
     })
 
-    const labelListData = computed(() => {
-      if (isAnimating.value || !barData.value)
-        return undefined
-      return barData.value.map((entry, i) => {
-        const fill = cellPropsRef.value?.[i]?.fill ?? entry.payload?.fill ?? props.fill
-        return {
-          x: entry.x,
-          y: entry.y,
-          width: entry.width,
-          height: entry.height,
-          value: entry.value,
-          payload: entry.payload,
-          parentViewBox: entry.parentViewBox,
-          ...(fill != null ? { fill } : {}),
-        }
-      })
-    })
+    // Labels ride along with the bars as drawn on this frame and show the new value at once;
+    // labels of entering and leaving bars fade with them.
+    const labelListData = computed(() => drawn.value.map(({ bar: entry, index, opacity, key }) => {
+      const fill = cellPropsRef.value?.[index]?.fill ?? entry.payload?.fill ?? props.fill
+      return {
+        x: entry.x,
+        y: entry.y,
+        width: entry.width,
+        height: entry.height,
+        value: entry.value,
+        payload: entry.payload,
+        parentViewBox: entry.parentViewBox,
+        key,
+        ...(fill != null ? { fill } : {}),
+        ...(opacity != null && opacity < 1 ? { opacity } : {}),
+      }
+    }))
     provideCartesianLabelListData(labelListData)
 
     const renderGeometry = () => {
@@ -114,11 +114,11 @@ const BarView = defineComponent({
             {props.background && !props.hide && <BarBackground />}
             <BarRectangles />
           </Layer>
-          {!isAnimating.value && !props.hide && (props.label || slots.label) && (
+          {(props.label || slots.label) && (
             <LabelList
               {...(typeof props.label === 'object' ? props.label : {})}
-              data={barData.value}
-              animate={props.isAnimationActive !== false}
+              data={labelListData.value}
+              animate={false}
               v-slots={{ label: slots.label }}
             />
           )}
