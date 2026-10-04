@@ -16,9 +16,9 @@ const MAX_CACHE_NUM = 2000
 const SPAN_STYLE = {
   position: 'absolute',
   top: '-20000px',
-  left: 0,
-  padding: 0,
-  margin: 0,
+  left: '0px',
+  padding: '0px',
+  margin: '0px',
   border: 'none',
   whiteSpace: 'pre',
 }

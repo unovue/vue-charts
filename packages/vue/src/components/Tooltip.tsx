@@ -324,8 +324,8 @@ const TooltipBoundingBox = defineComponent({
         pointerEvents: 'none',
         visibility: !dismissed.value && active && hasPayload ? 'visible' : 'hidden',
         position: 'absolute',
-        top: 0,
-        left: 0,
+        top: '0px',
+        left: '0px',
         ...style,
       }
       return (

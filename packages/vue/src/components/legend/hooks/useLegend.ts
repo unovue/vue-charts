@@ -1,3 +1,4 @@
+import { toPx } from '@/utils/style'
 import { useCanMeasureText } from '@/animation/renderPhase'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
@@ -130,11 +131,11 @@ export function useLegend(props: LegendProps) {
       return userStyle
     }
 
-    // Vue's style binding appends px to numeric values automatically
+    // Vue's style binding requires explicit units for numeric CSS lengths.
     const baseStyle: CSSProperties = {
       position: 'absolute',
-      width: widthOrHeight.value?.width || props.width || 'auto',
-      height: widthOrHeight.value?.height || props.height || 'auto',
+      width: toPx(widthOrHeight.value?.width || props.width || 'auto'),
+      height: toPx(widthOrHeight.value?.height || props.height || 'auto'),
     }
 
     const calculatedPositionStyle = positionStyle.value ?? getDefaultPosition(

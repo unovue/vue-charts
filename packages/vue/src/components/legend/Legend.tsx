@@ -53,8 +53,8 @@ const LegendView = defineComponent({
       const layout = resolvedLayout.value
 
       const finalStyle = {
-        padding: 0,
-        margin: 0,
+        padding: '0px',
+        margin: '0px',
         textAlign: layout === 'horizontal' ? align : ('left' as const),
       }
 

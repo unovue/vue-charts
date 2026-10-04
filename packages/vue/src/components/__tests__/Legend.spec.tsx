@@ -1,5 +1,6 @@
 import { render } from '@testing-library/vue'
-import { nextTick } from 'vue'
+import { renderToString } from 'vue/server-renderer'
+import { createSSRApp, nextTick } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, Legend, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -17,6 +18,29 @@ describe('legend', () => {
     { name: 'Page E', uv: 278, pv: 3908, amt: 2400 },
     { name: 'Page F', uv: 189, pv: 4800, amt: 2400 },
   ]
+
+  // Catches dimensions silently discarded by the browser as unitless CSS lengths.
+  it.each([
+    { props: {}, width: '490px', height: 'auto' },
+    { props: { width: 200, height: 40 }, width: '200px', height: '40px' },
+    { props: { layout: 'vertical' as const, height: 70 }, width: 'auto', height: '70px' },
+  ])('emits CSS units in server and client wrapper styles: $props', async ({ props, width, height }) => {
+    const chart = () => (
+      <LineChart width={500} height={300} data={data}>
+        <Line dataKey="uv" isAnimationActive={false} />
+        <Legend {...props} />
+      </LineChart>
+    )
+    const server = document.createElement('div')
+    server.innerHTML = await renderToString(createSSRApp({ render: chart }))
+    const { container } = render(chart)
+    await nextTick()
+    for (const root of [server, container]) {
+      const wrapper = root.querySelector<HTMLElement>('.v-charts-legend-wrapper')!
+      expect(wrapper.style.width).toBe(width)
+      expect(wrapper.style.height).toBe(height)
+    }
+  })
 
   describe('renders in BarChart', () => {
     it('renders legend wrapper', async () => {
