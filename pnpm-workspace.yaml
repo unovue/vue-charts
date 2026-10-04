@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'packages/vue/test/fixtures/nuxt-app'
   - 'playground/*'
   - 'docs'
 

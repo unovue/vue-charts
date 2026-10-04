@@ -21,7 +21,7 @@ export default defineConfig({
     restoreMocks: true,
     unstubGlobals: true,
     unstubEnvs: true,
-    exclude: ['**/node_modules/**'],
+    exclude: ['**/node_modules/**', 'test/**'],
     include: ['./**/*.{test,spec}.{ts,js,tsx}'],
     coverage: {
       provider: 'istanbul',

@@ -29,6 +29,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/es/index.mjs"
+    },
+    "./nuxt": {
+      "types": "./dist/nuxt.d.ts",
+      "import": "./dist/es/nuxt.mjs"
     }
   },
   "module": "./dist/es/index.mjs",
@@ -45,12 +49,19 @@
     "test": "vitest",
     "bumpp": "bumpp package.json",
     "pub:release": "pnpm publish --access public",
-    "size": "size-limit"
+    "size": "size-limit",
+    "test:nuxt": "vitest run --config vitest.nuxt.config.ts"
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
+    "@nuxt/kit": "^4.4.2",
     "motion-v": "^2.4.0",
     "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/kit": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
@@ -67,11 +78,15 @@
     "immer": "^10.1.1"
   },
   "devDependencies": {
+    "@nuxt/kit": "^4.4.2",
+    "@nuxt/schema": "^4.5.2",
+    "@nuxt/test-utils": "^3.21.0",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-time": "^3.0.4",
     "@vitejs/plugin-vue-jsx": "^5.0.0",
     "@vue/babel-plugin-jsx": "^1.1.1",
     "@vue/runtime-core": "^3.5.13",
+    "nuxt": "^4.4.2",
     "vue": "^3.5.13"
   },
   "size-limit": [

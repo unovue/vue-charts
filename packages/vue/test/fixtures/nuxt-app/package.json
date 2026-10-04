@@ -1,0 +1,10 @@
+{
+  "name": "vccs-nuxt-fixture",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "nuxt": "^4.4.2",
+    "vccs": "workspace:*",
+    "vue": "^3.5.18"
+  }
+}

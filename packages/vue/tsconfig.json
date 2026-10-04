@@ -14,7 +14,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@nuxt/schema": ["../node_modules/@nuxt/schema"]
     },
     "resolveJsonModule": true,
     "types": ["node"],
