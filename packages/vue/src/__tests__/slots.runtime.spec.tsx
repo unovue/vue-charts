@@ -9,7 +9,7 @@ import { nextTick } from 'vue'
 import type { Component, VNode } from 'vue'
 import ts from 'typescript'
 import * as Vccs from '@/index'
-import { Area, Bar, Brush, CartesianGrid, ComposedChart, Customized, Funnel, FunnelChart, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, SunburstChart, Tooltip, Treemap, XAxis, YAxis } from '@/index'
+import { Area, Bar, Brush, CalendarHeatmap, CartesianGrid, ComposedChart, Customized, Funnel, FunnelChart, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, SunburstChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
 
 // Compile the unchanged docs SFCs against source exports, so this check also
 // works in a fresh checkout where the published dist entry does not exist yet.
@@ -72,6 +72,8 @@ const rows: Row[] = [
   ...['content', 'default'].map(slot => ({ component: 'Treemap', slot, standalone: true, render: (marker: Slot) => <Treemap width={400} height={300} data={data} dataKey="value" isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'content' ? '.v-charts-treemap rect' : undefined })),
   ...['content', 'default'].map(slot => ({ component: 'SunburstChart', slot, standalone: true, render: (marker: Slot) => <SunburstChart width={400} height={300} data={{ name: 'root', value: 30, children: data }} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'content' ? '.v-charts-sunburst path' : undefined })),
   ...['node', 'link', 'default'].map(slot => ({ component: 'Sankey', slot, standalone: true, render: (marker: Slot) => <Sankey width={400} height={300} data={{ nodes: [{ name: 'A' }, { name: 'B' }], links: [{ source: 0, target: 1, value: 10 }] }} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'node' ? '.v-charts-sankey-nodes rect' : slot === 'link' ? '.v-charts-sankey-links path' : undefined })),
+  ...['cell', 'default'].map(slot => ({ component: 'Tracker', slot, standalone: true, render: (marker: Slot) => <Tracker width={400} height={30} data={[{ date: 'a', status: 'up' }]} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'cell' ? '.v-charts-cell-rect' : undefined })),
+  ...['cell', 'default'].map(slot => ({ component: 'CalendarHeatmap', slot, standalone: true, render: (marker: Slot) => <CalendarHeatmap width={400} height={100} data={[{ date: '2026-01-01', value: 1 }]} start="2026-01-01" isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'cell' ? '.v-charts-cell-rect' : undefined })),
 ]
 
 function renderRow(row: Row, marker?: Slot) {

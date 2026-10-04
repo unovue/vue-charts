@@ -11,4 +11,8 @@ export const chartThemeTokens = [
   '--v-charts-tooltip-foreground',
   '--v-charts-inactive',
   '--v-charts-series',
+  '--v-charts-status-up',
+  '--v-charts-status-degraded',
+  '--v-charts-status-down',
+  '--v-charts-status-maintenance',
 ] as const
