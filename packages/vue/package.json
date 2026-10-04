@@ -49,8 +49,8 @@
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
-    "motion-v": ">=2.0.0",
-    "vue": ">=3.0.0"
+    "motion-v": "^2.4.0",
+    "vue": "^3.5.0"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
@@ -76,8 +76,33 @@
   },
   "size-limit": [
     {
+      "name": "Area chart",
       "path": "dist/es/index.mjs",
-      "limit": "3.4 kb",
+      "import": "{ AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip }",
+      "gzip": true,
+      "limit": "85 kB",
+      "ignore": [
+        "vue",
+        "motion-v"
+      ]
+    },
+    {
+      "name": "Bar chart",
+      "path": "dist/es/index.mjs",
+      "import": "{ BarChart, Bar, XAxis, YAxis, Tooltip, Legend }",
+      "gzip": true,
+      "limit": "88 kB",
+      "ignore": [
+        "vue",
+        "motion-v"
+      ]
+    },
+    {
+      "name": "Pie chart",
+      "path": "dist/es/index.mjs",
+      "import": "{ PieChart, Pie, Tooltip }",
+      "gzip": true,
+      "limit": "73 kB",
       "ignore": [
         "vue",
         "motion-v"

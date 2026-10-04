@@ -1,5 +1,5 @@
 import { type ComputedRef, computed } from 'vue'
-import { useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/chartContext'
 import { selectActiveLabel, selectActiveTooltipCoordinate, selectIsTooltipActive } from '@/state/selectors/tooltipSelectors'
 import { selectAxisDomain, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis } from '@/state/selectors/axisSelectors'
 import { useChartHeight, useChartWidth, useMargin, useOffset } from '@/context/chartLayoutContext'
@@ -17,9 +17,6 @@ export interface CartesianDataPoint {
 
 // Re-export existing layout hooks
 export { useChartWidth, useChartHeight, useMargin, useOffset }
-
-// Re-export existing tooltip hook
-export { useActiveTooltipDataPoints } from '@/state/hooks'
 
 /**
  * Returns whether the tooltip is currently active (visible).
