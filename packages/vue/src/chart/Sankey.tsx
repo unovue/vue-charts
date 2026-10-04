@@ -1,4 +1,5 @@
-import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
+import { useTrackedData } from '@/hooks/useTrackedData'
+import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { AnimationOptions } from 'motion-v'
 import { provideChartContext } from '@/state/chartContext'
@@ -23,12 +24,12 @@ import type {
 } from '@/state/tooltipSlice'
 import type { Coordinate } from '@/types'
 import {
-  computeSankeyLayout,
-  linkPathGenerator,
   type SankeyInputLink,
   type SankeyInputNode,
   type SankeyLayoutLink,
   type SankeyLayoutNode,
+  computeSankeyLayout,
+  linkPathGenerator,
 } from './sankeyUtils'
 
 export interface SankeyNodeSlotProps {
@@ -116,12 +117,14 @@ const SankeyInner = defineComponent({
   props: SankeyVueProps,
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots }) {
+    const nodes = useTrackedData(() => props.data.nodes)
+    const links = useTrackedData(() => props.data.links)
     const dispatch = useAppDispatch()
 
     const layout = computed(() => {
       const m = props.margin
       return computeSankeyLayout({
-        data: props.data,
+        data: { nodes: nodes.value ?? [], links: links.value ?? [] },
         width: props.width,
         height: props.height,
         nodePadding: props.nodePadding,

@@ -1,5 +1,5 @@
+import { Teleport, computed, defineComponent, proxyRefs, toRefs } from 'vue'
 import type { SVGAttributes, SlotsType } from 'vue'
-import { Teleport, computed, defineComponent } from 'vue'
 import type { BarProps, BarPropsWithSVG } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
@@ -45,14 +45,16 @@ export const Bar = defineComponent<BarPropsWithSVG>({
   setup(props: BarProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
-    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(props, slots.shape, slots.activeBar)
+    const data = useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(trackedProps, slots.shape, slots.activeBar)
     const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
     const layout = useChartLayout()
 
     const errorBarOffset = computed(() => {
       const first = barData.value?.[0]
-      if (first == null || first.height == null || first.width == null) return 0
+      if (first == null || first.height == null || first.width == null)
+        return 0
       return layout.value === 'vertical' ? first.height / 2 : first.width / 2
     })
 
@@ -65,7 +67,8 @@ export const Bar = defineComponent<BarPropsWithSVG>({
     })
 
     const labelListData = computed(() => {
-      if (isAnimating.value || !barData.value) return undefined
+      if (isAnimating.value || !barData.value)
+        return undefined
       return barData.value.map((entry, i) => {
         const fill = cellPropsRef.value?.[i]?.fill ?? entry.payload?.fill ?? props.fill
         return {

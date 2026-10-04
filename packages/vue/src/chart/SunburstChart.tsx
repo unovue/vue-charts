@@ -1,4 +1,5 @@
-import { computed, defineComponent, type PropType, type SlotsType, watchEffect } from 'vue'
+import { useTrackedData } from '@/hooks/useTrackedData'
+import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
 import { provideChartContext } from '@/state/chartContext'
 import { Layer } from '@/container/Layer'
@@ -23,9 +24,9 @@ import type {
 } from '@/state/tooltipSlice'
 import type { Coordinate } from '@/types'
 import {
-  computeSunburstLayout,
   type SunburstData,
   type SunburstLayoutNode,
+  computeSunburstLayout,
 } from './sunburstUtils'
 
 export type { SunburstData }
@@ -43,7 +44,8 @@ export const sunburstPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
   activeIndex: TooltipIndex,
 ) => {
-  if (!data || !activeIndex) return undefined
+  if (!data || !activeIndex)
+    return undefined
   return get(data, activeIndex)
 }
 
@@ -81,6 +83,9 @@ const SunburstInner = defineComponent({
   props: SunburstChartVueProps,
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots }) {
+    const trackedData = useTrackedData(() => [props.data])
+    // The object-shaped API needs a root wrapper that Immer cannot freeze recursively.
+    const data = computed(() => Object.freeze({ ...trackedData.value![0] }))
     const dispatch = useAppDispatch()
 
     const resolvedCx = computed(() => props.cx ?? props.width / 2)
@@ -91,7 +96,7 @@ const SunburstInner = defineComponent({
 
     const nodes = computed(() =>
       computeSunburstLayout({
-        data: props.data,
+        data: data.value,
         cx: resolvedCx.value,
         cy: resolvedCy.value,
         innerRadius: props.innerRadius,
@@ -107,7 +112,7 @@ const SunburstInner = defineComponent({
     // Register tooltip entry settings
     watchEffect((onCleanup) => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
-        dataDefinedOnItem: props.data,
+        dataDefinedOnItem: data.value,
         positions: undefined,
         settings: {
           stroke: props.stroke,
@@ -129,7 +134,8 @@ const SunburstInner = defineComponent({
     })
 
     function getNodeFill(node: SunburstLayoutNode): string {
-      if (node.fill) return node.fill
+      if (node.fill)
+        return node.fill
       return props.fill
     }
 
@@ -222,7 +228,8 @@ export const SunburstChart = defineComponent({
     provideChartContext(store)
 
     return () => {
-      if (!props.data?.children || props.data.children.length === 0) return null
+      if (!props.data?.children || props.data.children.length === 0)
+        return null
 
       return (
         <ChartsWrapper

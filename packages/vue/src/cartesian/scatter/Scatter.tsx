@@ -1,6 +1,6 @@
-import type { PropType, SlotsType, SVGAttributes } from 'vue'
+import { Teleport, computed, defineComponent, proxyRefs, toRefs, useAttrs } from 'vue'
+import type { PropType, SVGAttributes, SlotsType } from 'vue'
 import type { AnimationOptions } from 'motion-v'
-import { Teleport, computed, defineComponent, useAttrs } from 'vue'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { Layer } from '@/container/Layer'
@@ -67,8 +67,9 @@ export const Scatter = defineComponent({
   setup(props, { attrs, slots }) {
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
-    const { shouldRender, points } = useScatter(props)
+    const data = useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, points } = useScatter(trackedProps)
     const graphicalLayerRef = useGraphicalLayerRef()
     const svgAttrs = useAttrs() as SVGAttributes
     const dispatch = useAppDispatch()
@@ -80,8 +81,9 @@ export const Scatter = defineComponent({
     // arrayTooltipSearcher returns the tooltipPayload array for the active index,
     // which combineTooltipPayload processes into per-axis tooltip entries.
     SetTooltipEntrySettings({
-      fn: (input) => ({
-        dataDefinedOnItem: input.points?.map(p => p.tooltipPayload),
+      fn: input => ({
+        // This owned array contains payloads that reference caller-owned rows.
+        dataDefinedOnItem: input.points && Object.freeze(input.points.map(p => p.tooltipPayload)),
         positions: undefined,
         settings: {
           stroke: input.stroke,
@@ -150,7 +152,7 @@ export const Scatter = defineComponent({
           cy: point.cy,
           size: isActive ? (point.size ?? 64) * 1.6 : point.size,
           type: props.shape as SymbolType,
-          ...(isActive ? { stroke: '#fff', 'stroke-width': 2 } : {}),
+          ...(isActive ? { 'stroke': '#fff', 'stroke-width': 2 } : {}),
         }
         return (
           <g
@@ -171,12 +173,14 @@ export const Scatter = defineComponent({
     }
 
     const renderLine = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
-      if (!props.line) return null
+      if (!props.line)
+        return null
 
       let linePoints: { x: number, y: number }[]
       if (props.lineType === 'joint') {
         linePoints = data.map(p => ({ x: p.cx ?? 0, y: p.cy ?? 0 }))
-      } else {
+      }
+      else {
         const { xmin, xmax, a, b } = getLinearRegression(data)
         linePoints = [
           { x: xmin, y: a * xmin + b },

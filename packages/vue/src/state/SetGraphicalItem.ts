@@ -24,6 +24,9 @@ export function SetCartesianGraphicalItem(_props: MaybeRef<SetCartesianGraphical
   let preSetting: CartesianGraphicalItemSettings | null = null
   watchEffect(() => {
     const props = unref(_props)
+    // Only freeze the library-owned snapshot. Immer must not recursively freeze caller-owned rows.
+    if (props.data)
+      Object.freeze(props.data)
     const settings: CartesianGraphicalItemSettings = {
       ...(props as CartesianGraphicalItemSettings),
       stackId: getNormalizedStackId(props.stackId),
@@ -49,6 +52,9 @@ export function SetPolarGraphicalItem(_props: MaybeRef<Partial<PolarGraphicalIte
   let preSetting: PolarGraphicalItemSettings | null = null
   watchEffect(() => {
     const props = unref(_props)
+    // Only freeze the library-owned snapshot. Immer must not recursively freeze caller-owned rows.
+    if (props.data)
+      Object.freeze(props.data)
     const settings = props as PolarGraphicalItemSettings
     if (preSetting === null) {
       dispatch(addPolarGraphicalItem(settings))

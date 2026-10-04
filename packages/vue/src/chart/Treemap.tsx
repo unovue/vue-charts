@@ -1,4 +1,5 @@
-import { computed, defineComponent, type PropType, ref, type SlotsType, watchEffect } from 'vue'
+import { useTrackedData } from '@/hooks/useTrackedData'
+import { type PropType, type SlotsType, computed, defineComponent, ref, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { AnimationOptions } from 'motion-v'
 import { provideChartContext } from '@/state/chartContext'
@@ -9,16 +10,21 @@ import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
 import { useAppDispatch } from '@/state/hooks'
-import { setActiveMouseOverItemIndex, setActiveClickItemIndex, mouseLeaveItem, addTooltipEntrySettings, removeTooltipEntrySettings } from '@/state/tooltipSlice'
+import { addTooltipEntrySettings, mouseLeaveItem, removeTooltipEntrySettings, setActiveClickItemIndex, setActiveMouseOverItemIndex } from '@/state/tooltipSlice'
 import type { ChartOptions } from '@/state/optionsSlice'
-import type { TooltipPayloadSearcher } from '@/state/tooltipSlice'
-import type { TooltipIndex, TooltipPayloadConfiguration } from '@/state/tooltipSlice'
+import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/tooltipSlice'
 import type { Coordinate } from '@/types'
-import { computeTreemapLayout, type TreemapLayoutNode } from './treemapUtils'
+import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 const DEFAULT_COLORS = [
-  '#8889DD', '#9597E4', '#8DC77B', '#A5D297',
-  '#E2CF45', '#F8C12D', '#F89C24', '#F56E1A',
+  '#8889DD',
+  '#9597E4',
+  '#8DC77B',
+  '#A5D297',
+  '#E2CF45',
+  '#F8C12D',
+  '#F89C24',
+  '#F56E1A',
 ]
 
 export interface TreemapContentSlotProps extends TreemapLayoutNode {
@@ -56,7 +62,8 @@ export const treemapPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
   activeIndex: TooltipIndex,
 ) => {
-  if (!data || !activeIndex) return undefined
+  if (!data || !activeIndex)
+    return undefined
   return get(data, activeIndex)
 }
 
@@ -128,14 +135,16 @@ const TreemapInner = defineComponent({
     // Nest mode state
     const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
     const currentData = ref<Record<string, any>[] | null>(null)
+    const trackedData = useTrackedData(() => props.type === 'nest' ? currentData.value ?? props.data : props.data)
     // Increment to re-trigger entrance animation on nest navigation
     const animationKey = ref(0)
 
     const isNestMode = computed(() => props.type === 'nest')
 
     const nestCurrentData = computed(() => {
-      if (!isNestMode.value) return null
-      return currentData.value ?? props.data
+      if (!isNestMode.value)
+        return null
+      return trackedData.value ?? []
     })
 
     function computeNestLevelData(data: Record<string, any>[]): Record<string, any>[] {
@@ -148,8 +157,8 @@ const TreemapInner = defineComponent({
 
     const nodes = computed(() => {
       const dataToLayout = isNestMode.value
-        ? computeNestLevelData(nestCurrentData.value ?? props.data)
-        : props.data
+        ? computeNestLevelData(nestCurrentData.value ?? [])
+        : (trackedData.value ?? [])
 
       return computeTreemapLayout({
         data: dataToLayout,
@@ -164,7 +173,7 @@ const TreemapInner = defineComponent({
 
     // Build node tree for tooltip payload lookup
     const nodeTree = computed(() => {
-      const data = isNestMode.value ? (nestCurrentData.value ?? props.data) : props.data
+      const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
       return buildNodeTree(data, props.dataKey, props.nameKey)
     })
 
@@ -194,21 +203,23 @@ const TreemapInner = defineComponent({
 
     // Map layout node name → tooltipIndex from nodeTree
     function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
-      const data = isNestMode.value ? (nestCurrentData.value ?? props.data) : props.data
+      const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
       const idx = data.findIndex(item => item[props.nameKey] === node.name)
-      if (idx >= 0) return `children[${idx}]`
+      if (idx >= 0)
+        return `children[${idx}]`
       // For flat mode with nested data, search leaves
       for (let i = 0; i < data.length; i++) {
         if (data[i].children) {
           const childIdx = data[i].children.findIndex((c: any) => c[props.nameKey] === node.name)
-          if (childIdx >= 0) return `children[${i}].children[${childIdx}]`
+          if (childIdx >= 0)
+            return `children[${i}].children[${childIdx}]`
         }
       }
       return `children[0]`
     }
 
     function handleNestClick(node: TreemapLayoutNode, e: MouseEvent) {
-      const sourceData = nestCurrentData.value ?? props.data
+      const sourceData = nestCurrentData.value ?? []
       const clickedItem = sourceData.find(item => item[props.nameKey] === node.name)
 
       if (clickedItem?.children && clickedItem.children.length > 0) {
@@ -310,7 +321,7 @@ const TreemapInner = defineComponent({
 
       // Check if this node has children in the original source data (for nest mode arrow)
       const hasChildren = isNestMode.value && (() => {
-        const sourceData = nestCurrentData.value ?? props.data
+        const sourceData = nestCurrentData.value ?? []
         const item = sourceData.find(d => d[props.nameKey] === node.name)
         return item?.children && item.children.length > 0
       })()
@@ -367,7 +378,8 @@ const TreemapInner = defineComponent({
     }
 
     function renderBreadcrumb() {
-      if (!isNestMode.value || breadcrumbTrail.value.length === 0) return null
+      if (!isNestMode.value || breadcrumbTrail.value.length === 0)
+        return null
 
       return (
         <div class="v-charts-treemap-breadcrumb">
@@ -439,7 +451,8 @@ export const Treemap = defineComponent({
     provideChartContext(store)
 
     return () => {
-      if (!props.data || props.data.length === 0) return null
+      if (!props.data || props.data.length === 0)
+        return null
 
       return (
         <ChartsWrapper

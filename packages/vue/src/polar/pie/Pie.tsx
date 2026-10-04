@@ -1,3 +1,4 @@
+import { useTrackedData } from '@/hooks/useTrackedData'
 import { computed, defineComponent, ref, watch } from 'vue'
 import type { SlotsType } from 'vue'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
@@ -27,6 +28,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
     default?: () => any
   }>,
   setup(props, { attrs, slots }) {
+    const data = useTrackedData(() => props.data)
     const dispatch = useAppDispatch()
     const isControlled = computed(() => props.activeIndex !== -1)
     const activeIndex = ref(props.activeIndex)
@@ -35,7 +37,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
     })
 
     const pieSettings = computed<ResolvedPieSettings>(() => ({
-      data: props.data,
+      data: data.value,
       dataKey: props.dataKey,
       nameKey: props.nameKey,
       cx: props.cx,
@@ -54,7 +56,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
 
     SetPolarGraphicalItem(computed(() => ({
       type: 'pie' as const,
-      data: props.data ?? [],
+      data: data.value ?? [],
       dataKey: props.dataKey,
       hide: props.hide,
       angleAxisId: 0,
@@ -66,7 +68,8 @@ export const Pie = defineComponent<PiePropsWithSVG>({
     const offset = useAppSelector(state => selectChartOffset(state))
 
     const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
-    SetLegendPayload(computed(() => legendPayload.value ?? []))
+    // Keep Immer from freezing caller-owned rows referenced by legend payloads.
+    SetLegendPayload(computed(() => Object.freeze(legendPayload.value ?? [])))
 
     const sectors = computed(() => {
       if (synchronisedSettings.value == null || displayedData.value == null) {

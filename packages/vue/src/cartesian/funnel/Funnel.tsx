@@ -1,3 +1,4 @@
+import { useTrackedData } from '@/hooks/useTrackedData'
 import { computed, defineComponent, shallowRef } from 'vue'
 import type { SlotsType } from 'vue'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
@@ -24,12 +25,13 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
     default?: () => any
   }>,
   setup(props, { attrs, slots }) {
+    const data = useTrackedData(() => props.data)
     const dispatch = useAppDispatch()
     const isAnimating = useIsAnimating(() => props.isAnimationActive)
     const cellPropsRef = shallowRef<Record<string, any>[]>([])
 
     const funnelSettings = computed<ResolvedFunnelSettings>(() => ({
-      data: props.data,
+      data: data.value,
       dataKey: props.dataKey,
       nameKey: props.nameKey,
       tooltipType: props.tooltipType,
@@ -44,7 +46,7 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
 
     SetPolarGraphicalItem(computed(() => ({
       type: 'funnel' as const,
-      data: props.data ?? [],
+      data: data.value ?? [],
       dataKey: props.dataKey,
       hide: props.hide,
       angleAxisId: 0,
@@ -67,12 +69,12 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
         payload: trap.payload,
       }))
     })
-    SetLegendPayload(legendPayload)
+    SetLegendPayload(computed(() => Object.freeze(legendPayload.value)))
 
     SetTooltipEntrySettings({
       fn: v => v,
       args: computed(() => ({
-        dataDefinedOnItem: props.data ?? [],
+        dataDefinedOnItem: data.value ?? [],
         positions: trapezoids.value.map((t: any) => t.tooltipPosition),
         settings: {
           dataKey: props.dataKey,

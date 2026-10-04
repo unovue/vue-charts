@@ -1,6 +1,6 @@
+import { Fragment, Teleport, computed, defineComponent, proxyRefs, toRefs } from 'vue'
 import type { SVGAttributes, SlotsType } from 'vue'
-import { Fragment, Teleport, computed, defineComponent } from 'vue'
-import type { LineProps, LinePropsWithSVG } from './type'
+import type { LineProps } from './type'
 import { LineVueProps } from './type'
 import { useLine } from '@/cartesian/line/hooks/useLine'
 import { Layer } from '@/container/Layer'
@@ -18,8 +18,9 @@ export const Line = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
   setup(props: LineProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
-    useSetupGraphicalItem(props, 'line')
-    const { shouldRender, needClip, clipPathId, lineData, points } = useLine(props, attrs, slots.shape, slots.dot, slots.label)
+    const data = useSetupGraphicalItem(props, 'line')
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, needClip, clipPathId, lineData, points } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
     // Provide label list data so LabelList children can consume it via context

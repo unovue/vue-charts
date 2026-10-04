@@ -1,5 +1,6 @@
 import type { PropType } from 'vue'
 import { defineComponent, onUnmounted, watch } from 'vue'
+import { useTrackedData } from '@/hooks/useTrackedData'
 import { useChartDataActions } from '@/state/chartContext'
 import type { ChartData } from '@/state/chartData'
 
@@ -18,8 +19,9 @@ export const ChartDataContextProvider = defineComponent({
   setup(props) {
     const data = useChartDataActions()
 
-    watch(() => props.chartData, (val) => {
-      data.setData(Array.from(val))
+    const trackedData = useTrackedData(() => props.chartData)
+    watch(trackedData, (val) => {
+      data.setData(val)
     }, { immediate: true })
 
     onUnmounted(() => {

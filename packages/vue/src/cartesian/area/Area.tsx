@@ -1,5 +1,5 @@
+import { Fragment, Teleport, defineComponent, proxyRefs, toRefs } from 'vue'
 import type { SVGAttributes, SlotsType } from 'vue'
-import { Fragment, Teleport, defineComponent } from 'vue'
 import type { AreaDotSlotProps, AreaProps, AreaPropsWithSVG } from './type'
 import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
@@ -21,8 +21,9 @@ const _Area = defineComponent<AreaPropsWithSVG>({
   inheritAttrs: false,
   slots: Object as SlotsType<AreaSlots>,
   setup(props: AreaProps, { attrs, slots }: { attrs: SVGAttributes, slots: AreaSlots }) {
-    useSetupGraphicalItem(props, 'area')
-    const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(props, attrs, slots.dot)
+    const data = useSetupGraphicalItem(props, 'area')
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(trackedProps, attrs, slots.dot)
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
     return () => {
