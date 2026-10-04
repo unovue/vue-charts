@@ -12,16 +12,15 @@ import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { interpolate } from '@/utils/data-utils'
 import { ActivePoints } from '@/cartesian/line/ActivePoints'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
 import type { DataKey } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
-import type { RadarComposedData, RadarPoint } from '@/types/radar'
+import type { RadarPoint } from '@/types/radar'
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
   return stroke && stroke !== 'none' ? stroke : fill
@@ -48,21 +47,6 @@ function getRangePath(
   return `${outerWithoutZ}L${inner.slice(1)}`
 }
 
-function interpolatePolarPoint(
-  prevPoints: RadarPoint[] | null,
-  prevPointsDiffFactor: number,
-  t: number,
-  entry: RadarPoint,
-  index: number,
-): RadarPoint {
-  const prev = prevPoints && prevPoints[Math.floor(index * prevPointsDiffFactor)]
-  if (prev) {
-    return { ...entry, x: interpolate(prev.x, entry.x, t), y: interpolate(prev.y, entry.y, t) }
-  }
-  // New point: animate from center
-  return { ...entry, x: interpolate(entry.cx ?? 0, entry.x, t), y: interpolate(entry.cy ?? 0, entry.y, t) }
-}
-
 const RadarViewProps = {
   dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
   name: { type: String, default: undefined },
@@ -82,7 +66,7 @@ const RadarViewProps = {
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: () => ({ duration: 0.8, ease: 'easeOut' }),
+    default: undefined,
   },
   activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
 }
@@ -106,7 +90,17 @@ const RadarView = defineComponent({
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef()
 
-    const isAnimating = useIsAnimating(() => props.isAnimationActive)
+    const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })
+    const centre = (point: RadarPoint): RadarPoint => ({ ...point, x: point.cx ?? 0, y: point.cy ?? 0 })
+    const { items, isAnimating } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
+      key: ({ point }, index) => point.name ?? index,
+      interpolate: (from, to, t) => ({ point: mix(from.point, to.point, t), baseline: from.baseline && to.baseline ? mix(from.baseline, to.baseline, t) : to.baseline }),
+      enterFrom: to => ({ point: centre(to.point), baseline: to.baseline && centre(to.baseline) }),
+      exitTo: from => ({ point: centre(from.point), baseline: from.baseline && centre(from.baseline) }),
+      connected: true,
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+    })
 
     provideCartesianLabelListData(computed(() => {
       if (props.isAnimationActive && isAnimating.value)
@@ -123,11 +117,6 @@ const RadarView = defineComponent({
         payload: point.payload,
       }))
     }))
-
-    let prevPoints: RadarPoint[] | null = null
-    let prevBaseLinePoints: RadarPoint[] | null = null
-    let animationId = 0
-    let lastData: RadarComposedData | undefined
 
     const renderPolygon = (
       points: RadarPoint[],
@@ -197,7 +186,7 @@ const RadarView = defineComponent({
                 const dotProps = typeof props.dot === 'object' ? props.dot : {}
                 return (
                   <Dot
-                    key={`dot-${i}`}
+                    key={items.value[i].key}
                     cx={point.x}
                     cy={point.y}
                     r={3}
@@ -218,10 +207,11 @@ const RadarView = defineComponent({
         return null
 
       const data = radarPoints.value
-      if (data == null || data.points.length === 0)
+      if (items.value.length === 0)
         return null
 
-      const { points, baseLinePoints, isRange } = data
+      const points = data?.points ?? []
+      const isRange = data?.isRange ?? false
 
       const mainColor = getLegendItemColor(props.stroke, props.fill) ?? props.fill
 
@@ -239,53 +229,9 @@ const RadarView = defineComponent({
         ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
         : null
 
-      if (!props.isAnimationActive) {
-        prevPoints = points
-        prevBaseLinePoints = baseLinePoints
-        return (
-          <Fragment>
-            {renderPolygon(points, baseLinePoints, isRange)}
-            {labelEl}
-            {activePoints}
-          </Fragment>
-        )
-      }
-
-      const prevPts = prevPoints
-      const prevBasePts = prevBaseLinePoints
-      const prevPointsDiffFactor = prevPts ? prevPts.length / points.length : 1
-      const prevBaseDiffFactor = prevBasePts ? prevBasePts.length / baseLinePoints.length : 1
-      if (data !== lastData) {
-        animationId++
-        lastData = data
-      }
-
       return (
         <Fragment>
-          <Animate
-            key={animationId}
-            isActive={true}
-            transition={props.transition}
-            onAnimationStart={() => { isAnimating.value = true }}
-            onAnimationEnd={() => { isAnimating.value = false }}
-          >
-            {(t: number) => {
-              const stepPoints: RadarPoint[] = t === 1
-                ? points
-                : points.map((entry, i) => interpolatePolarPoint(prevPts, prevPointsDiffFactor, t, entry, i))
-
-              const stepBaseLine: RadarPoint[] = t === 1
-                ? baseLinePoints
-                : baseLinePoints.map((entry, i) => interpolatePolarPoint(prevBasePts, prevBaseDiffFactor, t, entry, i))
-
-              if (t > 0) {
-                prevPoints = stepPoints
-                prevBaseLinePoints = stepBaseLine
-              }
-
-              return renderPolygon(stepPoints, stepBaseLine, isRange)
-            }}
-          </Animate>
+          {renderPolygon(items.value.map(item => item.value.point), items.value.flatMap(item => item.value.baseline ? [item.value.baseline] : []), isRange)}
           {labelEl}
           {activePoints}
         </Fragment>
