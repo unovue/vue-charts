@@ -50,7 +50,7 @@ export const TravellerLayer = defineComponent({
         role="slider"
         aria-label={ariaLabelBrush.value}
         aria-valuenow={props.travellerX}
-        class="recharts-brush-traveller"
+        class="v-charts-brush-traveller"
         onMouseenter={e => emit('mouseenter', e)}
         onMouseleave={e => emit('mouseleave', e)}
         onMousedown={e => emit('mousedown', e)}

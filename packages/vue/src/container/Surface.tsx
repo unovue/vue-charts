@@ -57,7 +57,7 @@ const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
       const svgView = viewBox || { width, height, x: 0, y: 0 }
       return (
         <svg
-          class={['vcharts-surface', className]}
+          class={['v-charts-surface', className]}
           width={width}
           height={height}
           style={style}

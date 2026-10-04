@@ -341,7 +341,7 @@ describe('areaChart', () => {
   //   //   spies.forEach(el => expect(el).toHaveBeenCalledTimes(1))
   //   //   expect(axisSpy).toHaveBeenCalledTimes(3)
 
-  //   //   const brushSlide = container.querySelector('.recharts-brush-slide')
+  //   //   const brushSlide = container.querySelector('.v-charts-brush-slide')
   //   //   assertNotNull(brushSlide)
   //   //   await fireEvent.mouseDown(brushSlide)
   //   //   await fireEvent.mouseMove(brushSlide, { clientX: 200, clientY: 200 })
@@ -354,7 +354,7 @@ describe('areaChart', () => {
   //   // it('should only show the last data when the brush travelers all moved to the right', async () => {
   //   //   const { container } = render(chart)
 
-  //   //   const leftBrushTraveler = container.querySelector('.recharts-brush-traveller')
+  //   //   const leftBrushTraveler = container.querySelector('.v-charts-brush-traveller')
   //   //   assertNotNull(leftBrushTraveler)
   //   //   assertNotNull(window)
   //   //   await fireEvent.mouseDown(leftBrushTraveler)
@@ -362,20 +362,20 @@ describe('areaChart', () => {
   //   //   await fireEvent.mouseUp(window)
 
   //   //   expect(leftBrushTraveler?.firstChild).toHaveAttribute('x', '390')
-  //   //   expect(container.querySelectorAll('.recharts-area-dot')).toHaveLength(1)
+  //   //   expect(container.querySelectorAll('.v-charts-area-dot')).toHaveLength(1)
   //   // })
 
   //   // it('should only show the first data when the brush travelers all moved to the left', async () => {
   //   //   const { container } = render(chart)
 
-  //   //   const rightBrushTraveler = container.querySelectorAll('.recharts-brush-traveller')[1]
+  //   //   const rightBrushTraveler = container.querySelectorAll('.v-charts-brush-traveller')[1]
   //   //   assertNotNull(rightBrushTraveler)
   //   //   await fireEvent.mouseDown(rightBrushTraveler, { clientX: 400, clientY: 0 })
   //   //   await fireEvent.mouseMove(window, { clientX: 0, clientY: 0 })
   //   //   await fireEvent.mouseUp(window)
 
   //   //   expect(rightBrushTraveler?.firstChild).toHaveAttribute('x', '65')
-  //   //   expect(container.querySelectorAll('.recharts-area-dot')).toHaveLength(1)
+  //   //   expect(container.querySelectorAll('.v-charts-area-dot')).toHaveLength(1)
   //   // })
   // })
 

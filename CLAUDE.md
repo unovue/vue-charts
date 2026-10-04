@@ -98,7 +98,7 @@ export const Component = defineComponent<PropsWithSVG>({
   setup(props, { attrs, slots }) {
     useSetupGraphicalItem(props, 'itemType')
     const { ...data } = useComponentHook(props, attrs)
-    return () => (/* JSX */)
+    return () => null // Return the component's JSX here.
   },
 })
 ```
@@ -163,7 +163,7 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 - Tests as render functions: `render(() => <Component />)`
 - Public API imports from `@/index`; internal imports use direct paths
 - CSS class selectors: `.v-charts-{component}` pattern (e.g. `.v-charts-line-curve`, `.v-charts-bar-rectangle`, `.v-charts-funnel`, `.v-charts-trapezoid`)
-- **ResponsiveContainer** uses `vcharts-` prefix (not `v-charts-`): `.vcharts-responsive-container`
+- All library CSS classes use the `v-charts-` prefix with kebab-case suffixes, including `.v-charts-responsive-container` and `.v-charts-surface`. User-provided classes and data attributes are preserved.
 - Tooltip hover: `fireEvent(chart, new MouseEvent('mousemove', {...}))` on `.v-charts-wrapper` + 2x `nextTick()`; `defaultIndex` requires 3x `nextTick()`
 - ResizeObserver: `MockResizeObserver` with `trigger(width, height)` method
 - Animation in JSDOM: `motion-v` uses RAF — value stays at `from` when `isActive=true`; snaps to `to` when `isActive=false`

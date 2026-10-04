@@ -13,7 +13,8 @@ import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 function getCurveYCoords(container: Element, curveIndex = 0): number[] {
   const curves = container.querySelectorAll('.v-charts-line-curve')
   const d = curves[curveIndex]?.getAttribute('d')
-  if (!d) return []
+  if (!d)
+    return []
   const matches = d.matchAll(/[ML]([\d.]+),([\d.]+)/g)
   return Array.from(matches).map(m => Number.parseFloat(m[2]))
 }
@@ -24,7 +25,8 @@ function getCurveYCoords(container: Element, curveIndex = 0): number[] {
 function getCurveXCoords(container: Element, curveIndex = 0): number[] {
   const curves = container.querySelectorAll('.v-charts-line-curve')
   const d = curves[curveIndex]?.getAttribute('d')
-  if (!d) return []
+  if (!d)
+    return []
   const matches = d.matchAll(/[ML]([\d.]+),([\d.]+)/g)
   return Array.from(matches).map(m => Number.parseFloat(m[1]))
 }
@@ -137,7 +139,7 @@ describe('axisSelectors integration', () => {
       ))
 
       // Two Y axes should render
-      const yAxes = container.querySelectorAll('.v-charts-yAxis')
+      const yAxes = container.querySelectorAll('.v-charts-y-axis')
       expect(yAxes.length).toBe(2)
 
       // Two line curves should render
@@ -296,7 +298,7 @@ describe('axisSelectors integration', () => {
     })
   })
 
-  describe('XAxis with type="category" shows data labels', () => {
+  describe('xAxis with type="category" shows data labels', () => {
     it('positions points at evenly-spaced X coordinates for category axis', () => {
       const { container } = render(() => (
         <LineChart width={500} height={300} data={data}>

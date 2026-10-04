@@ -1,10 +1,10 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Line', () => {
+describe('line', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -337,8 +337,8 @@ describe('Line', () => {
 
       const curves = getLineCurves(container)
       expect(curves).toHaveLength(1)
-      expect(container.querySelector('.v-charts-xAxis')).toBeTruthy()
-      expect(container.querySelector('.v-charts-yAxis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-x-axis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-y-axis')).toBeTruthy()
     })
 
     it('renders with Tooltip', async () => {

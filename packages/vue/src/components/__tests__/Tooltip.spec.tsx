@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { Bar, BarChart, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -31,7 +31,7 @@ describe('tooltip', () => {
 
       // The tooltip wrapper may exist but be hidden when not active
       // At minimum, the chart should render without errors
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
 
     it('renders tooltip wrapper in LineChart', () => {
@@ -44,7 +44,7 @@ describe('tooltip', () => {
         </LineChart>
       ))
 
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
   })
 
@@ -111,7 +111,7 @@ describe('tooltip', () => {
       await nextTick()
 
       // Chart should render without errors
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
   })
 
@@ -126,7 +126,7 @@ describe('tooltip', () => {
         </BarChart>
       ))
 
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
 
     it('accepts offset prop', () => {
@@ -139,7 +139,7 @@ describe('tooltip', () => {
         </BarChart>
       ))
 
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
 
     it('accepts trigger prop', () => {
@@ -152,7 +152,7 @@ describe('tooltip', () => {
         </BarChart>
       ))
 
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
   })
 
@@ -167,7 +167,7 @@ describe('tooltip', () => {
         </BarChart>
       ))
 
-      const chart = container.querySelector('.vcharts-surface')
+      const chart = container.querySelector('.v-charts-surface')
       expect(chart).toBeTruthy()
 
       // Simulate mouse enter on chart
@@ -177,7 +177,7 @@ describe('tooltip', () => {
       }
 
       // Chart should still be rendered properly
-      expect(container.querySelector('.vcharts-surface')).toBeTruthy()
+      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
   })
 })

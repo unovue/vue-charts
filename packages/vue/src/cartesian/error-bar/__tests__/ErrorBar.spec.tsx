@@ -11,7 +11,7 @@ type ExpectedErrorBarLine = {
 }
 
 function getErrorBarLines(container: HTMLElement): ExpectedErrorBarLine[] {
-  const lines = container.querySelectorAll('.v-charts-errorBar line')
+  const lines = container.querySelectorAll('.v-charts-error-bar line')
   return Array.from(lines).map(line => ({
     x1: line.getAttribute('x1') ?? '',
     x2: line.getAttribute('x2') ?? '',
@@ -44,15 +44,15 @@ describe('<ErrorBar />', () => {
         </BarChart>
       ))
 
-      const errorBarsContainer = container.querySelectorAll('.v-charts-errorBars')
+      const errorBarsContainer = container.querySelectorAll('.v-charts-error-bars')
       expect(errorBarsContainer.length).toBeGreaterThanOrEqual(1)
 
-      const errorBarGroups = container.querySelectorAll('.v-charts-errorBar')
+      const errorBarGroups = container.querySelectorAll('.v-charts-error-bar')
       // 4 data points => 4 error bar groups
       expect(errorBarGroups).toHaveLength(4)
 
       // Each error bar group has 3 lines (top cap, main bar, bottom cap)
-      const allLines = container.querySelectorAll('.v-charts-errorBar line')
+      const allLines = container.querySelectorAll('.v-charts-error-bar line')
       expect(allLines).toHaveLength(12)
     })
 
@@ -67,7 +67,7 @@ describe('<ErrorBar />', () => {
         </BarChart>
       ))
 
-      const lines = container.querySelectorAll('.v-charts-errorBar line')
+      const lines = container.querySelectorAll('.v-charts-error-bar line')
       expect(lines.length).toBeGreaterThan(0)
       lines.forEach((line) => {
         expect(line.getAttribute('stroke')).toBe('red')
@@ -136,7 +136,7 @@ describe('<ErrorBar />', () => {
         </BarChart>
       ))
 
-      const errorBarGroups = container.querySelectorAll('.v-charts-errorBar')
+      const errorBarGroups = container.querySelectorAll('.v-charts-error-bar')
       expect(errorBarGroups).toHaveLength(2)
 
       // For symmetric errors, the main bar should be centered
@@ -163,11 +163,11 @@ describe('<ErrorBar />', () => {
       ))
 
       // Two ErrorBar containers (one per ErrorBar component)
-      const errorBarsContainers = container.querySelectorAll('.v-charts-errorBars')
+      const errorBarsContainers = container.querySelectorAll('.v-charts-error-bars')
       expect(errorBarsContainers).toHaveLength(2)
 
       // Each should have 4 data points worth of error bar groups
-      const errorBarGroups = container.querySelectorAll('.v-charts-errorBar')
+      const errorBarGroups = container.querySelectorAll('.v-charts-error-bar')
       expect(errorBarGroups).toHaveLength(8)
     })
   })
@@ -192,10 +192,10 @@ describe('<ErrorBar />', () => {
         </ScatterChart>
       ))
 
-      const errorBarGroups = container.querySelectorAll('.v-charts-errorBar')
+      const errorBarGroups = container.querySelectorAll('.v-charts-error-bar')
       expect(errorBarGroups).toHaveLength(3)
 
-      const lines = container.querySelectorAll('.v-charts-errorBar line')
+      const lines = container.querySelectorAll('.v-charts-error-bar line')
       expect(lines).toHaveLength(9)
     })
   })

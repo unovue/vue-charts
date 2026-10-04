@@ -187,7 +187,7 @@ const containerStyle = computed(() => ({
   <div
     :id="id ? `${id}` : undefined"
     ref="containerRef"
-    class="vcharts-responsive-container"
+    class="v-charts-responsive-container"
     :class="[props.class]"
     :style="containerStyle"
   >

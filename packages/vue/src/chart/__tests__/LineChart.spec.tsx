@@ -229,8 +229,8 @@ describe('lineChart', () => {
 
       const curves = getLineCurves(container)
       expect(curves).toHaveLength(1)
-      expect(container.querySelector('.v-charts-xAxis')).toBeTruthy()
-      expect(container.querySelector('.v-charts-yAxis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-x-axis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-y-axis')).toBeTruthy()
     })
 
     it('renders with Tooltip', async () => {

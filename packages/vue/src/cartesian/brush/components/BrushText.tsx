@@ -31,7 +31,7 @@ export const BrushText = defineComponent({
       }
 
       return (
-        <Layer class="recharts-brush-texts">
+        <Layer class="v-charts-brush-texts">
           <Text
             textAnchor="end"
             verticalAnchor="middle"

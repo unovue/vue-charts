@@ -102,7 +102,7 @@ const YAxisImpl = defineComponent({
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
           tickTextProps={isAutoWidth() ? { width: undefined } : { width: axisSize.value?.width }}
-          class={['v-charts-yAxis yAxis']}
+          class="v-charts-y-axis"
           ref={cartesianAxisRef}
         />
       )

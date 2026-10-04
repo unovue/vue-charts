@@ -20,7 +20,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      expect(container.querySelector('.vcharts-responsive-container')).toBeTruthy()
+      expect(container.querySelector('.v-charts-responsive-container')).toBeTruthy()
     })
 
     it('renders with width and height props', () => {
@@ -30,7 +30,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper).toBeTruthy()
       expect(wrapper.style.width).toBe('400px')
       expect(wrapper.style.height).toBe('300px')
@@ -44,7 +44,7 @@ describe('responsiveContainer', () => {
       ))
       await nextTick()
 
-      const wrapper = container.querySelector('.vcharts-responsive-container')
+      const wrapper = container.querySelector('.v-charts-responsive-container')
       expect(wrapper).toBeTruthy()
       // Child element should be rendered inside the container
       expect(container.querySelector('.test-child')).toBeTruthy()
@@ -60,7 +60,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper.style.minWidth).toBe('200px')
     })
 
@@ -71,7 +71,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper.style.minHeight).toBe('150px')
     })
 
@@ -82,7 +82,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper.style.width).toBe('100%')
       expect(wrapper.style.height).toBe('50%')
     })
@@ -94,7 +94,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper.style.maxHeight).toBe('600px')
     })
   })
@@ -107,7 +107,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container') as HTMLElement
+      const wrapper = container.querySelector('.v-charts-responsive-container') as HTMLElement
       expect(wrapper).toBeTruthy()
       expect(wrapper.style.width).toBe('400px')
     })
@@ -123,7 +123,7 @@ describe('responsiveContainer', () => {
 
       const wrapper = container.querySelector('#my-chart-container')
       expect(wrapper).toBeTruthy()
-      expect(wrapper?.classList.contains('vcharts-responsive-container')).toBe(true)
+      expect(wrapper?.classList.contains('v-charts-responsive-container')).toBe(true)
     })
 
     it('renders with class prop', () => {
@@ -133,7 +133,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container')
+      const wrapper = container.querySelector('.v-charts-responsive-container')
       expect(wrapper).toBeTruthy()
       expect(wrapper?.classList.contains('custom-class')).toBe(true)
     })
@@ -147,7 +147,7 @@ describe('responsiveContainer', () => {
 
       const wrapper = container.querySelector('#chart-1')
       expect(wrapper).toBeTruthy()
-      expect(wrapper?.classList.contains('vcharts-responsive-container')).toBe(true)
+      expect(wrapper?.classList.contains('v-charts-responsive-container')).toBe(true)
       expect(wrapper?.classList.contains('chart-wrapper')).toBe(true)
     })
 
@@ -240,7 +240,7 @@ describe('responsiveContainer', () => {
         </ResponsiveContainer>
       ))
 
-      const wrapper = container.querySelector('.vcharts-responsive-container')
+      const wrapper = container.querySelector('.v-charts-responsive-container')
       expect(wrapper).toBeTruthy()
       // Children should still render because getBoundingClientRect returns 0,0 which is >= 0
     })

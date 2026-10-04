@@ -45,7 +45,7 @@ provideLabelLayerRef(labelLayerRef)
 <template>
   <svg
     v-bind="$attrs"
-    class="vcharts-surface"
+    class="v-charts-surface"
     :class="[props.class]"
     :width="width"
     :height="height"

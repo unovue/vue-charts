@@ -115,7 +115,7 @@ export const ErrorBar = defineComponent({
         }
 
         return (
-          <Layer class="v-charts-errorBar" key={`bar-${x}-${y}-${value}-${dataIndex}`}>
+          <Layer class="v-charts-error-bar" key={`bar-${x}-${y}-${value}-${dataIndex}`}>
             {lineCoordinates.map((c, lineIndex) => (
               <line
                 key={`errorbar-${dataIndex}-${c.x1}-${c.y1}-${c.x2}-${c.y2}-${lineIndex}`}
@@ -131,7 +131,7 @@ export const ErrorBar = defineComponent({
         )
       })
 
-      return <Layer class="v-charts-errorBars">{errorBars}</Layer>
+      return <Layer class="v-charts-error-bars">{errorBars}</Layer>
     }
   },
 })

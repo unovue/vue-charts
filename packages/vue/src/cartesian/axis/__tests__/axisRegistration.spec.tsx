@@ -79,8 +79,8 @@ it('server-renders explicit axes and categorical tick labels', async () => {
         </LineChart>
       ),
     })))
-    expect(html).toContain('v-charts-xAxis')
-    expect(html).toContain('v-charts-yAxis')
+    expect(html).toContain('v-charts-x-axis')
+    expect(html).toContain('v-charts-y-axis')
     expect(html).toContain('January')
     expect(html).toContain('February')
   }

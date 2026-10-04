@@ -36,7 +36,7 @@ describe('<Brush />', () => {
 
       const brush = container.querySelector('.v-charts-brush')
       expect(brush).not.toBeNull()
-      expect(brush!.querySelectorAll('.recharts-brush-traveller')).toHaveLength(2)
+      expect(brush!.querySelectorAll('.v-charts-brush-traveller')).toHaveLength(2)
     })
 
     it('renders 2 travellers and 1 slide in simple Brush', () => {
@@ -46,9 +46,9 @@ describe('<Brush />', () => {
         </BarChart>
       ))
 
-      const travellers = container.querySelectorAll('.recharts-brush-traveller')
+      const travellers = container.querySelectorAll('.v-charts-brush-traveller')
       expect(travellers).toHaveLength(2)
-      expect(container.querySelectorAll('.recharts-brush-slide')).toHaveLength(1)
+      expect(container.querySelectorAll('.v-charts-brush-slide')).toHaveLength(1)
     })
 
     it('renders the brush container with correct dimensions', () => {
@@ -71,8 +71,8 @@ describe('<Brush />', () => {
         </BarChart>
       ))
 
-      expect(container.querySelectorAll('.recharts-brush-traveller')).toHaveLength(0)
-      expect(container.querySelectorAll('.recharts-brush-slide')).toHaveLength(0)
+      expect(container.querySelectorAll('.v-charts-brush-traveller')).toHaveLength(0)
+      expect(container.querySelectorAll('.v-charts-brush-slide')).toHaveLength(0)
     })
   })
 
@@ -85,7 +85,7 @@ describe('<Brush />', () => {
       ))
 
       // Brush should render with travellers when data is available
-      const travellers = container.querySelectorAll('.recharts-brush-traveller')
+      const travellers = container.querySelectorAll('.v-charts-brush-traveller')
       expect(travellers).toHaveLength(2)
     })
   })
@@ -123,8 +123,8 @@ describe('<Brush />', () => {
       ))
 
       // Brush renders with travellers and slide
-      expect(container.querySelectorAll('.recharts-brush-traveller')).toHaveLength(2)
-      expect(container.querySelectorAll('.recharts-brush-slide')).toHaveLength(1)
+      expect(container.querySelectorAll('.v-charts-brush-traveller')).toHaveLength(2)
+      expect(container.querySelectorAll('.v-charts-brush-slide')).toHaveLength(1)
     })
   })
 
@@ -136,7 +136,7 @@ describe('<Brush />', () => {
         </BarChart>
       ))
 
-      expect(container.querySelectorAll('.recharts-brush-texts')).toHaveLength(1)
+      expect(container.querySelectorAll('.v-charts-brush-texts')).toHaveLength(1)
     })
 
     it('does not render brush text by default', () => {
@@ -146,7 +146,7 @@ describe('<Brush />', () => {
         </BarChart>
       ))
 
-      expect(container.querySelectorAll('.recharts-brush-texts')).toHaveLength(0)
+      expect(container.querySelectorAll('.v-charts-brush-texts')).toHaveLength(0)
     })
   })
 
@@ -159,7 +159,7 @@ describe('<Brush />', () => {
       ))
 
       // Should render the brush with specified range
-      const travellers = container.querySelectorAll('.recharts-brush-traveller')
+      const travellers = container.querySelectorAll('.v-charts-brush-traveller')
       expect(travellers).toHaveLength(2)
     })
   })

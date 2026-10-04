@@ -43,7 +43,7 @@ describe('responsive prop', () => {
     ))
 
     expect(container.querySelector('.v-charts-wrapper')).toBeTruthy()
-    expect(container.querySelector('.vcharts-surface')).toBeNull()
+    expect(container.querySelector('.v-charts-surface')).toBeNull()
   })
 
   it('renders the chart at the measured size once mounted', async () => {
@@ -54,7 +54,7 @@ describe('responsive prop', () => {
     ))
     await nextTick()
 
-    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    const svg = container.querySelector('.v-charts-surface') as SVGElement
     expect(svg).toBeTruthy()
     expect(svg.getAttribute('width')).toBe('500')
     expect(svg.getAttribute('height')).toBe('300')
@@ -73,7 +73,7 @@ describe('responsive prop', () => {
     MockResizeObserver.instances.at(-1)!.trigger(640, 480)
     await nextTick()
 
-    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    const svg = container.querySelector('.v-charts-surface') as SVGElement
     expect(svg.getAttribute('width')).toBe('640')
     expect(svg.getAttribute('height')).toBe('480')
   })
@@ -102,7 +102,7 @@ describe('responsive prop', () => {
     await nextTick()
 
     expect(MockResizeObserver.instances.length).toBe(0)
-    expect((container.querySelector('.vcharts-surface') as SVGElement).getAttribute('width')).toBe('400')
+    expect((container.querySelector('.v-charts-surface') as SVGElement).getAttribute('width')).toBe('400')
 
     responsive.value = true
     await nextTick()
@@ -110,7 +110,7 @@ describe('responsive prop', () => {
 
     expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
     // The observer's initial callback picks up the mocked 500x300 bounding rect.
-    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    const svg = container.querySelector('.v-charts-surface') as SVGElement
     expect(svg.getAttribute('width')).toBe('500')
     expect(svg.getAttribute('height')).toBe('300')
   })
@@ -126,7 +126,7 @@ describe('responsive prop', () => {
     await nextTick()
 
     expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
-    expect((container.querySelector('.vcharts-surface') as SVGElement).getAttribute('width')).toBe('500')
+    expect((container.querySelector('.v-charts-surface') as SVGElement).getAttribute('width')).toBe('500')
 
     // Mount-time observer churn already disconnected once; only the toggle-off must disconnect now.
     disconnectSpy.mockClear()
@@ -135,7 +135,7 @@ describe('responsive prop', () => {
     await nextTick()
 
     expect(disconnectSpy).toHaveBeenCalled()
-    const svg = container.querySelector('.vcharts-surface') as SVGElement
+    const svg = container.querySelector('.v-charts-surface') as SVGElement
     expect(svg.getAttribute('width')).toBe('400')
     expect(svg.getAttribute('height')).toBe('320')
     disconnectSpy.mockRestore()

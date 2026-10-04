@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Tooltip, XAxis, YAxis } from '@/index'
-import { assertNotNull, expectAreaCurve } from '@/test/helper'
+import { assertNotNull } from '@/test/helper'
 import type { ActivePointSlotProps } from '@/cartesian/area/ActivePoints'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -294,8 +294,8 @@ describe('area', () => {
 
       expect(container.querySelectorAll('.v-charts-area-area')).toHaveLength(1)
       expect(container.querySelectorAll('.v-charts-area-curve')).toHaveLength(1)
-      expect(container.querySelector('.v-charts-xAxis')).toBeTruthy()
-      expect(container.querySelector('.v-charts-yAxis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-x-axis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-y-axis')).toBeTruthy()
     })
 
     it('renders with Tooltip', async () => {
