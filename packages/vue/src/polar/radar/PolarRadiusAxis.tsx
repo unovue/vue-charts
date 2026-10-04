@@ -101,19 +101,21 @@ const PolarRadiusAxisView = defineComponent({
               {tickItems!.map((entry, i) => {
                 const coord = polarToCartesian(cx, cy, entry.coordinate, angle)
                 const value = tickFormatter ? tickFormatter(entry.value, i) : entry.value
-                return (
-                  <Text
-                    key={`tick-${entry.coordinate}`}
-                    class="v-charts-polar-radius-axis-tick-value"
-                    x={coord.x}
-                    y={coord.y}
-                    textAnchor={textAnchor}
-                    verticalAnchor="middle"
-                    fill={stroke ?? 'var(--v-charts-text, #ccc)'}
-                    angle={90 - angle}
-                    value={String(value)}
-                  />
-                )
+                return slots.tick
+                  ? slots.tick({ x: coord.x, y: coord.y, value, index: i, payload: entry, textAnchor })
+                  : (
+                      <Text
+                        key={`tick-${entry.coordinate}`}
+                        class="v-charts-polar-radius-axis-tick-value"
+                        x={coord.x}
+                        y={coord.y}
+                        textAnchor={textAnchor}
+                        verticalAnchor="middle"
+                        fill={stroke ?? 'var(--v-charts-text, #ccc)'}
+                        angle={90 - angle}
+                        value={String(value)}
+                      />
+                    )
               })}
             </g>
           )}

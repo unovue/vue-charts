@@ -100,16 +100,20 @@ const ReferenceAreaView = defineComponent({
 
       return (
         <Layer class={['v-charts-reference-area', props.class]}>
-          <Rectangle
-            {...svgAttrs}
-            clip-path={clipPath}
-            x={r.x}
-            y={r.y}
-            width={r.width}
-            height={r.height}
-            radius={props.radius}
-            class="v-charts-reference-area-rect"
-          />
+          {slots.shape
+            ? slots.shape(r)
+            : (
+                <Rectangle
+                  {...svgAttrs}
+                  clip-path={clipPath}
+                  x={r.x}
+                  y={r.y}
+                  width={r.width}
+                  height={r.height}
+                  radius={props.radius}
+                  class="v-charts-reference-area-rect"
+                />
+              )}
           {labelValue != null && labelValue !== false && (
             <Label
               viewBox={r}

@@ -24,7 +24,7 @@ const YAxisImpl = defineComponent({
     },
   },
   inheritAttrs: false,
-  setup(props, { attrs }) {
+  setup(props, { attrs, slots }) {
     const canMeasureText = useCanMeasureText()
     const isPanorama = useIsPanorama()
     const axisType = 'yAxis'
@@ -108,6 +108,7 @@ const YAxisImpl = defineComponent({
           tickTextProps={isAutoWidth() ? { width: undefined } : { width: axisSize.value?.width }}
           class="v-charts-y-axis"
           ref={cartesianAxisRef}
+          v-slots={{ tick: slots.tick }}
         />
       )
     }
@@ -148,7 +149,7 @@ const YAxisSettingsDispatcher = defineComponent({
       default: undefined,
     },
   },
-  setup(props) {
+  setup(props, { slots }) {
     const { addYAxis, removeYAxis } = useChartCartesianAxis()
     let registeredSettings: YAxisSettings | undefined
     watch(() => {
@@ -178,7 +179,7 @@ const YAxisSettingsDispatcher = defineComponent({
     })
     const View = useDeferredView(YAxisImpl)
     return () => (
-      <View {...props} />
+      <View {...props} v-slots={slots} />
     )
   },
 })
@@ -270,8 +271,8 @@ const _YAxis = defineComponent({
       default: 5,
     },
   },
-  setup(props, { attrs }) {
-    return () => <YAxisSettingsDispatcher {...props} {...attrs} />
+  setup(props, { attrs, slots }) {
+    return () => <YAxisSettingsDispatcher {...props} {...attrs} v-slots={slots} />
   },
 })
 

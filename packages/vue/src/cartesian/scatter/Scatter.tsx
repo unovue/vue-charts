@@ -71,6 +71,7 @@ const ScatterView = defineComponent({
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
   slots: Object as SlotsType<{
+    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
     default?: () => any
   }>,
   setup(view, { slots }) {
@@ -192,7 +193,7 @@ const ScatterView = defineComponent({
             onMouseleave={(event: MouseEvent) => { onMouseLeaveSymbol(); emit('mouseleave', point, i, event) }}
             onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(i), activeDataKey: props.dataKey, activeCoordinate: point.tooltipPosition }); emit('click', point, i, event) }}
           >
-            {Symbols(symbolProps)}
+            {slots.shape ? slots.shape({ ...point, index: i, isActive }) : Symbols(symbolProps)}
           </g>
         )
       })
@@ -296,6 +297,7 @@ const _Scatter = defineComponent({
   props: ScatterVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
+    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
     default?: () => any
   }>,
   setup(inputProps, { attrs, slots, emit }) {

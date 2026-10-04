@@ -113,10 +113,11 @@ const BarView = defineComponent({
             {props.background && <BarBackground />}
             <BarRectangles />
           </Layer>
-          {!isAnimating.value && props.label && (
+          {!isAnimating.value && (props.label || slots.label) && (
             <LabelList
               {...(typeof props.label === 'object' ? props.label : {})}
               data={barData.value}
+              v-slots={{ label: slots.label }}
             />
           )}
         </Fragment>

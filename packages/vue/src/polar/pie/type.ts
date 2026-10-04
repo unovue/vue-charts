@@ -29,6 +29,7 @@ export const PieVueProps = {
     default: undefined,
   },
   label: { type: Boolean, default: false },
+  labelLine: { type: Boolean, default: true },
   class: classProp,
 }
 

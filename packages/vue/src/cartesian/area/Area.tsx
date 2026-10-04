@@ -43,17 +43,11 @@ const AreaView = defineComponent({
       if (!shouldRender.value) {
         return null
       }
-      let activeDot
-      if (slots.activeDot) {
-        activeDot = {
-          activeDot: slots.activeDot,
-        }
-      }
 
       const areaContent = (
         <Fragment>
           <Layer class={['v-charts-area', attrs.class]}>
-            <StaticArea />
+            <StaticArea v-slots={{ label: slots.label }} />
           </Layer>
           <Layer {...activeListeners}>
             <ActivePoints
@@ -61,9 +55,8 @@ const AreaView = defineComponent({
               mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
               itemDataKey={props.dataKey}
               activeDot={props.activeDot}
-            >
-              {activeDot}
-            </ActivePoints>
+              v-slots={{ activeDot: slots.activeDot }}
+            />
           </Layer>
         </Fragment>
       )

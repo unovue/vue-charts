@@ -41,8 +41,9 @@ export const LabelListView = defineComponent({
             const idProps = isNullish(id) ? undefined : `${id}-${index}`
             const viewBox = parseViewBox(isNullish(clockWise) ? entry : { ...entry, clockWise })
 
-            if (slots.label) {
-              return slots.label({ ...others, ...attrs, ...viewBox, value, index, key: `label-${index}` })
+            const contentSlot = slots.content ?? slots.label
+            if (contentSlot) {
+              return contentSlot({ ...others, ...attrs, ...viewBox, value, index, key: `label-${index}` })
             }
 
             const entryFill = entry.fill != null && !('fill' in others) && !('fill' in attrs) ? entry.fill : undefined

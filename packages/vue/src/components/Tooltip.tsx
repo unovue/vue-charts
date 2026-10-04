@@ -720,7 +720,7 @@ const _Tooltip = defineComponent({
       accessibilityLayer: accessibilityLayer.value,
     }))
 
-    const hasContentSlot = computed(() => !!slots.content)
+    const hasContentSlot = computed(() => !!slots.content || !!slots.default)
 
     useTooltipChartSynchronisation({
       tooltipEventType,
@@ -752,7 +752,7 @@ const _Tooltip = defineComponent({
                 style={props.style}
               >
                 {hasContentSlot.value
-                  ? slots.content!(contentProps.value)
+                  ? (slots.content ? slots.content(contentProps.value) : slots.default!())
                   : <contentComponent.value {...contentProps.value} />}
               </TooltipBoundingBox>
             </Teleport>

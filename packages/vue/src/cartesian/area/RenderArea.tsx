@@ -66,7 +66,7 @@ export const Dots = defineComponent({
 // 简化的 StaticArea 组件 - 使用 context
 export const StaticArea = defineComponent({
   name: 'StaticArea',
-  setup() {
+  setup(_, { slots }) {
     const emit = areaEvents.use()
     const { points, clipPathId, layout, attrs, areaData, props, isAnimating } = useAreaContext()
     const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
@@ -101,7 +101,7 @@ export const StaticArea = defineComponent({
       }
       const sweepId = `animationClipPath-${clipPathId.value}`
       const isRange = areaData.value?.isRange
-      const showLabels = !isAnimating.value && props.label
+      const showLabels = !isAnimating.value && (props.label || slots.label)
       const labelProps = typeof props.label === 'object' ? props.label : {}
       return (
         <Fragment>
@@ -159,7 +159,7 @@ export const StaticArea = defineComponent({
           </g>
           {
             showLabels && (
-              <LabelList {...labelProps} data={areaData.value?.points ?? []} dataKey={props.dataKey} />
+              <LabelList {...labelProps} data={areaData.value?.points ?? []} dataKey={props.dataKey} v-slots={{ label: slots.label }} />
             )
           }
         </Fragment>

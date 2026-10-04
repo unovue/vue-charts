@@ -119,15 +119,19 @@ const ReferenceLineView = defineComponent({
 
       return (
         <Layer class={['v-charts-reference-line', props.class]}>
-          <line
-            {...svgAttrs}
-            clip-path={clipPath}
-            x1={p1.x}
-            y1={p1.y}
-            x2={p2.x}
-            y2={p2.y}
-            class="v-charts-reference-line-line"
-          />
+          {slots.shape
+            ? slots.shape({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y })
+            : (
+                <line
+                  {...svgAttrs}
+                  clip-path={clipPath}
+                  x1={p1.x}
+                  y1={p1.y}
+                  x2={p2.x}
+                  y2={p2.y}
+                  class="v-charts-reference-line-line"
+                />
+              )}
           {labelValue != null && labelValue !== false && (
             <Label
               viewBox={labelViewBox}

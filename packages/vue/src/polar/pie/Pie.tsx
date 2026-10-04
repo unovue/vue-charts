@@ -14,7 +14,7 @@ import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
-import { extractCellProps } from '@/utils/cell'
+import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/pieSelectors'
 import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
@@ -40,10 +40,7 @@ const PieView = defineComponent({
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
   },
-  slots: Object as SlotsType<{
-    shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
-    default?: () => any
-  }>,
+  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => import('vue').VNode[] }>,
   setup(view, { slots }) {
     const emit = pieEvents.use()
     const props = view.item
@@ -149,23 +146,29 @@ const PieView = defineComponent({
       const anchor = pos.x > sector.cx ? 'start' : pos.x < sector.cx ? 'end' : 'middle'
       return (
         <g key={`label-${index}`}>
-          <line
-            x1={edgePoint.x}
-            y1={edgePoint.y}
-            x2={pos.x}
-            y2={pos.y}
-            stroke={sector.fill}
-            fill="none"
-          />
-          <text
-            x={pos.x}
-            y={pos.y}
-            text-anchor={anchor}
-            dominant-baseline="middle"
-            fill={sector.fill}
-          >
-            {String(sector.value)}
-          </text>
+          {props.labelLine && (
+            <line
+              x1={edgePoint.x}
+              y1={edgePoint.y}
+              x2={pos.x}
+              y2={pos.y}
+              stroke={sector.fill}
+              fill="none"
+            />
+          )}
+          {slots.label
+            ? slots.label({ ...sector, index })
+            : (
+                <text
+                  x={pos.x}
+                  y={pos.y}
+                  text-anchor={anchor}
+                  dominant-baseline="middle"
+                  fill={sector.fill}
+                >
+                  {String(sector.value)}
+                </text>
+              )}
         </g>
       )
     }
@@ -184,8 +187,9 @@ const PieView = defineComponent({
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
             const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === sector.index }
-            const content = slots.shape
-              ? slots.shape(shapeProps)
+            const shapeSlot = shapeProps.isActive && slots.activeShape ? slots.activeShape : slots.shape
+            const content = shapeSlot
+              ? shapeSlot(shapeProps)
               : (
                   <Sector
                     {...attrs}
@@ -211,7 +215,8 @@ const PieView = defineComponent({
               </g>
             )
           })}
-          {!isAnimating.value && props.label && <FadeIn isActive={props.isAnimationActive}>{sectorList.map(({ value }, index) => renderLabel(value, index))}</FadeIn>}
+          {filterOutCells(slots.default?.() ?? [])}
+          {!isAnimating.value && (props.label || slots.label) && <FadeIn isActive={props.isAnimationActive}>{sectorList.map(({ value }, index) => renderLabel(value, index))}</FadeIn>}
         </Layer>
       )
     }
@@ -223,10 +228,7 @@ const _Pie = defineComponent({
   emits: pieEvents.emits,
   props: PieVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<{
-    shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
-    default?: () => any
-  }>,
+  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => import('vue').VNode[] }>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     pieEvents.provide(emit)
