@@ -1,7 +1,7 @@
 import { useAppSelector } from './chartContext'
 import { selectActiveTooltipDataPoints } from '@/state/selectors/tooltipSelectors'
 
-export { useAppDispatch, useAppSelector } from './chartContext'
+export { useAppSelector } from './chartContext'
 
 /**
  * Returns the currently active data points being displayed in the Tooltip.

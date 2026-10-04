@@ -1,22 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createSSRApp, defineComponent } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { provideChartContext, useAppSelector, useChartBrush, useChartCartesianAxis, useChartDataActions, useChartGraphicalItems, useChartLayoutActions, useChartLegend, useChartOptions, useChartPolarOptions, useChartReferenceElements, useChartRootProps, useChartTooltip } from '../chartContext'
-import { createRechartsStore } from '../store'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 
 describe('chart context SSR', () => {
-  it('keeps state current during rendering and releases the subscription afterward', async () => {
-    const store = createRechartsStore()
-    const subscribe = store.subscribe
-    const unsubscribe = vi.fn()
-    const subscription = vi.spyOn(store, 'subscribe').mockImplementation((listener) => {
-      const stop = subscribe(listener)
-      return () => {
-        unsubscribe()
-        stop()
-      }
-    })
+  it('keeps state current during rendering', async () => {
     const Reader = defineComponent({
       setup() {
         const width = useAppSelector(state => state.layout.width)
@@ -30,14 +19,12 @@ describe('chart context SSR', () => {
     })
     const Fixture = defineComponent({
       setup() {
-        provideChartContext(store)
+        provideChartContext()
         return () => <Reader />
       },
     })
     const html = await renderToString(createSSRApp(Fixture))
     expect(html).toBe('<span>321:2</span>')
-    expect(subscription).toHaveBeenCalledTimes(1)
-    expect(unsubscribe).toHaveBeenCalledTimes(1)
   })
 
   it('isolates concurrent requests even when child setup yields', async () => {
@@ -86,7 +73,7 @@ describe('chart context SSR', () => {
       })
       const Fixture = defineComponent({
         setup() {
-          provideChartContext(createRechartsStore())
+          provideChartContext()
           return () => <Reader />
         },
       })

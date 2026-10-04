@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit'
-import type { RechartsRootState } from '../store'
+import { createSelector } from '../createSelector'
+import type { RechartsRootState } from '../chartState'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
 import type { ChartData, ChartDataState } from '../chartData'
 import { selectChartOffset } from './selectChartOffset'

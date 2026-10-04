@@ -59,7 +59,7 @@ packages/vue/src/           # Main library source (vccs)
 ├── components/             # Legend, Tooltip, Text, Label, Cell
 ├── container/              # ResponsiveContainer, Surface, Layer
 ├── shape/                  # Rectangle, Symbols, Dot, Sector, Cross, Curve, Trapezoid
-├── state/                  # Redux store, slices, middleware, selectors
+├── state/                  # Chart-local Vue domains, stable state view, selectors
 ├── animation/              # Animate component, motion-v utilities
 ├── context/                # provide/inject context providers
 ├── hooks/                  # Shared composition hooks
@@ -75,11 +75,11 @@ playground/nuxt/            # Nuxt 3 playground (Tailwind v4, shadcn-nuxt)
 ### Key Decisions
 
 1. **Components**: `defineComponent` + JSX (not SFC)
-2. **State**: Redux Toolkit via `@reduxjs/vue-redux` — one store per chart (`createRechartsStore`)
+2. **State**: Chart-local Vue factories expose immutable shallow snapshots through a stable read-only getter view; selector computeds track only domains they read.
 3. **Context**: `provide/inject` for parent-child communication
 4. **Chart Factory**: `generateCategoricalChart()` creates chart containers
 5. **Animation**: `motion-v` with `Animate` wrapper
-6. **Events**: Redux middleware — mouse events use `createListenerMiddleware`; external/keyboard/touch use plain synchronous `Middleware`
+6. **Events**: Pointer, keyboard, touch, and synchronization handlers call chart-local typed operations directly.
 7. **Build output**: ESM-only (`preserveModules: true`); `minify: false` — Rolldown's minifier renames variables colliding with Vue's `h`
 
 ## Code Conventions
@@ -187,7 +187,7 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 
 | Library | Purpose |
 |---------|---------|
-| `@reduxjs/toolkit` + `@reduxjs/vue-redux` | Chart state management |
+| `reselect` | Pure selector result memoization; argument caching disabled for the stable Vue state view |
 | `motion-v` | SVG animations (external peer dep) |
 | `victory-vendor` | D3 math/scale utilities |
 | `lodash-es` / `es-toolkit` | Utility functions |

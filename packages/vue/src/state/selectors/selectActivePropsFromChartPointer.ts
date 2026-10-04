@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit'
-import type { RechartsRootState } from '../store'
+import { createSelector } from '../createSelector'
+import type { RechartsRootState } from '../chartState'
 import { selectTooltipAxisRangeWithReverse, selectTooltipAxisTicks, selectTooltipAxisType } from './tooltipSelectors'
 import { selectChartOffset } from './selectChartOffset'
 import { combineActiveProps, selectOrderedTooltipTicks } from './selectors'

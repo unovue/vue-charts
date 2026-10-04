@@ -31,7 +31,7 @@ export const ErrorBar = defineComponent({
     const { data, dataPointFormatter, xAxisId, yAxisId, errorBarOffset } = useErrorBarContext()
 
     // Register this ErrorBar's settings into the parent's registry so the graphical item
-    // can report them to Redux, allowing axis domain to extend for error bar ranges.
+    // can report them to chart state, allowing axis domain to extend for error bar ranges.
     const registry = useErrorBarRegistry(null)
     if (registry) {
       const direction: ErrorBarDirection = props.direction ?? (layout.value === 'horizontal' ? 'y' : 'x')

@@ -61,7 +61,7 @@ describe('scatterChart', () => {
 
       expect(container.querySelectorAll('.v-charts-scatter')).toHaveLength(2)
       expect(container.querySelectorAll('.v-charts-scatter-symbol')).toHaveLength(data01.length + data02.length)
-      // Legend renders (items may need async propagation via Redux)
+      // Legend renders (items may need async propagation through chart state)
     })
 
     it('renders no symbols when data is empty', () => {
@@ -165,7 +165,7 @@ describe('scatterChart', () => {
         </ScatterChart>
       ))
 
-      // Legend renders (items may need async propagation via Redux)
+      // Legend renders (items may need async propagation through chart state)
     })
   })
 

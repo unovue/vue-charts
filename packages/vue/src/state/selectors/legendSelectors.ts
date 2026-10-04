@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit'
-import type { RechartsRootState } from '../store'
+import { createSelector } from '../createSelector'
+import type { RechartsRootState } from '../chartState'
 import type { LegendSettings } from '../chartLegend'
 import type { Size } from '@/types'
 import type { LegendPayload } from '@/components/DefaultLegendContent'

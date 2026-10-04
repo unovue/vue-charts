@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { watch } from 'vue'
 import { createChartLayout } from '../chartLayout'
-import { createRechartsStore } from '../store'
 
 describe('chart-local Vue layout', () => {
   it('updates dimensions, margins and direction atomically without mutating inputs', () => {
@@ -38,13 +37,12 @@ describe('chart-local Vue layout', () => {
     expect(layout.state.value.scale).toBe(2)
   })
 
-  it('owns fresh chart-local defaults without a Redux layout slice', () => {
+  it('owns fresh chart-local defaults without sharing layout snapshots', () => {
     const first = createChartLayout()
     const second = createChartLayout()
     expect(first.state.value).not.toBe(second.state.value)
     expect(first.state.value.margin).not.toBe(second.state.value.margin)
     first.setProps('vertical', { width: 300, height: 500 }, {})
     expect(second.state.value.width).toBe(0)
-    expect(createRechartsStore().getState()).not.toHaveProperty('layout')
   })
 })

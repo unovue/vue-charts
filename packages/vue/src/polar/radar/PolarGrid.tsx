@@ -30,12 +30,12 @@ export const PolarGrid = defineComponent({
   setup(props, { attrs }) {
     const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
     const polarAngles = useAppSelector(state => selectPolarGridAngles(state, props.angleAxisId))
-    const polarRadiiFromRedux = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
+    const selectedPolarRadii = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
 
     const polarRadii = computed(() => {
       if (Array.isArray(props.polarRadius))
         return props.polarRadius
-      return polarRadiiFromRedux.value
+      return selectedPolarRadii.value
     })
 
     return () => {

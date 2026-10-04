@@ -1,6 +1,6 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import type { Series } from 'd3-shape'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type {
   BaseAxisWithScale,
   StackGroup,

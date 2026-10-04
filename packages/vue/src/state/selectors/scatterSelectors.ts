@@ -1,6 +1,6 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import { toRaw } from 'vue'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import type { ChartData, ChartDataState } from '../chartData'

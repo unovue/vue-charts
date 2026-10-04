@@ -9,8 +9,8 @@ import type { OffsetHorizontal, OffsetVertical } from '@/types/offset'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 import { appendOffsetOfLegend } from '@/utils/legend'
 import type { ChartOffsetInternal } from '@/utils/types'
-import type { RechartsRootState } from '@/state/store'
-import { createSelector } from '@reduxjs/toolkit'
+import type { RechartsRootState } from '@/state/chartState'
+import { createSelector } from '../createSelector'
 import { get } from 'es-toolkit/compat'
 
 /**

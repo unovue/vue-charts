@@ -112,7 +112,7 @@ const data = [
 
 ## Architecture
 
-- **State**: Redux Toolkit via [@reduxjs/vue-redux](https://github.com/nicepkg/reduxjs-vue-redux) — one store per chart
+- **State**: Chart-local Vue domains with a stable read-only view and fine-grained computed selectors
 - **Math**: Direct D3 scale and shape modules
 - **Animation**: [Motion for Vue](https://motion.dev/docs/vue)
 
@@ -151,7 +151,7 @@ case. Declaration generation runs only during the library build.
 - **[Recharts](https://recharts.org)** — Original React charting library this project ports from
 - **[Victory Vendor](https://github.com/FormidableLabs/victory)** — D3 math utilities
 - **[Motion for Vue](https://motion.dev/docs/vue)** — Animation engine
-- **[Redux Toolkit](https://redux-toolkit.js.org/)** — State management
+- **[Reselect](https://reselect.js.org/)** — Selector result memoization over Vue domain snapshots
 - **[VueUse](https://vueuse.org/)** — Vue composition utilities
 
 ---

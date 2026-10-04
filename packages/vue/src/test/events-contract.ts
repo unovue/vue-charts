@@ -11,7 +11,7 @@ eventCenter.off(BRUSH_SYNC_EVENT, brushListener)
 eventCenter.emit(BRUSH_SYNC_EVENT, 'group', { startIndex: 0, endIndex: 1 }, emitter)
 eventCenter.emit(TOOLTIP_SYNC_EVENT, 'group', { kind: 'tooltip', active: true, index: '0', dataKey: undefined, coordinate: undefined, label: 'A' }, emitter)
 
-// @ts-expect-error Redux actions must not travel on the tooltip channel.
+// @ts-expect-error Transport actions must not travel on the tooltip channel.
 eventCenter.emit(TOOLTIP_SYNC_EVENT, 'group', { type: 'tooltip/setSyncInteraction', payload: { active: true, index: '0', dataKey: undefined, coordinate: undefined, label: 'A' } }, emitter)
 
 // @ts-expect-error Unknown synchronization events must not be accepted.

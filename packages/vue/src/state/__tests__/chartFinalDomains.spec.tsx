@@ -6,7 +6,6 @@ import { createChartGraphicalItems } from '../chartGraphicalItems'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '../chartGraphicalItems'
 import { provideChartContext, useAppSelector, useChartCartesianAxis, useChartGraphicalItems, useChartTooltip } from '../chartContext'
 import { SetCartesianGraphicalItem, SetPolarGraphicalItem } from '../SetGraphicalItem'
-import { createRechartsStore } from '../store'
 import { selectAllVisibleBars } from '../selectors/barSelectors'
 import { implicitXAxis, implicitYAxis, implicitZAxis, selectAxisScale, selectCartesianItemsSettings } from '../selectors/axisSelectors'
 
@@ -159,7 +158,7 @@ it('tracks only registration inputs and keeps panorama and pointer geometry isol
   let items: ReturnType<typeof useChartGraphicalItems>
   let axes: ReturnType<typeof useChartCartesianAxis>
   let tooltip: ReturnType<typeof useChartTooltip>
-  let state: ReturnType<typeof useAppSelector<import('../store').RechartsRootState>>
+  let state: ReturnType<typeof useAppSelector<import('../chartState').RechartsRootState>>
   const Reader = defineComponent({
     setup() {
       items = useChartGraphicalItems()
@@ -176,7 +175,7 @@ it('tracks only registration inputs and keeps panorama and pointer geometry isol
   })
   const Fixture = defineComponent({
     setup() {
-      provideChartContext(createRechartsStore())
+      provideChartContext()
       return () => <Reader />
     },
   })

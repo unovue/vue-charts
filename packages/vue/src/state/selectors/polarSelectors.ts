@@ -1,6 +1,6 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import type { AppliedChartData, ChartData } from '../chartData'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type { AxisId, BaseCartesianAxis } from '../chartCartesianAxis'
 import { selectChartDataAndAlwaysIgnoreIndexes, selectChartDataWithIndexes } from './dataSelectors'
 import type {

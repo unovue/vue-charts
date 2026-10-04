@@ -1,7 +1,7 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import { sortBy } from 'es-toolkit/compat'
 import { useAppSelector } from '../hooks'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type {
   ActiveTooltipProps,
   TooltipIndex,

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isProxy, reactive, watch } from 'vue'
 import { createChartData } from '../chartData'
-import { createRechartsStore } from '../store'
 
 describe('chart-local data', () => {
   it('preserves supplied identity without adding proxies or freezing caller data', () => {
@@ -61,6 +60,5 @@ describe('chart-local data', () => {
     first.setRange({})
     expect(first.state.value).toBe(before)
     expect(second.state.value).toMatchObject({ chartData: undefined, dataStartIndex: 0, dataEndIndex: 0 })
-    expect(createRechartsStore().getState()).not.toHaveProperty('chartData')
   })
 })

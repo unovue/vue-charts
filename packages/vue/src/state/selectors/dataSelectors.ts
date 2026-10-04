@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit'
-import type { RechartsRootState } from '../store'
+import { createSelector } from '../createSelector'
+import type { RechartsRootState } from '../chartState'
 import type { ChartDataState } from '../chartData'
 import type { AxisId } from '../chartCartesianAxis'
 

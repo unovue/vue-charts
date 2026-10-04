@@ -1,4 +1,4 @@
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import { useAppSelector } from '../hooks'
 import type { SharedTooltipSettings } from '../chartTooltip'
 import type { TooltipEventType } from '@/types'

@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit'
-import type { RechartsRootState } from '../store'
+import { createSelector } from '../createSelector'
+import type { RechartsRootState } from '../chartState'
 import { selectChartOffset } from './selectChartOffset'
 import { selectMargin } from './containerSelectors'
 import type { BrushSettings } from '../chartBrush'

@@ -10,7 +10,6 @@ import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
-import { createRechartsStore } from '@/state/store'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import type { Coordinate } from '@/types'
@@ -122,7 +121,7 @@ export const TreemapVueProps = {
 }
 
 /**
- * Inner component that has access to the Redux store (provided by Treemap wrapper).
+ * Inner component that has access to chart-local Vue state (provided by Treemap wrapper).
  */
 const TreemapInner = defineComponent({
   name: 'TreemapInner',
@@ -449,8 +448,7 @@ export const Treemap = defineComponent({
   props: { ...TreemapVueProps, ...chartSizeProps },
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
-    const store = createRechartsStore(undefined, 'Treemap')
-    provideChartContext(store, undefined, treemapOptions)
+    provideChartContext(treemapOptions)
     provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 

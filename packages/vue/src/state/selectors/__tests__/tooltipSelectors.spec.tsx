@@ -4,11 +4,9 @@ import { nextTick } from 'vue'
 import { BarChart } from '@/chart/BarChart'
 import { LineChart } from '@/chart/LineChart'
 import { ComposedChart } from '@/chart/ComposedChart'
-import { ScatterChart } from '@/chart/ScatterChart'
 import { Bar } from '@/cartesian/bar/Bar'
 import { Line } from '@/cartesian/line/Line'
 import { Area } from '@/cartesian/area/Area'
-import { Scatter } from '@/cartesian/scatter/Scatter'
 import { XAxis } from '@/cartesian/axis/XAxis'
 import { YAxis } from '@/cartesian/axis/YAxis'
 import { Tooltip } from '@/components/Tooltip'
@@ -18,7 +16,7 @@ import { assertNotNull } from '@/test/helper'
 /**
  * Integration tests for tooltip selectors (tooltipSelectors.ts).
  *
- * These tests verify that the Redux selectors produce correct tooltip payload,
+ * These tests verify that the chart selectors produce correct tooltip payload,
  * active label, and coordinate data by rendering real charts and triggering
  * mouse interactions. The selectors under test include:
  *   - selectActiveTooltipPayload / selectTooltipPayload
@@ -219,7 +217,7 @@ describe('tooltipSelectors integration', () => {
     })
   })
 
-  describe('ComposedChart with multiple chart types', () => {
+  describe('composedChart with multiple chart types', () => {
     it('shows combined tooltip payload for Line + Bar in ComposedChart', async () => {
       const { container } = render(() => (
         <ComposedChart width={500} height={300} data={data}>

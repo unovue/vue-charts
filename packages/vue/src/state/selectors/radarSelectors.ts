@@ -1,6 +1,6 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import { last } from 'es-toolkit/compat'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type { BaseAxisWithScale } from './axisSelectors'
 import { selectPolarAxisScale, selectPolarAxisTicks } from './polarScaleSelectors'
 import { selectAngleAxis, selectPolarViewBox, selectRadiusAxis } from './polarAxisSelectors'

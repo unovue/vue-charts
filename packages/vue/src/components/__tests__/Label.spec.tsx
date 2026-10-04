@@ -1,10 +1,10 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Bar, BarChart, XAxis, YAxis } from '@/index'
+import { Bar, BarChart } from '@/index'
 import { Label } from '@/components/label/Label'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Label', () => {
+describe('label', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -32,7 +32,7 @@ describe('Label', () => {
     height: 200,
   }
 
-  // Helper: render Label inside BarChart (provides Redux store context)
+  // Helper: render Label inside BarChart (provides chart-local Vue state)
   function renderLabelInChart(labelProps: Record<string, any>, labelSlots?: any) {
     return render(() => (
       <BarChart width={500} height={300} data={data}>

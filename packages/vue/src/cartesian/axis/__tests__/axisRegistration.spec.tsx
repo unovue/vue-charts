@@ -5,7 +5,6 @@ import { renderToString } from 'vue/server-renderer'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { XAxis } from '../XAxis'
 import { YAxis } from '../YAxis'
-import { createRechartsStore } from '@/state/store'
 import { Global, Line, LineChart } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -28,7 +27,6 @@ beforeEach(() => {
 
 describe.each(axes)('$axisType registration', ({ renderAxis, axisType }) => {
   function createFixture() {
-    const store = createRechartsStore()
     let axis: ReturnType<typeof useChartCartesianAxis>
     const Reader = defineComponent({
       props: { axisId: { type: [String, Number], default: 0 }, tickCount: { type: Number, default: 5 } },
@@ -40,7 +38,7 @@ describe.each(axes)('$axisType registration', ({ renderAxis, axisType }) => {
     const Fixture = defineComponent({
       props: { axisId: { type: [String, Number], default: 0 }, tickCount: { type: Number, default: 5 } },
       setup(props) {
-        provideChartContext(store)
+        provideChartContext()
         return () => h(Reader, props)
       },
     })

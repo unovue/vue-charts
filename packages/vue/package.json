@@ -73,7 +73,6 @@
     }
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.8.2",
     "@types/d3-sankey": "^0.12.5",
     "@types/d3-shape": "^3.1.7",
     "@vueuse/core": "^13.1.0",
@@ -84,8 +83,8 @@
     "d3-time": "^3.1.0",
     "decimal.js-light": "^2.5.1",
     "es-toolkit": "^1.39.3",
-    "immer": "^10.1.1",
-    "motion-dom": "^13.3.0"
+    "motion-dom": "^13.3.0",
+    "reselect": "^5.1.1"
   },
   "devDependencies": {
     "@nuxt/kit": "^4.4.2",
@@ -106,7 +105,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip }",
       "gzip": true,
-      "limit": "85 kB",
+      "limit": "78.31 kB",
       "ignore": [
         "vue",
         "motion-v"
@@ -117,7 +116,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ BarChart, Bar, XAxis, YAxis, Tooltip, Legend }",
       "gzip": true,
-      "limit": "88 kB",
+      "limit": "81.62 kB",
       "ignore": [
         "vue",
         "motion-v"
@@ -128,7 +127,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ PieChart, Pie, Tooltip }",
       "gzip": true,
-      "limit": "73 kB",
+      "limit": "65.78 kB",
       "ignore": [
         "vue",
         "motion-v"

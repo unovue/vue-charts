@@ -9,7 +9,6 @@ import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
 import { ChartsWrapper } from './ChartsWrapper'
-import { createRechartsStore } from '@/state/store'
 import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
@@ -219,8 +218,7 @@ export const SunburstChart = defineComponent({
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots }) {
-    const store = createRechartsStore(undefined, 'SunburstChart')
-    provideChartContext(store, undefined, sunburstOptions)
+    provideChartContext(sunburstOptions)
     provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 

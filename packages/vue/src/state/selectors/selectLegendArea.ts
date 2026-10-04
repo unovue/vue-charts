@@ -1,8 +1,8 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import type { CartesianViewBoxRequired } from '@/cartesian/type'
 import type { Margin } from '@/types'
 import { selectChartHeight, selectChartWidth, selectMargin } from '@/state/selectors/containerSelectors'
-import type { RechartsRootState } from '@/state/store'
+import type { RechartsRootState } from '@/state/chartState'
 
 /**
  * The margin-inset chart area. Outside-positioned legends are placed here,

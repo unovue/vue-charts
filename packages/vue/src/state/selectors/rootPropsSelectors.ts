@@ -1,5 +1,5 @@
 import type { StackOffsetType, SyncMethod } from '@/types'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 
 export const selectRootMaxBarSize = (state: RechartsRootState) => state.rootProps.maxBarSize!
 export const selectBarGap = (state: RechartsRootState) => state.rootProps.barGap

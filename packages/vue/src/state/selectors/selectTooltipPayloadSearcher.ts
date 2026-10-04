@@ -1,4 +1,4 @@
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type { TooltipPayloadSearcher } from '../chartTooltip'
 
 export function selectTooltipPayloadSearcher(state: RechartsRootState): TooltipPayloadSearcher | undefined {

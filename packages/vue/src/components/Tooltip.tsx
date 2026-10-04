@@ -593,11 +593,11 @@ export const Tooltip = defineComponent({
     const tooltipState = useAppSelector(state =>
       selectIsTooltipActive(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
     )
-    const payloadFromRedux = useAppSelector(state =>
+    const selectedPayload = useAppSelector(state =>
       selectTooltipPayload(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
     )
 
-    const labelFromRedux = useAppSelector(state =>
+    const selectedLabel = useAppSelector(state =>
       selectActiveLabel(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
     )
 
@@ -605,7 +605,7 @@ export const Tooltip = defineComponent({
       selectActiveCoordinate(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
     )
 
-    const payload = computed(() => payloadFromRedux.value ?? [])
+    const payload = computed(() => selectedPayload.value ?? [])
 
     // Portal
     const tooltipPortalFromContext = usePortal()
@@ -614,7 +614,7 @@ export const Tooltip = defineComponent({
     // Final states
     const finalIsActive = computed(() => props.active ?? tooltipState.value?.isActive)
     const finalLabel = computed(() =>
-      tooltipEventType.value === 'axis' ? labelFromRedux.value : undefined,
+      tooltipEventType.value === 'axis' ? selectedLabel.value : undefined,
     )
 
     // Payload processing

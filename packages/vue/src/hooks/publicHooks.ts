@@ -21,7 +21,7 @@ export { useChartWidth, useChartHeight, useMargin, useOffset }
 /**
  * Returns whether the tooltip is currently active (visible).
  *
- * Must be used inside a chart component tree (where the Redux store is provided).
+ * Must be used inside a chart component tree (where chart-local Vue state is provided).
  *
  * @returns A reactive boolean indicating tooltip active state
  */
@@ -32,7 +32,7 @@ export function useIsTooltipActive() {
 /**
  * Returns the current coordinate of the active tooltip.
  *
- * Must be used inside a chart component tree (where the Redux store is provided).
+ * Must be used inside a chart component tree (where chart-local Vue state is provided).
  *
  * @returns A reactive Coordinate ({ x, y }) or undefined when no tooltip is active
  */
@@ -43,7 +43,7 @@ export function useActiveTooltipCoordinate() {
 /**
  * Returns the label of the currently active tooltip (the value from the axis dataKey at the hovered index).
  *
- * Must be used inside a chart component tree (where the Redux store is provided).
+ * Must be used inside a chart component tree (where chart-local Vue state is provided).
  *
  * @returns A reactive string label or undefined when no tooltip is active
  */
@@ -55,7 +55,7 @@ export function useActiveTooltipLabel() {
  * Returns the plot area rectangle { x, y, width, height }.
  * This is the area inside all axes, legend, and brush — where graphical items render.
  *
- * Must be used inside a chart component tree (where the Redux store is provided).
+ * Must be used inside a chart component tree (where chart-local Vue state is provided).
  *
  * @returns A reactive object with x, y, width, height or undefined if offset is not yet available
  */

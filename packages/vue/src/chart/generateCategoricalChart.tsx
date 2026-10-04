@@ -1,5 +1,4 @@
 import { provideEntranceGate } from '@/animation/entranceGate'
-import { createRechartsStore } from '@/state/store'
 import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import { provideChartContext } from '@/state/chartContext'
@@ -152,8 +151,7 @@ export function generateCategoricalChart({
         tooltipPayloadSearcher,
         eventEmitter: undefined,
       }
-      const store = createRechartsStore(undefined, props.id ?? chartName)
-      provideChartContext(store, undefined, options)
+      provideChartContext(options)
       provideEntranceGate()
       provideIndependentChart()
 

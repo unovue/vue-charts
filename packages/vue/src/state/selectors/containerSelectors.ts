@@ -1,5 +1,5 @@
 import type { Margin } from '@/types'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 
 export const selectChartWidth = (state: RechartsRootState): number => state.layout.width
 

@@ -8,22 +8,15 @@ import { createChartRootProps } from './chartRootProps'
 import { createChartOptions } from './chartOptions'
 import { createChartLegend } from './chartLegend'
 import { createChartBrush } from './chartBrush'
-import { computed, inject, provide, shallowRef, watchSyncEffect } from 'vue'
-import type { InjectionKey, ShallowRef } from 'vue'
-import type { AppDispatch, LegacyChartState, RechartsRootState } from './store'
+import { computed, inject, provide } from 'vue'
+import type { InjectionKey } from 'vue'
+import type { RechartsRootState } from './chartState'
 import { createChartLayout } from './chartLayout'
 import { createChartData } from './chartData'
 import { createChartTooltip } from './chartTooltip'
 
-interface ChartStore {
-  getState: () => LegacyChartState
-  dispatch: AppDispatch
-  subscribe: (listener: () => void) => () => void
-}
-
 interface ChartContext {
-  state: Readonly<ShallowRef<RechartsRootState>>
-  dispatch: AppDispatch
+  view: RechartsRootState
   layout: ReturnType<typeof createChartLayout>
   data: ReturnType<typeof createChartData>
   brush: ReturnType<typeof createChartBrush>
@@ -40,7 +33,8 @@ interface ChartContext {
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
-export function provideChartContext(store: ChartStore, layout = createChartLayout(), initialOptions?: ChartOptions) {
+export function provideChartContext(initialOptions?: ChartOptions) {
+  const layout = createChartLayout()
   const cartesianAxis = createChartCartesianAxis()
   const graphicalItems = createChartGraphicalItems()
   const brush = createChartBrush()
@@ -52,28 +46,22 @@ export function provideChartContext(store: ChartStore, layout = createChartLayou
   const referenceElements = createChartReferenceElements()
   const data = createChartData()
   const tooltip = createChartTooltip()
-  const legacyState = shallowRef(store.getState())
-  watchSyncEffect((onCleanup) => {
-    onCleanup(store.subscribe(() => {
-      legacyState.value = store.getState()
-    }))
+  // A stable view lets Vue track only the domains each selector reads.
+  const view: RechartsRootState = Object.freeze({
+    get cartesianAxis() { return cartesianAxis.state.value },
+    get graphicalItems() { return graphicalItems.state.value },
+    get layout() { return layout.state.value },
+    get chartData() { return data.state.value },
+    get brush() { return brush.state.value },
+    get legend() { return legend.state.value },
+    get options() { return options.state.value },
+    get rootProps() { return rootProps.state.value },
+    get polarOptions() { return polarOptions.state.value },
+    get polarAxis() { return polarAxis.state.value },
+    get referenceElements() { return referenceElements.state.value },
+    get tooltip() { return tooltip.state.value },
   })
-  const state = computed(() => ({
-    ...legacyState.value,
-    cartesianAxis: cartesianAxis.state.value,
-    graphicalItems: graphicalItems.state.value,
-    layout: layout.state.value,
-    chartData: data.state.value,
-    brush: brush.state.value,
-    legend: legend.state.value,
-    options: options.state.value,
-    rootProps: rootProps.state.value,
-    polarOptions: polarOptions.state.value,
-    polarAxis: polarAxis.state.value,
-    referenceElements: referenceElements.state.value,
-    tooltip: tooltip.state.value,
-  }))
-  provide(chartContextKey, { state, dispatch: store.dispatch, layout, data, brush, legend, options, rootProps, polarOptions, polarAxis, referenceElements, tooltip, cartesianAxis, graphicalItems })
+  provide(chartContextKey, { view, layout, data, brush, legend, options, rootProps, polarOptions, polarAxis, referenceElements, tooltip, cartesianAxis, graphicalItems })
 }
 
 function useChartContext() {
@@ -82,10 +70,6 @@ function useChartContext() {
     throw new Error('Chart state must be used inside a chart component.')
   }
   return context
-}
-
-export function useAppDispatch() {
-  return useChartContext().dispatch
 }
 
 export function useChartLayoutActions() {
@@ -97,8 +81,8 @@ export function useChartDataActions() {
 }
 
 export function useAppSelector<Selected>(selector: (state: RechartsRootState) => Selected) {
-  const { state } = useChartContext()
-  return computed(() => selector(state.value))
+  const { view } = useChartContext()
+  return computed(() => selector(view))
 }
 
 export function useChartTooltip() {

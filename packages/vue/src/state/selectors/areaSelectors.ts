@@ -1,4 +1,4 @@
-import { createSelector } from '@reduxjs/toolkit'
+import { createSelector } from '../createSelector'
 import type { Series } from 'd3-shape'
 import type {
   StackGroup,
@@ -9,7 +9,7 @@ import {
   selectTicksOfGraphicalItem,
   selectUnfilteredCartesianItems,
 } from './axisSelectors'
-import type { RechartsRootState } from '../store'
+import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import type { ChartData } from '../chartData'

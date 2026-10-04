@@ -8,15 +8,10 @@ import { createChartPolarOptions } from '../chartPolarOptions'
 import { createChartPolarAxis } from '../chartPolarAxis'
 import type { AngleAxisSettings } from '../chartPolarAxis'
 import { createChartReferenceElements } from '../chartReferenceElements'
-import { createRechartsStore } from '../store'
 
 // These checks catch stale selector inputs, shared defaults, reordered registrations,
 // and accidental replacement of the chart's synchronization identity during cutover.
 describe('chart-local small domains', () => {
-  it('leaves no reducer-owned domains in the store', () => {
-    expect(Object.keys(createRechartsStore().getState())).toEqual([])
-  })
-
   it('replaces brush geometry immutably, retains equal padding, and resets locally', () => {
     const brush = createChartBrush()
     const sibling = createChartBrush()
