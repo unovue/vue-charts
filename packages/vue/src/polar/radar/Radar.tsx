@@ -14,7 +14,7 @@ import { selectRadarPoints } from '@/state/selectors/radarSelectors'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
-import { LabelList } from '@/components/label/LabelList'
+import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
@@ -242,7 +242,7 @@ const RadarView = defineComponent({
       const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
       const labelEl = !isAnimating.value && props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
+        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} animate={props.isAnimationActive !== false} />
         : null
 
       return (

@@ -14,8 +14,11 @@ export const FadeIn = defineComponent({
     let controls: AnimationPlaybackControls | undefined
     watch([element, () => props.isActive], ([el, active]) => {
       controls?.stop()
-      if (el && active && !skip && reduced.value !== 'reduce')
+      if (el && active && !skip && reduced.value !== 'reduce') {
+        // Hide before the first paint; the animation only starts on the next frame.
+        el.style.opacity = '0'
         controls = animate(el, { opacity: [0, 1] }, { duration: 0.2 })
+      }
       else if (el)
         el.style.opacity = '1'
     }, { flush: 'post' })

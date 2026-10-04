@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
+import { CartesianGrid, LabelList, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -381,5 +381,15 @@ describe('line', () => {
       expect(curves[0].getAttribute('stroke')).toBe('#8884d8')
       expect(curves[1].getAttribute('stroke')).toBe('#82ca9d')
     })
+  })
+
+  it('withholds LabelList children until the line has settled, like its own labels', () => {
+    const { container } = render(() => (
+      <LineChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+        <Line dataKey="value"><LabelList /></Line>
+      </LineChart>
+    ))
+    // JSDOM never advances motion, so the entrance is still running.
+    expect(container.querySelectorAll('.v-charts-label-list text')).toHaveLength(0)
   })
 })

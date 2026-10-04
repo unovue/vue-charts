@@ -107,5 +107,6 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
     lineData,
     points: lineContext.points,
     clipPathId,
+    isAnimating,
   }
 }

@@ -26,11 +26,16 @@ export const LabelListView = defineComponent({
     const labelLayerRef = useLabelLayerRef(null)
     const contextData = useCartesianLabelListData(null)
 
+    // Series withhold their labels while they animate. Labels that arrive after mount fade in;
+    // labels present from the start (no animation, server render) show at once.
+    let arrivedLate = false
     return () => {
       const { dataKey, valueAccessor, clockWise, id, ...others } = props
       const data = props.data ?? contextData?.value
-      if (!data || !data.length)
+      if (!data || !data.length) {
+        arrivedLate = true
         return null
+      }
 
       const content = (
         <Layer class="v-charts-label-list">
@@ -65,7 +70,7 @@ export const LabelListView = defineComponent({
         </Layer>
       )
 
-      return teleport(view.fade ? h(FadeIn, null, () => content) : content, labelLayerRef)
+      return teleport(view.fade || arrivedLate ? h(FadeIn, { isActive: arrivedLate || view.fade }, () => content) : content, labelLayerRef)
     }
   },
 })

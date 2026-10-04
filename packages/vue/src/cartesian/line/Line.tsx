@@ -38,13 +38,13 @@ const LineView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, needClip, clipPathId, lineData, points } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
+    const { shouldRender, needClip, clipPathId, lineData, points, isAnimating } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
     const activeListeners = useSeriesPointEvents(lineEvents.use(), () => props.dataKey, () => lineData.value ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
-    // Provide label list data so LabelList children can consume it via context
-    provideCartesianLabelListData(computed(() => lineData.value as any))
+    // LabelList children show once the line has settled, like the series' own labels.
+    provideCartesianLabelListData(computed(() => isAnimating.value ? undefined : lineData.value as any))
 
     return () => {
       if (!shouldRender.value) {

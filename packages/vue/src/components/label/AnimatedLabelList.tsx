@@ -5,9 +5,12 @@ import { LabelListView } from './LabelListView'
 
 /** Internal opt-in used by series after their geometry settles. */
 export const AnimatedLabelList = defineComponent({
-  props: LabelListVueProps,
+  props: { ...LabelListVueProps, animate: { type: Boolean, default: true } },
   setup(props, { attrs, slots }) {
     const View = useDeferredView(LabelListView)
-    return () => h(View, { item: props, svgAttrs: attrs, fade: true }, slots)
+    return () => {
+      const { animate, ...item } = props
+      return h(View, { item, svgAttrs: attrs, fade: animate }, slots)
+    }
   },
 })

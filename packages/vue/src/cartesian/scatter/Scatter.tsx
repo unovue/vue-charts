@@ -259,6 +259,7 @@ const ScatterView = defineComponent({
               <LabelList
                 {...(typeof props.label === 'object' ? props.label : {})}
                 data={labelData}
+                animate={props.isAnimationActive !== false}
               />
             )
           })()}

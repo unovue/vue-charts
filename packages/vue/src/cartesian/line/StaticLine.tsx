@@ -127,6 +127,7 @@ export const StaticLine = defineComponent({
               {...labelProps}
               data={lineData.value ?? []}
               dataKey={props.dataKey}
+              animate={props.isAnimationActive !== false}
               v-slots={labelSlot ? { label: labelSlot } : undefined}
             />
           )}

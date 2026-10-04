@@ -14,7 +14,7 @@ import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { LabelList } from '@/components/label/LabelList'
+import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { interpolate } from '@/utils/data-utils'
 import { RadialBarVueProps } from './type'
@@ -196,7 +196,7 @@ const RadialBarView = defineComponent({
         return null
 
       const labelEl = !isAnimating.value && props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
+        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} animate={props.isAnimationActive !== false} />
         : null
       const slotChildren = !isAnimating.value ? slots.default?.() : null
 

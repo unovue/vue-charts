@@ -164,7 +164,7 @@ export const StaticArea = defineComponent({
           </g>
           {
             showLabels && (
-              <LabelList {...labelProps} data={areaData.value?.points ?? []} dataKey={props.dataKey} v-slots={{ label: slots.label }} />
+              <LabelList {...labelProps} data={areaData.value?.points ?? []} dataKey={props.dataKey} animate={props.isAnimationActive !== false} v-slots={{ label: slots.label }} />
             )
           }
         </Fragment>
