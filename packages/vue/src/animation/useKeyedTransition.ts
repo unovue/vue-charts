@@ -133,20 +133,32 @@ export function useKeyedTransition<T>(
     const nextItems = keyed(next)
     const nextKeys = new Set(nextItems.map(item => item.key))
 
-    // Closest neighbours in the new order that are already on screen.
+    // Closest neighbours, found in two linear passes so large data stays O(n): for each index,
+    // the nearest index before and after it that satisfies `qualifies`.
+    const nearest = (length: number, qualifies: (index: number) => boolean) => {
+      const before = Array.from<number>({ length })
+      const after = Array.from<number>({ length })
+      for (let i = 0, last = -1; i < length; i++) {
+        before[i] = last
+        if (qualifies(i))
+          last = i
+      }
+      for (let i = length - 1, last = -1; i >= 0; i--) {
+        after[i] = last
+        if (qualifies(i))
+          last = i
+      }
+      return { before, after }
+    }
+
+    // For entering items: the closest neighbours in the new order that are already on screen.
+    const onScreenAround = onScreen.size ? nearest(nextItems.length, i => onScreen.has(nextItems[i].key)) : undefined
+    const moveInNext = (i: number): Move<T> | undefined => i < 0 ? undefined : { from: onScreen.get(nextItems[i].key)!, to: nextItems[i].value }
     const neighborsInNext = (index: number): Neighbors<T> => {
-      let previousMove: Move<T> | undefined
-      let nextMove: Move<T> | undefined
-      for (let i = index - 1; i >= 0 && !previousMove; i--) {
-        const from = onScreen.get(nextItems[i].key)
-        if (from !== undefined)
-          previousMove = { from, to: nextItems[i].value }
-      }
-      for (let i = index + 1; i < nextItems.length && !nextMove; i++) {
-        const from = onScreen.get(nextItems[i].key)
-        if (from !== undefined)
-          nextMove = { from, to: nextItems[i].value }
-      }
+      if (!onScreenAround)
+        return {}
+      const previousMove = moveInNext(onScreenAround.before[index])
+      const nextMove = moveInNext(onScreenAround.after[index])
       return { previous: previousMove?.from, next: nextMove?.from, previousMove, nextMove }
     }
     const staying: PlanItem<T>[] = nextItems.map(({ key, value: to }, index) => {
@@ -156,21 +168,13 @@ export function useKeyedTransition<T>(
         : { key, from, to, phase: 'update' }
     })
 
-    // Closest neighbours in the old order that stay, at their new positions.
+    // For leaving items: the closest neighbours in the old order that stay, at their new places.
     const targetOf = new Map(staying.map(item => [item.key, item.to]))
+    const stayingAround = nearest(drawn.length, i => nextKeys.has(drawn[i].key))
+    const moveInDrawn = (i: number): Move<T> | undefined => i < 0 ? undefined : { from: drawn[i].value, to: targetOf.get(drawn[i].key)! }
     const neighborsInDrawn = (index: number): Neighbors<T> => {
-      let previousMove: Move<T> | undefined
-      let nextMove: Move<T> | undefined
-      for (let i = index - 1; i >= 0 && !previousMove; i--) {
-        const to = targetOf.get(drawn[i].key)
-        if (to !== undefined)
-          previousMove = { from: drawn[i].value, to }
-      }
-      for (let i = index + 1; i < drawn.length && !nextMove; i++) {
-        const to = targetOf.get(drawn[i].key)
-        if (to !== undefined)
-          nextMove = { from: drawn[i].value, to }
-      }
+      const previousMove = moveInDrawn(stayingAround.before[index])
+      const nextMove = moveInDrawn(stayingAround.after[index])
       return { previous: previousMove?.to, next: nextMove?.to, previousMove, nextMove }
     }
 
@@ -183,11 +187,11 @@ export function useKeyedTransition<T>(
       if (nextKeys.has(item.key))
         return
       const exit: PlanItem<T> = { key: item.key, from: item.value, to: options.exitTo(item.value, neighborsInDrawn(index)), phase: 'exit' }
-      const anchor = drawn.slice(index + 1).find(later => nextKeys.has(later.key))
-      if (anchor) {
-        const group = exitsBefore.get(anchor.key) ?? []
+      const anchor = stayingAround.after[index]
+      if (anchor >= 0) {
+        const group = exitsBefore.get(drawn[anchor].key) ?? []
         group.push(exit)
-        exitsBefore.set(anchor.key, group)
+        exitsBefore.set(drawn[anchor].key, group)
       }
       else {
         trailingExits.push(exit)
@@ -215,7 +219,8 @@ export function useKeyedTransition<T>(
 
     const steps = plan(nextItems)
     // The very first appearance uses the enter timing for every item.
-    const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[!hasEntered ? 'enter' : options.connected ? 'update' : phase]
+    const first = !hasEntered
+    const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[first ? 'enter' : options.connected ? 'update' : phase]
     hasEntered = true
     stop()
     isAnimating.value = true

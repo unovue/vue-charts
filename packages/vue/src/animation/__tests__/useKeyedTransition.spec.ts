@@ -207,3 +207,38 @@ describe('useKeyedTransition order', () => {
     expect(view()).toEqual(['A:update', 'B:update'])
   })
 })
+
+describe('useKeyedTransition scale', () => {
+  it('uses the enter timing for the first appearance of a connected path', () => {
+    effectScope().run(() => useKeyedTransition(() => [{ x: 1 }], {
+      key: (_, i) => i,
+      interpolate: (_from, to) => to,
+      enterFrom: to => to,
+      exitTo: from => from,
+      isActive: () => true,
+      connected: true,
+    }))
+    expect(clock.runs.at(-1)!.to).toBe(motionTokens.enter.duration)
+  })
+
+  it('plans 50,000 entering and leaving items in linear time', async () => {
+    const data = shallowRef(Array.from({ length: 50_000 }, (_, i) => ({ name: `a${i}`, height: i })))
+    const started = performance.now()
+    setupPlain(data)
+    finish()
+    data.value = Array.from({ length: 50_000 }, (_, i) => ({ name: `b${i}`, height: i }))
+    await nextTick()
+    // Quadratic neighbour scans took seconds here; linear passes take a few tens of ms.
+    expect(performance.now() - started).toBeLessThan(1500)
+  })
+})
+
+function setupPlain(data: { value: BarItem[] }) {
+  return effectScope().run(() => useKeyedTransition(() => data.value, {
+    key: item => item.name,
+    interpolate: (_from, to) => to,
+    enterFrom: to => to,
+    exitTo: from => from,
+    isActive: () => true,
+  }))!
+}
