@@ -52,9 +52,11 @@ describe('public chart callbacks', () => {
         <Customized>{{ default: () => <InteractionProbe /> }}</Customized>
       </BarChart>
     ))
-    const wrapper = container.querySelector('.v-charts-wrapper')!
+    const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
     const probe = container.querySelector('[data-testid="interaction"]')!
-    wrapper.dispatchEvent(new FocusEvent('focus'))
+    wrapper.focus()
+    if (!accessible)
+      wrapper.dispatchEvent(new FocusEvent('focus'))
     await nextTick()
     expect(probe.getAttribute('data-active')).toBe(String(accessible))
     if (accessible)
@@ -98,7 +100,7 @@ describe('public chart callbacks', () => {
       </BarChart>
     ))
     await nextTick()
-    const wrapper = container.querySelector('.v-charts-wrapper')!
+    const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
     const event = eventName.startsWith('touch')
       ? new TouchEvent(eventName, { bubbles: true })
       : new MouseEvent(eventName, { clientX: 200, clientY: 100, bubbles: true })
@@ -124,7 +126,7 @@ describe('public chart callbacks', () => {
       </BarChart>
     ))
     await nextTick()
-    const wrapper = container.querySelector('.v-charts-wrapper')!
+    const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
     wrapper.dispatchEvent(new MouseEvent('mousemove', { clientX: 200, clientY: 100 }))
     expect(onMouseMove.mock.calls[0][0]).toMatchObject({
       activeLabel: 'A',
@@ -177,7 +179,7 @@ it.each([
 ])('delivers chart state once from specialty chart wrappers', async ({ Chart, props }) => {
   const click = vi.fn()
   const { container } = render(() => <Chart {...props} width={500} height={300} onClick={click} />)
-  const wrapper = container.querySelector('.v-charts-wrapper')!
+  const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
   const event = new MouseEvent('click', { bubbles: true })
   wrapper.dispatchEvent(event)
   expect(click.mock.calls).toEqual([[expect.objectContaining({ isTooltipActive: expect.any(Boolean) }), event]])

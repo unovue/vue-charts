@@ -25,7 +25,7 @@ provide('chart-config', computed(() => props.config))
       'flex aspect-video justify-center text-xs',
       '[--v-charts-grid:var(--border)] [--v-charts-axis:var(--border)] [--v-charts-text:var(--muted-foreground)]',
       '[--v-charts-cursor:var(--border)] [--v-charts-muted:var(--muted)] [--v-charts-background:var(--background)]',
-      '[--v-charts-inactive:var(--muted-foreground)]',
+      '[--v-charts-inactive:var(--muted-foreground)] [--v-charts-focus:var(--ring)]',
       '[&_.v-charts-surface]:outline-hidden [&_.v-charts-layer]:outline-hidden [&_.v-charts-sector]:outline-hidden',
       props.class,
     )"

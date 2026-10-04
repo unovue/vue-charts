@@ -1,4 +1,5 @@
 export const chartThemeTokens = [
+  '--v-charts-focus',
   '--v-charts-background',
   '--v-charts-grid',
   '--v-charts-axis',

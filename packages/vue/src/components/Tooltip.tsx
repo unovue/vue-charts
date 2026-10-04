@@ -381,7 +381,6 @@ const TooltipBoundingBox = defineComponent({
       return (
         <div
           role="tooltip"
-          aria-live="polite"
           tabindex={-1}
           class={cssClasses}
           style={boundingBoxStyle}
@@ -526,6 +525,7 @@ const TooltipVueProps = {
    * If true, then Tooltip will show information about hidden series (defaults to false).
    */
   includeHidden: Boolean,
+  formatter: Function as PropType<Formatter<ValueType, NameType>>,
   allowEscapeViewBox: {
     type: Object as PropType<AllowInDimension>,
     default: () => ({ x: false, y: false }),
@@ -700,6 +700,35 @@ const _Tooltip = defineComponent({
 
       return result
     })
+
+    // Listen to keyboard state only: pointer updates must never trigger announcements.
+    watch([
+      () => tooltip.state.value.keyboardInteraction.active,
+      () => tooltip.state.value.settings.activeIndex !== undefined
+        ? tooltip.state.value.settings.activeIndex
+        : tooltip.state.value.keyboardInteraction.index,
+    ], ([active, index], _, cleanup) => {
+      if (!accessibilityLayer.value || !active || index == null)
+        return
+      const timer = setTimeout(() => {
+        const entries = finalPayload.value.flatMap((entry, position, payload) => {
+          const formatter = entry.formatter ?? props.formatter
+          const formatted: unknown = formatter
+            ? formatter(entry.value!, entry.name!, entry, position, payload)
+            : entry.value
+          if (formatted == null)
+            return []
+          const [value, name] = formatter && Array.isArray(formatted)
+            ? formatted
+            : [Array.isArray(formatted) ? formatted.join(' ~ ') : formatted, entry.name]
+          return [`${name ?? ''} ${value ?? ''}`.trim()]
+        })
+        if (entries.length)
+          tooltip.announcement.value = `${selectedLabel.value ?? ''}: ${entries.join(', ')}`
+      }, 150)
+      cleanup(() => clearTimeout(timer))
+    }, { flush: 'post' })
+    onScopeDispose(() => { tooltip.announcement.value = '' })
 
     const hasPayload = computed(() => finalPayload.value.length > 0)
 

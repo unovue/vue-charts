@@ -18,6 +18,7 @@ interface SurfaceProps {
   style?: StyleValue
   title?: string
   desc?: string
+  descriptionId?: string
 }
 
 defineOptions({
@@ -53,7 +54,7 @@ provideLabelLayerRef(labelLayerRef)
     :viewBox="svgViewBox"
   >
     <title>{{ title }}</title>
-    <desc>{{ desc }}</desc>
+    <desc :id="descriptionId">{{ desc }}</desc>
     <slot />
     <g
       ref="cursorLayerRef"

@@ -13,6 +13,10 @@ import { getChartPointer } from '@/utils/chart'
 export const ChartsWrapper = defineComponent({
   name: 'ChartsWrapper',
   props: {
+    accessibilityLayer: { type: Boolean, default: false },
+    title: String,
+    descriptionId: String,
+    tabIndex: Number,
     class: classProp,
     height: { type: Number, required: true },
     isResponsive: { type: Boolean, default: false },
@@ -88,11 +92,29 @@ export const ChartsWrapper = defineComponent({
       callHandler((state, event) => emit('mousemove', state, event), e)
     }
 
-    const onFocus = () => {
-      interactions.focus()
+    const focusVisible = ref(false)
+    let pointerFocus = false
+    const onFocus = (e: FocusEvent) => {
+      if (e.target !== wrapperEl.value || !props.accessibilityLayer)
+        return
+      focusVisible.value = !pointerFocus && wrapperEl.value!.matches(':focus-visible')
+      if (focusVisible.value)
+        interactions.focus()
+    }
+    const onBlur = () => {
+      focusVisible.value = false
+      pointerFocus = false
+    }
+    const onPointerDown = () => {
+      pointerFocus = true
+      focusVisible.value = false
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== wrapperEl.value || !props.accessibilityLayer)
+        return
+      pointerFocus = false
+      focusVisible.value = true
       interactions.keyDown(e.key)
     }
 
@@ -105,6 +127,7 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseDown = (e: MouseEvent) => {
+      onPointerDown()
       callHandler((state, event) => emit('mousedown', state, event), e)
     }
 
@@ -134,8 +157,15 @@ export const ChartsWrapper = defineComponent({
           // Before the first measurement the SVG is scaled by its viewBox, so pointer
           // coordinates would not match chart coordinates.
           !props.interactive && { pointerEvents: 'none' },
+          focusVisible.value && { outline: '2px solid var(--v-charts-focus, Highlight)', outlineOffset: '2px' },
         ]}
-        role="application"
+        role={props.accessibilityLayer ? 'application' : undefined}
+        tabindex={props.accessibilityLayer ? props.tabIndex ?? 0 : undefined}
+        aria-label={props.accessibilityLayer ? props.title : undefined}
+        aria-describedby={props.accessibilityLayer ? props.descriptionId : undefined}
+        data-focus-visible={focusVisible.value ? '' : undefined}
+        onBlur={onBlur}
+        onPointerdown={onPointerDown}
         onClick={myOnClick}
         onContextmenu={myOnContextMenu}
         onDblclick={myOnDoubleClick}
@@ -152,6 +182,11 @@ export const ChartsWrapper = defineComponent({
         ref={innerRef as any}
       >
         {slots.default?.()}
+        {props.accessibilityLayer && (
+          <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', border: 0 }}>
+            {tooltip.announcement.value}
+          </div>
+        )}
       </div>
     )
   },

@@ -4,7 +4,7 @@ import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import { provideChartContext } from '@/state/chartContext'
 import type { PropType, StyleValue } from 'vue'
-import { Fragment, defineComponent } from 'vue'
+import { Fragment, defineComponent, useId } from 'vue'
 import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
 import Surface from '@/chart/Surface.vue'
@@ -159,6 +159,7 @@ export function generateCategoricalChart({
       provideIndependentChart()
 
       const clipPathId = provideClipPathId(props)
+      const descriptionId = `v-charts-desc-${useId()}`
 
       const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured, boxStyle } = useResponsiveSize(props)
 
@@ -206,8 +207,8 @@ export function generateCategoricalChart({
           return null
 
         if (props.accessibilityLayer) {
-          attributes.tabindex = props.tabIndex ?? 0
-          attributes.role = props.role ?? 'application'
+          delete attributes.tabindex
+          delete attributes.role
         }
 
         // Separate event handler attrs (onMouseDown, etc.) from SVG attrs
@@ -227,6 +228,10 @@ export function generateCategoricalChart({
             {hasValidSize.value && <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />}
             {hasValidSize.value && renderPolarOptions(isPolarChart)}
             <ChartsWrapper
+              accessibilityLayer={props.accessibilityLayer}
+              tabIndex={props.tabIndex}
+              title={title ?? `${chartName} chart`}
+              descriptionId={desc ? descriptionId : undefined}
               isResponsive={isResponsive.value}
               boxStyle={boxStyle.value}
               interactive={!isResponsive.value || measured.value}
@@ -240,7 +245,13 @@ export function generateCategoricalChart({
             >
               {hasValidSize.value && (
                 <Surface
-                  {...svgAttributes}
+                  {...{
+                    ...svgAttributes,
+                    'role': props.accessibilityLayer ? undefined : 'img',
+                    'aria-label': props.accessibilityLayer ? undefined : title ?? `${chartName} chart`,
+                    'aria-describedby': desc ? descriptionId : undefined,
+                  }}
+                  descriptionId={descriptionId}
                   width={effectiveWidth.value}
                   height={effectiveHeight.value}
                   title={title}

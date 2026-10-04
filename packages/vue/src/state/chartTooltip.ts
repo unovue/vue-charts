@@ -227,6 +227,7 @@ export const noInteraction: TooltipInteractionState = Object.freeze({
 })
 
 export function createChartTooltip() {
+  const announcement = shallowRef('')
   const state = shallowRef<TooltipState>({
     itemInteraction: {
       click: { ...noInteraction },
@@ -357,10 +358,18 @@ export function createChartTooltip() {
     }
     if (sameInteraction(state.value.keyboardInteraction, interaction))
       return
-    state.value = { ...state.value, keyboardInteraction: interaction }
+    // Keyboard navigation takes ownership from a previous pointer hover.
+    const current = state.value
+    state.value = {
+      ...current,
+      keyboardInteraction: interaction,
+      itemInteraction: { click: { ...current.itemInteraction.click, active: false }, hover: { ...current.itemInteraction.hover, active: false } },
+      axisInteraction: { click: { ...current.axisInteraction.click, active: false }, hover: { ...current.axisInteraction.hover, active: false } },
+    }
   }
 
   return {
+    announcement,
     state: computed(() => state.value),
     addTooltipEntrySettings,
     removeTooltipEntrySettings,
