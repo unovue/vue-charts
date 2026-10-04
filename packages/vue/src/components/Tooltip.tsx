@@ -290,6 +290,8 @@ const TooltipBoundingBox = defineComponent({
     }, { flush: 'post' })
     const visible = computed(() => !dismissed.value && props.active && props.hasPayload)
     const present = ref(false)
+    // A tooltip glides only between positions on screen; one that appears starts where it belongs.
+    let placed = false
     const content = ref<HTMLDivElement>()
     let fade: AnimationPlaybackControls | undefined
     let cachedContent: VNode[] | undefined
@@ -312,8 +314,10 @@ const TooltipBoundingBox = defineComponent({
         opacity: show ? [0, 1] : 0,
         ...(reduced ? {} : { scale: show ? [0.96, 1] : 1 }),
       }, { duration: show ? 0.12 : 0.1, onComplete: () => {
-        if (!show)
+        if (!show) {
           present.value = false
+          placed = false
+        }
       } })
     })
     onScopeDispose(() => {
@@ -354,7 +358,10 @@ const TooltipBoundingBox = defineComponent({
         return
       const nextX = Number(match[1])
       const nextY = Number(match[2])
-      if (props.isAnimationActive && reducedMotion.value !== 'reduce') {
+      // Until the box is measured the translate ignores its size, so it is not a position yet.
+      if ((!visible.value && !placed) || !tooltipSize.value.height)
+        return
+      if (props.isAnimationActive && reducedMotion.value !== 'reduce' && placed) {
         x.set(nextX)
         y.set(nextY)
       }
@@ -362,6 +369,7 @@ const TooltipBoundingBox = defineComponent({
         x.jump(nextX)
         y.jump(nextY)
         writePosition()
+        placed = true
       }
     })
 

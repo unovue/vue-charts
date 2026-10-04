@@ -78,3 +78,14 @@ it('uses instant positioning and opacity-only visibility under reduced motion', 
   expect(view.tooltip.style.transform).toBe('translate(80px, 40px)')
   expect(motion.animations.at(-1)?.values).toEqual({ opacity: [0, 1] })
 })
+it('appears at its position instead of gliding in from the corner', async () => {
+  const view = await setup()
+  expect(view.tooltip.style.transform).toBe('translate(10px, 20px)')
+  view.active.value = false
+  await nextTick()
+  motion.animations.at(-1)?.options.onComplete?.()
+  view.position.value = { x: 90, y: 50 }
+  view.active.value = true
+  await nextTick()
+  expect(view.tooltip.style.transform).toBe('translate(90px, 50px)')
+})
