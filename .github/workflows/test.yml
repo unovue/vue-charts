@@ -24,7 +24,14 @@ jobs:
 
       - run: pnpm --filter vccs typecheck
 
-      - run: pnpm test
+      - run: pnpm --filter vccs exec vitest run --exclude 'src/__breakit__/**'
+
+      - run: pnpm exec eslint .
+
+      - run: pnpm --filter vccs size
+
+      # This SSR fixture uses browser: false; no Playwright browser is needed.
+      - run: pnpm --filter vccs test:nuxt
 
   consumers:
     runs-on: ubuntu-latest
@@ -77,3 +84,30 @@ jobs:
           include-hidden-files: true
           path: .evidence/s21/
           if-no-files-found: warn
+
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:package
+
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter vccs build
+      - run: pnpm --filter docs build
