@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Tooltip, Treemap } from '../index'
 import type { ChartPointerState } from '../index'
 
+const hidden = ref<string[]>([])
+const wrongLegend = {} as InstanceType<typeof Legend>
+// @ts-expect-error Legend model values are arrays of string keys.
+wrongLegend.$emit('update:hidden', [1])
 const wrongModel = ref('wrong')
 const activePoint = ref<number | null>(null)
 const wrongTooltip = {} as InstanceType<typeof Tooltip>
@@ -56,7 +60,10 @@ brush.$emit('change', { startIndex: 0 })
       @drag-end="({ endIndex }) => endIndex.toFixed()"
     />
     <Tooltip v-model:active-index="activePoint" />
-    <Legend @click="(entry, index, event) => { entry.value.toUpperCase(); index.toFixed(); event.preventDefault() }" />
+    <Legend
+      v-model:hidden="hidden"
+      @click="(entry, index, event) => { entry.value.toUpperCase(); index.toFixed(); event.preventDefault() }"
+    />
   </BarChart>
   <PieChart
     :width="400"
@@ -85,6 +92,8 @@ brush.$emit('change', { startIndex: 0 })
   <Brush v-model:start-index="wrongModel" />
   <!-- @vue-expect-error Tooltip models require numeric or null refs. -->
   <Tooltip v-model:active-index="wrongModel" />
+  <!-- @vue-expect-error Legend models require string array refs. -->
+  <Legend v-model:hidden="wrongModel" />
   <!-- @vue-expect-error Chart listeners must infer the state shape. -->
   <BarChart @click="(state) => state.missingProperty" />
   <!-- @vue-expect-error Brush listeners must infer the range shape. -->

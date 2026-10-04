@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { pieEvents } from '@/events/itemEvents'
 import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, ref, watch } from 'vue'
@@ -163,6 +164,8 @@ const PieView = defineComponent({
     }
 
     return () => {
+      if (props.hide)
+        return null
       const sectorList = items.value
       if (!sectorList || sectorList.length === 0) {
         return null
@@ -217,7 +220,8 @@ export const Pie = defineComponent({
     shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     pieEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const pieSettings = computed<ResolvedPieSettings>(() => ({
@@ -248,7 +252,7 @@ export const Pie = defineComponent({
     })))
 
     const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
-    SetLegendPayload(computed(() => legendPayload.value ?? []))
+    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(PieView)
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)

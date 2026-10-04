@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { lineEvents } from '@/events/itemEvents'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
@@ -88,7 +89,8 @@ export const Line = defineComponent({
   props: LineVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     lineEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'line')
     const View = useDeferredView(LineView)

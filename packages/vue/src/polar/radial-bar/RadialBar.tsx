@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
@@ -215,7 +216,8 @@ export const RadialBar = defineComponent({
   emits: radialBarEvents.emits,
   props: RadialBarVueProps,
   inheritAttrs: false,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     radialBarEvents.provide(emit)
     SetPolarGraphicalItem(computed(() => ({
       type: 'radialBar' as const,
@@ -233,7 +235,7 @@ export const RadialBar = defineComponent({
     const legendPayload = useAppSelector(state =>
       selectRadialBarLegendPayload(state, props.legendType),
     )
-    SetLegendPayload(computed(() => legendPayload.value ?? []))
+    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

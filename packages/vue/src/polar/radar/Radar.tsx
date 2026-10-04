@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -259,7 +260,8 @@ export const Radar = defineComponent({
   emits: radarEvents.emits,
   inheritAttrs: false,
   props: RadarViewProps,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     radarEvents.provide(emit)
     SetPolarGraphicalItem(computed(() => ({
       type: 'radar' as const,

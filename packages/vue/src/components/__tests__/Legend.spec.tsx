@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { renderToString } from 'vue/server-renderer'
-import { createSSRApp, nextTick } from 'vue'
+import { createSSRApp, nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Bar, BarChart, Legend, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -234,4 +234,50 @@ it('emits legend entry, index, and the original mouse or keyboard event once', a
   expect(click.mock.calls[1]).toEqual([expect.objectContaining({ value: 'Value' }), 0, key])
   expect(click).toHaveBeenCalledTimes(2)
   expect(bbox).toHaveBeenCalledWith({ width: expect.any(Number), height: expect.any(Number) })
+})
+
+// Catches legend proposals mutating hidden state without the parent's acceptance.
+it.each([true, false])('keeps legend ownership when controlled=%s', async (controlled) => {
+  const hidden = ref<string[] | undefined>(controlled ? ['uv'] : undefined)
+  const update = vi.fn()
+  const { container } = render(() => (
+    <div>
+      <BarChart width={500} height={300} data={[{ uv: 10, pv: 20 }]}>
+        <Bar dataKey="uv" isAnimationActive={false} />
+        <Bar dataKey="pv" hide isAnimationActive={false} />
+        <Legend hidden={hidden.value} {...{ 'onUpdate:hidden': update }} />
+      </BarChart>
+      <BarChart width={500} height={300} data={[{ uv: 10 }]}>
+        <Bar dataKey="uv" isAnimationActive={false} />
+      </BarChart>
+    </div>
+  ))
+  await nextTick()
+  const charts = container.querySelectorAll('.v-charts-wrapper')
+  const bars = () => charts[0].querySelectorAll('.v-charts-bar-rectangle').length
+  const item = [...charts[0].querySelectorAll('.v-charts-legend-item')].find(item => item.textContent === 'uv')!
+  const inactive = () => item.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color
+  expect(bars()).toBe(controlled ? 0 : 1)
+  expect(charts[1].querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(1)
+  if (controlled)
+    expect(inactive()).toBe('var(--v-charts-inactive, #a3a3a3)')
+  await fireEvent.click(item)
+  expect(update.mock.calls).toEqual(controlled ? [[[]]] : [])
+  expect(bars()).toBe(controlled ? 0 : 1)
+  if (controlled) {
+    hidden.value = []
+    await nextTick()
+    expect(bars()).toBe(1)
+    expect(inactive()).not.toBe('var(--v-charts-inactive, #a3a3a3)')
+    await fireEvent.keyDown(item, { key: 'Enter' })
+    expect(update.mock.calls.at(-1)).toEqual([['uv']])
+    expect(bars()).toBe(1)
+    hidden.value.push('uv')
+    await nextTick()
+    expect(bars()).toBe(0)
+    expect(inactive()).toBe('var(--v-charts-inactive, #a3a3a3)')
+    hidden.value = undefined
+    await nextTick()
+    expect(bars()).toBe(1)
+  }
 })

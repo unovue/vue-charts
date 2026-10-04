@@ -17,6 +17,7 @@ export type LegendSettings = {
  * unnecessary re-renders. Select only the properties you need.
  */
 export type LegendState = {
+  hidden: ReadonlySet<string>
   settings: LegendSettings
   size: Size
   /**
@@ -31,7 +32,16 @@ export function createChartLegend() {
     settings: { layout: 'horizontal', align: 'center', verticalAlign: 'middle' },
     size: { width: 0, height: 0 },
     payload: [],
+    hidden: new Set(),
   })
+
+  function setHidden(keys: string[] | undefined) {
+    const hidden = new Set(keys)
+    const previous = state.value.hidden
+    if (previous.size === hidden.size && [...hidden].every(key => previous.has(key)))
+      return
+    state.value = { ...state.value, hidden }
+  }
 
   function setLegendSize(size: Size) {
     if (state.value.size.width === size.width && state.value.size.height === size.height)
@@ -59,5 +69,5 @@ export function createChartLegend() {
     state.value = { ...state.value, payload: state.value.payload.filter((_, i) => i !== index) }
   }
 
-  return { state: computed(() => state.value), setLegendSize, setLegendSettings, addLegendPayload, removeLegendPayload }
+  return { state: computed(() => state.value), setHidden, setLegendSize, setLegendSettings, addLegendPayload, removeLegendPayload }
 }

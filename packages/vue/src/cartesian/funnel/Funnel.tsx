@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { funnelEvents } from '@/events/itemEvents'
 import type { ComputedRef, ExtractPropTypes, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, shallowRef } from 'vue'
@@ -86,6 +87,8 @@ const FunnelView = defineComponent({
         height: trap.height,
         value: trap.value ?? trap.val ?? '',
         payload: trap.payload,
+        dataKey: props.dataKey,
+        inactive: props.hide,
         parentViewBox: trap.parentViewBox,
         fill: trap.fill ?? props.fill,
       }))
@@ -176,7 +179,8 @@ export const Funnel = defineComponent({
     shape?: (props: FunnelTrapezoidItem) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     funnelEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const cellPropsRef = shallowRef<Record<string, any>[]>([])
@@ -217,6 +221,8 @@ export const Funnel = defineComponent({
         value: String(trap.name ?? ''),
         color: cells[i]?.fill ?? trap.fill ?? props.fill,
         payload: trap.payload,
+        dataKey: props.dataKey,
+        inactive: props.hide,
       }))
     })
     SetLegendPayload(computed(() => legendPayload.value))

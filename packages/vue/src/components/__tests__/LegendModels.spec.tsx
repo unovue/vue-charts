@@ -1,0 +1,42 @@
+import { render } from '@testing-library/vue'
+import { expect, it } from 'vitest'
+import { nextTick, ref } from 'vue'
+import { Area, Bar, ComposedChart, Funnel, FunnelChart, Legend, Line, Pie, PieChart, Radar, RadarChart, RadialBar, RadialBarChart, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
+import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+
+const data = [{ name: 'A', value: 10, x: 1 }, { name: 'B', value: 20, x: 2 }, { name: 'C', value: 30, x: 3 }]
+
+// Catches series rendering or registration ignoring the shared hidden set.
+it.each([
+  ['line', (hide: boolean) => <Line dataKey="value" hide={hide} isAnimationActive={false} />, ComposedChart],
+  ['area', (hide: boolean) => <Area dataKey="value" hide={hide} isAnimationActive={false} />, ComposedChart],
+  ['bar', (hide: boolean) => <Bar dataKey="value" hide={hide} isAnimationActive={false} />, ComposedChart],
+  ['scatter', (hide: boolean) => <Scatter dataKey="value" data={data} hide={hide} isAnimationActive={false} />, ScatterChart],
+  ['funnel', (hide: boolean) => <Funnel dataKey="value" data={data} hide={hide} isAnimationActive={false} />, FunnelChart],
+  ['pie', (hide: boolean) => <Pie dataKey="value" data={data} hide={hide} isAnimationActive={false} />, PieChart],
+  ['radar', (hide: boolean) => <Radar dataKey="value" hide={hide} isAnimationActive={false} />, RadarChart],
+  ['radial-bar', (hide: boolean) => <RadialBar dataKey="value" hide={hide} isAnimationActive={false} />, RadialBarChart],
+] as const)('applies legend hidden to %s and preserves explicit hide', async (name, series, Chart) => {
+  mockGetBoundingClientRect({ width: 500, height: 300 })
+  const hidden = ref<string[]>(['value'])
+  const hide = ref(false)
+  const { container } = render(() => (
+    <Chart width={500} height={300} data={data}>
+      {name === 'scatter' && <XAxis dataKey="x" type="number" />}
+      {name === 'scatter' && <YAxis dataKey="value" />}
+      {series(hide.value)}
+      <Legend hidden={hidden.value} />
+    </Chart>
+  ))
+  await nextTick()
+  expect(container.querySelector(`.v-charts-${name}`)).toBeNull()
+  expect(container.querySelector('.v-charts-legend-item-text')).not.toBeNull()
+  expect(container.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color).toBe('var(--v-charts-inactive, #a3a3a3)')
+  hidden.value = []
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector(`.v-charts-${name}`)).not.toBeNull()
+  hide.value = true
+  await nextTick()
+  expect(container.querySelector(`.v-charts-${name}`)).toBeNull()
+})

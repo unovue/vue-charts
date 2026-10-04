@@ -9,7 +9,10 @@ export interface LegendSlots {
   content: (params: LegendContentProps) => VNode
 }
 
+export type LegendHidden = string[]
+
 export const LegendVueProps = {
+  hidden: Array as PropType<LegendHidden>,
   layout: {
     type: String as PropType<LayoutType | 'auto'>,
     default: 'auto',

@@ -1,8 +1,8 @@
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
-import { defineComponent, h, watch } from 'vue'
+import { defineComponent, h, onUnmounted, watch } from 'vue'
 import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { LegendSlots } from './type'
+import type { LegendHidden, LegendSlots } from './type'
 import { LegendVueProps } from './type'
 import { useLegend } from './hooks/useLegend'
 import { useChartLegend } from '@/state/chartContext'
@@ -16,6 +16,7 @@ export type LegendBoundingBox = { width: number, height: number } | null
 
 const legendItemEvent = (_entry: LegendPayload, _index: number, _event: MouseEvent | KeyboardEvent) => true
 const legendEmits = {
+  'update:hidden': (_hidden: LegendHidden) => true,
   'click': legendItemEvent,
   'mouseenter': legendItemEvent,
   'mouseleave': legendItemEvent,
@@ -55,6 +56,17 @@ const LegendView = defineComponent({
 
     watch(boundingBox, box => emit('bbox-update', box), { immediate: true })
 
+    const activateItem = (entry: LegendPayload, index: number, event: MouseEvent | KeyboardEvent) => {
+      if (props.hidden !== undefined && entry.dataKey !== undefined) {
+        const key = String(entry.dataKey)
+        const hidden = props.hidden.includes(key)
+          ? props.hidden.filter(item => item !== key)
+          : [...props.hidden, key]
+        emit('update:hidden', hidden)
+      }
+      emit('click', entry, index, event)
+    }
+
     const renderDefaultContent = () => {
       if (!processedPayload.value || processedPayload.value.length === 0) {
         return null
@@ -83,11 +95,11 @@ const LegendView = defineComponent({
                 tabindex={0}
                 role="button"
                 aria-label={`Toggle ${formatValue(entry)} series`}
-                onClick={(event: MouseEvent) => emit('click', entry, index, event)}
+                onClick={(event: MouseEvent) => activateItem(entry, index, event)}
                 onKeydown={(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    emit('click', entry, index, e)
+                    activateItem(entry, index, e)
                   }
                 }}
                 onMouseenter={(event: MouseEvent) => emit('mouseenter', entry, index, event)}
@@ -170,7 +182,9 @@ export default defineComponent({
   slots: Object as SlotsType<LegendSlots>,
   props: LegendVueProps,
   setup(props, { attrs, slots, emit }) {
-    const { setLegendSettings } = useChartLegend()
+    const { setLegendSettings, setHidden } = useChartLegend()
+    watch(() => props.hidden, setHidden, { immediate: true, deep: true })
+    onUnmounted(() => setHidden(undefined))
     watch(() => ({
       layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
       align: props.align,
@@ -183,6 +197,7 @@ export default defineComponent({
     return () => h(View, {
       'item': props,
       'svgAttrs': attrs,
+      'onUpdate:hidden': hidden => emit('update:hidden', hidden),
       'onClick': (entry, index, event) => emit('click', entry, index, event),
       'onMouseenter': (entry, index, event) => emit('mouseenter', entry, index, event),
       'onMouseleave': (entry, index, event) => emit('mouseleave', entry, index, event),

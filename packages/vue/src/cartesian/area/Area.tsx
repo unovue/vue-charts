@@ -1,3 +1,4 @@
+import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { areaEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -78,7 +79,8 @@ const _Area = defineComponent({
   props: AreaVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<AreaSlots>,
-  setup(props, { attrs, slots, emit }) {
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useLegendHiddenProps(inputProps)
     areaEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)
