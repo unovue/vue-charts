@@ -5,7 +5,8 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
@@ -86,10 +87,12 @@ export const SankeyVueProps = {
   nodeStroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   linkFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
   linkStroke: { type: String, default: 'none' },
+  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
+  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: () => ({ duration: 0.8, ease: 'easeOut' as const }),
+    default: undefined,
   },
   onClick: {
     type: Function as PropType<(item: any, type: 'node' | 'link', e: MouseEvent) => void>,
@@ -129,6 +132,55 @@ const SankeyInner = defineComponent({
           bottom: m.bottom ?? 5,
           left: m.left ?? 5,
         },
+      })
+    })
+
+    const nodeKey = (node: SankeyLayoutNode) => node.name ?? node.index ?? 0
+    const linkKey = (link: SankeyLayoutLink) => `${nodeKey(link.source as SankeyLayoutNode)}→${nodeKey(link.target as SankeyLayoutNode)}`
+    type Geometry = { kind: 'node', node: SankeyLayoutNode } | { kind: 'link', link: SankeyLayoutLink, sourceFraction: number, targetFraction: number }
+    const collapse = (item: Geometry): Geometry => item.kind === 'node'
+      ? { ...item, node: { ...item.node, y1: item.node.y0 } }
+      : { ...item, link: { ...item.link, width: 0 } }
+    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const { items } = useKeyedTransition<Geometry>(() => [
+      ...layout.value.nodes.map(node => ({ kind: 'node' as const, node })),
+      ...layout.value.links.map((link) => {
+        const source = link.source as SankeyLayoutNode
+        const target = link.target as SankeyLayoutNode
+        const fraction = (y: number | undefined, node: SankeyLayoutNode) => ((y ?? 0) - (node.y0 ?? 0)) / ((node.y1 ?? 0) - (node.y0 ?? 0) || 1)
+        return { kind: 'link' as const, link, sourceFraction: fraction(link.y0, source), targetFraction: fraction(link.y1, target) }
+      }),
+    ], {
+      key: item => item.kind === 'node' ? `node:${nodeKey(item.node)}` : `link:${linkKey(item.link)}`,
+      interpolate: (from, to, t) => {
+        const mix = (a: number | undefined, b: number | undefined) => (a ?? 0) + ((b ?? 0) - (a ?? 0)) * t
+        if (from.kind === 'node' && to.kind === 'node')
+          return { ...to, node: { ...to.node, x0: mix(from.node.x0, to.node.x0), x1: mix(from.node.x1, to.node.x1), y0: mix(from.node.y0, to.node.y0), y1: mix(from.node.y1, to.node.y1) } }
+        if (from.kind === 'link' && to.kind === 'link')
+          return { ...to, sourceFraction: mix(from.sourceFraction, to.sourceFraction), targetFraction: mix(from.targetFraction, to.targetFraction), link: { ...to.link, width: mix(from.link.width, to.link.width) } }
+        return to
+      },
+      enterFrom: collapse,
+      exitTo: collapse,
+      connected: true,
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+      onStart: callbacks.onStart,
+
+    })
+    const displayNodes = computed(() => items.value.flatMap(({ value }) => value.kind === 'node' ? [value.node] : []))
+    const displayLinks = computed(() => {
+      const byKey = new Map(displayNodes.value.map(node => [nodeKey(node), node]))
+      return items.value.flatMap(({ value }) => {
+        if (value.kind !== 'link')
+          return []
+        const link = value.link
+        const source = byKey.get(nodeKey(link.source as SankeyLayoutNode))
+        const target = byKey.get(nodeKey(link.target as SankeyLayoutNode))
+        if (!source || !target)
+          return []
+        return [Object.assign({}, link, { source, target, y0: (source.y0 ?? 0) + value.sourceFraction * ((source.y1 ?? 0) - (source.y0 ?? 0)), y1: (target.y0 ?? 0) + value.targetFraction * ((target.y1 ?? 0) - (target.y0 ?? 0)) })]
       })
     })
 
@@ -258,7 +310,7 @@ const SankeyInner = defineComponent({
         }
         return (
           <g
-            key={`node-${index}`}
+            key={`node:${nodeKey(node)}`}
             class="v-charts-sankey-node"
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
@@ -272,7 +324,7 @@ const SankeyInner = defineComponent({
 
       return (
         <g
-          key={`node-${index}`}
+          key={`node:${nodeKey(node)}`}
           class="v-charts-sankey-node"
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
@@ -305,7 +357,7 @@ const SankeyInner = defineComponent({
         }
         return (
           <g
-            key={`link-${index}`}
+            key={`link:${linkKey(link)}`}
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
             onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
@@ -318,7 +370,7 @@ const SankeyInner = defineComponent({
 
       return (
         <path
-          key={`link-${index}`}
+          key={`link:${linkKey(link)}`}
           class="v-charts-sankey-link"
           d={d}
           fill="none"
@@ -336,23 +388,12 @@ const SankeyInner = defineComponent({
     return () => (
       <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sankey">
-          <Animate
-            isActive={props.isAnimationActive}
-            from={0}
-            to={1}
-            transition={props.transition}
-          >
-            {(progress: number) => (
-              <>
-                <g class="v-charts-sankey-links">
-                  {layout.value.links.map((link, i) => renderLink(link, i, progress))}
-                </g>
-                <g class="v-charts-sankey-nodes">
-                  {layout.value.nodes.map((node, i) => renderNode(node, i, progress))}
-                </g>
-              </>
-            )}
-          </Animate>
+          <g class="v-charts-sankey-links">
+            {displayLinks.value.map((link, i) => renderLink(link, link.index ?? i, 1))}
+          </g>
+          <g class="v-charts-sankey-nodes">
+            {displayNodes.value.map((node, i) => renderNode(node, node.index ?? i, 1))}
+          </g>
         </Layer>
       </Surface>
     )
