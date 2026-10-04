@@ -1,24 +1,36 @@
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { defineComponent, h, watch } from 'vue'
-import type { DefineSetupFnComponent, ExtractPropTypes, PropType, SlotsType } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { LegendPropsWithSVG, LegendSlots } from './type'
+import type { LegendSlots } from './type'
 import { LegendVueProps } from './type'
 import { useLegend } from './hooks/useLegend'
 import { useChartLegend } from '@/state/chartContext'
 import { getLayoutForPosition } from './utils'
 import { useLegendContent } from './hooks/useLegendContent'
 import Surface from '@/container/Surface'
+import type { LegendPayload } from '@/components/DefaultLegendContent'
 import { LegendSymbol, SIZE } from './LegendSymbol'
+
+export type LegendBoundingBox = { width: number, height: number } | null
+
+const legendItemEvent = (_entry: LegendPayload, _index: number, _event: MouseEvent | KeyboardEvent) => true
+const legendEmits = {
+  'click': legendItemEvent,
+  'mouseenter': legendItemEvent,
+  'mouseleave': legendItemEvent,
+  'bbox-update': (_box: LegendBoundingBox) => true,
+}
 
 const LegendView = defineComponent({
   name: 'LegendView',
-  inheritAttrs: true,
+  emits: legendEmits,
+  inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof LegendVueProps>>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  setup(view, { slots }) {
+  setup(view, { slots, emit }) {
     const teleport = useLayerTeleport()
     const props = view.item
     const attrs = view.svgAttrs
@@ -39,10 +51,9 @@ const LegendView = defineComponent({
       getItemStyle,
       getSvgStyle,
       formatValue,
-      handleClick,
-      handleMouseEnter,
-      handleMouseLeave,
     } = useLegendContent(props)
+
+    watch(boundingBox, box => emit('bbox-update', box), { immediate: true })
 
     const renderDefaultContent = () => {
       if (!processedPayload.value || processedPayload.value.length === 0) {
@@ -72,15 +83,15 @@ const LegendView = defineComponent({
                 tabindex={0}
                 role="button"
                 aria-label={`Toggle ${formatValue(entry)} series`}
-                onClick={() => handleClick(entry, index)}
+                onClick={(event: MouseEvent) => emit('click', entry, index, event)}
                 onKeydown={(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    handleClick(entry, index)
+                    emit('click', entry, index, e)
                   }
                 }}
-                onMouseenter={() => handleMouseEnter(entry, index)}
-                onMouseleave={() => handleMouseLeave(entry, index)}
+                onMouseenter={(event: MouseEvent) => emit('mouseenter', entry, index, event)}
+                onMouseleave={(event: MouseEvent) => emit('mouseleave', entry, index, event)}
               >
                 <Surface
                   width={iconSize}
@@ -154,8 +165,11 @@ const LegendView = defineComponent({
 
 export default defineComponent({
   name: 'Legend',
+  inheritAttrs: false,
+  emits: legendEmits,
+  slots: Object as SlotsType<LegendSlots>,
   props: LegendVueProps,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
     const { setLegendSettings } = useChartLegend()
     watch(() => ({
       layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
@@ -166,6 +180,13 @@ export default defineComponent({
     }), setLegendSettings, { immediate: true })
 
     const View = useDeferredView(LegendView)
-    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+    return () => h(View, {
+      'item': props,
+      'svgAttrs': attrs,
+      'onClick': (entry, index, event) => emit('click', entry, index, event),
+      'onMouseenter': (entry, index, event) => emit('mouseenter', entry, index, event),
+      'onMouseleave': (entry, index, event) => emit('mouseleave', entry, index, event),
+      'onBbox-update': box => emit('bbox-update', box),
+    }, slots)
   },
-}) as unknown as DefineSetupFnComponent<LegendPropsWithSVG, {}, SlotsType<LegendSlots>>
+})

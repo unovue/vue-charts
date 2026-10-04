@@ -48,9 +48,6 @@ export const LegendVueProps = {
   contentStyle: Object as PropType<CSSProperties>,
   itemStyle: Object as PropType<CSSProperties>,
   formatter: Function as PropType<(value: string, entry: LegendPayload) => string>,
-  onClick: Function as PropType<(data: LegendPayload, index: number) => void>,
-  onMouseEnter: Function as PropType<(data: LegendPayload, index: number) => void>,
-  onMouseLeave: Function as PropType<(data: LegendPayload, index: number) => void>,
   margin: Object as PropType<Margin>,
   chartWidth: Number,
   chartHeight: Number,
@@ -60,7 +57,6 @@ export const LegendVueProps = {
     default: 'value',
   },
   portal: Object as PropType<HTMLElement | null>,
-  onBBoxUpdate: Function as PropType<(box: { width: number, height: number } | null) => void>,
 } as const
 
 export type LegendProps = VuePropsToType<typeof LegendVueProps>

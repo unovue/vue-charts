@@ -1,7 +1,7 @@
-import { render } from '@testing-library/vue'
+import { fireEvent, render } from '@testing-library/vue'
 import { renderToString } from 'vue/server-renderer'
 import { createSSRApp, nextTick } from 'vue'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Bar, BarChart, Legend, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -208,4 +208,30 @@ describe('legend', () => {
       expect(legendText!.textContent).toBe('Unique Visitors')
     })
   })
+})
+
+// Catches DOM fallthrough and missing event arguments on legend items.
+it('emits legend entry, index, and the original mouse or keyboard event once', async () => {
+  const click = vi.fn()
+  const enter = vi.fn()
+  const leave = vi.fn()
+  const bbox = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={500} height={300} data={[{ value: 10 }]}>
+      <Bar dataKey="value" name="Value" isAnimationActive={false} />
+      <Legend onClick={click} onMouseenter={enter} onMouseleave={leave} {...{ 'onBbox-update': bbox }} />
+    </BarChart>
+  ))
+  await nextTick()
+  const item = container.querySelector('.v-charts-legend-item')!
+  for (const [name, listener] of [['click', click], ['mouseenter', enter], ['mouseleave', leave]] as const) {
+    const event = new MouseEvent(name, { bubbles: true })
+    await fireEvent(item, event)
+    expect(listener.mock.calls).toEqual([[expect.objectContaining({ value: 'Value', dataKey: 'value' }), 0, event]])
+  }
+  const key = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+  await fireEvent(item, key)
+  expect(click.mock.calls[1]).toEqual([expect.objectContaining({ value: 'Value' }), 0, key])
+  expect(click).toHaveBeenCalledTimes(2)
+  expect(bbox).toHaveBeenCalledWith({ width: expect.any(Number), height: expect.any(Number) })
 })

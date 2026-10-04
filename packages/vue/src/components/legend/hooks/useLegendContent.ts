@@ -12,9 +12,6 @@ interface LegendContentProps {
   wrapperStyle?: CSSProperties
   contentStyle?: CSSProperties
   formatter?: (value: string, entry: LegendPayload) => string
-  onClick?: (data: LegendPayload, index: number) => void
-  onMouseEnter?: (data: LegendPayload, index: number) => void
-  onMouseLeave?: (data: LegendPayload, index: number) => void
   payload?: LegendPayload[]
   content?: Component | ((props: any) => any)
 }
@@ -64,18 +61,6 @@ export function useLegendContent(props: LegendContentProps) {
     return props.formatter ? props.formatter(entry.value, entry) : entry.value
   }
 
-  const handleClick = (entry: LegendPayload, index: number) => {
-    props.onClick?.(entry, index)
-  }
-
-  const handleMouseEnter = (entry: LegendPayload, index: number) => {
-    props.onMouseEnter?.(entry, index)
-  }
-
-  const handleMouseLeave = (entry: LegendPayload, index: number) => {
-    props.onMouseLeave?.(entry, index)
-  }
-
   return {
     getWrapperStyle,
     getContentStyle,
@@ -83,8 +68,5 @@ export function useLegendContent(props: LegendContentProps) {
     getViewBox,
     getSvgStyle,
     formatValue,
-    handleClick,
-    handleMouseEnter,
-    handleMouseLeave,
   }
 }
