@@ -8,7 +8,7 @@ import type {
   TooltipInteractionState,
   TooltipPayload,
   TooltipPayloadConfiguration,
-} from '../tooltipSlice'
+} from '../chartTooltip'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import { combineTooltipPayload, selectTooltipAxis, selectTooltipAxisDomain, selectTooltipAxisTicks, selectTooltipDisplayedData } from './tooltipSelectors'
 import type { AxisRange } from './axisSelectors'

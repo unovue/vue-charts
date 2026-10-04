@@ -1,4 +1,4 @@
-import type { TooltipPayloadConfiguration } from '@/state/tooltipSlice'
+import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
 import type { BarProps, BarSettings, Rectangle } from './type'
 import type { BarPositionPosition, BarRectangleItem } from '@/types/bar'
 import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'

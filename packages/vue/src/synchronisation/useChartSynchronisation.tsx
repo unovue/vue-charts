@@ -10,7 +10,7 @@ import type { Ref } from 'vue'
 import { computed, watchEffect } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { selectTooltipDataKey } from '@/state/selectors/selectors'
-import { setSyncInteraction } from '@/state/tooltipSlice'
+import type { TooltipSyncMessage } from '@/utils/events'
 import { selectSynchronisedTooltipState } from '@/synchronisation/syncSelectors'
 import { selectEventEmitter, selectSyncId } from '@/state/selectors/rootPropsSelectors'
 import type { ChartCoordinate, TooltipEventType, TooltipIndex, TooltipTrigger } from '@/types'
@@ -55,14 +55,15 @@ export function useTooltipChartSynchronisation(
     if (eventEmitterSymbol.value == null)
       return
 
-    const syncAction = setSyncInteraction({
+    const message: TooltipSyncMessage = {
+      kind: 'tooltip',
       active: isTooltipActive.value,
       coordinate: activeCoordinate.value,
       dataKey: activeDataKey.value,
       index: activeIndex.value!,
       label: typeof activeLabel.value === 'number' ? String(activeLabel.value) : activeLabel.value,
-    })
-    eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId.value, syncAction, eventEmitterSymbol.value)
+    }
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId.value, message, eventEmitterSymbol.value)
   })
 }
 
@@ -76,7 +77,7 @@ export function useBrushChartSynchronisation() {
     if (syncId.value == null || brushStartIndex.value == null || brushEndIndex.value == null || eventEmitterSymbol.value == null) {
       return
     }
-    const syncAction: BrushStartEndIndex = { startIndex: brushStartIndex.value, endIndex: brushEndIndex.value }
-    eventCenter.emit(BRUSH_SYNC_EVENT, syncId.value, syncAction, eventEmitterSymbol.value)
+    const range: BrushStartEndIndex = { startIndex: brushStartIndex.value, endIndex: brushEndIndex.value }
+    eventCenter.emit(BRUSH_SYNC_EVENT, syncId.value, range, eventEmitterSymbol.value)
   })
 }

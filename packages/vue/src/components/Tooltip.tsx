@@ -1,14 +1,14 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { Fragment, Teleport, computed, defineComponent, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { useChartLayout, useOffsetInternal, useViewBox } from '@/context/chartLayoutContext'
 import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { animate } from 'motion-v'
 import type { AnimationOptions, AnimationPlaybackControls } from 'motion-dom'
-import type { TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/tooltipSlice'
-import { setTooltipSettingsState } from '@/state/tooltipSlice'
+import type { TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
 import {
   selectActiveCoordinate,
   selectActiveLabel,
@@ -569,22 +569,20 @@ export const Tooltip = defineComponent({
     default?: () => any
   }>,
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
 
     const defaultIndexAsString = computed(() =>
       typeof props.defaultIndex === 'number' ? String(props.defaultIndex) : props.defaultIndex,
     )
 
     // Register tooltip settings in store
-    watchEffect(() => {
-      dispatch(setTooltipSettingsState({
-        shared: props.shared,
-        trigger: props.trigger,
-        axisId: props.axisId,
-        active: props.active,
-        defaultIndex: defaultIndexAsString.value,
-      }))
-    })
+    watch(computed(() => ({
+      shared: props.shared,
+      trigger: props.trigger,
+      axisId: props.axisId,
+      active: props.active,
+      defaultIndex: defaultIndexAsString.value,
+    })), tooltip.setTooltipSettingsState, { immediate: true })
 
     // Context hooks
     const viewBox = useViewBox()

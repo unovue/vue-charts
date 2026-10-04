@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions } from '../chartContext'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions, useChartTooltip } from '../chartContext'
 import { createEventEmitter } from '../optionsSlice'
 import { createRechartsStore } from '../store'
 
@@ -46,9 +46,14 @@ describe('chart context SSR', () => {
         async setup() {
           const selected = useAppSelector(state => state.layout.width)
           const layout = useChartLayoutActions()
+          const tooltip = useChartTooltip()
+          const index = useAppSelector(state => state.tooltip.keyboardInteraction.index)
+          expect(index.value).toBeNull()
           await Promise.resolve()
           layout.setProps('horizontal', { width, height: 200 }, {})
+          tooltip.setKeyboardInteraction({ active: true, activeIndex: String(width), activeDataKey: undefined })
           await Promise.resolve()
+          expect(index.value).toBe(String(width))
           return () => <span>{selected.value}</span>
         },
       })

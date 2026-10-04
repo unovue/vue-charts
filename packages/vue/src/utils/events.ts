@@ -1,5 +1,4 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
-import type { TooltipSyncState } from '../state/tooltipSlice'
+import type { TooltipSyncState } from '../state/chartTooltip'
 import type { BrushStartEndIndex } from '@/state/chartData'
 
 export const TOOLTIP_SYNC_EVENT = 'recharts.syncEvent.tooltip'
@@ -24,8 +23,10 @@ function createChannel<Arguments extends unknown[]>() {
   }
 }
 
+export type TooltipSyncMessage = TooltipSyncState & { kind: 'tooltip' }
+
 interface EventTypes {
-  [TOOLTIP_SYNC_EVENT]: (syncId: number | string, data: PayloadAction<TooltipSyncState>, emitter: symbol) => void
+  [TOOLTIP_SYNC_EVENT]: (syncId: number | string, data: TooltipSyncMessage, emitter: symbol) => void
   [BRUSH_SYNC_EVENT]: (syncId: number | string, data: BrushStartEndIndex, emitter: symbol) => void
 }
 

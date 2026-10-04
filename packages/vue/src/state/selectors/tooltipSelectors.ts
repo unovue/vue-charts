@@ -46,7 +46,7 @@ import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings
 import { selectChartName, selectStackOffsetType } from './rootPropsSelectors'
 // import { mathSign } from '../../util/DataUtils'
 import { combineAxisRangeWithReverse } from './combiners/combineAxisRangeWithReverse'
-import type { TooltipEntrySettings, TooltipIndex, TooltipInteractionState, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher, TooltipSettingsState } from '../tooltipSlice'
+import type { TooltipEntrySettings, TooltipIndex, TooltipInteractionState, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher, TooltipSettingsState } from '../chartTooltip'
 
 import {
   combineTooltipEventType,

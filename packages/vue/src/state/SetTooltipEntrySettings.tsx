@@ -1,8 +1,8 @@
-import { useAppDispatch } from '@/state/hooks'
-import { type TooltipPayloadConfiguration, addTooltipEntrySettings, removeTooltipEntrySettings } from './tooltipSlice'
+import { useChartTooltip } from '@/state/chartContext'
+import type { TooltipPayloadConfiguration } from './chartTooltip'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import type { Ref } from 'vue'
-import { watchEffect } from 'vue'
+import { computed, watch } from 'vue'
 
 type SetTooltipEntrySettingsProps<T> = {
   args: Ref<T>
@@ -10,16 +10,15 @@ type SetTooltipEntrySettingsProps<T> = {
 }
 
 export function SetTooltipEntrySettings<T>({ fn, args }: SetTooltipEntrySettingsProps<T>) {
-  const dispatch = useAppDispatch()
+  const tooltip = useChartTooltip()
   const isPanorama = useIsPanorama()
-  watchEffect((onCleanup) => {
-    if (isPanorama) {
+  watch(computed(() => isPanorama ? undefined : fn(args.value)), (tooltipEntrySettings, _previous, onCleanup) => {
+    if (!tooltipEntrySettings) {
       return
     }
-    const tooltipEntrySettings: TooltipPayloadConfiguration = fn(args.value)
-    dispatch(addTooltipEntrySettings(tooltipEntrySettings))
+    tooltip.addTooltipEntrySettings(tooltipEntrySettings)
     onCleanup(() => {
-      dispatch(removeTooltipEntrySettings(tooltipEntrySettings))
+      tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
     })
-  })
+  }, { immediate: true })
 }

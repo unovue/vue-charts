@@ -1,5 +1,5 @@
 import type { DataKey, TooltipEventType, TooltipTrigger } from '@/types'
-import type { TooltipIndex, TooltipPayloadConfiguration, TooltipState } from '../../tooltipSlice'
+import type { TooltipIndex, TooltipPayloadConfiguration, TooltipState } from '../../chartTooltip'
 
 export function combineTooltipPayloadConfigurations(tooltipState: TooltipState, tooltipEventType: TooltipEventType, trigger: TooltipTrigger, defaultIndex: TooltipIndex | undefined): ReadonlyArray<TooltipPayloadConfiguration> {
   // if tooltip reacts to axis interaction, then we display all items at the same time.

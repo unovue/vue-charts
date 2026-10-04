@@ -1,7 +1,8 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { computed, defineComponent, shallowRef } from 'vue'
 import type { SlotsType } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
 import { Animate } from '@/animation/Animate'
@@ -9,7 +10,6 @@ import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
-import { mouseLeaveItem, setActiveMouseOverItemIndex } from '@/state/tooltipSlice'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
@@ -26,7 +26,7 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
   }>,
   setup(props, { attrs, slots }) {
     const data = useTrackedData(() => props.data)
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const isAnimating = useIsAnimating(() => props.isAnimationActive)
     const cellPropsRef = shallowRef<Record<string, any>[]>([])
 
@@ -110,15 +110,15 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
     }))
 
     function handleTrapezoidEnter(trap: FunnelTrapezoidItem, index: number) {
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: String(index),
         activeDataKey: props.dataKey,
         activeCoordinate: trap.tooltipPosition,
-      }))
+      })
     }
 
     function handleTrapezoidLeave() {
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
     }
 
     return () => {

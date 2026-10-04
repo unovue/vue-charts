@@ -1,29 +1,21 @@
+import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideEntranceGate } from '@/animation/entranceGate'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
-import { provideChartContext } from '@/state/chartContext'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
-import { useAppDispatch } from '@/state/hooks'
-import {
-  addTooltipEntrySettings,
-  mouseLeaveItem,
-  removeTooltipEntrySettings,
-  setActiveClickItemIndex,
-  setActiveMouseOverItemIndex,
-} from '@/state/tooltipSlice'
 import type { ChartOptions } from '@/state/optionsSlice'
 import type {
   TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
-} from '@/state/tooltipSlice'
+} from '@/state/chartTooltip'
 import type { Coordinate } from '@/types'
 import {
   type SunburstData,
@@ -88,7 +80,7 @@ const SunburstInner = defineComponent({
     const trackedData = useTrackedData(() => [props.data])
     // The object-shaped API needs a root wrapper that Immer cannot freeze recursively.
     const data = computed(() => Object.freeze({ ...trackedData.value![0] }))
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
 
     const resolvedCx = computed(() => props.cx ?? props.width / 2)
     const resolvedCy = computed(() => props.cy ?? props.height / 2)
@@ -112,7 +104,7 @@ const SunburstInner = defineComponent({
     )
 
     // Register tooltip entry settings
-    watchEffect((onCleanup) => {
+    watch(computed(() => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: data.value,
         positions: undefined,
@@ -129,11 +121,13 @@ const SunburstInner = defineComponent({
           unit: '',
         },
       }
-      dispatch(addTooltipEntrySettings(tooltipEntrySettings))
+      return tooltipEntrySettings
+    }), (tooltipEntrySettings, _previous, onCleanup) => {
+      tooltip.addTooltipEntrySettings(tooltipEntrySettings)
       onCleanup(() => {
-        dispatch(removeTooltipEntrySettings(tooltipEntrySettings))
+        tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
       })
-    })
+    }, { immediate: true })
 
     function getNodeFill(node: SunburstLayoutNode): string {
       if (node.fill)
@@ -148,25 +142,25 @@ const SunburstInner = defineComponent({
     }
 
     function handleMouseEnter(node: SunburstLayoutNode, e: MouseEvent) {
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: node.tooltipIndex,
         activeDataKey: props.dataKey,
         activeCoordinate: getTooltipCoordinate(node),
-      }))
+      })
       props.onMouseEnter?.(node.payload, e)
     }
 
     function handleMouseLeave(node: SunburstLayoutNode, e: MouseEvent) {
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
       props.onMouseLeave?.(node.payload, e)
     }
 
     function handleClick(node: SunburstLayoutNode, e: MouseEvent) {
-      dispatch(setActiveClickItemIndex({
+      tooltip.setActiveClickItemIndex({
         activeIndex: node.tooltipIndex,
         activeDataKey: props.dataKey,
         activeCoordinate: getTooltipCoordinate(node),
-      }))
+      })
       props.onClick?.(node.payload, e)
     }
 

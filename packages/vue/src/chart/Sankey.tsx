@@ -1,29 +1,21 @@
+import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideEntranceGate } from '@/animation/entranceGate'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
-import { useAppDispatch } from '@/state/hooks'
-import {
-  addTooltipEntrySettings,
-  mouseLeaveItem,
-  removeTooltipEntrySettings,
-  setActiveClickItemIndex,
-  setActiveMouseOverItemIndex,
-} from '@/state/tooltipSlice'
 import type { ChartOptions } from '@/state/optionsSlice'
 import type {
   TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
-} from '@/state/tooltipSlice'
+} from '@/state/chartTooltip'
 import type { Coordinate } from '@/types'
 import {
   type SankeyInputLink,
@@ -121,7 +113,7 @@ const SankeyInner = defineComponent({
   setup(props, { slots }) {
     const nodes = useTrackedData(() => props.data.nodes)
     const links = useTrackedData(() => props.data.links)
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
 
     const layout = computed(() => {
       const m = props.margin
@@ -164,7 +156,7 @@ const SankeyInner = defineComponent({
       return { nodes, links }
     })
 
-    watchEffect((onCleanup) => {
+    watch(computed(() => {
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: payloadTree.value,
         positions: undefined,
@@ -181,22 +173,24 @@ const SankeyInner = defineComponent({
           unit: '',
         },
       }
-      dispatch(addTooltipEntrySettings(settings))
+      return settings
+    }), (settings, _previous, onCleanup) => {
+      tooltip.addTooltipEntrySettings(settings)
       onCleanup(() => {
-        dispatch(removeTooltipEntrySettings(settings))
+        tooltip.removeTooltipEntrySettings(settings)
       })
-    })
+    }, { immediate: true })
 
     function handleNodeMouseEnter(node: SankeyLayoutNode, index: number, e: MouseEvent) {
       const coord: Coordinate = {
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: `nodes[${index}]`,
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
-      }))
+      })
       props.onMouseEnter?.(node, 'node', e)
     }
 
@@ -206,16 +200,16 @@ const SankeyInner = defineComponent({
       const sy = link.y0 ?? 0
       const ty = link.y1 ?? 0
       const coord: Coordinate = { x: (sx + tx) / 2, y: (sy + ty) / 2 }
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: `links[${index}]`,
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
-      }))
+      })
       props.onMouseEnter?.(link, 'link', e)
     }
 
     function handleMouseLeave(item: any, type: 'node' | 'link', e: MouseEvent) {
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
       props.onMouseLeave?.(item, type, e)
     }
 
@@ -224,11 +218,11 @@ const SankeyInner = defineComponent({
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      dispatch(setActiveClickItemIndex({
+      tooltip.setActiveClickItemIndex({
         activeIndex: `nodes[${index}]`,
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
-      }))
+      })
       props.onClick?.(node, 'node', e)
     }
 
@@ -239,11 +233,11 @@ const SankeyInner = defineComponent({
         x: (sx + tx) / 2,
         y: ((link.y0 ?? 0) + (link.y1 ?? 0)) / 2,
       }
-      dispatch(setActiveClickItemIndex({
+      tooltip.setActiveClickItemIndex({
         activeIndex: `links[${index}]`,
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
-      }))
+      })
       props.onClick?.(link, 'link', e)
     }
 

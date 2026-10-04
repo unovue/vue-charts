@@ -1,3 +1,4 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { Teleport, computed, defineComponent, proxyRefs, toRefs, useAttrs } from 'vue'
 import type { PropType, SVGAttributes, SlotsType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-dom'
@@ -18,9 +19,8 @@ import { Animate } from '@/animation/Animate'
 import { getLinearRegression } from '@/utils/getLinearRegression'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { selectActiveTooltipDataKey, selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
-import { mouseLeaveChart, setActiveMouseOverItemIndex, setMouseOverAxisIndex } from '@/state/tooltipSlice'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 
@@ -72,7 +72,7 @@ export const Scatter = defineComponent({
     const { shouldRender, points } = useScatter(trackedProps)
     const graphicalLayerRef = useGraphicalLayerRef()
     const svgAttrs = useAttrs() as SVGAttributes
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
 
@@ -129,11 +129,11 @@ export const Scatter = defineComponent({
       }
       // Dispatch to both axis and item interaction so Scatter works in both
       // ComposedChart (tooltipEventType='axis') and ScatterChart (tooltipEventType='item')
-      dispatch(setMouseOverAxisIndex(payload))
-      dispatch(setActiveMouseOverItemIndex(payload))
+      tooltip.setMouseOverAxisIndex(payload)
+      tooltip.setActiveMouseOverItemIndex(payload)
     }
     const onMouseLeaveSymbol = () => {
-      dispatch(mouseLeaveChart())
+      tooltip.mouseLeaveChart()
     }
 
     const renderSymbols = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {

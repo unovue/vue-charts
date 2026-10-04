@@ -1,20 +1,19 @@
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { selectEventEmitter, selectSyncId, selectSyncMethod } from '@/state/selectors/rootPropsSelectors'
 import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
 import { selectTooltipAxisTicks } from '@/state/selectors/tooltipSelectors'
-import { type TooltipSyncState, setSyncInteraction } from '@/state/tooltipSlice'
-import type { PayloadAction } from '@reduxjs/toolkit'
+import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import { createEventEmitter } from '@/state/optionsSlice'
 import type { BrushStartEndIndex } from '@/state/chartData'
-import { useChartDataActions } from '@/state/chartContext'
+import { useChartDataActions, useChartTooltip } from '@/state/chartContext'
 
 function useTooltipSyncEventsListener() {
   const mySyncId = useAppSelector(selectSyncId)
   const myEventEmitter = useAppSelector(selectEventEmitter)
-  const dispatch = useAppDispatch()
+  const tooltip = useChartTooltip()
   const syncMethod = useAppSelector(selectSyncMethod)
   const tooltipTicks = useAppSelector(selectTooltipAxisTicks)
   const layout = useChartLayout()
@@ -28,9 +27,9 @@ function useTooltipSyncEventsListener() {
       return
     }
 
-    const listener = (incomingSyncId: number | string, action: PayloadAction<TooltipSyncState>, emitter: symbol) => {
+    const listener = (incomingSyncId: number | string, message: TooltipSyncMessage, emitter: symbol) => {
       if (myEventEmitter.value === emitter) {
-        // We don't want to dispatch actions that we sent ourselves.
+        // Ignore messages sent by this chart.
         return
       }
       if (mySyncId.value !== incomingSyncId) {
@@ -38,7 +37,8 @@ function useTooltipSyncEventsListener() {
         return
       }
       if (syncMethod.value === 'index') {
-        dispatch(action)
+        const { kind: _kind, ...interaction } = message
+        tooltip.setSyncInteraction(interaction)
         // This is the default behaviour, we don't need to do anything else.
         return
       }
@@ -55,12 +55,12 @@ function useTooltipSyncEventsListener() {
          * In 3.x we store things differently but let's try to keep the old shape for compatibility.
          */
         const syncMethodParam: MouseHandlerDataParam = {
-          activeTooltipIndex: action.payload.index == null ? undefined : Number(action.payload.index),
-          isTooltipActive: action.payload.active,
-          activeIndex: action.payload.index == null ? undefined : Number(action.payload.index),
-          activeLabel: action.payload.label,
-          activeDataKey: action.payload.dataKey,
-          activeCoordinate: action.payload.coordinate,
+          activeTooltipIndex: message.index == null ? undefined : Number(message.index),
+          isTooltipActive: message.active,
+          activeIndex: message.index == null ? undefined : Number(message.index),
+          activeLabel: message.label,
+          activeDataKey: message.dataKey,
+          activeCoordinate: message.coordinate,
         }
         // Call a callback function. If there is an application specific algorithm
         const activeTooltipIndex = syncMethod.value(tooltipTicks.value, syncMethodParam)
@@ -68,22 +68,20 @@ function useTooltipSyncEventsListener() {
       }
       else if (syncMethod.value === 'value') {
         // labels are always strings, tick.value might be a string or a number, depending on axis type
-        activeTick = tooltipTicks.value.find(tick => String(tick.value) === action.payload.label)
+        activeTick = tooltipTicks.value.find(tick => String(tick.value) === message.label)
       }
 
-      if (activeTick == null || action.payload.active === false) {
-        dispatch(
-          setSyncInteraction({
-            active: false,
-            coordinate: undefined,
-            dataKey: undefined,
-            index: null,
-            label: undefined,
-          }),
-        )
+      if (activeTick == null || message.active === false) {
+        tooltip.setSyncInteraction({
+          active: false,
+          coordinate: undefined,
+          dataKey: undefined,
+          index: null,
+          label: undefined,
+        })
         return
       }
-      const { x, y } = action.payload.coordinate!
+      const { x, y } = message.coordinate!
       const validateChartX = Math.min(x!, viewBox.value?.x + viewBox.value?.width!)
       const validateChartY = Math.min(y!, viewBox.value?.y + viewBox.value?.height!)
       const activeCoordinate: Coordinate = {
@@ -91,14 +89,13 @@ function useTooltipSyncEventsListener() {
         y: layout.value === 'horizontal' ? validateChartY : activeTick.coordinate,
       }
 
-      const syncAction = setSyncInteraction({
-        active: action.payload.active,
+      tooltip.setSyncInteraction({
+        active: message.active,
         coordinate: activeCoordinate,
-        dataKey: action.payload.dataKey,
+        dataKey: message.dataKey,
         index: String(activeTick.index),
-        label: action.payload.label,
+        label: message.label,
       })
-      dispatch(syncAction)
     }
     eventCenter.on(TOOLTIP_SYNC_EVENT, listener)
     onCleanup(() => {
@@ -117,13 +114,13 @@ function useBrushSyncEventsListener() {
       return
     }
 
-    const listener = (incomingSyncId: number | string, action: BrushStartEndIndex, emitter: symbol) => {
+    const listener = (incomingSyncId: number | string, range: BrushStartEndIndex, emitter: symbol) => {
       if (myEventEmitter.value === emitter) {
-        // We don't want to dispatch actions that we sent ourselves.
+        // Ignore messages sent by this chart.
         return
       }
       if (mySyncId.value === incomingSyncId) {
-        data.setRange(action)
+        data.setRange(range)
       }
     }
 

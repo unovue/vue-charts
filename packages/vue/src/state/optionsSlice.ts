@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
-import type { TooltipIndex, TooltipPayloadSearcher } from './tooltipSlice'
+import type { TooltipIndex, TooltipPayloadSearcher } from './chartTooltip'
 import type { TooltipEventType } from '@/types'
 import { isNan } from '@/utils'
 

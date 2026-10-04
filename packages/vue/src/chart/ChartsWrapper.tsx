@@ -1,6 +1,5 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
-import { mouseLeaveChart } from '../state/tooltipSlice'
-import { useAppDispatch } from '../state/hooks'
 import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
@@ -35,7 +34,7 @@ export const ChartsWrapper = defineComponent({
     width: { type: Number, required: true },
   },
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const callHandler = useChartCallbacks()
     const interactions = useChartInteractions()
 
@@ -86,7 +85,7 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
-      dispatch(mouseLeaveChart())
+      tooltip.mouseLeaveChart()
       callHandler(props.onMouseLeave, e)
     }
 

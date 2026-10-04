@@ -1,4 +1,4 @@
-import type { TooltipIndex, TooltipInteractionState } from '../../tooltipSlice'
+import type { TooltipIndex, TooltipInteractionState } from '../../chartTooltip'
 import type { ChartData } from '../../chartData'
 import type { CategoricalDomain, DataKey } from '@/types'
 import type { NumberDomain } from '@/types/axis'

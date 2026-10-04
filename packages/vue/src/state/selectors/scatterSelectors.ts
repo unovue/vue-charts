@@ -15,7 +15,7 @@ import {
   selectZAxisWithScale,
 } from './axisSelectors'
 import type { Coordinate, DataKey, ScatterPointItem, ScatterPointNode, TickItem, TooltipType } from '@/types'
-import type { TooltipPayloadEntry } from '@/state/tooltipSlice'
+import type { TooltipPayloadEntry } from '@/state/chartTooltip'
 import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
 import { isNullish } from '@/utils/validate'
 

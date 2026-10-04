@@ -1,6 +1,6 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { Fragment, computed, defineComponent } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { mouseLeaveItem, setActiveMouseOverItemIndex } from '@/state/tooltipSlice'
+import { useAppSelector } from '@/state/hooks'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
@@ -25,7 +25,7 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
   props: RadialBarVueProps,
   inheritAttrs: false,
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
 
     const radialBarSettings = computed<RadialBarSettings>(() => ({
       dataKey: props.dataKey,
@@ -146,13 +146,13 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
             }
             const sectorFill = (sector as any).fill ?? defaultFill
             const onMouseenter = () => {
-              dispatch(setActiveMouseOverItemIndex({
+              tooltip.setActiveMouseOverItemIndex({
                 activeIndex: String(i),
                 activeDataKey: props.dataKey,
-              }))
+              })
             }
             const onMouseleave = () => {
-              dispatch(mouseLeaveItem())
+              tooltip.mouseLeaveItem()
             }
             return (
               <Sector

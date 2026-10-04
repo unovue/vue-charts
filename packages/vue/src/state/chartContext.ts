@@ -3,6 +3,7 @@ import type { InjectionKey, ShallowRef } from 'vue'
 import type { AppDispatch, LegacyChartState, RechartsRootState } from './store'
 import { createChartLayout } from './chartLayout'
 import { createChartData } from './chartData'
+import { createChartTooltip } from './chartTooltip'
 
 interface ChartStore {
   getState: () => LegacyChartState
@@ -15,20 +16,22 @@ interface ChartContext {
   dispatch: AppDispatch
   layout: ReturnType<typeof createChartLayout>
   data: ReturnType<typeof createChartData>
+  tooltip: ReturnType<typeof createChartTooltip>
 }
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
 export function provideChartContext(store: ChartStore, layout = createChartLayout()) {
   const data = createChartData()
+  const tooltip = createChartTooltip()
   const legacyState = shallowRef(store.getState())
   watchSyncEffect((onCleanup) => {
     onCleanup(store.subscribe(() => {
       legacyState.value = store.getState()
     }))
   })
-  const state = computed(() => ({ ...legacyState.value, layout: layout.state.value, chartData: data.state.value }))
-  provide(chartContextKey, { state, dispatch: store.dispatch, layout, data })
+  const state = computed(() => ({ ...legacyState.value, layout: layout.state.value, chartData: data.state.value, tooltip: tooltip.state.value }))
+  provide(chartContextKey, { state, dispatch: store.dispatch, layout, data, tooltip })
 }
 
 function useChartContext() {
@@ -54,4 +57,8 @@ export function useChartDataActions() {
 export function useAppSelector<Selected>(selector: (state: RechartsRootState) => Selected) {
   const { state } = useChartContext()
   return computed(() => selector(state.value))
+}
+
+export function useChartTooltip() {
+  return useChartContext().tooltip
 }

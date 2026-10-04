@@ -1,14 +1,10 @@
-import { defineComponent, watch } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useChartTooltip } from '@/state/chartContext'
+import { defineComponent } from 'vue'
+import { useAppSelector } from '@/state/hooks'
 import {
   selectActiveTooltipDataKey,
   selectActiveTooltipIndex,
 } from '@/state/selectors/tooltipSelectors'
-import {
-  mouseLeaveItem,
-  setActiveClickItemIndex,
-  setActiveMouseOverItemIndex,
-} from '@/state/tooltipSlice'
 import { filterProps } from '@/utils/VueUtils'
 import { Layer } from '@/container/Layer'
 import { Rectangle } from '@/shape/Rectangle'
@@ -21,7 +17,7 @@ export const BarRectangles = defineComponent({
   inheritAttrs: false,
 
   setup(_) {
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
     let previousRectangles: ReadonlyArray<BarRectangleItem> | null = null
@@ -40,27 +36,27 @@ export const BarRectangles = defineComponent({
 
     // 事件处理函数
     const onMouseEnterFromContext = (entry: BarRectangleItem, index: number) => (e: MouseEvent) => {
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeDataKey: dataKey,
         activeIndex: String(index),
         activeCoordinate: {
           x: entry.tooltipPosition.x,
           y: entry.tooltipPosition.y,
         },
-      }))
+      })
     }
     const onMouseLeaveFromContext = (entry: BarRectangleItem, index: number) => (e: MouseEvent) => {
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
     }
     const onClickFromContext = (entry: BarRectangleItem, index: number) => (e: MouseEvent) => {
-      dispatch(setActiveClickItemIndex({
+      tooltip.setActiveClickItemIndex({
         activeDataKey: dataKey,
         activeIndex: String(index),
         activeCoordinate: {
           x: entry.tooltipPosition.x,
           y: entry.tooltipPosition.y,
         },
-      }))
+      })
     }
 
     const baseProps = filterProps(props, false)

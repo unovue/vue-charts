@@ -1,5 +1,5 @@
 import { isNan } from '@/utils'
-import type { TooltipIndex } from '../../tooltipSlice'
+import type { TooltipIndex } from '../../chartTooltip'
 import type { TickItem } from '@/types'
 
 export function combineActiveLabel(tooltipTicks: ReadonlyArray<TickItem>, activeIndex: TooltipIndex): string | number | undefined {

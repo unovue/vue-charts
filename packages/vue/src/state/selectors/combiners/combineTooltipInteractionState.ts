@@ -1,5 +1,5 @@
-import type { TooltipIndex, TooltipInteractionState, TooltipState } from '../../tooltipSlice'
-import { noInteraction } from '../../tooltipSlice'
+import type { TooltipIndex, TooltipInteractionState, TooltipState } from '../../chartTooltip'
+import { noInteraction } from '../../chartTooltip'
 import type { TooltipEventType, TooltipTrigger } from '@/types'
 
 function chooseAppropriateMouseInteraction(

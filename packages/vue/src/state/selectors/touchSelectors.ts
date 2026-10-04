@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
-import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '../tooltipSlice'
+import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '../chartTooltip'
 import { selectTooltipPayloadSearcher } from './selectTooltipPayloadSearcher'
 import { selectTooltipState } from './selectTooltipState'
 import type { Coordinate, DataKey } from '@/types'

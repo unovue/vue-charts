@@ -1,6 +1,4 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { createSlice, current } from '@reduxjs/toolkit'
-import { castDraft } from 'immer'
+import { computed, shallowRef } from 'vue'
 import type { AxisId } from './cartesianAxisSlice'
 import type { ChartCoordinate, Coordinate, DataKey, NameType, Payload, TooltipTrigger, ValueType } from '@/types'
 
@@ -53,7 +51,7 @@ export type TooltipPayloadConfiguration = {
   settings: TooltipEntrySettings
   /**
    * This is the data that the item has provided, all of it mixed together.
-   * Later as user is interacting with the chart, a redux selector will use this
+   * Later as user is interacting with the chart, a selector will use this
    * data + activeIndex, pass it to the TooltipPayloadSearcher, and render the result in a Tooltip.
    */
   dataDefinedOnItem: unknown
@@ -162,13 +160,6 @@ export type TooltipSyncState = TooltipInteractionState & {
   label: string | undefined
 }
 
-export const noInteraction: TooltipInteractionState = {
-  active: false,
-  index: null,
-  dataKey: undefined,
-  coordinate: undefined,
-}
-
 /**
  * The tooltip interaction state stores:
  *
@@ -213,38 +204,11 @@ export type TooltipState = {
    */
   tooltipItemPayloads: ReadonlyArray<TooltipPayloadConfiguration>
   /**
-   * Tooltip props or other settings that need redux access.
+   * Tooltip props or other settings used by selectors.
    * This assumes that there is always only one Tooltip. In case we want to start supporting multiple Tooltips,
    * we have to change this to an array - and update all the places reading this state too.
    */
   settings: TooltipSettingsState
-}
-
-export const initialState: TooltipState = {
-  itemInteraction: {
-    click: noInteraction,
-    hover: noInteraction,
-  },
-  axisInteraction: {
-    click: noInteraction,
-    hover: noInteraction,
-  },
-  keyboardInteraction: noInteraction,
-  syncInteraction: {
-    active: false,
-    index: null,
-    dataKey: undefined,
-    label: undefined,
-    coordinate: undefined,
-  },
-  tooltipItemPayloads: [],
-  settings: {
-    shared: undefined,
-    trigger: 'hover',
-    axisId: 0,
-    active: false,
-    defaultIndex: undefined,
-  },
 }
 
 export type TooltipActionPayload = {
@@ -253,93 +217,140 @@ export type TooltipActionPayload = {
   activeCoordinate?: ChartCoordinate | undefined
 }
 
-const tooltipSlice = createSlice({
-  name: 'tooltip',
-  initialState,
-  reducers: {
-    addTooltipEntrySettings(state, action: PayloadAction<TooltipPayloadConfiguration>) {
-      state.tooltipItemPayloads.push(castDraft(action.payload))
-    },
-    removeTooltipEntrySettings(state, action: PayloadAction<TooltipPayloadConfiguration>) {
-      const index = current(state).tooltipItemPayloads.indexOf(castDraft(action.payload))
-      if (index > -1) {
-        state.tooltipItemPayloads.splice(index, 1)
-      }
-    },
-    setTooltipSettingsState(state, action: PayloadAction<TooltipSettingsState>) {
-      state.settings = action.payload
-    },
-    setActiveMouseOverItemIndex(state, action: PayloadAction<TooltipActionPayload>) {
-      state.syncInteraction.active = false
-      state.keyboardInteraction.active = false
-      state.itemInteraction.hover.active = true
-      state.itemInteraction.hover.index = action.payload.activeIndex
-      state.itemInteraction.hover.dataKey = action.payload.activeDataKey
-      state.itemInteraction.hover.coordinate = action.payload.activeCoordinate
-    },
-    mouseLeaveChart(state) {
-      /*
-       * Clear only the active flags. Why?
-       * 1. Keep Coordinate to preserve animation - next time the Tooltip appears, we want to render it from
-       * the last place where it was when it disappeared.
-       * 2. We want to keep all the properties anyway just in case the tooltip has `active=true` prop
-       * and continues being visible even after the mouse has left the chart.
-       */
-      state.itemInteraction.hover.active = false
-      state.axisInteraction.hover.active = false
-    },
-    mouseLeaveItem(state) {
-      state.itemInteraction.hover.active = false
-    },
-    setActiveClickItemIndex(state, action: PayloadAction<TooltipActionPayload>) {
-      state.syncInteraction.active = false
-      state.itemInteraction.click.active = true
-      state.keyboardInteraction.active = false
-      state.itemInteraction.click.index = action.payload.activeIndex
-      state.itemInteraction.click.dataKey = action.payload.activeDataKey
-      state.itemInteraction.click.coordinate = action.payload.activeCoordinate
-    },
-    setMouseOverAxisIndex(state, action: PayloadAction<TooltipActionPayload>) {
-      state.syncInteraction.active = false
-      state.axisInteraction.hover.active = true
-      state.keyboardInteraction.active = false
-      state.axisInteraction.hover.index = action.payload.activeIndex
-      state.axisInteraction.hover.dataKey = action.payload.activeDataKey
-      state.axisInteraction.hover.coordinate = action.payload.activeCoordinate
-    },
-    setMouseClickAxisIndex(state, action: PayloadAction<TooltipActionPayload>) {
-      state.syncInteraction.active = false
-      state.keyboardInteraction.active = false
-      state.axisInteraction.click.active = true
-      state.axisInteraction.click.index = action.payload.activeIndex
-      state.axisInteraction.click.dataKey = action.payload.activeDataKey
-      state.axisInteraction.click.coordinate = action.payload.activeCoordinate
-    },
-    setSyncInteraction(state, action: PayloadAction<TooltipSyncState>) {
-      state.syncInteraction = action.payload
-    },
-    setKeyboardInteraction(state, action: PayloadAction<TooltipActionPayload & { active: boolean }>) {
-      state.keyboardInteraction.active = action.payload.active
-      state.keyboardInteraction.index = action.payload.activeIndex
-      state.keyboardInteraction.coordinate = action.payload.activeCoordinate
-      state.keyboardInteraction.dataKey = action.payload.activeDataKey
-    },
-  },
+export const noInteraction: TooltipInteractionState = Object.freeze({
+  active: false,
+  index: null,
+  dataKey: undefined,
+  coordinate: undefined,
 })
 
-export const {
-  addTooltipEntrySettings,
-  removeTooltipEntrySettings,
-  setTooltipSettingsState,
-  setActiveMouseOverItemIndex,
-  mouseLeaveItem,
-  mouseLeaveChart,
-  setActiveClickItemIndex,
+export function createChartTooltip() {
+  const state = shallowRef<TooltipState>({
+    itemInteraction: {
+      click: { ...noInteraction },
+      hover: { ...noInteraction },
+    },
+    axisInteraction: {
+      click: { ...noInteraction },
+      hover: { ...noInteraction },
+    },
+    keyboardInteraction: { ...noInteraction },
+    syncInteraction: {
+      active: false,
+      index: null,
+      dataKey: undefined,
+      label: undefined,
+      coordinate: undefined,
+    },
+    tooltipItemPayloads: [],
+    settings: {
+      shared: undefined,
+      trigger: 'hover',
+      axisId: 0,
+      active: false,
+      defaultIndex: undefined,
+    },
+  })
 
-  setMouseOverAxisIndex,
-  setMouseClickAxisIndex,
-  setSyncInteraction,
-  setKeyboardInteraction,
-} = tooltipSlice.actions
+  function sameInteraction(a: TooltipInteractionState, b: TooltipInteractionState) {
+    return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate
+  }
 
-export const tooltipReducer = tooltipSlice.reducer
+  function addTooltipEntrySettings(settings: TooltipPayloadConfiguration) {
+    state.value = { ...state.value, tooltipItemPayloads: [...state.value.tooltipItemPayloads, settings] }
+  }
+
+  function removeTooltipEntrySettings(settings: TooltipPayloadConfiguration) {
+    const current = state.value
+    const index = current.tooltipItemPayloads.indexOf(settings)
+    if (index < 0)
+      return
+    state.value = { ...current, tooltipItemPayloads: current.tooltipItemPayloads.filter((_, i) => i !== index) }
+  }
+
+  function setTooltipSettingsState(settings: TooltipSettingsState) {
+    const previous = state.value.settings
+    if (previous.shared === settings.shared && previous.trigger === settings.trigger && previous.axisId === settings.axisId
+      && previous.active === settings.active && previous.defaultIndex === settings.defaultIndex) {
+      return
+    }
+    state.value = { ...state.value, settings }
+  }
+
+  function activate(channel: 'itemInteraction' | 'axisInteraction', trigger: 'hover' | 'click', payload: TooltipActionPayload) {
+    const current = state.value
+    const interaction: TooltipInteractionState = {
+      active: true,
+      index: payload.activeIndex,
+      dataKey: payload.activeDataKey,
+      coordinate: payload.activeCoordinate,
+    }
+    const previous = current[channel][trigger]
+    if (sameInteraction(previous, interaction) && !current.syncInteraction.active && !current.keyboardInteraction.active)
+      return
+    state.value = {
+      ...current,
+      [channel]: sameInteraction(previous, interaction) ? current[channel] : { ...current[channel], [trigger]: interaction },
+      syncInteraction: current.syncInteraction.active ? { ...current.syncInteraction, active: false } : current.syncInteraction,
+      keyboardInteraction: current.keyboardInteraction.active ? { ...current.keyboardInteraction, active: false } : current.keyboardInteraction,
+    }
+  }
+
+  function setActiveMouseOverItemIndex(payload: TooltipActionPayload) { activate('itemInteraction', 'hover', payload) }
+  function setActiveClickItemIndex(payload: TooltipActionPayload) { activate('itemInteraction', 'click', payload) }
+  function setMouseOverAxisIndex(payload: TooltipActionPayload) { activate('axisInteraction', 'hover', payload) }
+  function setMouseClickAxisIndex(payload: TooltipActionPayload) { activate('axisInteraction', 'click', payload) }
+
+  function mouseLeaveItem() {
+    const current = state.value
+    if (!current.itemInteraction.hover.active)
+      return
+    state.value = { ...current, itemInteraction: { ...current.itemInteraction, hover: { ...current.itemInteraction.hover, active: false } } }
+  }
+
+  function mouseLeaveChart() {
+    const current = state.value
+    if (!current.itemInteraction.hover.active && !current.axisInteraction.hover.active)
+      return
+    // Keep the last index and coordinate for animation and the Tooltip active prop.
+    state.value = {
+      ...current,
+      itemInteraction: current.itemInteraction.hover.active ? { ...current.itemInteraction, hover: { ...current.itemInteraction.hover, active: false } } : current.itemInteraction,
+      axisInteraction: current.axisInteraction.hover.active ? { ...current.axisInteraction, hover: { ...current.axisInteraction.hover, active: false } } : current.axisInteraction,
+    }
+  }
+
+  function setSyncInteraction(interaction: TooltipSyncState) {
+    const previous = state.value.syncInteraction
+    if (sameInteraction(previous, interaction) && previous.label === interaction.label)
+      return
+    state.value = { ...state.value, syncInteraction: interaction }
+  }
+
+  function setKeyboardInteraction(payload: TooltipActionPayload & { active: boolean }) {
+    const interaction: TooltipInteractionState = {
+      active: payload.active,
+      index: payload.activeIndex,
+      dataKey: payload.activeDataKey,
+      coordinate: payload.activeCoordinate,
+    }
+    if (sameInteraction(state.value.keyboardInteraction, interaction))
+      return
+    state.value = { ...state.value, keyboardInteraction: interaction }
+  }
+
+  return {
+    state: computed(() => state.value),
+    addTooltipEntrySettings,
+    removeTooltipEntrySettings,
+    setTooltipSettingsState,
+    setActiveMouseOverItemIndex,
+    setActiveClickItemIndex,
+    setMouseOverAxisIndex,
+    setMouseClickAxisIndex,
+    mouseLeaveItem,
+    mouseLeaveChart,
+    setSyncInteraction,
+    setKeyboardInteraction,
+  }
+}

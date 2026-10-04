@@ -1,7 +1,8 @@
+import { useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { computed, defineComponent, ref, watch } from 'vue'
 import type { SlotsType } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { Animate } from '@/animation/Animate'
@@ -12,7 +13,6 @@ import { extractCellProps } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/pieSelectors'
 import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
-import { mouseLeaveItem, setActiveMouseOverItemIndex } from '@/state/tooltipSlice'
 import { polarToCartesian } from '@/utils/polar'
 import type { PiePropsWithSVG } from './type'
 import { PieVueProps } from './type'
@@ -29,7 +29,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
   }>,
   setup(props, { attrs, slots }) {
     const data = useTrackedData(() => props.data)
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const isControlled = computed(() => props.activeIndex !== -1)
     const activeIndex = ref(props.activeIndex)
     watch(() => props.activeIndex, (val) => {
@@ -114,18 +114,18 @@ export const Pie = defineComponent<PiePropsWithSVG>({
       if (!isControlled.value) {
         activeIndex.value = index
       }
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: String(index),
         activeDataKey: props.dataKey,
         activeCoordinate: sector.tooltipPosition,
-      }))
+      })
     }
 
     function handleSectorLeave() {
       if (!isControlled.value) {
         activeIndex.value = -1
       }
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
     }
 
     function renderLabel(sector: PieSectorDataItem, index: number) {

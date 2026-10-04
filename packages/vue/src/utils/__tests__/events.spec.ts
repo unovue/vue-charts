@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { PayloadAction } from '@reduxjs/toolkit'
-import type { TooltipSyncState } from '@/state/tooltipSlice'
+import type { TooltipSyncMessage } from '@/utils/events'
 import type { BrushStartEndIndex } from '@/state/chartData'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 
-const tooltipAction: PayloadAction<TooltipSyncState> = {
-  type: 'tooltip/setSyncInteraction',
-  payload: { active: true, coordinate: undefined, dataKey: undefined, index: '0', label: 'A' },
+const tooltipMessage: TooltipSyncMessage = {
+  kind: 'tooltip',
+  active: true,
+  coordinate: undefined,
+  dataKey: undefined,
+  index: '0',
+  label: 'A',
 }
 const brushIndexes: BrushStartEndIndex = { startIndex: 0, endIndex: 2 }
 
@@ -19,10 +22,10 @@ describe('eventCenter', () => {
     eventCenter.on(BRUSH_SYNC_EVENT, brushListener)
 
     const emitter = Symbol('emitter')
-    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipAction, emitter)
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipMessage, emitter)
     eventCenter.emit(BRUSH_SYNC_EVENT, 'sync-id', brushIndexes, emitter)
 
-    expect(tooltipListener).toHaveBeenCalledWith('sync-id', tooltipAction, emitter)
+    expect(tooltipListener).toHaveBeenCalledWith('sync-id', tooltipMessage, emitter)
     expect(brushListener).toHaveBeenCalledWith('sync-id', brushIndexes, emitter)
     expect(tooltipListener).toHaveBeenCalledTimes(1)
     expect(brushListener).toHaveBeenCalledTimes(1)
@@ -37,13 +40,13 @@ describe('eventCenter', () => {
     eventCenter.on(TOOLTIP_SYNC_EVENT, firstListener)
     eventCenter.on(TOOLTIP_SYNC_EVENT, secondListener)
     eventCenter.off(TOOLTIP_SYNC_EVENT, firstListener)
-    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipAction, Symbol('emitter'))
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipMessage, Symbol('emitter'))
 
     expect(firstListener).not.toHaveBeenCalled()
     expect(secondListener).toHaveBeenCalledTimes(1)
 
     eventCenter.off(TOOLTIP_SYNC_EVENT, secondListener)
-    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipAction, Symbol('emitter'))
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, 'sync-id', tooltipMessage, Symbol('emitter'))
     expect(secondListener).toHaveBeenCalledTimes(1)
   })
 

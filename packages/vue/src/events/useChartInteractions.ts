@@ -1,5 +1,5 @@
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { mouseLeaveChart, setActiveMouseOverItemIndex, setKeyboardInteraction, setMouseClickAxisIndex, setMouseOverAxisIndex } from '@/state/tooltipSlice'
+import { useChartTooltip } from '@/state/chartContext'
+import { useAppSelector } from '@/state/hooks'
 import { selectActivePropsFromChartPointer } from '@/state/selectors/selectActivePropsFromChartPointer'
 import { selectTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { selectTooltipAxisTicks, selectTooltipDisplayedData } from '@/state/selectors/tooltipSelectors'
@@ -13,7 +13,7 @@ import type { ChartPointer } from '@/types'
 
 export function useChartInteractions() {
   const chartState = useAppSelector(state => state)
-  const dispatch = useAppDispatch()
+  const tooltip = useChartTooltip()
 
   function click(chartPointer: ChartPointer) {
     const state = chartState.value
@@ -21,13 +21,11 @@ export function useChartInteractions() {
     if (tooltipEventType === 'axis') {
       const activeProps = selectActivePropsFromChartPointer(state, chartPointer)
       if (activeProps?.activeIndex != null) {
-        dispatch(
-          setMouseClickAxisIndex({
-            activeIndex: activeProps.activeIndex,
-            activeDataKey: undefined,
-            activeCoordinate: activeProps.activeCoordinate,
-          }),
-        )
+        tooltip.setMouseClickAxisIndex({
+          activeIndex: activeProps.activeIndex,
+          activeDataKey: undefined,
+          activeCoordinate: activeProps.activeCoordinate,
+        })
       }
     }
   }
@@ -38,16 +36,14 @@ export function useChartInteractions() {
     const activeProps = selectActivePropsFromChartPointer(state, chartPointer)
     if (tooltipEventType === 'axis') {
       if (activeProps?.activeIndex != null) {
-        dispatch(
-          setMouseOverAxisIndex({
-            activeIndex: activeProps.activeIndex,
-            activeDataKey: undefined,
-            activeCoordinate: activeProps.activeCoordinate,
-          }),
-        )
+        tooltip.setMouseOverAxisIndex({
+          activeIndex: activeProps.activeIndex,
+          activeDataKey: undefined,
+          activeCoordinate: activeProps.activeCoordinate,
+        })
       }
       else {
-        dispatch(mouseLeaveChart())
+        tooltip.mouseLeaveChart()
       }
     }
   }
@@ -69,14 +65,12 @@ export function useChartInteractions() {
     const tooltipTicks = selectTooltipAxisTicks(state)
     if (key === 'Enter') {
       const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(keyboardInteraction.index))
-      dispatch(
-        setKeyboardInteraction({
-          active: !keyboardInteraction.active,
-          activeIndex: keyboardInteraction.index,
-          activeDataKey: keyboardInteraction.dataKey,
-          activeCoordinate: coordinate,
-        }),
-      )
+      tooltip.setKeyboardInteraction({
+        active: !keyboardInteraction.active,
+        activeIndex: keyboardInteraction.index,
+        activeDataKey: keyboardInteraction.dataKey,
+        activeCoordinate: coordinate,
+      })
       return
     }
 
@@ -89,14 +83,12 @@ export function useChartInteractions() {
     }
     const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(nextIndex))
 
-    dispatch(
-      setKeyboardInteraction({
-        active: true,
-        activeIndex: nextIndex.toString(),
-        activeDataKey: undefined,
-        activeCoordinate: coordinate,
-      }),
-    )
+    tooltip.setKeyboardInteraction({
+      active: true,
+      activeIndex: nextIndex.toString(),
+      activeDataKey: undefined,
+      activeCoordinate: coordinate,
+    })
   }
 
   function focus() {
@@ -112,14 +104,12 @@ export function useChartInteractions() {
     if (keyboardInteraction.index == null) {
       const nextIndex = '0'
       const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(nextIndex))
-      dispatch(
-        setKeyboardInteraction({
-          activeDataKey: undefined,
-          active: true,
-          activeIndex: nextIndex,
-          activeCoordinate: coordinate,
-        }),
-      )
+      tooltip.setKeyboardInteraction({
+        activeDataKey: undefined,
+        active: true,
+        activeIndex: nextIndex,
+        activeCoordinate: coordinate,
+      })
     }
   }
 
@@ -139,13 +129,11 @@ export function useChartInteractions() {
         })!,
       )
       if (activeProps?.activeIndex != null) {
-        dispatch(
-          setMouseOverAxisIndex({
-            activeIndex: activeProps.activeIndex,
-            activeDataKey: undefined,
-            activeCoordinate: activeProps.activeCoordinate,
-          }),
-        )
+        tooltip.setMouseOverAxisIndex({
+          activeIndex: activeProps.activeIndex,
+          activeDataKey: undefined,
+          activeCoordinate: activeProps.activeCoordinate,
+        })
       }
     }
     else if (tooltipEventType === 'item') {
@@ -157,13 +145,11 @@ export function useChartInteractions() {
       const dataKey = target.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
       const coordinate = selectTooltipCoordinate(chartState.value, itemIndex, dataKey!)
 
-      dispatch(
-        setActiveMouseOverItemIndex({
-          activeDataKey: dataKey!,
-          activeIndex: itemIndex,
-          activeCoordinate: coordinate,
-        }),
-      )
+      tooltip.setActiveMouseOverItemIndex({
+        activeDataKey: dataKey!,
+        activeIndex: itemIndex,
+        activeCoordinate: coordinate,
+      })
     }
   }
 

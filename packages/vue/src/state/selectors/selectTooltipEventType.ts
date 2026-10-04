@@ -1,6 +1,6 @@
 import type { RechartsRootState } from '../store'
 import { useAppSelector } from '../hooks'
-import type { SharedTooltipSettings } from '../tooltipSlice'
+import type { SharedTooltipSettings } from '../chartTooltip'
 import type { TooltipEventType } from '@/types'
 
 export function selectDefaultTooltipEventType(state: RechartsRootState): TooltipEventType {

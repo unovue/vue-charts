@@ -1,20 +1,18 @@
+import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideEntranceGate } from '@/animation/entranceGate'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, ref, watchEffect } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent, ref, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
-import { useAppDispatch } from '@/state/hooks'
-import { addTooltipEntrySettings, mouseLeaveItem, removeTooltipEntrySettings, setActiveClickItemIndex, setActiveMouseOverItemIndex } from '@/state/tooltipSlice'
 import type { ChartOptions } from '@/state/optionsSlice'
-import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/tooltipSlice'
+import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import type { Coordinate } from '@/types'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
@@ -131,7 +129,7 @@ const TreemapInner = defineComponent({
   props: TreemapVueProps,
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const tooltip = useChartTooltip()
     const colors = computed(() => props.colorPanel ?? DEFAULT_COLORS)
 
     // Nest mode state
@@ -180,7 +178,7 @@ const TreemapInner = defineComponent({
     })
 
     // Register tooltip entry settings (like Funnel/Scatter do)
-    watchEffect((onCleanup) => {
+    watch(computed(() => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: nodeTree.value,
         positions: undefined,
@@ -197,11 +195,13 @@ const TreemapInner = defineComponent({
           unit: '',
         },
       }
-      dispatch(addTooltipEntrySettings(tooltipEntrySettings))
+      return tooltipEntrySettings
+    }), (tooltipEntrySettings, _previous, onCleanup) => {
+      tooltip.addTooltipEntrySettings(tooltipEntrySettings)
       onCleanup(() => {
-        dispatch(removeTooltipEntrySettings(tooltipEntrySettings))
+        tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
       })
-    })
+    }, { immediate: true })
 
     // Map layout node name → tooltipIndex from nodeTree
     function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
@@ -259,16 +259,16 @@ const TreemapInner = defineComponent({
         x: node.x + node.width / 2,
         y: node.y + node.height / 2,
       }
-      dispatch(setActiveMouseOverItemIndex({
+      tooltip.setActiveMouseOverItemIndex({
         activeIndex: tooltipIndex,
         activeDataKey: props.dataKey,
         activeCoordinate,
-      }))
+      })
       props.onMouseEnter?.(node, e)
     }
 
     function handleNodeMouseLeave(node: TreemapLayoutNode, e: MouseEvent) {
-      dispatch(mouseLeaveItem())
+      tooltip.mouseLeaveItem()
       props.onMouseLeave?.(node, e)
     }
 
@@ -282,11 +282,11 @@ const TreemapInner = defineComponent({
           x: node.x + node.width / 2,
           y: node.y + node.height / 2,
         }
-        dispatch(setActiveClickItemIndex({
+        tooltip.setActiveClickItemIndex({
           activeIndex: tooltipIndex,
           activeDataKey: props.dataKey,
           activeCoordinate,
-        }))
+        })
         props.onClick?.(node, e)
       }
     }
