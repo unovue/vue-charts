@@ -1,8 +1,7 @@
-import { computed, shallowRef, watch } from 'vue'
+import { computed } from 'vue'
 import type { Point } from '@/shape/Curve'
 import type { ChartTransition } from './motion'
 import { useAnimationCallbacks } from './useAnimationCallbacks'
-import type { DisplayItem } from './useKeyedTransition'
 import { useKeyedTransition } from './useKeyedTransition'
 
 interface PointState<T> {
@@ -63,6 +62,7 @@ export function usePointTransition<T extends Point>(
       return { ...from, point: { ...from.point, x: neighbor.point.x, y: neighbor.point.y }, baseline: neighbor.baseline }
     },
     isActive: options.isActive,
+    connected: true,
     transition: options.transition,
     onStart: () => {
       if (target()?.length || appeared)
@@ -75,28 +75,12 @@ export function usePointTransition<T extends Point>(
         callbacks.onEnd()
     },
   })
-  // Merge exits into the previous path order, before the next surviving neighbour.
-  const ordered = shallowRef<DisplayItem<PointState<T>>[]>([])
-  watch(items, (current) => {
-    const oldKeys = ordered.value.map(item => item.key)
-    const next = current.filter(item => item.phase !== 'exit')
-    const exits = new Map(current.filter(item => item.phase === 'exit').map(item => [item.key, item]))
-    for (let i = 0; i < oldKeys.length; i++) {
-      const exit = exits.get(oldKeys[i])
-      if (!exit)
-        continue
-      const following = oldKeys.slice(i + 1).find(key => next.some(item => item.key === key))
-      const index = following == null ? next.length : next.findIndex(item => item.key === following)
-      next.splice(index, 0, exit)
-    }
-    ordered.value = next
-  }, { immediate: true, flush: 'sync' })
   return {
-    items: ordered,
-    points: computed(() => ordered.value.map(item => item.value.point)),
+    items,
+    points: computed(() => items.value.map(item => item.value.point)),
     baseline: computed(() => {
-      const first = ordered.value[0]?.value.baseline
-      return typeof first === 'number' ? first : ordered.value.map(item => item.value.baseline).filter((point): point is Point => point != null && typeof point === 'object')
+      const first = items.value[0]?.value.baseline
+      return typeof first === 'number' ? first : items.value.map(item => item.value.baseline).filter((point): point is Point => point != null && typeof point === 'object')
     }),
     reveal: computed(() => Math.min(1, ...items.value.map(item => item.value.reveal))),
     isAnimating,

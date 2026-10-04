@@ -29,6 +29,12 @@ export interface KeyedTransitionOptions<T> {
   /** Where an exiting item ends, e.g. collapsed onto its baseline or into a remaining neighbour. */
   exitTo: (from: T, neighbors: Neighbors<T>) => T
   isActive: () => boolean
+  /**
+   * The items form one path (a line or area). Every point then follows the update timing, so
+   * each frame is a blend of two ordered point lists and the path never crosses itself.
+   * Separate shapes (bars) leave faster than they arrive.
+   */
+  connected?: boolean
   /** A user `transition` prop. When set, every phase follows it instead of the motion tokens. */
   transition?: () => ChartTransition | undefined
   onStart?: () => void
@@ -101,13 +107,11 @@ export function useKeyedTransition<T>(
   }
 
   function plan(next: readonly T[]): PlanItem<T>[] {
-    const onScreen = new Map<PropertyKey, T>()
-    for (const item of items.value) {
-      if (item.phase !== 'exit')
-        onScreen.set(item.key, item.value)
-    }
+    // Everything drawn now, including items still leaving after an interrupted change.
+    const drawn = items.value
+    const onScreen = new Map(drawn.map(item => [item.key, item.value]))
     const nextItems = keyed(next)
-    const nextKeys = new Set(nextItems.map(i => i.key))
+    const nextKeys = new Set(nextItems.map(item => item.key))
 
     // Closest neighbours in the new order that are already on screen.
     const neighborsInNext = (index: number): Neighbors<T> => {
@@ -119,7 +123,7 @@ export function useKeyedTransition<T>(
         following = onScreen.get(nextItems[i].key)
       return { previous, next: following }
     }
-    const result: PlanItem<T>[] = nextItems.map(({ key, value: to }, index) => {
+    const staying: PlanItem<T>[] = nextItems.map(({ key, value: to }, index) => {
       const from = onScreen.get(key)
       return from === undefined
         ? { key, from: options.enterFrom(to, neighborsInNext(index)), to, phase: 'enter' }
@@ -127,22 +131,38 @@ export function useKeyedTransition<T>(
     })
 
     // Closest neighbours in the old order that stay, at their new positions.
-    const remaining = items.value.filter(i => i.phase !== 'exit')
-    const targetOf = new Map(result.map(r => [r.key, r.to]))
-    const neighborsInPrevious = (index: number): Neighbors<T> => {
+    const targetOf = new Map(staying.map(item => [item.key, item.to]))
+    const neighborsInDrawn = (index: number): Neighbors<T> => {
       let previous: T | undefined
       let following: T | undefined
       for (let i = index - 1; i >= 0 && previous === undefined; i--)
-        previous = targetOf.get(remaining[i].key)
-      for (let i = index + 1; i < remaining.length && following === undefined; i++)
-        following = targetOf.get(remaining[i].key)
+        previous = targetOf.get(drawn[i].key)
+      for (let i = index + 1; i < drawn.length && following === undefined; i++)
+        following = targetOf.get(drawn[i].key)
       return { previous, next: following }
     }
-    remaining.forEach((item, index) => {
-      if (!nextKeys.has(item.key))
-        result.push({ key: item.key, from: item.value, to: options.exitTo(item.value, neighborsInPrevious(index)), phase: 'exit' })
+
+    // Exiting items keep their place relative to the items that stay, so a path drawn through
+    // the items never jumps back across the chart. Each one is placed before the next item of
+    // the old order that stays.
+    const exitsBefore = new Map<PropertyKey, PlanItem<T>[]>()
+    const trailingExits: PlanItem<T>[] = []
+    drawn.forEach((item, index) => {
+      if (nextKeys.has(item.key))
+        return
+      const exit: PlanItem<T> = { key: item.key, from: item.value, to: options.exitTo(item.value, neighborsInDrawn(index)), phase: 'exit' }
+      const anchor = drawn.slice(index + 1).find(later => nextKeys.has(later.key))
+      if (anchor) {
+        const group = exitsBefore.get(anchor.key) ?? []
+        group.push(exit)
+        exitsBefore.set(anchor.key, group)
+      }
+      else {
+        trailingExits.push(exit)
+      }
     })
-    return result
+
+    return [...staying.flatMap(item => [...(exitsBefore.get(item.key) ?? []), item]), ...trailingExits]
   }
 
   watch(target, (next) => {
@@ -157,7 +177,7 @@ export function useKeyedTransition<T>(
 
     const steps = plan(nextItems)
     // The very first appearance uses the enter timing for every item.
-    const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[hasEntered ? phase : 'enter']
+    const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[!hasEntered ? 'enter' : options.connected ? 'update' : phase]
     hasEntered = true
     stop()
     isAnimating.value = true

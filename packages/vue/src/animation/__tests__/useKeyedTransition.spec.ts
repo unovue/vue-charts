@@ -144,3 +144,37 @@ describe('useKeyedTransition neighbours', () => {
     expect(view()).toEqual(['A:0', 'B:80'])
   })
 })
+
+describe('useKeyedTransition order', () => {
+  function setupOrder(initial: string[]) {
+    const data = shallowRef(initial.map(name => ({ name, height: 10 })))
+    const result = effectScope().run(() => useKeyedTransition(() => data.value, {
+      key: item => item.name,
+      interpolate: (_from, to) => to,
+      enterFrom: to => to,
+      exitTo: from => from,
+      isActive: () => true,
+    }))!
+    const view = () => result.items.value.map(i => `${String(i.key)}:${i.phase}`)
+    return { data, view }
+  }
+
+  // Lines and areas draw a path through the items in list order.
+  it('keeps exiting items in their old place between the items that stay', async () => {
+    const { data, view } = setupOrder(['A', 'B', 'C', 'D', 'E'])
+    finish()
+    data.value = ['A', 'D'].map(name => ({ name, height: 10 }))
+    await nextTick()
+    expect(view()).toEqual(['A:update', 'B:exit', 'C:exit', 'D:update', 'E:exit'])
+  })
+
+  it('lets an item that is still leaving return from where it is', async () => {
+    const { data, view } = setupOrder(['A', 'B'])
+    finish()
+    data.value = [{ name: 'A', height: 10 }]
+    await nextTick()
+    data.value = [{ name: 'A', height: 10 }, { name: 'B', height: 10 }]
+    await nextTick()
+    expect(view()).toEqual(['A:update', 'B:update'])
+  })
+})
