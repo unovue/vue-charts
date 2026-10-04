@@ -110,6 +110,43 @@ try {
   await write(vite, 'index.html', '<!doctype html><html><head><title>vccs consumer</title></head><body><div id="app"></div><script type="module" src="/src/main.ts"></script></body></html>\n')
   await write(vite, 'src/main.ts', 'import { createApp } from \'vue\'\nimport App from \'./App.vue\'\ncreateApp(App).mount(\'#app\')\n')
   await write(vite, 'src/App.vue', chart.replace('IMPORTS', 'import { BarChart, Bar, LineChart, Line, Tooltip, Legend, XAxis, YAxis } from \'vccs\''))
+  // Minimal shadcn-vue shape: theme variables on a container and typed chart slots.
+  await write(vite, 'src/ChartContainer.vue', `<script setup lang="ts">
+import { useId } from 'vue'
+const id = useId()
+</script>
+<template>
+  <div data-slot="chart" :data-chart="id" style="--v-charts-grid: var(--border); --v-charts-axis: var(--border); --v-charts-text: var(--muted-foreground); --v-charts-cursor: var(--border); --v-charts-muted: var(--muted); --v-charts-background: var(--background); --v-charts-inactive: var(--muted-foreground); --v-charts-focus: var(--ring)">
+    <slot />
+  </div>
+</template>
+`)
+  await write(vite, 'src/RegistryChart.vue', `<script setup lang="ts">
+import { CartesianGrid, defineChartComponents } from 'vccs'
+import ChartContainer from './ChartContainer.vue'
+interface Row { month: string; visitors: number }
+const { AreaChart, Area, XAxis, Tooltip } = defineChartComponents<Row>()
+const rows: Row[] = [{ month: 'January', visitors: 12 }]
+</script>
+<template>
+  <ChartContainer>
+    <AreaChart :data="rows" :width="600" :height="300">
+      <CartesianGrid />
+      <XAxis data-key="month" />
+      <Area data-key="visitors" :is-animation-active="false" />
+      <Tooltip>
+        <template #content="{ active, payload, label }">
+          <div v-if="active">{{ label }}: {{ payload.map(item => item.payload.visitors).join(', ') }}</div>
+        </template>
+      </Tooltip>
+    </AreaChart>
+  </ChartContainer>
+</template>
+`)
+  const app = await readFile(join(vite, 'src/App.vue'), 'utf8')
+  await write(vite, 'src/App.vue', app
+    .replace('<script setup lang="ts">', '<script setup lang="ts">\nimport RegistryChart from \'./RegistryChart.vue\'')
+    .replace('<template>', '<template>\n  <RegistryChart />'))
   run(vite, ['install', '--prod=false', '--no-frozen-lockfile'])
   check(vite, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
   check(vite, ['exec', 'vite', 'build'])
