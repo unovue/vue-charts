@@ -100,8 +100,7 @@ const BarView = defineComponent({
         return null
       }
 
-      // Bars entering or leaving a shifted window travel past the plot edges while they animate.
-      const clip = needClip.value || isAnimating.value
+      const clip = needClip.value
       return (
         <Fragment>
           {

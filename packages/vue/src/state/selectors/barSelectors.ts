@@ -173,7 +173,7 @@ export function selectBarBandSize(state: RechartsRootState, xAxisId: AxisId, yAx
   return getBandSizeOfAxis(axis, ticks, true) ?? maxBarSize ?? 0
 }
 
-function selectAxisBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
+export function selectAxisBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
   const layout = selectChartLayout(state)
   let axis: BaseAxisWithScale, ticks: ReadonlyArray<TickItem>
   if (layout === 'horizontal') {

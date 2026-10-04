@@ -15,10 +15,12 @@ import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransiti
 import type { BarRectangleItem } from '@/types/bar'
 import { useBarContext } from '../hooks/useBar'
 
-/** A bar plus its position in the data, which tooltips and cells address. */
+/** A bar, its position in the data (which tooltips and cells address) and its category band. */
 interface IndexedBar {
   bar: BarRectangleItem
   index: number
+  /** The category band along the category axis: start and size in pixels. */
+  band?: { start: number, size: number }
 }
 
 export const BarRectangles = defineComponent({
@@ -30,7 +32,7 @@ export const BarRectangles = defineComponent({
     const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
-    const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps } = useBarContext()
+    const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps, band } = useBarContext()
 
     // Bars are matched across data changes by their category, so a shifted or extended
     // series slides instead of every bar morphing into its neighbour.
@@ -38,34 +40,60 @@ export const BarRectangles = defineComponent({
       ? selectAxisSettings(state, 'yAxis', props.yAxisId)
       : selectAxisSettings(state, 'xAxis', props.xAxisId))
 
+    const bandOf = (bar: BarRectangleItem): IndexedBar['band'] => {
+      const position = layout.value === 'vertical' ? bar.y : bar.x
+      return band.value && position != null ? { start: position - band.value.offset, size: band.value.size } : undefined
+    }
     const atBaseline = (bar: BarRectangleItem): BarRectangleItem => layout.value === 'vertical'
       ? { ...bar, x: bar.stackedBarStart, width: 0 }
       : { ...bar, y: bar.stackedBarStart, height: 0 }
 
-    // How far the neighbouring bars travel along the category axis. Entering and leaving bars
-    // travel with them, so a shifted window slides in and out instead of growing in place.
-    const travel = ({ previousMove, nextMove }: Neighbors<IndexedBar>) => {
-      const axis = layout.value === 'vertical' ? 'y' : 'x'
-      const moves = [previousMove, nextMove].filter(move => move != null)
-      if (!moves.length)
-        return 0
-      return moves.reduce((sum, { from, to }) => sum + (to.bar[axis] ?? 0) - (from.bar[axis] ?? 0), 0) / moves.length
+    // Entering and leaving bars open or close at the boundary between their neighbouring
+    // categories. Every edge then moves linearly on one shared curve between two layouts
+    // without overlap, so no bar ever covers another, in any series of a group.
+    const seam = ({ previous, next }: Neighbors<IndexedBar>) => {
+      const end = previous?.band && previous.band.start + previous.band.size
+      const start = next?.band?.start
+      return end == null ? start : start == null ? end : (end + start) / 2
     }
-    const shifted = (bar: BarRectangleItem, by: number): BarRectangleItem => layout.value === 'vertical'
-      ? { ...bar, y: (bar.y ?? 0) + by }
-      : { ...bar, x: (bar.x ?? 0) + by }
+    // A series shown or hidden from the legend has no neighbours of its own: its bars open or
+    // close at the nearer edge of their band while the other series of the group make room.
+    // The first appearance grows in place.
+    let shown = false
+    const nearerEdge = ({ bar, band }: IndexedBar) => {
+      if (!shown || !band)
+        return undefined
+      const [position, size] = layout.value === 'vertical' ? [bar.y ?? 0, bar.height ?? 0] : [bar.x ?? 0, bar.width ?? 0]
+      return position + size / 2 < band.start + band.size / 2 ? band.start : band.start + band.size
+    }
+    const collapsed = (item: IndexedBar, neighbors: Neighbors<IndexedBar>): IndexedBar => {
+      const { bar, index } = item
+      const at = seam(neighbors) ?? nearerEdge(item)
+      const flat = atBaseline(bar)
+      if (at == null)
+        return { index, bar: flat }
+      return {
+        index,
+        bar: layout.value === 'vertical' ? { ...flat, y: at, height: 0 } : { ...flat, x: at, width: 0 },
+        band: { start: at, size: 0 },
+      }
+    }
 
     const { items, isAnimating: transitioning } = useKeyedTransition<IndexedBar>(
       // A series hidden from the legend lets its bars leave instead of vanishing.
-      () => props.hide ? [] : barData.value?.map((bar, index) => ({ bar, index })),
+      () => props.hide ? [] : barData.value?.map((bar, index) => ({ bar, index, band: bandOf(bar) })),
       {
         key: ({ bar, index }) => {
           const dataKey = categoryAxis.value?.dataKey
           const category = dataKey == null ? undefined : getValueByDataKey(bar.payload, dataKey)
           return category == null ? index : String(category)
         },
-        interpolate: ({ bar: from }, { bar: to, index }, t) => ({
+        interpolate: ({ bar: from, band: fromBand }, { bar: to, index, band: toBand }, t) => ({
           index,
+          band: fromBand && toBand && {
+            start: interpolate(fromBand.start, toBand.start, t),
+            size: interpolate(fromBand.size, toBand.size, t),
+          },
           bar: {
             ...to,
             x: interpolate(from.x ?? 0, to.x ?? 0, t),
@@ -74,9 +102,9 @@ export const BarRectangles = defineComponent({
             height: interpolate(from.height ?? 0, to.height ?? 0, t),
           },
         }),
-        enterFrom: ({ bar, index }, neighbors) => ({ index, bar: shifted(atBaseline(bar), -travel(neighbors)) }),
-        exitTo: ({ bar, index }, neighbors) => ({ index, bar: shifted(atBaseline(bar), travel(neighbors)) }),
-        // Leaving bars travel with their neighbours, so they share their timing.
+        enterFrom: collapsed,
+        exitTo: collapsed,
+        // Entering and leaving bars move with their neighbours, so they share their timing.
         connected: true,
         isActive: () => props.isAnimationActive !== false,
         transition: () => props.transition,
@@ -84,6 +112,9 @@ export const BarRectangles = defineComponent({
         onEnd: () => emit('animation-end'),
       },
     )
+    watch(() => items.value.length > 0, (value) => {
+      shown ||= value
+    }, { immediate: true })
     watch(transitioning, (value) => {
       isAnimating.value = value
     }, { immediate: true })

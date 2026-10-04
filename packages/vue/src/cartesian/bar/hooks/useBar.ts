@@ -8,7 +8,7 @@ import { getNormalizedStackId } from '@/utils/chart'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useAppSelector } from '@/state/hooks'
-import { selectBarRectangles } from '@/state/selectors/barSelectors'
+import { selectAxisBandSize, selectBarPosition, selectBarRectangles } from '@/state/selectors/barSelectors'
 import type { BarRectangleItem } from '@/types/bar'
 
 export interface BarContext {
@@ -22,6 +22,8 @@ export interface BarContext {
   shapeSlot?: (props: any) => any
   activeBarSlot?: (props: any) => any
   cellProps: ShallowRef<Record<string, any>[]>
+  /** Where the bars sit in their category band, so bars can enter and leave between categories. */
+  band: Readonly<Ref<{ offset: number, size: number } | undefined>>
 }
 export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
 
@@ -38,6 +40,9 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
     stackId: getNormalizedStackId(props.stackId),
   }))
   const rects = useAppSelector(state => selectBarRectangles(state, props.xAxisId, props.yAxisId, isPanorama, barSettings.value))
+  const position = useAppSelector(state => selectBarPosition(state, props.xAxisId, props.yAxisId, isPanorama, barSettings.value))
+  const bandSize = useAppSelector(state => selectAxisBandSize(state, props.xAxisId, props.yAxisId, isPanorama))
+  const band = computed(() => position.value && bandSize.value ? { offset: position.value.offset, size: bandSize.value } : undefined)
 
   const shouldRender = computed(() => {
     // A hidden bar stays mounted so its bars can leave; it draws nothing once they have.
@@ -58,6 +63,7 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
     shapeSlot,
     activeBarSlot,
     cellProps: cellPropsRef,
+    band,
   })
 
   return {

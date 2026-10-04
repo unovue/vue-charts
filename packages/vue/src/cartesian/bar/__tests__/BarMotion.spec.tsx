@@ -21,28 +21,29 @@ beforeEach(() => {
   mockGetBoundingClientRect({ width: 400, height: 300 })
 })
 
-it('slides bars of a shifted window in and out with their neighbours', async () => {
-  const rows = ref(['A', 'B', 'C'].map((name, i) => ({ name, value: 10 + i })))
+it('lets removed categories close between their neighbours without covering any bar', async () => {
+  const rows = ref(['A', 'B', 'C', 'D', 'E'].map((name, i) => ({ name, a: 10 + i, b: 20 - i })))
   const { container } = render(() => (
     <BarChart width={400} height={300} data={rows.value}>
       <XAxis dataKey="name" />
-      <Bar dataKey="value" />
+      <Bar dataKey="a" />
+      <Bar dataKey="b" />
     </BarChart>
   ))
   await nextTick()
   clock.update(clock.to)
   await nextTick()
-  const x = () => [...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => Number(path.getAttribute('d')!.match(/^M\s*(-?[\d.]+)/)![1]))
-  const [a, b] = x()
-  const band = b - a
-  rows.value = ['B', 'C', 'D'].map((name, i) => ({ name, value: 11 + i }))
+  rows.value = rows.value.filter(row => row.name !== 'B' && row.name !== 'C')
   await nextTick()
-  clock.update(clock.to / 2)
-  await nextTick()
-  // Order on screen: A (leaving), B, C, D (entering). All move left by the same distance.
-  const [leaving, staying] = x()
-  expect(staying - b).toBeLessThan(-band / 4)
-  expect(leaving - a).toBeCloseTo(staying - b, 0)
+  for (const progress of [0.25, 0.5, 0.75]) {
+    clock.update(clock.to * progress)
+    await nextTick()
+    const spans = [...container.querySelectorAll('.v-charts-bar-rectangle path')]
+      .map(path => [Number(path.getAttribute('x')), Number(path.getAttribute('x')) + Number(path.getAttribute('width'))])
+      .sort(([a], [b]) => a - b)
+    for (let i = 1; i < spans.length; i++)
+      expect(spans[i][0]).toBeGreaterThanOrEqual(spans[i - 1][1] - 0.01)
+  }
 })
 
 it('lets the bars of a series hidden from the legend collapse instead of vanishing', async () => {
