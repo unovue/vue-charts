@@ -21,7 +21,7 @@ interface ChartSizeProps {
 }
 
 /**
- * Resolves the chart size per dimension: a numeric `width` or `height` prop is fixed, a missing
+ * Resolves the chart size per dimension: a finite nonnegative `width` or `height` prop is fixed, a missing or invalid
  * one follows the measured box. The server and the first client render share the same initial
  * geometry, so hydration matches; measurement happens after mount.
  */
@@ -29,8 +29,8 @@ export function useResponsiveSize(props: ChartSizeProps) {
   const inheritedInitial = useInitialDimension(null)
   const { size, setSize } = useRoundedSize()
   const measured = ref(false)
-  const fixedWidth = computed(() => typeof props.width === 'number' ? props.width : undefined)
-  const fixedHeight = computed(() => typeof props.height === 'number' ? props.height : undefined)
+  const fixedWidth = computed(() => typeof props.width === 'number' && Number.isFinite(props.width) && props.width >= 0 ? props.width : undefined)
+  const fixedHeight = computed(() => typeof props.height === 'number' && Number.isFinite(props.height) && props.height >= 0 ? props.height : undefined)
   const isResponsive = computed(() => fixedWidth.value === undefined || fixedHeight.value === undefined)
   const initial = computed(() => {
     const base = props.initialDimension ?? inheritedInitial?.value

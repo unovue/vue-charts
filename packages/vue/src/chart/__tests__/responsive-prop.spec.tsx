@@ -1,7 +1,7 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Line, LineChart } from '@/index'
+import { Line, LineChart, Sankey, SunburstChart, Treemap } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
@@ -16,6 +16,34 @@ describe('default responsive sizing', () => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
     MockResizeObserver.instances = []
     vi.stubGlobal('ResizeObserver', MockResizeObserver)
+  })
+
+  it('keeps standalone charts finite and recovers when explicit dimensions are invalid', async () => {
+    const dimensions = ref({ width: 400, height: 320 })
+    const charts = [
+      () => <Sankey {...dimensions.value} data={{ nodes: [{ name: 'A' }, { name: 'B' }], links: [{ source: 0, target: 1, value: 10 }] }} isAnimationActive={false} />,
+      () => <Treemap {...dimensions.value} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]} dataKey="value" isAnimationActive={false} />,
+      () => <SunburstChart {...dimensions.value} data={{ name: 'root', children: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }] }} isAnimationActive={false} />,
+    ]
+    for (const chart of charts) {
+      dimensions.value = { width: 400, height: 320 }
+      const { container, unmount } = render(chart)
+      for (const invalid of [Number.NaN, Infinity, -Infinity, -100]) {
+        dimensions.value = { width: invalid, height: invalid }
+        await nextTick()
+        await nextTick()
+        const svg = container.querySelector('svg')!
+        expect(svg.getAttribute('width')).toBe('500')
+        expect(svg.getAttribute('height')).toBe('300')
+        expect(svg.getAttribute('viewBox')).toBe('0 0 500 300')
+        expect(svg.outerHTML).not.toMatch(/NaN|Infinity/)
+
+        dimensions.value = { width: 400, height: 320 }
+        await nextTick()
+        expect(svg.getAttribute('viewBox')).toBe('0 0 400 320')
+      }
+      unmount()
+    }
   })
 
   it('renders the wrapper div with 100% CSS sizing in responsive mode', async () => {
