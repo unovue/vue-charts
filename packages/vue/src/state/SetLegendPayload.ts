@@ -1,22 +1,21 @@
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import { useAppDispatch } from './hooks'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import type { MaybeRef } from 'vue'
-import { unref, watchEffect } from 'vue'
-import { addLegendPayload, removeLegendPayload } from '@/state/legendSlice'
+import { unref, watch } from 'vue'
+import { useChartLegend } from '@/state/chartContext'
 
 export function SetLegendPayload(_legendPayload: MaybeRef<ReadonlyArray<LegendPayload>>): null {
-  const dispatch = useAppDispatch()
+  const { addLegendPayload, removeLegendPayload } = useChartLegend()
   const isPanorama = useIsPanorama()
-  watchEffect((onCleanup) => {
-    const legendPayload = unref(_legendPayload)
+  // Track the payload input, not the chart state read by registration operations.
+  watch(() => unref(_legendPayload), (legendPayload, _, onCleanup) => {
     if (isPanorama) {
       return
     }
-    dispatch(addLegendPayload(legendPayload))
+    addLegendPayload(legendPayload)
     onCleanup(() => {
-      dispatch(removeLegendPayload(legendPayload))
+      removeLegendPayload(legendPayload)
     })
-  })
+  }, { immediate: true })
   return null
 }

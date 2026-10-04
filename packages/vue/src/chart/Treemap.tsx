@@ -11,7 +11,7 @@ import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
-import type { ChartOptions } from '@/state/optionsSlice'
+import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import type { Coordinate } from '@/types'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
@@ -449,8 +449,8 @@ export const Treemap = defineComponent({
   props: { ...TreemapVueProps, ...chartSizeProps },
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
-    const store = createRechartsStore({ options: treemapOptions }, 'Treemap')
-    provideChartContext(store)
+    const store = createRechartsStore(undefined, 'Treemap')
+    provideChartContext(store, undefined, treemapOptions)
     provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 

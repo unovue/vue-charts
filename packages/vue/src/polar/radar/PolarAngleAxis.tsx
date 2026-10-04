@@ -1,7 +1,8 @@
-import { defineComponent, onUnmounted, watchEffect } from 'vue'
+import { defineComponent, onUnmounted, watch } from 'vue'
 import type { PropType, SlotsType } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addAngleAxis, removeAngleAxis } from '@/state/polarAxisSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartPolarAxis } from '@/state/chartContext'
+import type { AngleAxisSettings } from '@/state/chartPolarAxis'
 import { selectPolarAxisTicks } from '@/state/selectors/polarScaleSelectors'
 import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
@@ -53,34 +54,33 @@ export const PolarAngleAxis = defineComponent({
     tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
   }>,
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const { addAngleAxis, removeAngleAxis } = useChartPolarAxis()
 
-    let prevSettings: any = null
-    watchEffect(() => {
-      const settings = {
-        id: props.angleAxisId,
-        type: props.type,
-        dataKey: props.dataKey,
-        scale: 'auto' as const,
-        allowDuplicatedCategory: true,
-        allowDataOverflow: false,
-        reversed: false,
-        includeHidden: false,
-        domain: props.domain,
-        unit: undefined,
-        name: undefined,
-        allowDecimals: false,
-        tickCount: props.tickCount,
-        ticks: props.ticks,
-        tick: props.tick,
-      }
-      dispatch(addAngleAxis(settings))
+    let prevSettings: AngleAxisSettings | null = null
+    watch(() => ({
+      id: props.angleAxisId,
+      type: props.type,
+      dataKey: props.dataKey,
+      scale: 'auto' as const,
+      allowDuplicatedCategory: true,
+      allowDataOverflow: false,
+      reversed: false,
+      includeHidden: false,
+      domain: props.domain,
+      unit: undefined,
+      name: undefined,
+      allowDecimals: false,
+      tickCount: props.tickCount,
+      ticks: props.ticks,
+      tick: props.tick,
+    }), (settings) => {
+      addAngleAxis(settings)
       prevSettings = settings
-    })
+    }, { immediate: true })
 
     onUnmounted(() => {
       if (prevSettings) {
-        dispatch(removeAngleAxis(prevSettings))
+        removeAngleAxis(prevSettings)
         prevSettings = null
       }
     })

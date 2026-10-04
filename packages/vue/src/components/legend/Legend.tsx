@@ -1,5 +1,5 @@
 import type { DefineSetupFnComponent, SlotsType } from 'vue'
-import { Teleport, defineComponent, watchEffect } from 'vue'
+import { Teleport, defineComponent, watch } from 'vue'
 import type { LegendPropsWithSVG, LegendSlots } from './type'
 import { LegendVueProps } from './type'
 import { useLegend } from './hooks/useLegend'
@@ -20,6 +20,7 @@ export default defineComponent({
       positionViewBox,
       syncSettings,
       syncSize,
+      boundingBox,
     } = useLegend(props)
 
     const {
@@ -31,11 +32,11 @@ export default defineComponent({
       handleMouseLeave,
     } = useLegendContent(props)
 
-    // Sync settings and size to store
-    watchEffect(() => {
+    // Watch report inputs so chart-state writes do not become dependencies.
+    watch([resolvedLayout, () => props.align, () => props.verticalAlign, () => props.position, () => props.offset, () => props.portal, boundingBox], () => {
       syncSettings()
       syncSize()
-    })
+    }, { immediate: true })
 
     const renderDefaultContent = () => {
       if (!processedPayload.value || processedPayload.value.length === 0) {

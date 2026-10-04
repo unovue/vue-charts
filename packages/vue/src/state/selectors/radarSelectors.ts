@@ -7,7 +7,7 @@ import { selectAngleAxis, selectPolarViewBox, selectRadiusAxis } from './polarAx
 import type { AxisId } from '../cartesianAxisSlice'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
 import type { ChartDataState } from '../chartData'
-import type { AngleAxisSettings, RadiusAxisSettings } from '../polarAxisSlice'
+import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import { selectUnfilteredPolarItems } from './polarSelectors'
 import type { RechartsScale } from '@/types/scale'
 import type { AngleAxisForRadar, RadarComposedData, RadiusAxisForRadar } from '@/types/radar'

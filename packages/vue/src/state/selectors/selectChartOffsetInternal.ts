@@ -1,4 +1,4 @@
-import type { LegendSettings } from '@/state/legendSlice'
+import type { LegendSettings } from '@/state/chartLegend'
 import { selectChartHeight, selectChartWidth, selectMargin } from '@/state/selectors/containerSelectors'
 import { selectLegendSettings, selectLegendSize } from '@/state/selectors/legendSelectors'
 import { selectAllXAxes, selectAllYAxes } from '@/state/selectors/selectAllAxes'

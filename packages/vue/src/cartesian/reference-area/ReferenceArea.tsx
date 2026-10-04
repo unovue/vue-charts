@@ -4,8 +4,8 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
 import { Rectangle } from '@/shape/Rectangle'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addArea, removeArea } from '@/state/referenceElementsSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartReferenceElements } from '@/state/chartContext'
 import type { AxisId } from '@/state/cartesianAxisSlice'
 import { selectAxisScale } from '@/state/selectors/axisSelectors'
 import { useClipPathId } from '@/chart/provideClipPathId'
@@ -36,7 +36,7 @@ export const ReferenceArea = defineComponent({
   props: ReferenceAreaVueProps,
   inheritAttrs: false,
   setup(props, { attrs }) {
-    const dispatch = useAppDispatch()
+    const { addArea, removeArea } = useChartReferenceElements()
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
 
@@ -51,10 +51,10 @@ export const ReferenceArea = defineComponent({
     })
 
     onMounted(() => {
-      dispatch(addArea(settings))
+      addArea(settings)
     })
     onUnmounted(() => {
-      dispatch(removeArea(settings))
+      removeArea(settings)
     })
 
     const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))

@@ -34,7 +34,7 @@ import {
   selectPolarItemsSettings,
   selectUnfilteredPolarItems,
 } from './polarSelectors'
-import type { AngleAxisSettings, RadiusAxisSettings } from '../polarAxisSlice'
+import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import type { DataKey, LayoutType, TickItem } from '@/types'
 import type { StackId } from '@/types/tick'
 import type { RechartsScale } from '@/types/scale'

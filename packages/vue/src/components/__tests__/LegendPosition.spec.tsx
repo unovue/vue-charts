@@ -6,7 +6,7 @@ import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { appendOffsetOfLegend } from '@/utils/legend'
 import { isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
-import type { LegendSettings } from '@/state/legendSlice'
+import type { LegendSettings } from '@/state/chartLegend'
 
 const data = [
   { name: 'Page A', uv: 400, pv: 2400, amt: 2400 },
@@ -98,7 +98,7 @@ describe('cartesianPositionToCSSTranslate', () => {
   })
 })
 
-describe('Legend position prop', () => {
+describe('legend position prop', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })

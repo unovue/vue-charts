@@ -1,8 +1,9 @@
+import { SetLegendPayload } from '../SetLegendPayload'
 import { cleanup, render } from '@testing-library/vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, isProxy, nextTick, ref } from 'vue'
 import type { ComputedRef } from 'vue'
-import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions } from '../chartContext'
+import { provideChartContext, useAppDispatch, useAppSelector, useChartDataActions, useChartLayoutActions, useChartLegend } from '../chartContext'
 import { createRechartsStore } from '../store'
 import { createChartLayout } from '../chartLayout'
 
@@ -128,4 +129,32 @@ describe('chart context', () => {
     })
     render(Fixture)
   })
+})
+
+it('does not re-register legend payloads when another legend field changes', async () => {
+  let legend: ReturnType<typeof useChartLegend> | undefined
+  const first = [{ value: 'first', color: 'red' }]
+  const second = [{ value: 'second', color: 'blue' }]
+  const Reader = defineComponent({
+    setup() {
+      legend = useChartLegend()
+      SetLegendPayload(first)
+      SetLegendPayload(second)
+      return () => null
+    },
+  })
+  const Fixture = defineComponent({
+    setup() {
+      provideChartContext(createRechartsStore())
+      return () => <Reader />
+    },
+  })
+  const { unmount } = render(Fixture)
+  const payload = legend?.state.value.payload
+  expect(payload).toEqual([first, second])
+  legend?.setLegendSize({ width: 100, height: 30 })
+  await nextTick()
+  expect(legend?.state.value.payload).toBe(payload)
+  unmount()
+  expect(legend?.state.value.payload).toEqual([])
 })

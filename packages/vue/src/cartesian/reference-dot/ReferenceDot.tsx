@@ -3,8 +3,8 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { Label } from '@/components/label/Label'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addDot, removeDot } from '@/state/referenceElementsSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartReferenceElements } from '@/state/chartContext'
 import type { AxisId } from '@/state/cartesianAxisSlice'
 import { selectAxisScale } from '@/state/selectors/axisSelectors'
 import { useClipPathId } from '@/chart/provideClipPathId'
@@ -44,7 +44,7 @@ const _ReferenceDot = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<ReferenceDotSlots>,
   setup(props, { attrs, slots }) {
-    const dispatch = useAppDispatch()
+    const { addDot, removeDot } = useChartReferenceElements()
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
 
@@ -58,10 +58,10 @@ const _ReferenceDot = defineComponent({
     })
 
     onMounted(() => {
-      dispatch(addDot(settings))
+      addDot(settings)
     })
     onUnmounted(() => {
-      dispatch(removeDot(settings))
+      removeDot(settings)
     })
 
     const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))

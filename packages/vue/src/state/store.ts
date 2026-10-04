@@ -1,29 +1,22 @@
+import type { ReferenceElementState } from './chartReferenceElements'
+import type { PolarAxisState } from './chartPolarAxis'
+import type { PolarChartOptions } from './chartPolarOptions'
+import type { UpdatableChartOptions } from './chartRootProps'
+import type { ChartOptions } from './chartOptions'
+import type { LegendState } from './chartLegend'
+import type { BrushSettings } from './chartBrush'
 import type { Action, Dispatch, Store } from '@reduxjs/toolkit'
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import { optionsReducer } from './optionsSlice'
 import type { TooltipState } from './chartTooltip'
 import type { ChartDataState } from './chartData'
 import type { ChartLayoutState } from './chartLayout'
 import { reduxDevtoolsJsonStringifyReplacer } from './reduxDevtoolsJsonStringifyReplacer'
 import { cartesianAxisReducer } from './cartesianAxisSlice'
 import { graphicalItemsReducer } from './graphicalItemsSlice'
-import { referenceElementsReducer } from './referenceElementsSlice'
-import { brushReducer } from './brushSlice'
-import { legendReducer } from './legendSlice'
-import { rootPropsReducer } from './rootPropsSlice'
-import { polarAxisReducer } from './polarAxisSlice'
-import { polarOptionsReducer } from './polarOptionsSlice'
 
 const rootReducer = combineReducers({
-  brush: brushReducer,
   cartesianAxis: cartesianAxisReducer,
   graphicalItems: graphicalItemsReducer,
-  legend: legendReducer,
-  options: optionsReducer,
-  polarAxis: polarAxisReducer,
-  polarOptions: polarOptionsReducer,
-  referenceElements: referenceElementsReducer,
-  rootProps: rootPropsReducer,
 })
 
 export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, chartName: string = 'Chart'): Store<LegacyChartState> {
@@ -48,5 +41,16 @@ export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, 
 }
 
 export type LegacyChartState = ReturnType<typeof rootReducer>
-export type RechartsRootState = LegacyChartState & { layout: ChartLayoutState, chartData: ChartDataState, tooltip: TooltipState }
+export type RechartsRootState = LegacyChartState & {
+  layout: ChartLayoutState
+  chartData: ChartDataState
+  tooltip: TooltipState
+  brush: BrushSettings
+  legend: LegendState
+  options: ChartOptions
+  rootProps: UpdatableChartOptions
+  polarOptions: PolarChartOptions | null
+  polarAxis: PolarAxisState
+  referenceElements: ReferenceElementState
+}
 export type AppDispatch = Dispatch<Action>

@@ -26,7 +26,7 @@ import type {
   ReferenceDotSettings,
   ReferenceElementSettings,
   ReferenceLineSettings,
-} from '../referenceElementsSlice'
+} from '../chartReferenceElements'
 import { selectChartHeight, selectChartWidth } from './containerSelectors'
 import { selectAllXAxes, selectAllYAxes } from './selectAllAxes'
 import { selectChartOffset } from './selectChartOffset'
@@ -35,7 +35,7 @@ import type { BrushDimensions } from './brushSelectors'
 import { selectBrushDimensions, selectBrushSettings } from './brushSelectors'
 import { selectBarCategoryGap, selectChartName, selectStackOffsetType } from './rootPropsSelectors'
 import { selectAngleAxis, selectAngleAxisRange, selectRadiusAxis, selectRadiusAxisRange } from './polarAxisSelectors'
-import type { AngleAxisSettings, RadiusAxisSettings } from '../polarAxisSlice'
+import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import { pickAxisType } from './pickAxisType'
 import { pickAxisId } from './pickAxisId'
 import type { MaybeStackedGraphicalItem } from './barSelectors'

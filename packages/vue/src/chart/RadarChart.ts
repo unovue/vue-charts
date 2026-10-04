@@ -1,5 +1,5 @@
 import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/optionsSlice'
+import { arrayTooltipSearcher } from '@/state/chartOptions'
 
 export const RadarChart = generateCategoricalChart({
   chartName: 'RadarChart',

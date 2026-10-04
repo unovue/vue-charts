@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { computed, shallowRef } from 'vue'
 import type { TooltipIndex, TooltipPayloadSearcher } from './chartTooltip'
 import type { TooltipEventType } from '@/types'
 import { isNan } from '@/utils'
@@ -8,10 +8,10 @@ import { isNan } from '@/utils'
  * and will not change during the lifetime of the chart.
  *
  * Changing these options can be done by swapping the root element
- * which will make a brand-new Redux store.
+ * which will create brand-new chart-local state.
  *
  * If you want to store options that can be changed by the user,
- * use UpdatableChartOptions in rootPropsSlice.ts.
+ * use UpdatableChartOptions in chartRootProps.ts.
  */
 export type ChartOptions = {
   chartName: string
@@ -37,25 +37,20 @@ export function arrayTooltipSearcher<T>(data: ReadonlyArray<T>, strIndex: Toolti
   return data?.[numIndex]
 }
 
-const initialState: ChartOptions = {
-  chartName: '',
-  tooltipPayloadSearcher: undefined,
-  eventEmitter: undefined,
-  defaultTooltipEventType: 'axis',
+export function createChartOptions(options?: ChartOptions) {
+  const state = shallowRef<ChartOptions>(options
+    ? { ...options }
+    : {
+        chartName: '',
+        tooltipPayloadSearcher: undefined,
+        eventEmitter: undefined,
+        defaultTooltipEventType: 'axis',
+      })
+
+  function createEventEmitter() {
+    if (state.value.eventEmitter == null)
+      state.value = { ...state.value, eventEmitter: Symbol('rechartsEventEmitter') }
+  }
+
+  return { state: computed(() => state.value), createEventEmitter }
 }
-
-const optionsSlice = createSlice({
-  name: 'options',
-  initialState,
-  reducers: {
-    createEventEmitter: (state: ChartOptions) => {
-      if (state.eventEmitter == null) {
-        state.eventEmitter = Symbol('rechartsEventEmitter')
-      }
-    },
-  },
-})
-
-export const optionsReducer = optionsSlice.reducer
-
-export const { createEventEmitter } = optionsSlice.actions

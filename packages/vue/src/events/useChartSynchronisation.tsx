@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useAppSelector } from '@/state/hooks'
 import { onMounted, watch } from 'vue'
 import { selectEventEmitter, selectSyncId, selectSyncMethod } from '@/state/selectors/rootPropsSelectors'
 import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
@@ -6,9 +6,8 @@ import { selectTooltipAxisTicks } from '@/state/selectors/tooltipSelectors'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
-import { createEventEmitter } from '@/state/optionsSlice'
+import { useChartDataActions, useChartOptions, useChartTooltip } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
-import { useChartDataActions, useChartTooltip } from '@/state/chartContext'
 
 function useTooltipSyncEventsListener() {
   const mySyncId = useAppSelector(selectSyncId)
@@ -140,10 +139,10 @@ function useBrushSyncEventsListener() {
  * @returns void
  */
 export function useSynchronisedEventsFromOtherCharts() {
-  const dispatch = useAppDispatch()
+  const { createEventEmitter } = useChartOptions()
 
   onMounted(() => {
-    dispatch(createEventEmitter())
+    createEventEmitter()
   })
 
   useTooltipSyncEventsListener()

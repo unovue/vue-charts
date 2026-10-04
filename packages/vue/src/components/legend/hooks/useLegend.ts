@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { setLegendSettings, setLegendSize } from '@/state/legendSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartLegend } from '@/state/chartContext'
 import { selectLegendPayload } from '@/state/selectors/legendSelectors'
 import { selectLegendArea } from '@/state/selectors/selectLegendArea'
 import { useChartHeight, useChartWidth, useMargin, useViewBox } from '@/context/chartLayoutContext'
@@ -18,7 +18,7 @@ import type { LegendProps } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
 export function useLegend(props: LegendProps) {
-  const dispatch = useAppDispatch()
+  const { setLegendSize, setLegendSettings } = useChartLegend()
   const contextPayload = useAppSelector(selectLegendPayload)
   const legendPortalFromContext = useLegendPortal()
   const margin = useMargin()
@@ -61,7 +61,7 @@ export function useLegend(props: LegendProps) {
   })
 
   // Inside/center positions are absolutely placed over the plot area
-  // and must not shrink it, so their size is not reported to the store.
+  // and must not shrink it, so their size is not reported to chart state.
   const shouldReportDimensions = computed(() =>
     props.portal == null && (props.position == null || isOutsidePosition(props.position)))
 
@@ -148,26 +148,26 @@ export function useLegend(props: LegendProps) {
   // Determine portal target
   const legendPortal = computed(() => props.portal ?? legendPortalFromContext?.value)
 
-  // Sync settings to store
+  // Report settings to chart state
   const syncSettings = () => {
-    dispatch(setLegendSettings({
+    setLegendSettings({
       layout: resolvedLayout.value,
       align: props.align!,
       verticalAlign: props.verticalAlign!,
       position: props.position,
       offset: props.offset,
-    }))
+    })
   }
 
-  // Sync size to store
+  // Report size to chart state
   const syncSize = () => {
     if (!shouldReportDimensions.value) {
       return
     }
-    dispatch(setLegendSize({
+    setLegendSize({
       width: boundingBox.value.width,
       height: boundingBox.value.height,
-    }))
+    })
   }
 
   return {

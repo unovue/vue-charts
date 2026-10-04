@@ -1,7 +1,8 @@
-import { computed, defineComponent, onUnmounted, provide, watchEffect } from 'vue'
+import { computed, defineComponent, onUnmounted, provide, watch } from 'vue'
 import type { PropType } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addRadiusAxis, removeRadiusAxis } from '@/state/polarAxisSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartPolarAxis } from '@/state/chartContext'
+import type { RadiusAxisSettings } from '@/state/chartPolarAxis'
 import { selectPolarAxisTicks } from '@/state/selectors/polarScaleSelectors'
 import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
 import { polarToCartesian } from '@/utils/polar'
@@ -42,38 +43,36 @@ export const PolarRadiusAxis = defineComponent({
     allowDecimals: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
-    const dispatch = useAppDispatch()
+    const { addRadiusAxis, removeRadiusAxis } = useChartPolarAxis()
     const layout = useChartLayout()
 
-    let prevSettings: any = null
-    watchEffect(() => {
-      const resolvedType = resolveAxisType(props.type, layout.value, 'radiusAxis')
-      const settings = {
-        id: props.radiusAxisId,
-        type: resolvedType,
-        dataKey: props.dataKey,
-        scale: 'auto' as const,
-        allowDuplicatedCategory: true,
-        allowDataOverflow: props.domain != null,
-        reversed: false,
-        includeHidden: false,
-        // Recharts v2 defaults domain=[0,'auto'], which creates extra band entries
-        // via parseSpecifiedDomain, making bars thinner. Preserve that behavior.
-        domain: props.domain ?? [0, 'auto'],
-        unit: undefined,
-        name: undefined,
-        allowDecimals: props.allowDecimals,
-        tickCount: props.tickCount,
-        ticks: props.ticks,
-        tick: props.tick,
-      }
-      dispatch(addRadiusAxis(settings))
+    let prevSettings: RadiusAxisSettings | null = null
+    watch(() => ({
+      id: props.radiusAxisId,
+      type: resolveAxisType(props.type, layout.value, 'radiusAxis'),
+      dataKey: props.dataKey,
+      scale: 'auto' as const,
+      allowDuplicatedCategory: true,
+      allowDataOverflow: props.domain != null,
+      reversed: false,
+      includeHidden: false,
+      // Recharts v2 defaults domain=[0,'auto'], which creates extra band entries
+      // via parseSpecifiedDomain, making bars thinner. Preserve that behavior.
+      domain: props.domain ?? [0, 'auto'],
+      unit: undefined,
+      name: undefined,
+      allowDecimals: props.allowDecimals,
+      tickCount: props.tickCount,
+      ticks: props.ticks,
+      tick: props.tick,
+    }), (settings) => {
+      addRadiusAxis(settings)
       prevSettings = settings
-    })
+    }, { immediate: true })
 
     onUnmounted(() => {
       if (prevSettings) {
-        dispatch(removeRadiusAxis(prevSettings))
+        removeRadiusAxis(prevSettings)
         prevSettings = null
       }
     })

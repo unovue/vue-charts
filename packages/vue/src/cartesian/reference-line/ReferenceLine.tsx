@@ -3,8 +3,8 @@ import { classProp } from '@/types'
 import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addLine, removeLine } from '@/state/referenceElementsSlice'
+import { useAppSelector } from '@/state/hooks'
+import { useChartReferenceElements } from '@/state/chartContext'
 import type { AxisId } from '@/state/cartesianAxisSlice'
 import { selectAxisScale, selectXAxisSettings, selectYAxisSettings } from '@/state/selectors/axisSelectors'
 import { useViewBox } from '@/context/chartLayoutContext'
@@ -32,7 +32,7 @@ export const ReferenceLine = defineComponent({
   props: ReferenceLineVueProps,
   inheritAttrs: false,
   setup(props, { attrs }) {
-    const dispatch = useAppDispatch()
+    const { addLine, removeLine } = useChartReferenceElements()
     const isPanorama = useIsPanorama()
     const clipPathId = useClipPathId()
     const viewBox = useViewBox()
@@ -46,10 +46,10 @@ export const ReferenceLine = defineComponent({
     })
 
     onMounted(() => {
-      dispatch(addLine(settings))
+      addLine(settings)
     })
     onUnmounted(() => {
-      dispatch(removeLine(settings))
+      removeLine(settings)
     })
 
     const xAxisSettings = useAppSelector(state => selectXAxisSettings(state, props.xAxisId))

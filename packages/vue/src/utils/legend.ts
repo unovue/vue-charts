@@ -1,4 +1,4 @@
-import type { LegendSettings } from '@/state/legendSlice'
+import type { LegendSettings } from '@/state/chartLegend'
 import type { ChartOffset, Size } from '@/types'
 import { isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { isNumber } from '@/utils/validate'

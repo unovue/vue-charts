@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
 import { selectChartOffset } from './selectChartOffset'
 import { selectMargin } from './containerSelectors'
-import type { BrushSettings } from '../brushSlice'
+import type { BrushSettings } from '../chartBrush'
 import { isNumber } from '@/utils'
 
 export const selectBrushSettings = (state: RechartsRootState): BrushSettings => state.brush

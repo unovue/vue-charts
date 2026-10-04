@@ -14,7 +14,7 @@ import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
 import { FULL_WIDTH_AND_HEIGHT } from '@/chart/const'
 import { ReportMainChartProps } from '@/state/ReportMainChartProps'
-import type { ChartOptions } from '@/state/optionsSlice'
+import type { ChartOptions } from '@/state/chartOptions'
 import ReportChartProps from '@/state/ReportChartProps'
 import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
@@ -152,8 +152,8 @@ export function generateCategoricalChart({
         tooltipPayloadSearcher,
         eventEmitter: undefined,
       }
-      const store = createRechartsStore({ options }, props.id ?? chartName)
-      provideChartContext(store)
+      const store = createRechartsStore(undefined, props.id ?? chartName)
+      provideChartContext(store, undefined, options)
       provideEntranceGate()
       provideIndependentChart()
 

@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
-import type { LegendSettings } from '../legendSlice'
+import type { LegendSettings } from '../chartLegend'
 import type { Size } from '@/types'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 

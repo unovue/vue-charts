@@ -1,9 +1,8 @@
 import type { PropType } from 'vue'
-import { defineComponent, watchEffect } from 'vue'
+import { defineComponent, watch } from 'vue'
 import { classProp } from '@/types'
 import type { StackOffsetType, SyncMethod } from '@/types'
-import { useAppDispatch } from './hooks'
-import { updateOptions } from './rootPropsSlice'
+import { useChartRootProps } from '@/state/chartContext'
 
 export default defineComponent({
   name: 'ReportChartProps',
@@ -43,21 +42,19 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const { updateOptions } = useChartRootProps()
 
-    watchEffect(() => {
-      dispatch(updateOptions({
-        accessibilityLayer: props.accessibilityLayer,
-        barCategoryGap: props.barCategoryGap,
-        barGap: props.barGap,
-        barSize: props.barSize,
-        class: props.class,
-        maxBarSize: props.maxBarSize,
-        stackOffset: props.stackOffset,
-        syncId: props.syncId,
-        syncMethod: props.syncMethod,
-      }))
-    })
+    watch(() => ({
+      accessibilityLayer: props.accessibilityLayer,
+      barCategoryGap: props.barCategoryGap,
+      barGap: props.barGap,
+      barSize: props.barSize,
+      class: props.class,
+      maxBarSize: props.maxBarSize,
+      stackOffset: props.stackOffset,
+      syncId: props.syncId,
+      syncMethod: props.syncMethod,
+    }), updateOptions, { immediate: true })
 
     return () => null
   },

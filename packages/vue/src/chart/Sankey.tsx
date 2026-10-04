@@ -10,7 +10,7 @@ import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
 import { createRechartsStore } from '@/state/store'
-import type { ChartOptions } from '@/state/optionsSlice'
+import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
   TooltipPayloadConfiguration,
@@ -370,8 +370,8 @@ const _Sankey = defineComponent({
   props: { ...SankeyVueProps, ...chartSizeProps },
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots }) {
-    const store = createRechartsStore({ options: sankeyOptions }, 'Sankey')
-    provideChartContext(store)
+    const store = createRechartsStore(undefined, 'Sankey')
+    provideChartContext(store, undefined, sankeyOptions)
     provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 

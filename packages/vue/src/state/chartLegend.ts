@@ -1,0 +1,63 @@
+import { computed, shallowRef } from 'vue'
+import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
+import type { LayoutType, Size } from '@/types'
+
+export type LegendSettings = {
+  layout: LayoutType
+  align: HorizontalAlignmentType
+  verticalAlign: VerticalAlignmentType
+  position?: CartesianPosition
+  offset?: number
+}
+
+/**
+ * The properties inside this state update independently of each other and quite often.
+ * When selecting, never select the whole state because you are going to get
+ * unnecessary re-renders. Select only the properties you need.
+ */
+export type LegendState = {
+  settings: LegendSettings
+  size: Size
+  /**
+   * This is a 2D array of LegendPayloads. The first dimension is for each graphical item.
+   * Some items may have multiple legend items, so the second dimension is for each legend item.
+   */
+  payload: ReadonlyArray<ReadonlyArray<LegendPayload>>
+}
+
+export function createChartLegend() {
+  const state = shallowRef<LegendState>({
+    settings: { layout: 'horizontal', align: 'center', verticalAlign: 'middle' },
+    size: { width: 0, height: 0 },
+    payload: [],
+  })
+
+  function setLegendSize(size: Size) {
+    if (state.value.size.width === size.width && state.value.size.height === size.height)
+      return
+    state.value = { ...state.value, size: { width: size.width, height: size.height } }
+  }
+
+  function setLegendSettings(settings: LegendSettings) {
+    const previous = state.value.settings
+    if (previous.layout === settings.layout && previous.align === settings.align && previous.verticalAlign === settings.verticalAlign
+      && previous.position === settings.position && previous.offset === settings.offset) {
+      return
+    }
+    state.value = { ...state.value, settings: { ...settings } }
+  }
+
+  function addLegendPayload(payload: ReadonlyArray<LegendPayload>) {
+    state.value = { ...state.value, payload: [...state.value.payload, payload] }
+  }
+
+  function removeLegendPayload(payload: ReadonlyArray<LegendPayload>) {
+    const index = state.value.payload.indexOf(payload)
+    if (index < 0)
+      return
+    state.value = { ...state.value, payload: state.value.payload.filter((_, i) => i !== index) }
+  }
+
+  return { state: computed(() => state.value), setLegendSize, setLegendSettings, addLegendPayload, removeLegendPayload }
+}
