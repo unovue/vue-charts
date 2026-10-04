@@ -613,9 +613,10 @@ const TooltipVueProps = {
     type: Object,
     default: () => ({}),
   },
+  /** Sort rows. By default they keep the order of the series. */
   itemSorter: {
-    type: String,
-    default: 'name',
+    type: [String, Function] as PropType<'name' | 'value' | 'dataKey' | ((item: Payload<ValueType, NameType>) => number | string)>,
+    default: undefined,
   },
   separator: {
     type: String,
