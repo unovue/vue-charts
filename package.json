@@ -21,7 +21,8 @@
     "pub:release": "pnpm --filter vccs pub:release",
     "docs": "pnpm --filter docs dev",
     "docs:dev": "pnpm --filter docs dev",
-    "bumpp": "bumpp package.json packages/*/package.json docs/package.json"
+    "bumpp": "bumpp package.json packages/*/package.json docs/package.json",
+    "check:motion": "node scripts/check-motion.mjs"
   },
   "dependencies": {
     "@vueuse/core": "^13.1.0",
