@@ -378,6 +378,9 @@ const TooltipBoundingBox = defineComponent({
     return () => {
       const { style } = props
       const { cssClasses, cssProperties } = currentTransform.value
+      // The tooltip grows out of the corner that faces the pointer.
+      const side = cssClasses[1]
+      const transformOrigin = `${side['v-charts-tooltip-wrapper-left'] ? 'right' : 'left'} ${side['v-charts-tooltip-wrapper-top'] ? 'bottom' : 'top'}`
 
       const boundingBoxStyle: CSSProperties = {
         ...cssProperties,
@@ -396,7 +399,7 @@ const TooltipBoundingBox = defineComponent({
           style={boundingBoxStyle}
           ref={el}
         >
-          <div ref={content}>
+          <div ref={content} style={{ transformOrigin }}>
             {visible.value ? (cachedContent = slots.default?.()) : cachedContent}
           </div>
         </div>

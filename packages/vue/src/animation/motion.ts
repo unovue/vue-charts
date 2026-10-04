@@ -21,6 +21,6 @@ export const motionTokens = {
   enter: { duration: 0.6, ease: easeOutQuint },
   /** Data changes: same curve, shorter, so interruptions feel responsive. */
   update: { duration: 0.5, ease: easeOutQuint },
-  /** Removed elements. */
-  exit: { duration: 0.25, ease: cubicBezier(0.4, 0, 1, 1) },
+  /** Removed elements: the same curve, shorter still, so they clear the way for the rest. */
+  exit: { duration: 0.3, ease: easeOutQuint },
 } satisfies Record<string, PhaseTiming>
