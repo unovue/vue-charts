@@ -80,9 +80,9 @@ function SAMPLER() {
       shapes.tooltip = tip.style.transform
     return shapes
   }
-  // The largest area (px²) two bars of the chart cover at once; bars that touch do not count.
+  // The largest area (px²) two bars or cells cover at once; touching shapes do not count.
   window.__overlap = () => {
-    const boxes = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect)')]
+    const boxes = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect')]
       .map(el => ['x', 'y', 'width', 'height'].map(a => Number(el.getAttribute(a))))
       .filter(([x, y, w, h]) => [x, y, w, h].every(Number.isFinite) && Math.abs(w) > 0.5 && Math.abs(h) > 0.5)
       .map(([x, y, w, h]) => [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)])

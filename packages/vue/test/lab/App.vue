@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   Brush,
+  CalendarHeatmap,
   CartesianGrid,
   ComposedChart,
   Funnel,
@@ -28,6 +29,7 @@ import {
   ScatterChart,
   SunburstChart,
   Tooltip,
+  Tracker,
   Treemap,
   XAxis,
   YAxis,
@@ -58,6 +60,28 @@ const heavySteps = [
 ]
 const width = ref(720)
 
+// UTC arithmetic keeps the lab's ISO dates independent of the machine's timezone.
+const isoDay = day => new Date(day * 86400000).toISOString().slice(0, 10)
+const dayOf = iso => Date.parse(`${iso}T00:00:00Z`) / 86400000
+const statuses = ['up', 'degraded', 'down', 'maintenance']
+const trackerStart = dayOf('2025-01-01')
+const trackerData = (start, count = 30) => Array.from({ length: count }, (_, i) => ({ date: isoDay(start + i), status: statuses[(start + i) % statuses.length] }))
+const trackerRows = shallowRef(trackerData(trackerStart))
+function shiftTracker(count) {
+  const next = dayOf(trackerRows.value.at(-1).date) + 1
+  trackerRows.value = [...trackerRows.value.slice(count), ...trackerData(next, count)]
+}
+const calendarStart = ref(dayOf('2025-01-01'))
+const calendarEnd = ref(dayOf('2025-12-31'))
+const weekStart = ref(0)
+const calendarData = (variant = 0) => Array.from({ length: calendarEnd.value - calendarStart.value + 1 }, (_, i) => ({ date: isoDay(calendarStart.value + i), value: (i * 17 + variant * 23) % 101 }))
+const calendarRows = shallowRef(calendarData())
+function shiftCalendar(days) {
+  calendarStart.value += days
+  calendarEnd.value += days
+  calendarRows.value = calendarData()
+}
+
 // Steps shared by most categorical scenarios.
 const categorical = [
   ['values', () => { rows.value = mk(rows.value.map(r => r.name), alt) }],
@@ -87,6 +111,34 @@ const scatterRows = computed(() => rows.value.map((r, i) => ({ name: r.name, x: 
 
 const nullGap = ['nullGap', () => { rows.value = rows.value.map((r, i) => i === 2 ? { ...r, a: null } : r) }]
 const steps = {
+  tracker: [
+    ['shift', () => shiftTracker(1)],
+    ['shift3', () => shiftTracker(3)],
+    ['status', () => { trackerRows.value = trackerRows.value.map((row, i) => i < 5 ? { ...row, status: statuses[(statuses.indexOf(row.status) + 1) % statuses.length] } : row) }],
+    ['to14', () => { trackerRows.value = trackerRows.value.slice(-14) }],
+    ['to30', () => { trackerRows.value = trackerData(dayOf(trackerRows.value.at(-1).date) - 29) }],
+    ['empty', () => { trackerRows.value = [] }],
+    ['refill', () => { trackerRows.value = trackerData(trackerStart) }],
+  ],
+  calendar: [
+    ['values', () => { calendarRows.value = calendarData(1) }],
+    ['nextWeek', () => shiftCalendar(7)],
+    ['nextYear', () => {
+      const nextYear = (day) => {
+        const date = new Date(day * 86400000)
+        date.setUTCFullYear(date.getUTCFullYear() + 1)
+        return date.getTime() / 86400000
+      }
+      calendarStart.value = nextYear(calendarStart.value)
+      calendarEnd.value = nextYear(calendarEnd.value)
+      calendarRows.value = calendarData()
+    }],
+    ['weekStart', () => { weekStart.value = weekStart.value === 0 ? 1 : 0 }],
+    ['narrow', () => { width.value = 360 }],
+    ['wide', () => { width.value = 720 }],
+    ['empty', () => { calendarRows.value = [] }],
+    ['refill', () => { calendarRows.value = calendarData() }],
+  ],
   bar: categorical,
   barStacked: categorical,
   barHorizontal: categorical,
@@ -217,6 +269,20 @@ if (scenario === 'stress') {
           :radius="[4, 4, 0, 0]"
         />
       </BarChart>
+      <Tracker
+        v-else-if="scenario === 'tracker'"
+        :data="trackerRows"
+        name-key="date"
+        :width="720"
+        :height="36"
+      />
+      <CalendarHeatmap
+        v-else-if="scenario === 'calendar'"
+        :data="calendarRows"
+        :start="isoDay(calendarStart)"
+        :end="isoDay(calendarEnd)"
+        :week-start="weekStart"
+      />
       <BarChart
         v-else-if="scenario === 'barStacked'"
         :height="360"

@@ -13,6 +13,15 @@ A Vite app with one chart per scenario (`?s=bar`, `?s=areaStacked`, `?s=brush`, 
 
 Shared flags: `--browser=chromium|firefox|webkit`, `--prod` (production build; also `LAB_PROD=1`), `--install-browser` (installs the locked Playwright engines). Locally, `MOTION_EXECUTABLE_PATH` can point to another Chromium build, as for `pnpm check:motion`.
 
+Cell scenarios: `tracker` starts with 30 ISO-date status rows at 720×36 and exercises
+`shift`, `shift3`, `status`, `to14`, `to30`, `empty`, and `refill`. `calendar` starts with
+365 deterministic daily values and explicit range bounds, then exercises `values`,
+`nextWeek`, `nextYear`, `weekStart`, `narrow`, `wide`, `empty`, and `refill`.
+Calendar width follows the frame (720→360→720). Its `empty` step clears values while
+retaining the explicit date grid. Color-only changes are visible in films, but do not
+produce geometry progress curves. Cell rects participate in the existing overlap flag
+(still named `overlap bars`); it measures raw geometry, including clipped portions.
+
 Arc shapes (pie, radial and sunburst sectors) are not measured by the progress curves, because their path endpoints move along circles; review them in the videos.
 
 The report advances to each Playwright fake-clock animation frame (16 ms, encoded at 62.5 fps), and uses the actual clock time for curves. This avoids combining two animation frames into one sample when fractional clock advances round up. Before each data or pointer step, it waits for three unchanged geometry frames, up to 2 seconds; failure adds a `did not settle` flag. Entrance is recorded immediately so its motion remains visible. Interrupt resets the data with `fromOne` before settling.
