@@ -41,10 +41,21 @@
   },
   "module": "./dist/es/index.mjs",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "nuxt": [
+        "dist/nuxt.d.ts"
+      ],
+      "resolver": [
+        "dist/resolver.d.ts"
+      ]
+    }
+  },
   "files": [
     "./LICENSE",
     "./README.md",
-    "./dist"
+    "./dist/**/*.mjs",
+    "./dist/**/*.d.ts"
   ],
   "scripts": {
     "clean": "rm -rf dist",
