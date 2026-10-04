@@ -116,7 +116,19 @@ describe('useKeyedTransition', () => {
   it('gives repeated keys distinct identities', () => {
     const { view } = setup([{ name: 'A', height: 1 }, { name: 'A', height: 2 }])
     finish()
-    expect(view()).toEqual(['A:update:1', 'A#1:update:2'])
+    expect(view()).toEqual(['A:update:1', 'A\u00001:update:2'])
+  })
+
+  it('keeps duplicate categories separate from literal suffix categories on update', async () => {
+    const { data, result, scope } = setup([{ name: 'A', height: 10 }, { name: 'A', height: 20 }, { name: 'A#1', height: 30 }])
+    finish()
+    expect(new Set(result.items.value.map(item => item.key)).size).toBe(3)
+    data.value = [{ name: 'A', height: 40 }, { name: 'A', height: 50 }, { name: 'A#1', height: 60 }]
+    await nextTick()
+    expect(result.items.value.map(item => item.value.height)).toEqual([10, 20, 30])
+    finish()
+    expect(result.items.value.map(item => item.value.height)).toEqual([40, 50, 60])
+    scope.stop()
   })
 
   it('shows the target at once when animation is off', () => {

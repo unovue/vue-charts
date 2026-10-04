@@ -94,7 +94,7 @@ export function useKeyedTransition<T>(
       const base = options.key(value, i)
       const count = seen.get(base) ?? 0
       seen.set(base, count + 1)
-      return { key: count === 0 ? base : `${String(base)}#${count}`, value }
+      return { key: count === 0 ? base : `${String(base)}\u0000${count}`, value }
     })
   }
 
