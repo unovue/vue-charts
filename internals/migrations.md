@@ -32,6 +32,12 @@
   selector bindings. No persisted-data migration or public API change is involved.
 - Tracking: local `tasks/todo.md`, Stage 3; no external issue created.
 
+- Immer freeze guards (added 2026-10-04, commit 4d67b1a): `Object.freeze` on library-owned
+  data snapshots and legend/tooltip payload arrays in `state/SetGraphicalItem.ts`, `polar/pie/Pie.tsx`,
+  `cartesian/funnel/Funnel.tsx`, `cartesian/scatter/Scatter.tsx`, `chart/SunburstChart.tsx`. They stop
+  Immer auto-freeze from deep-freezing caller-owned (mutable, reactive) rows. Remove them together
+  with the Redux/Immer reducers.
+
 ### Ownership cutover constraints
 
 - Ten domains remain reducer-owned after the layout/data cutovers. Existing identity-memoized
