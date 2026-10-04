@@ -22,7 +22,13 @@
     "docs": "pnpm --filter docs dev",
     "docs:dev": "pnpm --filter docs dev",
     "bumpp": "bumpp package.json packages/*/package.json docs/package.json",
-    "check:motion": "node scripts/check-motion.mjs"
+    "check:motion": "node scripts/check-motion.mjs",
+    "motion:report": "node packages/vue/test/lab/report.mjs",
+    "motion:film": "node packages/vue/test/lab/film.mjs",
+    "motion:profile": "node packages/vue/test/lab/profile.mjs",
+    "motion:audit": "node packages/vue/test/lab/dom-audit.mjs",
+    "motion:probe": "node packages/vue/test/lab/realtime.mjs",
+    "motion:lab": "vite packages/vue/test/lab --config packages/vue/test/lab/vite.config.mjs"
   },
   "dependencies": {
     "@vueuse/core": "^13.1.0",

@@ -1,0 +1,399 @@
+// Motion report: frame-exact 60 fps videos (1x and 4x slow motion) of every transition, each
+// moving shape's progress against the ideal easing, and real-clock frame timing at normal speed
+// and with the CPU slowed 4x. Writes an HTML report.
+// pnpm motion:report [scenario...] [--steps=a,b] [--out=dir] [--no-throttle] [--prod] [--browser=…] [--check]
+// --check exits 1 on any motion flag, page error, Vue warning or slow frame at normal speed.
+/* eslint-disable no-console -- command-line output is the interface of these tools */
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { flag, has, launchBrowser, positional, repo, startServer } from './shared.mjs'
+
+const out = flag('out', join(repo, '.evidence/motion-report'))
+const only = flag('steps', '')
+const throttle = !has('no-throttle')
+const WINDOW = 900
+const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
+const scenarios = positional()
+
+// cubic-bezier(0.22, 1, 0.36, 1) sampled by Newton iteration, as the motion tokens define it.
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1
+  const bx = 3 * (x2 - x1) - cx
+  const ax = 1 - cx - bx
+  const cy = 3 * y1
+  const by = 3 * (y2 - y1) - cy
+  const ay = 1 - cy - by
+  const sx = t => ((ax * t + bx) * t + cx) * t
+  const sy = t => ((ay * t + by) * t + cy) * t
+  return (x) => {
+    let t = x
+    for (let i = 0; i < 8; i++) {
+      const d = (3 * ax * t + 2 * bx) * t + cx
+      if (Math.abs(d) < 1e-6)
+        break
+      t -= (sx(t) - x) / d
+    }
+    return sy(Math.min(1, Math.max(0, t)))
+  }
+}
+const quint = bezier(0.22, 1, 0.36, 1)
+const ideal = { update: t => quint(Math.min(1, t / 500)), enter: t => quint(Math.min(1, t / 600)) }
+
+const server = await startServer()
+const url = server.url
+const browser = await launchBrowser()
+
+// In-page per-frame sampler. Light on purpose: attribute reads only.
+function SAMPLER() {
+  window.__snapshot = () => {
+    const keyOf = (el) => {
+      const parts = []
+      for (let n = el; n && n.tagName !== 'svg'; n = n.parentElement) {
+        if (n.__vnode?.key != null)
+          parts.push(String(n.__vnode.key))
+        for (let c = n.__vueParentComponent; c && c.subTree?.el === n; c = c.parent) {
+          if (c.vnode.key != null)
+            parts.push(String(c.vnode.key))
+        }
+        const cls = n.getAttribute?.('class') || ''
+        const m = cls.match(/v-charts-(bar|line|area|pie|radar|radial-bar|funnel|scatter)(?![-\w])/)
+        if (m)
+          parts.push(`${m[1]}${[...document.querySelectorAll(`.v-charts-${m[1]}`)].indexOf(n)}`)
+      }
+      return parts.reverse().join('/')
+    }
+    const shapes = {}
+    const counts = {}
+    const svg = document.querySelector('svg.v-charts-surface')
+    for (const el of svg ? svg.querySelectorAll('rect,path,circle,polygon') : []) {
+      if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper, .v-charts-tooltip-cursor'))
+        continue
+      const cls = (el.getAttribute('class') || '').split(' ')[0]
+      const base = `${el.tagName}.${cls}#${keyOf(el)}`
+      counts[base] = (counts[base] ?? 0) + 1
+      shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
+    }
+    const tip = document.querySelector('[role="tooltip"]')
+    if (tip && tip.style.visibility === 'visible')
+      shapes.tooltip = tip.style.transform
+    return shapes
+  }
+  window.__sample = ms => new Promise((resolve) => {
+    const keyOf = (el) => {
+      const parts = []
+      for (let n = el; n && n.tagName !== 'svg'; n = n.parentElement) {
+        if (n.__vnode?.key != null)
+          parts.push(String(n.__vnode.key))
+        for (let c = n.__vueParentComponent; c && c.subTree?.el === n; c = c.parent) {
+          if (c.vnode.key != null)
+            parts.push(String(c.vnode.key))
+        }
+        const cls = n.getAttribute?.('class') || ''
+        const m = cls.match(/v-charts-(bar|line|area|pie|radar|radial-bar|funnel|scatter)\b(?!-)/)
+        if (m) {
+          const series = [...document.querySelectorAll(`.v-charts-${m[1]}`)].indexOf(n)
+          parts.push(`${m[1]}${series}`)
+        }
+      }
+      return parts.reverse().join('/')
+    }
+    const frames = []
+    const longtasks = []
+    const po = new PerformanceObserver(list => list.getEntries().forEach(e => longtasks.push(Math.round(e.duration))))
+    try { po.observe({ entryTypes: ['longtask'] }) }
+    catch {}
+    const t0 = performance.now()
+    const tick = (now) => {
+      const shapes = {}
+      const counts = {}
+      const svg = document.querySelector('svg.v-charts-surface')
+      for (const el of svg ? svg.querySelectorAll('rect,path,circle,polygon') : []) {
+        if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper'))
+          continue
+        const cls = (el.getAttribute('class') || '').split(' ')[0]
+        const base = `${el.tagName}.${cls}#${keyOf(el)}`
+        counts[base] = (counts[base] ?? 0) + 1
+        shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
+      }
+      const tip = document.querySelector('[role="tooltip"]')
+      if (tip && tip.style.visibility === 'visible')
+        shapes.tooltip = tip.style.transform
+      frames.push({ t: now - t0, shapes })
+      if (now - t0 < ms) {
+        requestAnimationFrame(tick)
+      }
+      else { po.disconnect(); resolve({ frames, longtasks }) }
+    }
+    requestAnimationFrame(tick)
+  })
+  window.__timing = ms => new Promise((resolve) => {
+    const ts = []
+    const longtasks = []
+    const po = new PerformanceObserver(list => list.getEntries().forEach(e => longtasks.push(Math.round(e.duration))))
+    try { po.observe({ entryTypes: ['longtask'] }) }
+    catch {}
+    const t0 = performance.now()
+    const tick = (now) => {
+      ts.push(now)
+      if (now - t0 < ms) {
+        requestAnimationFrame(tick)
+      }
+      else { po.disconnect(); resolve({ intervals: ts.slice(1).map((t, i) => t - ts[i]), longtasks }) }
+    }
+    requestAnimationFrame(tick)
+  })
+}
+
+const nums = s => (String(s).match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number)
+
+// Normalised progress per element: the coordinate that moves most, from its first to last value.
+function curves(frames) {
+  const ids = [...new Set(frames.flatMap(f => Object.keys(f.shapes)))]
+  const result = []
+  for (const id of ids) {
+    // Arc endpoints move along circles, so a coordinate is not a progress measure; sectors are
+    // judged by video.
+    // Rounded bars keep x/y/width/height, which are measured instead of their path.
+    const arcs = frames.some(f => /A\s*[\d.]/.test(f.shapes[id] ?? ''))
+    const value = shape => arcs ? shape.split('|').slice(1).join('|') : shape
+    if (arcs && !frames.some(f => f.shapes[id] && nums(value(f.shapes[id])).length))
+      continue
+    const series = frames.map(f => f.shapes[id] == null ? null : nums(value(f.shapes[id])))
+    const present = series.map((v, i) => [v, i]).filter(([v]) => v)
+    if (present.length < 3)
+      continue
+    const [first, i0] = present[0]
+    const [last] = present.at(-1)
+    if (first.length !== last.length)
+      continue
+    let k = -1
+    let span = 0
+    first.forEach((v, j) => {
+      const d = Math.abs(last[j] - v)
+      if (d > span) {
+        span = d
+        k = j
+      }
+    })
+    if (span < 2)
+      continue
+    const pts = present.filter(([v]) => v.length === first.length).map(([v, i]) => [frames[i].t, (v[k] - first[k]) / (last[k] - first[k])])
+    result.push({ id, span, appearsAt: i0 ? frames[i0].t : 0, pts })
+  }
+  return result
+}
+
+function flags(curveList, frames) {
+  const issues = []
+  for (const c of curveList) {
+    for (let i = 1; i < c.pts.length; i++) {
+      const [t, p] = c.pts[i]
+      const [, prev] = c.pts[i - 1]
+      if (c.id !== 'tooltip' && p - prev < -0.04 && prev < 1.02)
+        issues.push(`backwards ${c.id} @${Math.round(t)}ms ${prev.toFixed(2)}→${p.toFixed(2)}`)
+      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6)
+        issues.push(`jump ${c.id} @${Math.round(t)}ms +${((p - prev) * 100).toFixed(0)}% (${(c.span * (p - prev)).toFixed(0)}px)`)
+    }
+    // A stall: progress stuck mid-way for 3+ frames.
+    let still = 0
+    for (let i = 1; i < c.pts.length; i++) {
+      const p = c.pts[i][1]
+      still = Math.abs(p - c.pts[i - 1][1]) < 0.002 && p > 0.1 && p < 0.9 ? still + 1 : 0
+      if (still === 3)
+        issues.push(`stall ${c.id} @${Math.round(c.pts[i][0])}ms at ${(p * 100).toFixed(0)}%`)
+    }
+    const settle = c.pts.find(([, p]) => Math.abs(1 - p) < 0.01)
+    if (!settle)
+      issues.push(`unsettled ${c.id}`)
+  }
+  const intervals = frames.slice(1).map((f, i) => f.t - frames[i].t)
+  return { issues, intervals }
+}
+
+function stats(intervals) {
+  const sorted = [...intervals].sort((a, b) => a - b)
+  return { frames: intervals.length, worst: sorted.at(-1) ?? 0, p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0, slow: intervals.filter(v => v > 20).length }
+}
+
+function svgCurves(curveList, kind) {
+  const W = 380
+  const H = 170
+  const P = 22
+  const x = t => P + (t / WINDOW) * (W - P - 6)
+  const y = p => H - P - p * (H - 2 * P)
+  const idealPts = Array.from({ length: 91 }, (_, i) => i * 10).map(t => `${x(t).toFixed(1)},${y(ideal[kind](t)).toFixed(1)}`).join(' ')
+  const lines = curveList.slice(0, 120).map((c, i) => `<polyline fill="none" stroke="hsl(${(i * 47) % 360} 70% 45%)" stroke-opacity=".55" stroke-width="1.2" points="${c.pts.map(([t, p]) => `${x(t).toFixed(1)},${y(Math.max(-0.3, Math.min(1.3, p))).toFixed(1)}`).join(' ')}"><title>${c.id}</title></polyline>`).join('')
+  const grid = [0, 0.5, 1].map(p => `<line x1="${P}" x2="${W - 6}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".12"/><text x="2" y="${y(p) + 3}" font-size="9" fill="currentColor" opacity=".5">${p * 100}%</text>`).join('')
+  const ticks = [0, 250, 500, 750].map(t => `<text x="${x(t) - 6}" y="${H - 6}" font-size="9" fill="currentColor" opacity=".5">${t}ms</text>`).join('')
+  return `<svg viewBox="0 0 ${W} ${H}" class="curves">${grid}${ticks}${lines}<polyline fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" points="${idealPts}"/></svg>`
+}
+
+// Frame-exact rendering: a fake clock advanced one 60 Hz frame at a time, one screenshot per frame.
+// What each frame shows is exact; real-time cost is measured separately on a real clock.
+const FRAME = 1000 / 60
+async function record(page, dir, name, act) {
+  const frameDir = join(dir, `${name}-frames`)
+  mkdirSync(frameDir, { recursive: true })
+  const clip = await page.locator('.frame').boundingBox()
+  const frames = []
+  await act()
+  for (let i = 0, t = 0; t <= WINDOW; i++, t += FRAME) {
+    frames.push({ t, shapes: await page.evaluate(() => window.__snapshot()) })
+    await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
+    await page.clock.runFor(FRAME)
+  }
+  const video = join(dir, `${name}.mp4`)
+  const slow = join(dir, `${name}-slow.mp4`)
+  const scale = 'scale=trunc(iw/2)*2:trunc(ih/2)*2'
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '60', '-i', join(frameDir, '%04d.jpg'), '-vf', scale, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', video])
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '15', '-i', join(frameDir, '%04d.jpg'), '-vf', `${scale},fps=60`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', slow])
+  rmSync(frameDir, { recursive: true, force: true })
+  return { frames, video, slow }
+}
+
+mkdirSync(out, { recursive: true })
+const report = []
+const BACK = { values: 'refill', append2: 'fromOne', removeMiddle: 'fromOne', shift: 'fromOne', hideA: 'showA', showA: 'hideA', toOne: 'fromOne', fromOne: 'toOne', empty: 'refill', refill: 'empty', nullGap: 'fromOne', narrow: 'wide', wide: 'narrow', negative: 'positive', positive: 'negative', grow: 'reset', reset: 'grow' }
+async function openPage(s, fake) {
+  const context = await browser.newContext({ viewport: { width: 800, height: 440 }, deviceScaleFactor: 1 })
+  const page = await context.newPage()
+  const errors = []
+  page.on('pageerror', e => errors.push(e.message))
+  page.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning')
+      errors.push(m.text().slice(0, 200))
+  })
+  await page.addInitScript(SAMPLER)
+  if (fake) {
+    await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+    await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'))
+  }
+  await page.goto(`${url}?s=${s}`)
+  await page.waitForSelector('svg.v-charts-surface')
+  return { context, page, errors }
+}
+function actions(page, box) {
+  return async (step) => {
+    if (step === 'pointer-enter')
+      return page.mouse.move(box.x + 150, box.y + 150)
+    if (step === 'pointer-move')
+      return page.mouse.move(box.x + 520, box.y + 150)
+    if (step === 'pointer-leave')
+      return page.mouse.move(box.x + 520, box.y + box.height + 60)
+    if (step === 'interrupt')
+      return page.evaluate(() => { window.lab.step('values'); setTimeout(() => window.lab.step('removeMiddle'), 150) })
+    if (step !== 'entrance')
+      return page.evaluate(name => window.lab.step(name), step)
+  }
+}
+
+for (const s of scenarios.length ? scenarios : all) {
+  const dir = join(out, s)
+  rmSync(dir, { recursive: true, force: true })
+  mkdirSync(dir, { recursive: true })
+  const visual = await openPage(s, true)
+  const timingPage = await openPage(s, false)
+  const labSteps = await visual.page.evaluate(() => window.lab.steps)
+  const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(labSteps.includes('values') ? ['interrupt'] : [])]
+  const act = actions(visual.page, await visual.page.locator('.v-charts-wrapper').boundingBox())
+  const actReal = actions(timingPage.page, await timingPage.page.locator('.v-charts-wrapper').boundingBox())
+  for (const step of steps) {
+    if (only && !only.split(',').includes(step))
+      continue
+    if (step === 'interrupt') {
+      for (const p of [visual.page, timingPage.page]) await p.evaluate(() => window.lab.step('fromOne'))
+      await visual.page.clock.runFor(1200)
+      await timingPage.page.waitForTimeout(900)
+    }
+    if (step !== 'entrance')
+      await visual.page.clock.runFor(1200)
+    const recorded = await record(visual.page, dir, step, () => act(step))
+    const curveList = curves(recorded.frames)
+    let { issues } = flags(curveList, recorded.frames)
+    // An interrupted change legitimately reverses direction.
+    if (step === 'interrupt')
+      issues = issues.filter(issue => !issue.startsWith('backwards'))
+    // Real-clock frame timing of the same step, at normal speed and with the CPU slowed 4x.
+    const timing = {}
+    // Timing replays the step on a second page, so it needs a step that returns to the start.
+    const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(BACK[step])
+    if (step !== 'entrance' && replayable && flag('browser', 'chromium') === 'chromium') {
+      for (const rate of throttle ? [1, 4] : [1]) {
+        const back = labSteps.includes(BACK[step]) ? BACK[step] : undefined
+        if (back) {
+          await timingPage.page.evaluate(name => window.lab.step(name), back)
+          await timingPage.page.waitForTimeout(900)
+        }
+        if (step === 'interrupt') {
+          await timingPage.page.evaluate(() => window.lab.step('fromOne'))
+          await timingPage.page.waitForTimeout(900)
+        }
+        const cdp = await timingPage.context.newCDPSession(timingPage.page)
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate })
+        const t = timingPage.page.evaluate(ms => window.__timing(ms), WINDOW)
+        await actReal(step)
+        const r = await t
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
+        await cdp.detach()
+        timing[`${rate}x`] = { ...stats(r.intervals), longtasks: r.longtasks }
+        await timingPage.page.waitForTimeout(300)
+      }
+    }
+    const kind = step === 'entrance' ? 'enter' : 'update'
+    const errors = [...new Set([...visual.errors, ...timingPage.errors])]
+    report.push({ scenario: s, step, kind, issues, timing, curves: curveList.length, video: recorded.video, slow: recorded.slow, svg: svgCurves(curveList, kind), errors })
+    const last = report.at(-1)
+    console.log(`${s.padEnd(13)} ${step.padEnd(13)} curves=${String(last.curves).padStart(3)} issues=${String(issues.length).padStart(2)} 1x worst=${timing['1x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['1x']?.slow ?? '-'} 4x worst=${timing['4x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['4x']?.slow ?? '-'} lt=${JSON.stringify(timing['4x']?.longtasks ?? [])}${issues.length ? `\n    ${issues.slice(0, 6).join('\n    ')}` : ''}${errors.length ? `\n    ERR ${errors.slice(0, 3).join(' | ')}` : ''}`)
+  }
+  await visual.context.close()
+  await timingPage.context.close()
+}
+writeFileSync(join(out, 'report.json'), JSON.stringify(report.map(({ svg, ...r }) => r), null, 2))
+
+// HTML report.
+const rel = p => p.slice(out.length + 1)
+const rows = report.map(r => `
+<section class="step ${r.issues.length ? 'flagged' : ''}">
+  <header><h3>${r.scenario} · ${r.step}</h3><span class="pill ${r.issues.length ? 'bad' : 'ok'}">${r.issues.length ? `${r.issues.length} flags` : 'clean'}</span>
+  <span class="meta">${r.curves} moving shapes · 1x worst ${r.timing['1x']?.worst.toFixed(0) ?? '–'} ms · 4x CPU worst ${r.timing['4x']?.worst.toFixed(0) ?? '–'} ms, ${r.timing['4x']?.slow ?? '–'} slow frames</span></header>
+  <div class="row">
+    <figure><video src="${rel(r.slow)}" muted loop playsinline controls preload="none"></video><figcaption>4× slow motion</figcaption></figure>
+    <figure><video src="${rel(r.video)}" muted loop playsinline controls preload="none"></video><figcaption>real time</figcaption></figure>
+    <figure>${r.svg}<figcaption>progress per shape (colour) vs ideal ${r.kind} easing (dashed)</figcaption></figure>
+  </div>
+  ${r.issues.length ? `<ul class="issues">${r.issues.slice(0, 12).map(i => `<li>${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>` : ''}
+  ${r.errors.length ? `<ul class="issues">${r.errors.map(i => `<li>console: ${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>` : ''}
+</section>`).join('')
+writeFileSync(join(out, 'index.html'), `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Motion Report</title>
+<style>
+:root{--bg:#fafafa;--fg:#111;--card:#fff;--line:#e5e5e5;--ok:#15803d;--bad:#b91c1c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0b0c;--fg:#eee;--card:#151517;--line:#2a2a2d;--ok:#4ade80;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#0b0b0c;--fg:#eee;--card:#151517;--line:#2a2a2d;--ok:#4ade80;--bad:#f87171}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+main{max-width:1240px;margin:0 auto}h1{font-size:22px;margin:0 0 4px}.lede{opacity:.7;margin:0 0 20px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 14px}
+.step header{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline}.step h3{margin:0;font-size:15px}
+.meta{opacity:.65;font-size:12px}.pill{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:10px}
+figure{margin:0}video,.curves{width:100%;border-radius:8px;border:1px solid var(--line);background:#fff}.curves{background:var(--card)}
+figcaption{font-size:11px;opacity:.6;margin-top:4px}.issues{margin:8px 0 0;padding-left:18px;font:12px ui-monospace,monospace;color:var(--bad)}
+.filters{margin:0 0 16px}label{margin-right:12px}
+</style></head><body><main>
+<h1>Motion report</h1><p class="lede">${report.length} transitions across ${new Set(report.map(r => r.scenario)).size} scenarios, recorded in real time in headless Chromium. Curves show each moving shape's progress from start to end value; the dashed line is the ideal easing. Timing is measured without the sampler, at normal speed and with the CPU slowed 4×.</p>
+<p class="filters"><label><input type="checkbox" id="flagged"> only flagged</label></p>
+${rows}
+<script>document.getElementById('flagged').addEventListener('change',e=>document.querySelectorAll('.step:not(.flagged)').forEach(s=>s.style.display=e.target.checked?'none':''));
+const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting){v.preload='auto';v.play().catch(()=>{})}else v.pause()}));document.querySelectorAll('video').forEach(v=>io.observe(v));</script>
+</main></body></html>`)
+await browser.close()
+await server.close()
+
+if (has('check')) {
+  const failed = report.filter(r => r.issues.length || r.errors.length || (r.timing['1x']?.slow ?? 0) > 2)
+  for (const r of failed)
+    console.error(`FAIL ${r.scenario} ${r.step}: ${[...r.issues, ...r.errors].slice(0, 3).join(' | ') || `${r.timing['1x'].slow} slow frames`}`)
+  console.log(`${report.length - failed.length}/${report.length} transitions clean · report: ${join(out, 'index.html')}`)
+  if (failed.length)
+    process.exitCode = 1
+}
