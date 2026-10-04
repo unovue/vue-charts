@@ -123,9 +123,9 @@ export const TreemapVueProps = {
  * Inner component that has access to chart-local Vue state (provided by Treemap wrapper).
  */
 const treemapEmits = {
-  'node-click': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
-  'node-mouseenter': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
-  'node-mouseleave': (_node: TreemapLayoutNode, _event: MouseEvent) => true,
+  'node-click': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseenter': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseleave': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
   'animation-start': () => true,
   'animation-end': () => true,
 }
@@ -252,7 +252,7 @@ const TreemapInner = defineComponent({
       return `children[0]`
     }
 
-    function handleNestClick(node: TreemapLayoutNode, e: MouseEvent) {
+    function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent) {
       const sourceData = nestCurrentData.value ?? []
       const clickedItem = sourceData.find(item => item[props.nameKey] === node.name)
 
@@ -264,7 +264,7 @@ const TreemapInner = defineComponent({
         currentData.value = clickedItem.children
       }
 
-      emit('node-click', node, e)
+      emit('node-click', node, index, e)
     }
 
     function navigateToBreadcrumb(index: number) {
@@ -283,7 +283,7 @@ const TreemapInner = defineComponent({
       return node.color ?? props.fill
     }
 
-    function handleNodeMouseEnter(node: TreemapLayoutNode, e: MouseEvent) {
+    function handleNodeMouseEnter(node: TreemapLayoutNode, index: number, e: MouseEvent) {
       const tooltipIndex = getTooltipIndex(node)
       const activeCoordinate: Coordinate = {
         x: node.x + node.width / 2,
@@ -294,17 +294,17 @@ const TreemapInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate,
       })
-      emit('node-mouseenter', node, e)
+      emit('node-mouseenter', node, index, e)
     }
 
-    function handleNodeMouseLeave(node: TreemapLayoutNode, e: MouseEvent) {
+    function handleNodeMouseLeave(node: TreemapLayoutNode, index: number, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      emit('node-mouseleave', node, e)
+      emit('node-mouseleave', node, index, e)
     }
 
-    function handleNodeClick(node: TreemapLayoutNode, e: MouseEvent) {
+    function handleNodeClick(node: TreemapLayoutNode, index: number, e: MouseEvent) {
       if (isNestMode.value) {
-        handleNestClick(node, e)
+        handleNestClick(node, index, e)
       }
       else {
         const tooltipIndex = getTooltipIndex(node)
@@ -317,7 +317,7 @@ const TreemapInner = defineComponent({
           activeDataKey: props.dataKey,
           activeCoordinate,
         })
-        emit('node-click', node, e)
+        emit('node-click', node, index, e)
       }
     }
 
@@ -337,9 +337,9 @@ const TreemapInner = defineComponent({
             key={key}
             class="v-charts-treemap-node"
             style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-            onClick={(e: MouseEvent) => handleNodeClick(node, e)}
-            onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
-            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
+            onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
+            onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
+            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
           >
             {slots.content(nodeProps)}
           </g>
@@ -385,9 +385,9 @@ const TreemapInner = defineComponent({
           key={key}
           class="v-charts-treemap-node"
           style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-          onClick={(e: MouseEvent) => handleNodeClick(node, e)}
-          onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
-          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
+          onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
+          onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
+          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
         >
           <rect
             x={node.x}
@@ -483,7 +483,7 @@ export const Treemap = defineComponent({
           width={effectiveWidth.value}
           height={effectiveHeight.value}
         >
-          <TreemapInner {...{ 'onNode-click': (entry, event) => emit('node-click', entry, event) }} {...{ 'onNode-mouseenter': (entry, event) => emit('node-mouseenter', entry, event) }} {...{ 'onNode-mouseleave': (entry, event) => emit('node-mouseleave', entry, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <TreemapInner {...{ 'onNode-click': (entry, index, event) => emit('node-click', entry, index, event) }} {...{ 'onNode-mouseenter': (entry, index, event) => emit('node-mouseenter', entry, index, event) }} {...{ 'onNode-mouseleave': (entry, index, event) => emit('node-mouseleave', entry, index, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ content: slots.content }}
           </TreemapInner>
           {slots.default?.()}

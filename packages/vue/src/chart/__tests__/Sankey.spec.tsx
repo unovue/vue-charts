@@ -98,7 +98,8 @@ describe('<Sankey />', () => {
     await fireEvent.click(node)
     expect(onClick).toHaveBeenCalledTimes(1)
     expect(onClick.mock.calls[0][0]).toMatchObject({ name: 'A' })
-    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
+    expect(onClick.mock.calls[0][1]).toBe(0)
+    expect(onClick.mock.calls[0][2]).toBeInstanceOf(MouseEvent)
   })
 
   it('fires onClick with type "link" when a link is clicked', async () => {
@@ -110,7 +111,8 @@ describe('<Sankey />', () => {
     await fireEvent.click(link)
     expect(onClick).toHaveBeenCalledTimes(1)
     expect(onClick.mock.calls[0][0]).toMatchObject({ value: 10 })
-    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
+    expect(onClick.mock.calls[0][1]).toBe(0)
+    expect(onClick.mock.calls[0][2]).toBeInstanceOf(MouseEvent)
   })
 
   it('shows tooltip with node payload on node hover', async () => {

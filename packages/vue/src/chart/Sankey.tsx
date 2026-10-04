@@ -96,12 +96,12 @@ export const SankeyVueProps = {
 }
 
 const sankeyEmits = {
-  'node-click': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
-  'node-mouseenter': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
-  'node-mouseleave': (_entry: SankeyLayoutNode, _event: MouseEvent) => true,
-  'link-click': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
-  'link-mouseenter': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
-  'link-mouseleave': (_entry: SankeyLayoutLink, _event: MouseEvent) => true,
+  'node-click': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseenter': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseleave': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
+  'link-click': (_entry: SankeyLayoutLink, _index: number, _event: MouseEvent) => true,
+  'link-mouseenter': (_entry: SankeyLayoutLink, _index: number, _event: MouseEvent) => true,
+  'link-mouseleave': (_entry: SankeyLayoutLink, _index: number, _event: MouseEvent) => true,
   'animation-start': () => true,
   'animation-end': () => true,
 }
@@ -241,7 +241,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      emit('node-mouseenter', node, e)
+      emit('node-mouseenter', node, index, e)
     }
 
     function handleLinkMouseEnter(link: SankeyLayoutLink, index: number, e: MouseEvent) {
@@ -255,17 +255,17 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      emit('link-mouseenter', link, e)
+      emit('link-mouseenter', link, index, e)
     }
 
-    function handleNodeMouseLeave(node: SankeyLayoutNode, e: MouseEvent) {
+    function handleNodeMouseLeave(node: SankeyLayoutNode, index: number, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      emit('node-mouseleave', node, e)
+      emit('node-mouseleave', node, index, e)
     }
 
-    function handleLinkMouseLeave(link: SankeyLayoutLink, e: MouseEvent) {
+    function handleLinkMouseLeave(link: SankeyLayoutLink, index: number, e: MouseEvent) {
       tooltip.mouseLeaveItem()
-      emit('link-mouseleave', link, e)
+      emit('link-mouseleave', link, index, e)
     }
 
     function handleNodeClick(node: SankeyLayoutNode, index: number, e: MouseEvent) {
@@ -278,7 +278,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      emit('node-click', node, e)
+      emit('node-click', node, index, e)
     }
 
     function handleLinkClick(link: SankeyLayoutLink, index: number, e: MouseEvent) {
@@ -293,7 +293,7 @@ const SankeyInner = defineComponent({
         activeDataKey: props.dataKey,
         activeCoordinate: coord,
       })
-      emit('link-click', link, e)
+      emit('link-click', link, index, e)
     }
 
     function renderNode(node: SankeyLayoutNode, index: number, opacity: number, key: PropertyKey) {
@@ -319,7 +319,7 @@ const SankeyInner = defineComponent({
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
             onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
-            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
+            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
           >
             {slots.node(slotProps)}
           </g>
@@ -333,7 +333,7 @@ const SankeyInner = defineComponent({
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
           onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
-          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
+          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
         >
           <rect
             x={x}
@@ -365,7 +365,7 @@ const SankeyInner = defineComponent({
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
             onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
-            onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, e)}
+            onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, index, e)}
           >
             {slots.link(slotProps)}
           </g>
@@ -384,7 +384,7 @@ const SankeyInner = defineComponent({
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
           onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
-          onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, e)}
+          onMouseleave={(e: MouseEvent) => handleLinkMouseLeave(link, index, e)}
         />
       )
     }
@@ -427,7 +427,7 @@ const _Sankey = defineComponent({
 
       return (
         <ChartsWrapper {...chartListeners(emit)} isResponsive={isResponsive.value} boxStyle={boxStyle.value} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
-          <SankeyInner {...{ 'onNode-click': (entry, event) => emit('node-click', entry, event) }} {...{ 'onNode-mouseenter': (entry, event) => emit('node-mouseenter', entry, event) }} {...{ 'onNode-mouseleave': (entry, event) => emit('node-mouseleave', entry, event) }} {...{ 'onLink-click': (entry, event) => emit('link-click', entry, event) }} {...{ 'onLink-mouseenter': (entry, event) => emit('link-mouseenter', entry, event) }} {...{ 'onLink-mouseleave': (entry, event) => emit('link-mouseleave', entry, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <SankeyInner {...{ 'onNode-click': (entry, index, event) => emit('node-click', entry, index, event) }} {...{ 'onNode-mouseenter': (entry, index, event) => emit('node-mouseenter', entry, index, event) }} {...{ 'onNode-mouseleave': (entry, index, event) => emit('node-mouseleave', entry, index, event) }} {...{ 'onLink-click': (entry, index, event) => emit('link-click', entry, index, event) }} {...{ 'onLink-mouseenter': (entry, index, event) => emit('link-mouseenter', entry, index, event) }} {...{ 'onLink-mouseleave': (entry, index, event) => emit('link-mouseleave', entry, index, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>
           {slots.default?.()}

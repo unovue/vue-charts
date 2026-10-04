@@ -1,7 +1,6 @@
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
-import type { ExternalMouseEvents } from './event'
 
-export interface CategoricalChartProps extends Partial<ExternalMouseEvents> {
+export interface CategoricalChartProps {
   accessibilityLayer?: boolean
   barCategoryGap?: number | string
   barGap?: number | string

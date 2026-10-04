@@ -1,7 +1,7 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { Bar, BarChart, Customized, Tooltip, XAxis, YAxis, useActiveTooltipLabel, useIsTooltipActive } from '@/index'
+import { Bar, BarChart, Customized, Sankey, SunburstChart, Tooltip, Treemap, XAxis, YAxis, useActiveTooltipLabel, useIsTooltipActive } from '@/index'
 import type { CategoricalChartFunc } from '@/types'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -168,4 +168,42 @@ describe('public chart callbacks', () => {
     expect(secondCallback.mock.calls[0][0].activeLabel).toBe('Other')
     expect(firstCallback).toHaveBeenCalledTimes(1)
   })
+})
+
+it.each([
+  { Chart: Treemap, props: { data: [{ name: 'A', value: 10 }], dataKey: 'value', isAnimationActive: false } },
+  { Chart: Sankey, props: { data: { nodes: [{ name: 'A' }, { name: 'B' }], links: [{ source: 0, target: 1, value: 10 }] }, isAnimationActive: false } },
+  { Chart: SunburstChart, props: { data: { name: 'root', children: [{ name: 'A', value: 10 }] } } },
+])('delivers chart state once from specialty chart wrappers', async ({ Chart, props }) => {
+  const click = vi.fn()
+  const { container } = render(() => <Chart {...props} width={500} height={300} onClick={click} />)
+  const wrapper = container.querySelector('.v-charts-wrapper')!
+  const event = new MouseEvent('click', { bubbles: true })
+  wrapper.dispatchEvent(event)
+  expect(click.mock.calls).toEqual([[expect.objectContaining({ isTooltipActive: expect.any(Boolean) }), event]])
+})
+
+it('delivers Treemap node entry, index, and event separately from its container click', async () => {
+  const click = vi.fn()
+  const nodeClick = vi.fn()
+  const enter = vi.fn()
+  const leave = vi.fn()
+  const { container } = render(() => (
+    <Treemap
+      width={500}
+      height={300}
+      data={[{ name: 'A', value: 10 }]}
+      isAnimationActive={false}
+      onClick={click}
+      {...{ 'onNode-click': nodeClick, 'onNode-mouseenter': enter, 'onNode-mouseleave': leave }}
+    />
+  ))
+  const node = container.querySelector('.v-charts-treemap-node')!
+  for (const [name, listener] of [['click', nodeClick], ['mouseenter', enter], ['mouseleave', leave]] as const) {
+    const event = new MouseEvent(name, { bubbles: name === 'click' })
+    node.dispatchEvent(event)
+    expect(listener.mock.calls).toEqual([[expect.objectContaining({ name: 'A', value: 10 }), 0, event]])
+  }
+  expect(click).toHaveBeenCalledTimes(1)
+  expect(click.mock.calls[0][0]).toHaveProperty('activeIndex')
 })
