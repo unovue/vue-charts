@@ -11,7 +11,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, cellChartOptions, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, boxAttrs, cellChartOptions, cellGridSharedProps, isFocusVisible, rootAttrs } from './CellGridLayer'
 import type { GridCell } from './cellGridUtils'
 
 type SparkValue = number | null | undefined
@@ -76,8 +76,15 @@ const SparklineInner = defineComponent({
 
     const domain = computed(() => {
       const finite = values.value.filter((value): value is number => value !== null)
-      let lo = props.min ?? (finite.length ? Math.min(...finite) : 0)
-      let hi = props.max ?? (finite.length ? Math.max(...finite) : 1)
+      // Loops, not Math.min(...values): spreading very long series overflows the call stack.
+      let dataLo = Infinity
+      let dataHi = -Infinity
+      for (const value of finite) {
+        dataLo = Math.min(dataLo, value)
+        dataHi = Math.max(dataHi, value)
+      }
+      let lo = props.min ?? (finite.length ? dataLo : 0)
+      let hi = props.max ?? (finite.length ? dataHi : 1)
       // Bars grow from zero; lines use the data's own range.
       if (props.type === 'bar') {
         lo = props.min ?? Math.min(0, lo)
@@ -249,9 +256,9 @@ const SparklineInner = defineComponent({
                     ariaLabel={summary.value}
                     isAnimationActive={props.isAnimationActive}
                     transition={props.transition}
+                    activeIndex={active.value}
                     {...{
-                      'onCell-mouseenter': (_payload: unknown, index: number) => setActive(index),
-                      'onCell-mouseleave': () => setActive(null),
+                      'onUpdate:activeIndex': (index: number | null) => setActive(index),
                       'onAnimation-start': () => emit('animation-start'),
                       'onAnimation-end': () => emit('animation-end'),
                     }}
@@ -266,6 +273,10 @@ const SparklineInner = defineComponent({
                     onMousemove={onPointer}
                     onMouseleave={() => setActive(null)}
                     onKeydown={onKeydown}
+                    onFocus={(event: FocusEvent) => {
+                      if (active.value == null && points.value.length && isFocusVisible(event.target as Element))
+                        setActive(points.value.length - 1)
+                    }}
                     onBlur={() => setActive(null)}
                   >
                     <defs>
@@ -306,7 +317,7 @@ const _Sparkline = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...sparklineEmits },
   slots: Object as SlotsType<{ default?: () => any }>,
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     provideChartContext(cellChartOptions('Sparkline'))
     provideRenderPhase()
     const size = useResponsiveSize(reactive({
@@ -318,8 +329,9 @@ const _Sparkline = defineComponent({
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartsWrapper {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
+        <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
           <SparklineInner
+            {...rootAttrs(attrs)}
             {...inner}
             width={size.effectiveWidth.value}
             height={size.effectiveHeight.value}

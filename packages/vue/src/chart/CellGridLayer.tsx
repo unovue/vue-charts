@@ -1,10 +1,11 @@
-import { type PropType, type SlotsType, computed, defineComponent, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type StyleValue, computed, defineComponent, ref, useId, watch } from 'vue'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { get } from 'es-toolkit/compat'
 import { useChartTooltip } from '@/state/chartContext'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import type { ChartTransition } from '@/animation/motion'
+import type { VueClassValue } from '@/types/common'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { GridCell } from './cellGridUtils'
@@ -25,7 +26,7 @@ export interface CellGridSlots<P = unknown> {
   cell?: (props: CellSlotProps<P>) => any
 }
 
-function isFocusVisible(element: Element) {
+export function isFocusVisible(element: Element) {
   try {
     return element.matches(':focus-visible')
   }
@@ -100,6 +101,17 @@ export function cellChartOptions(chartName: string): ChartOptions {
   }
 }
 
+/** Caller `class` and `style` for the chart box. Attributes are untyped, so they are narrowed here once. */
+export function boxAttrs(attrs: Record<string, unknown>): { class?: VueClassValue, style?: StyleValue } {
+  return { class: attrs.class as VueClassValue, style: attrs.style as StyleValue }
+}
+
+/** Caller attributes for the SVG root: `class` and `style` go to the chart box instead. */
+export function rootAttrs(attrs: Record<string, unknown>) {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+}
+
 export const cellGridEmits = {
   'cell-click': (_payload: unknown, _index: number, _event: MouseEvent) => true,
   'cell-mouseenter': (_payload: unknown, _index: number, _event: MouseEvent) => true,
@@ -135,8 +147,10 @@ export const CellGridLayer = defineComponent({
     /** Where entering cells grow from. */
     grow: { type: String as PropType<'center' | 'bottom'>, default: 'center' },
     ariaLabel: { type: String, default: undefined },
+    /** Controlled active cell by position; `undefined` leaves it to pointer and keyboard. */
+    activeIndex: { type: Number as PropType<number | null>, default: undefined },
   },
-  emits: cellGridEmits,
+  emits: { ...cellGridEmits, 'update:activeIndex': (_index: number | null) => true },
   slots: Object as SlotsType<CellGridSlots>,
   setup(props, { emit, slots }) {
     const tooltip = useChartTooltip()
@@ -274,14 +288,23 @@ export const CellGridLayer = defineComponent({
       onCleanup(() => tooltip.removeTooltipEntrySettings(settings))
     }, { immediate: true })
 
-    // A data change can remove the active cell; never point the tooltip at a stale index.
+    // A data change can move or remove the active cell; the tooltip follows it or closes. This
+    // only re-syncs and never reports back: a controlled index keeps deciding which cell it is.
     watch(indexByKey, (map) => {
-      if (activeKey.value !== undefined && !map.has(activeKey.value))
-        clear()
+      const index = props.activeIndex !== undefined
+        ? (props.activeIndex ?? undefined)
+        : activeKey.value === undefined ? undefined : map.get(activeKey.value)
+      const cell = index === undefined ? undefined : props.cells[index]
+      if (cell)
+        activate(cell, index!, false)
+      else if (activeKey.value !== undefined)
+        clear(false)
     })
 
-    function activate(cell: GridCell, index: number) {
+    function activate(cell: GridCell, index: number, notify = true) {
       activeKey.value = cell.key
+      if (notify && props.activeIndex !== index)
+        emit('update:activeIndex', index)
       tooltip.setActiveMouseOverItemIndex({
         activeIndex: String(index),
         activeDataKey: 'value',
@@ -289,10 +312,23 @@ export const CellGridLayer = defineComponent({
       })
     }
 
-    function clear() {
+    function clear(notify = true) {
       activeKey.value = undefined
       tooltip.mouseLeaveItem()
+      if (notify && props.activeIndex != null)
+        emit('update:activeIndex', null)
     }
+
+    // A controlled index selects its cell like the pointer would.
+    watch(() => props.activeIndex, (index) => {
+      if (index === undefined)
+        return
+      const cell = index === null ? undefined : props.cells[index]
+      if (cell && cell.key !== activeKey.value)
+        activate(cell, index!, false)
+      else if (!cell && activeKey.value !== undefined)
+        clear(false)
+    }, { immediate: true })
 
     function onEnter(cell: GridCell, index: number, event: MouseEvent) {
       keyboard.value = false

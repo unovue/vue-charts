@@ -10,7 +10,7 @@ import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
-import { cellChartOptions, cellGridSharedProps } from './CellGridLayer'
+import { boxAttrs, cellChartOptions, cellGridSharedProps, isFocusVisible, rootAttrs } from './CellGridLayer'
 import {
   type JourneyInput,
   type JourneyLink,
@@ -300,6 +300,15 @@ const JourneySankeyInner = defineComponent({
       enterNode(next)
     }
 
+    // Keyboard focus must show where it is: start on the first node.
+    function onFocus(event: FocusEvent) {
+      const first = layout.value.nodes[0]
+      if (focused.value === undefined && first && isFocusVisible(event.target as Element)) {
+        focused.value = first.id
+        enterNode(first)
+      }
+    }
+
     const linkPath = (link: JourneyLink) => {
       const mid = (link.x1 - link.x0) * CURVATURE
       return `M${link.x0},${link.y0}C${link.x0 + mid},${link.y0} ${link.x1 - mid},${link.y1} ${link.x1},${link.y1}`
@@ -335,6 +344,7 @@ const JourneySankeyInner = defineComponent({
             aria-label={focusedLabel.value}
             style={{ outline: 'none' }}
             onKeydown={onKeydown}
+            onFocus={onFocus}
             onBlur={() => { focused.value = undefined; leave() }}
           >
             {props.headers && (
@@ -421,7 +431,7 @@ const _JourneySankey = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...journeyEmits },
   slots: Object as SlotsType<JourneySankeySlots>,
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     provideChartContext({ ...cellChartOptions('JourneySankey') })
     provideRenderPhase()
     const naturalHeight = computed(() => {
@@ -451,8 +461,9 @@ const _JourneySankey = defineComponent({
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartsWrapper {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
+        <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
           <JourneySankeyInner
+            {...rootAttrs(attrs)}
             {...inner}
             width={size.effectiveWidth.value}
             height={size.effectiveHeight.value}

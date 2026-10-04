@@ -112,20 +112,22 @@ export function computeJourneyLayout(input: readonly JourneyInput[], options: Jo
     })
   }
 
-  const shownSteps = Math.max(0, ...[...counts.values()].map(node => node.step + 1))
+  let shownSteps = 0
+  for (const node of counts.values())
+    shownSteps = Math.max(shownSteps, node.step + 1)
+  // The parent sending the most sessions into each node, found once instead of per comparison.
+  const mainParent = new Map<string, { source: string, count: number }>()
+  for (const link of linkCounts.values()) {
+    const best = mainParent.get(link.target)
+    if (!best || link.count > best.count)
+      mainParent.set(link.target, { source: link.source, count: link.count })
+  }
   // Order columns: first by count, then each node under its main parent, in the parent's order.
   const order = new Map<string, number>()
   const columns: string[][] = []
   for (let step = 0; step < shownSteps; step++) {
     const ids = [...counts.entries()].filter(([, node]) => node.step === step).map(([id]) => id)
-    const parentRank = (id: string) => {
-      let best: { rank: number, count: number } | undefined
-      for (const link of linkCounts.values()) {
-        if (link.target === id && (!best || link.count > best.count))
-          best = { rank: order.get(link.source) ?? 0, count: link.count }
-      }
-      return best?.rank ?? 0
-    }
+    const parentRank = (id: string) => order.get(mainParent.get(id)?.source ?? '') ?? 0
     ids.sort((a, b) => step === 0
       ? counts.get(b)!.count - counts.get(a)!.count || a.localeCompare(b)
       : parentRank(a) - parentRank(b) || counts.get(b)!.count - counts.get(a)!.count || a.localeCompare(b))

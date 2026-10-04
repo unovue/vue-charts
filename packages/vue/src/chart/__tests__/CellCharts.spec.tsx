@@ -93,6 +93,23 @@ describe('<Tracker />', () => {
     expect(cells[1].style.opacity).toBe('0.45')
   })
 
+  it('keeps the tooltip on the active bar when the window moves', async () => {
+    const days = ref([{ date: '2026-08-01', status: 'up' }, { date: '2026-08-02', status: 'down' }, { date: '2026-08-03', status: 'up' }])
+    const { container, findByText, queryByText } = render(() => (
+      <Tracker width={300} height={20} isAnimationActive={false} data={days.value}>
+        <Tooltip />
+      </Tracker>
+    ))
+    await fireEvent.mouseEnter(container.querySelectorAll('.v-charts-cell')[1])
+    await fireEvent(container.querySelector('.v-charts-wrapper')!, new MouseEvent('mousemove', { bubbles: true, clientX: 150, clientY: 10 }))
+    expect(await findByText('Aug 2, 2026')).toBeTruthy()
+    days.value = [...days.value.slice(1), { date: '2026-08-04', status: 'up' }]
+    await nextTick()
+    await nextTick()
+    expect(await findByText('Aug 2, 2026')).toBeTruthy()
+    expect(queryByText('Aug 3, 2026')).toBeNull()
+  })
+
   it('starts keyboard focus on the latest bar, moves with the arrow keys and clears with Escape', async () => {
     const { container } = render(() => (
       <Tracker width={300} height={20} isAnimationActive={false} data={[{ date: 'a', status: 'up' }, { date: 'b', status: 'up' }, { date: 'c', status: 'down' }]} />
@@ -292,6 +309,8 @@ describe('cell grid utils', () => {
     ['2026-01-01', toDayNumber(new Date(2026, 0, 1))],
     ['2026-01-01', toDayNumber(new Date(2026, 0, 1, 23, 59))],
     ['2026-02-30', undefined],
+    ['2026-13-01', undefined],
+    ['2026-00-01', undefined],
     ['2026-1-1', undefined],
   ])('reads %s as the same calendar day as a local Date', (input, expected) => {
     expect(toDayNumber(input)).toBe(expected)

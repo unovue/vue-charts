@@ -127,6 +127,14 @@ describe('<JourneySankey />', () => {
     expect(container.textContent).not.toContain('/de/pricing')
   })
 
+  it('shows the first node when it receives keyboard focus', async () => {
+    const { container } = render(() => <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} />)
+    const group = container.querySelector<SVGGElement>('.v-charts-journey')!
+    group.focus()
+    await nextTick()
+    expect(group.getAttribute('aria-label')).toBe('/, step 1: 14 sessions')
+  })
+
   it('walks nodes with the arrow keys and pins with Enter', async () => {
     const pinned = ref<string[] | null>(null)
     const { container } = render(() => (

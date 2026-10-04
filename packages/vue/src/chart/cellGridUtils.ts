@@ -41,8 +41,9 @@ export function toDayNumber(input: string | Date | null | undefined): number | u
     return undefined
   const [, y, m, d] = match.map(Number)
   const day = Date.UTC(y, m - 1, d) / DAY_MS
-  // Reject impossible dates such as 2026-02-30 instead of rolling them over.
-  return new Date(day * DAY_MS).getUTCDate() === d ? day : undefined
+  // Reject impossible dates such as 2026-02-30 or 2026-13-01 instead of rolling them over.
+  const parsed = new Date(day * DAY_MS)
+  return parsed.getUTCFullYear() === y && parsed.getUTCMonth() === m - 1 && parsed.getUTCDate() === d ? day : undefined
 }
 
 export function dayNumberToIso(day: number): string {

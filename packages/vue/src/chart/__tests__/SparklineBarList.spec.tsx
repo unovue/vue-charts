@@ -59,6 +59,29 @@ describe('<Sparkline />', () => {
     expect(await findByText('42')).toBeTruthy()
   })
 
+  it('reports keyboard selection of bar sparklines through v-model and follows a controlled index', async () => {
+    const active = ref<number | null>(null)
+    const { container } = render(() => (
+      <Sparkline type="bar" width={100} height={30} isAnimationActive={false} data={[3, 8, 4]} activeIndex={active.value} {...{ 'onUpdate:activeIndex': (index: number | null) => { active.value = index } }} />
+    ))
+    const grid = container.querySelector('.v-charts-cell-grid')!
+    await fireEvent.keyDown(grid, { key: 'ArrowLeft' })
+    expect(active.value).toBe(2)
+    active.value = 0
+    await nextTick()
+    expect(container.querySelector('[aria-selected="true"]')).toBe(container.querySelectorAll('.v-charts-cell')[0])
+  })
+
+  it('marks the latest point when it receives keyboard focus', async () => {
+    const active = ref<number | null>(null)
+    const { container } = render(() => (
+      <Sparkline width={100} height={30} isAnimationActive={false} data={[3, 8, 4]} {...{ 'onUpdate:activeIndex': (index: number | null) => { active.value = index } }} />
+    ))
+    container.querySelector<SVGGElement>('.v-charts-sparkline g[role="img"]')!.focus()
+    await nextTick()
+    expect(active.value).toBe(2)
+  })
+
   it('grows bars from zero, also below it', () => {
     const { container } = render(() => <Sparkline type="bar" width={100} height={40} gap={0} isAnimationActive={false} data={[10, -10]} />)
     const bars = Array.from(container.querySelectorAll('.v-charts-cell-rect'), rect => ({ y: Number(rect.getAttribute('y')), height: Number(rect.getAttribute('height')) }))

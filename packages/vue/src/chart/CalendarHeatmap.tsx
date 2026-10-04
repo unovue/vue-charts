@@ -7,7 +7,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, boxAttrs, cellChartOptions, cellGridEmits, cellGridSharedProps, rootAttrs } from './CellGridLayer'
 import { type GridCell, dayNumberToIso, formatDay, levelColors, levelOf, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay {
@@ -61,7 +61,7 @@ const _CalendarHeatmap = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<CalendarDay> & { default?: () => any }>,
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     provideChartContext(cellChartOptions('CalendarHeatmap'))
     provideRenderPhase()
     const rows = useTrackedData(() => props.data)
@@ -79,8 +79,10 @@ const _CalendarHeatmap = defineComponent({
     })
 
     const range = computed(() => {
-      const days = [...valuesByDay.value.keys()]
-      const end = toDayNumber(props.end) ?? (days.length ? Math.max(...days) : undefined)
+      let latest: number | undefined
+      for (const day of valuesByDay.value.keys())
+        latest = latest === undefined || day > latest ? day : latest
+      const end = toDayNumber(props.end) ?? latest
       if (end === undefined)
         return undefined
       const start = toDayNumber(props.start) ?? end - 52 * 7 - weekdayOffset(end)
@@ -177,8 +179,8 @@ const _CalendarHeatmap = defineComponent({
     const textStyle = { fill: 'var(--v-charts-text, #666)', fontSize: '10px' }
 
     return () => (
-      <ChartsWrapper {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-        <Surface width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
+        <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <Layer class="v-charts-calendar">
             <g class="v-charts-calendar-months" aria-hidden="true">
               {layout.value.months.map(month => (

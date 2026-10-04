@@ -7,7 +7,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, boxAttrs, cellChartOptions, cellGridEmits, cellGridSharedProps, rootAttrs } from './CellGridLayer'
 import { type GridCell, levelColors, levelOf, mixColor } from './cellGridUtils'
 
 export type HeatmapKey = string | number
@@ -70,7 +70,7 @@ const _Heatmap = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => any }>,
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     provideChartContext(cellChartOptions('Heatmap'))
     provideRenderPhase()
     const rows = useTrackedData(() => props.data)
@@ -191,8 +191,8 @@ const _Heatmap = defineComponent({
     const textStyle = { fill: 'var(--v-charts-text, #666)', fontSize: '10px' }
 
     return () => (
-      <ChartsWrapper {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-        <Surface width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
+        <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <Layer class="v-charts-heatmap">
             <g class="v-charts-heatmap-y-labels" aria-hidden="true">
               {layout.value.yLabels.map(label => (

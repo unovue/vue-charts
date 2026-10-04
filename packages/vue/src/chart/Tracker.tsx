@@ -7,7 +7,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, boxAttrs, cellChartOptions, cellGridEmits, cellGridSharedProps, rootAttrs } from './CellGridLayer'
 import { type GridCell, formatDay, toDayNumber } from './cellGridUtils'
 
 /** Default fill per status. Every color reads a CSS variable first, so themes can restyle it. */
@@ -53,7 +53,7 @@ const _Tracker = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<TrackerRow> & { default?: () => any }>,
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     provideChartContext(cellChartOptions('Tracker'))
     provideRenderPhase()
     // A tracker is a strip: without a height or aspect it is 32px tall, not the 360px chart default.
@@ -109,8 +109,8 @@ const _Tracker = defineComponent({
     })
 
     return () => (
-      <ChartsWrapper {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-        <Surface width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
+        <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <Layer class="v-charts-tracker">
             <CellGridLayer
               cells={cells.value}
