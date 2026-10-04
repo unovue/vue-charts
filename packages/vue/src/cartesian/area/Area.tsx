@@ -55,6 +55,7 @@ const AreaView = defineComponent({
               mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
               itemDataKey={props.dataKey}
               activeDot={props.activeDot}
+              isAnimationActive={props.isAnimationActive}
               v-slots={{ activeDot: slots.activeDot }}
             />
           </Layer>

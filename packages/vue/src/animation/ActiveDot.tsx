@@ -6,13 +6,14 @@ import { shouldSkipEntrance } from './renderPhase'
 
 /** Radius and opacity appear together; pointer retargeting keeps the mounted dot. */
 export const ActiveDot = defineComponent({
-  setup(_, { slots }) {
+  props: { isAnimationActive: { type: Boolean, default: true } },
+  setup(props, { slots }) {
     const element = ref<SVGGElement>()
     const reduced = usePreferredReducedMotion()
     const skip = shouldSkipEntrance()
     let controls: AnimationPlaybackControls | undefined
     watch(element, (el) => {
-      if (!el || skip || reduced.value === 'reduce')
+      if (!el || !props.isAnimationActive || skip || reduced.value === 'reduce')
         return
       const circle = el.querySelector('circle')
       const radius = circle?.getAttribute('r')

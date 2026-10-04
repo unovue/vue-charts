@@ -1,7 +1,7 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Area, AreaChart, Line, LineChart, Tooltip } from '@/index'
+import { Area, AreaChart, Line, LineChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, Tooltip } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const clock = vi.hoisted(() => ({ reduced: false, updates: [] as Array<(t: number) => void>, durations: [] as number[] }))
@@ -20,18 +20,18 @@ beforeEach(() => {
   mockGetBoundingClientRect({ width: 400, height: 300 })
 })
 for (const kind of ['line', 'area']) {
-  async function setup() {
+  async function setup(active = true) {
     const data = [{ name: 'A', value: 40 }, { name: 'B', value: 80 }]
     const { container } = render(() => kind === 'line'
       ? (
           <LineChart width={400} height={300} data={data}>
-            <Line dataKey="value" isAnimationActive={false} />
+            <Line dataKey="value" isAnimationActive={active} />
             <Tooltip defaultIndex={0} isAnimationActive={false} />
           </LineChart>
         )
       : (
           <AreaChart width={400} height={300} data={data}>
-            <Area dataKey="value" isAnimationActive={false} />
+            <Area dataKey="value" isAnimationActive={active} />
             <Tooltip defaultIndex={0} isAnimationActive={false} />
           </AreaChart>
         ))
@@ -57,3 +57,39 @@ for (const kind of ['line', 'area']) {
     expect(clock.updates).toHaveLength(0)
   })
 }
+
+it('renders final active dots immediately when Line, Area, or Radar disables animation', async () => {
+  const data = [{ name: 'A', value: 40 }, { name: 'B', value: 80 }]
+  for (const kind of ['line', 'area', 'radar']) {
+    const { container, unmount } = render(() => kind === 'line'
+      ? (
+          <LineChart width={400} height={300} data={data}>
+            <Line dataKey="value" isAnimationActive={false} />
+            <Tooltip defaultIndex={0} isAnimationActive={false} />
+          </LineChart>
+        )
+      : kind === 'area'
+        ? (
+            <AreaChart width={400} height={300} data={data}>
+              <Area dataKey="value" isAnimationActive={false} />
+              <Tooltip defaultIndex={0} isAnimationActive={false} />
+            </AreaChart>
+          )
+        : (
+            <RadarChart width={400} height={300} data={data}>
+              <PolarAngleAxis dataKey="name" />
+              <PolarRadiusAxis />
+              <Radar dataKey="value" isAnimationActive={false} />
+              <Tooltip defaultIndex={0} isAnimationActive={false} />
+            </RadarChart>
+          ))
+    await nextTick()
+    await nextTick()
+    const dot = container.querySelector('.v-charts-active-dot circle')!
+    expect(dot).not.toBeNull()
+    expect(dot.getAttribute('r')).toBe('4')
+    expect(dot.parentElement!.style.opacity).not.toBe('0')
+    expect(clock.updates).toHaveLength(0)
+    unmount()
+  }
+})

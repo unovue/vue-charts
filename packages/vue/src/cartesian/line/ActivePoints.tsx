@@ -18,6 +18,7 @@ export interface PointType {
 }
 
 const ActivePointsVueProps = {
+  isAnimationActive: { type: Boolean, default: true },
   points: { type: Array as PropType<ReadonlyArray<Point>>, required: true },
   mainColor: { type: String, required: true },
   itemDataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true },
@@ -66,6 +67,7 @@ export const ActivePoints = defineComponent({
         mainColor: props.mainColor!,
         dataKey: props.itemDataKey!,
         activeDot: props.activeDot,
+        isAnimationActive: props.isAnimationActive,
         slots,
       })
     }
@@ -77,11 +79,13 @@ function renderActivePoint({
   childIndex,
   mainColor,
   activeDot,
+  isAnimationActive,
   dataKey,
   slots,
 }: {
   point: PointType
   activeDot: any
+  isAnimationActive: boolean
   childIndex: number
   dataKey: DataKey<any>
   mainColor: string
@@ -114,7 +118,7 @@ function renderActivePoint({
 
   return (
     <Layer class="v-charts-active-dot">
-      <ActiveDot>{dot}</ActiveDot>
+      <ActiveDot isAnimationActive={isAnimationActive}>{dot}</ActiveDot>
     </Layer>
   )
 }

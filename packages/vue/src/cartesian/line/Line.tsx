@@ -70,6 +70,7 @@ const LineView = defineComponent({
               mainColor={attrs.stroke ?? props.stroke!}
               itemDataKey={props.dataKey}
               activeDot={props.activeDot}
+              isAnimationActive={props.isAnimationActive}
               v-slots={{ activeDot: slots.activeDot }}
             />
           </Layer>

@@ -235,6 +235,7 @@ const RadarView = defineComponent({
             mainColor={mainColor}
             itemDataKey={props.dataKey}
             activeDot={props.activeDot}
+            isAnimationActive={props.isAnimationActive}
           />
         </Layer>
       )
