@@ -178,6 +178,11 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 - MDC syntax: `::chart-demo{src="..."}::` to embed live demos
 - Tailwind v4 syntax: `border-(--color-border)` (NOT v3 `border-[--color-border]`)
 
+### Docs Styling (fixed rule)
+- **Tailwind utilities wherever possible** — no scoped CSS unless the style truly can't be expressed as a utility (e.g. `@keyframes`, third-party `:deep` overrides)
+- Design tokens via v4 paren syntax: `bg-(--ds-surface)`, `duration-(--ds-t-colour)`, `ease-(--ds-ease)`
+- Buttons use the `DsButton` component (`variant="solid" | "ghost"`), never raw classes
+
 ## Dependencies
 
 | Library | Purpose |
