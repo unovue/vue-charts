@@ -18,9 +18,11 @@ function useTooltipSyncEventsListener() {
   const layout = useChartLayout()
   const viewBox = useViewBox()
 
-  const className = useAppSelector(state => state.rootProps.class)
 
-  watch([className, myEventEmitter, mySyncId, syncMethod, tooltipTicks, layout, viewBox], (v, o, onCleanup) => {
+  // Subscribe only to what identifies the channel. The listener reads ticks, layout and viewBox
+  // when a message arrives; watching them re-queued this job for every series registration and
+  // tripped Vue's recursion guard in charts with many series.
+  watch([myEventEmitter, mySyncId], (v, o, onCleanup) => {
     if (mySyncId.value == null) {
       // This chart is not synchronised with any other chart so we don't need to listen for any events.
       return

@@ -16,7 +16,7 @@ import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { extractCellProps, filterOutCells } from '@/utils/cell'
+import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 
@@ -136,7 +136,7 @@ const FunnelView = defineComponent({
       // Extract Cell props and non-Cell children (e.g. LabelList) from default slot
       const defaultContent = slots.default?.() ?? []
       const cells = extractCellProps(defaultContent)
-      cellPropsRef.value = cells
+      assignCells(cellPropsRef, cells)
       const nonCellContent = cells.length > 0 ? filterOutCells(defaultContent) : defaultContent
       const stroke = (attrs.stroke as string) ?? props.stroke
 

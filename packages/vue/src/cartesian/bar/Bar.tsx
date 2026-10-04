@@ -21,7 +21,7 @@ import type { BarRectangleItem } from '@/types/bar'
 import { getValueByDataKey } from '@/utils/chart'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { extractCellProps, filterOutCells } from '@/utils/cell'
+import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 
 const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> = (
   dataPoint,
@@ -140,7 +140,7 @@ const BarView = defineComponent({
         return null
       const children = slots.default?.() ?? []
       const cells = extractCellProps(children)
-      cellPropsRef.value = cells
+      assignCells(cellPropsRef, cells)
       return teleport((
         <Layer class={['v-charts-bar', attrs.class]}>
           {h(Geometry)}
