@@ -1,0 +1,188 @@
+import { fireEvent, render } from '@testing-library/vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
+import { Funnel, FunnelChart, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, Sankey, Treemap } from '@/index'
+import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+
+const clock = vi.hoisted(() => ({ reduced: false, runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean, duration?: number }> }))
+vi.mock('motion-v', async original => ({
+  ...await original<typeof import('motion-v')>(),
+  animate: (from: number, to: number, options: { onUpdate: (v: number) => void, onComplete?: () => void, duration?: number }) => {
+    if (typeof from !== 'number')
+      return { stop() {} }
+    const run = { to, update: options.onUpdate, complete: () => options.onComplete?.(), stopped: false, duration: options.duration }
+    clock.runs.push(run)
+    return { stop: () => { run.stopped = true } }
+  },
+}))
+vi.mock('@vueuse/core', async original => ({
+  ...await original<typeof import('@vueuse/core')>(),
+  usePreferredReducedMotion: () => ref(clock.reduced ? 'reduce' : 'no-preference'),
+}))
+async function frame(seconds?: number) {
+  for (const run of clock.runs.filter(run => !run.stopped)) {
+    run.update(seconds ?? run.to)
+    if (seconds == null) {
+      run.stopped = true
+      run.complete()
+    }
+  }
+  await nextTick()
+}
+beforeEach(() => {
+  clock.runs = []
+  clock.reduced = false
+  mockGetBoundingClientRect({ width: 400, height: 300 })
+})
+const initial = [{ name: 'B', value: 40 }, { name: 'C', value: 70 }]
+export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel' | 'treemap' | 'sankey') {
+  function setup(active = true, override = false) {
+    const rows = ref(initial)
+    const props = { isAnimationActive: active, transition: override ? { duration: 0.12, ease: 'linear' as const } : undefined }
+    const { container } = render(() => {
+      switch (kind) {
+        case 'pie': return <PieChart width={400} height={300}><Pie data={rows.value} dataKey="value" paddingAngle={4} {...props} v-slots={{ shape: (sector: { name: string, startAngle: number, endAngle: number, paddingAngle: number }) => <path data-name={sector.name} data-start={sector.startAngle} data-end={sector.endAngle} data-padding={sector.paddingAngle} d={`M${sector.startAngle},${sector.endAngle}`} /> }} /></PieChart>
+        case 'radar': return (
+          <RadarChart width={400} height={300} data={rows.value}>
+            <PolarAngleAxis dataKey="name" />
+            <PolarRadiusAxis domain={[0, 100]} />
+            <Radar dot dataKey="value" {...props} />
+          </RadarChart>
+        )
+        case 'radial': return <RadialBarChart width={400} height={300} data={rows.value}><RadialBar dataKey="value" {...props} /></RadialBarChart>
+        case 'funnel': return <FunnelChart width={400} height={300}><Funnel data={rows.value} dataKey="value" {...props} v-slots={{ shape: (trap: { x: number, y: number, height: number, upperWidth: number }) => <rect x={trap.x} y={trap.y} height={trap.height} width={trap.upperWidth} /> }} /></FunnelChart>
+        case 'treemap': return <Treemap width={400} height={300} data={rows.value} {...props} v-slots={{ content: (node: { name: string, x: number, y: number, width: number, height: number }) => <rect data-name={node.name} x={node.x} y={node.y} width={node.width} height={node.height} /> }} />
+        case 'sankey': return <Sankey width={400} height={300} data={{ nodes: [...rows.value, { name: 'sink' }], links: rows.value.map((row, index) => ({ source: index, target: rows.value.length, value: row.value })) }} {...props} />
+      }
+    })
+    const selector = { pie: '.v-charts-pie > g', radar: '.v-charts-radar-dots circle', radial: '.v-charts-radial-bar > path', funnel: '.v-charts-funnel > g:has(rect)', treemap: '.v-charts-treemap-node', sankey: '.v-charts-sankey-node' }[kind]
+    const nodes = () => Array.from(container.querySelectorAll(selector))
+    const geometry = (node: Element) => {
+      const shape = node.matches('circle,path') ? node : node.querySelector('path,rect')!
+      return ['d', 'x', 'y', 'width', 'height', 'cx', 'cy'].map(attr => shape?.getAttribute(attr)).join('|')
+    }
+    return { rows, container, nodes, geometry }
+  }
+  describe(`${kind} public keyed transitions`, () => {
+    it('keeps DOM identity and screen geometry on prepend and reorder', async () => {
+      const view = setup()
+      await frame()
+      const before = view.nodes()
+      expect(before.length).toBeGreaterThanOrEqual(2)
+      const geometry = before.map(view.geometry)
+      view.rows.value = [{ name: 'A', value: 20 }, initial[1], initial[0]]
+      await nextTick()
+      before.forEach((node, index) => {
+        expect(view.nodes()).toContain(node)
+        expect(view.geometry(node)).toBe(geometry[index])
+      })
+      await frame()
+      before.forEach(node => expect(view.nodes()).toContain(node))
+    })
+    it('starts collapsed, retains exits until completion, and lands on nonzero geometry', async () => {
+      const view = setup()
+      await nextTick()
+      const entrance = view.nodes().map(view.geometry)
+      if (kind === 'pie') {
+        for (const node of view.container.querySelectorAll('[data-start]'))
+          expect(node.getAttribute('data-start')).toBe(node.getAttribute('data-end'))
+      }
+      else if (kind === 'radar') {
+        for (const node of view.nodes()) {
+          expect(node.getAttribute('cx')).toBe('200')
+          expect(node.getAttribute('cy')).toBe('150')
+        }
+      }
+      else if (kind === 'radial') {
+        expect(view.nodes()).toHaveLength(0)
+      }
+      else {
+        for (const node of view.nodes()) {
+          expect(node.querySelector('rect')!.getAttribute('height')).toBe('0')
+          if (kind === 'treemap')
+            expect(node.querySelector('rect')!.getAttribute('width')).toBe('0')
+        }
+      }
+      await frame()
+      expect(view.nodes().map(view.geometry)).not.toEqual(entrance)
+      const removed = kind === 'treemap' ? view.nodes().find(node => node.querySelector('[data-name]')?.getAttribute('data-name') === 'C')! : view.nodes()[1]
+      view.rows.value = [initial[0]]
+      await nextTick()
+      expect(view.nodes()).toContain(removed)
+      await frame(0.1)
+      expect(view.nodes()).toContain(removed)
+      await frame()
+      expect(view.nodes()).not.toContain(removed)
+    })
+    it('interrupts from displayed geometry', async () => {
+      const view = setup()
+      await frame()
+      const node = view.nodes()[0]
+      const before = view.geometry(node)
+      view.rows.value = [{ name: 'B', value: 90 }, { name: 'C', value: 10 }]
+      await nextTick()
+      await frame(0.15)
+      const midway = view.geometry(node)
+      expect(midway).not.toBe(before)
+      view.rows.value = [{ name: 'B', value: 10 }, { name: 'C', value: 90 }]
+      await nextTick()
+      expect(view.geometry(node)).toBe(midway)
+      await frame()
+      expect(view.geometry(node)).not.toBe(midway)
+    })
+    it.each(['disabled', 'reduced'])('snaps when %s', async (mode) => {
+      clock.reduced = mode === 'reduced'
+      const view = setup(mode !== 'disabled')
+      await nextTick()
+      const before = view.nodes().map(view.geometry)
+      view.rows.value = [{ name: 'B', value: 90 }, { name: 'C', value: 10 }]
+      await nextTick()
+      expect(view.nodes().map(view.geometry)).not.toEqual(before)
+      expect(clock.runs).toHaveLength(0)
+    })
+    it('uses the transition override for entrance and update', async () => {
+      const view = setup(true, true)
+      await nextTick()
+      expect(clock.runs.at(-1)?.duration).toBe(0.12)
+      await frame()
+      view.rows.value = [{ name: 'B', value: 20 }, initial[1]]
+      await nextTick()
+      expect(clock.runs.at(-1)?.duration).toBe(0.12)
+    })
+    if (kind === 'pie') {
+      it('keeps the ring angle total through insert, exit, and interruption', async () => {
+        const view = setup()
+        await frame()
+        const total = () => Array.from(view.container.querySelectorAll('[data-start]')).reduce((sum, node) => sum + Number(node.getAttribute('data-end')) - Number(node.getAttribute('data-start')) + Number(node.getAttribute('data-padding')), 0)
+        expect(total()).toBeCloseTo(360, 6)
+        view.rows.value = [initial[0], { name: 'D', value: 20 }, initial[1]]
+        await nextTick()
+        for (const time of [0, 0.1, 0.2]) {
+          await frame(time)
+          expect(total()).toBeCloseTo(360, 6)
+        }
+        view.rows.value = [initial[0], { name: 'D', value: 80 }]
+        await nextTick()
+        for (const time of [0, 0.1, 0.3, 0.5]) {
+          await frame(time)
+          expect(total()).toBeCloseTo(360, 6)
+        }
+        await frame()
+        expect(total()).toBeCloseTo(360, 6)
+      })
+    }
+  })
+
+  if (kind === 'treemap') {
+    it('treemap nest navigation updates without remounting its animation clock', async () => {
+      const { container } = render(() => <Treemap type="nest" width={400} height={300} data={[{ name: 'Group', children: initial }]} />)
+      await frame()
+      const count = clock.runs.length
+      await fireEvent.click(container.querySelector('.v-charts-treemap-node')!)
+      expect(clock.runs.length).toBe(count + 1)
+      expect(clock.runs.at(-1)?.duration).toBe(0.6)
+      await frame()
+      expect(container.textContent).toContain('Root')
+    })
+  }
+}

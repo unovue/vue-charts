@@ -96,6 +96,23 @@ describe('useKeyedTransition', () => {
     expect(view()).toEqual([`A:update:${midway}`])
   })
 
+  it('stops and snaps an in-flight transition when animation is disabled', async () => {
+    const active = shallowRef(true)
+    const result = effectScope().run(() => useKeyedTransition(() => [{ name: 'A', height: 100 }], {
+      key: item => item.name,
+      interpolate: (from, to, t) => ({ ...to, height: from.height + (to.height - from.height) * t }),
+      enterFrom: to => ({ ...to, height: 0 }),
+      exitTo: from => ({ ...from, height: 0 }),
+      isActive: () => active.value,
+    }))!
+    at(0.1)
+    active.value = false
+    await nextTick()
+    expect(clock.runs.at(-1)!.stopped).toBe(true)
+    expect(result.items.value[0].value.height).toBe(100)
+    expect(result.isAnimating.value).toBe(false)
+  })
+
   it('gives repeated keys distinct identities', () => {
     const { view } = setup([{ name: 'A', height: 1 }, { name: 'A', height: 2 }])
     finish()

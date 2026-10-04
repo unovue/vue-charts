@@ -165,11 +165,11 @@ export function useKeyedTransition<T>(
     return [...staying.flatMap(item => [...(exitsBefore.get(item.key) ?? []), item]), ...trailingExits]
   }
 
-  watch(target, (next) => {
+  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value }), ({ next, active, reduced }) => {
     const nextItems = next ?? []
     const skip = skipEntrance && !hasEntered
     skipEntrance = false
-    if (skip || !options.isActive() || reducedMotion.value === 'reduce') {
+    if (skip || !active || reduced === 'reduce') {
       hasEntered = true
       snap(nextItems)
       return
