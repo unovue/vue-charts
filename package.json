@@ -69,7 +69,8 @@
   },
   "pnpm": {
     "overrides": {
-      "vue": "3.5.18"
+      "vue": "3.5.18",
+      "nuxt-og-image>@unhead/vue": "2.1.12"
     }
   },
   "simple-git-hooks": {
