@@ -1,3 +1,4 @@
+import { pieEvents } from '@/events/itemEvents'
 import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, ref, watch } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -17,7 +18,7 @@ import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/p
 import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
 import { polarToCartesian } from '@/utils/polar'
-import type { PiePropsWithSVG } from './type'
+import type { PieProps } from './type'
 import { PieVueProps } from './type'
 
 const LABEL_OFFSET = 20
@@ -26,7 +27,7 @@ const PieView = defineComponent({
   name: 'PieView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<PiePropsWithSVG>, required: true },
+    item: { type: Object as PropType<PieProps>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
@@ -36,6 +37,7 @@ const PieView = defineComponent({
     default?: () => any
   }>,
   setup(view, { slots }) {
+    const emit = pieEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
     const data = view.data
@@ -70,7 +72,7 @@ const PieView = defineComponent({
       )
     })
 
-    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     let appeared = false
     const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.name ?? index,
@@ -191,8 +193,9 @@ const PieView = defineComponent({
             return (
               <g
                 key={key}
-                onMouseenter={() => handleSectorEnter(sector, sector.index)}
-                onMouseleave={handleSectorLeave}
+                onMouseenter={(event: MouseEvent) => { handleSectorEnter(sector, sector.index); emit('mouseenter', sector, sector.index, event) }}
+                onMouseleave={(event: MouseEvent) => { handleSectorLeave(); emit('mouseleave', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(sector.index), activeDataKey: props.dataKey, activeCoordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
               >
                 {content}
               </g>
@@ -205,15 +208,17 @@ const PieView = defineComponent({
   },
 })
 
-export const Pie = defineComponent<PiePropsWithSVG>({
+export const Pie = defineComponent({
   name: 'Pie',
+  emits: pieEvents.emits,
   props: PieVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
     shape?: (props: PieSectorDataItem & { isActive: boolean }) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
+    pieEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const pieSettings = computed<ResolvedPieSettings>(() => ({
       data: data.value,

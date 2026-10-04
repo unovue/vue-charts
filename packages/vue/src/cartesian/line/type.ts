@@ -30,8 +30,6 @@ export interface LineProps {
   legendType?: LegendType
   layout?: LayoutType
   name?: string | number
-  onAnimationEnd?: () => void
-  onAnimationStart?: () => void
   stroke?: string
   strokeWidth?: number
   tooltipType?: TooltipType
@@ -58,8 +56,6 @@ export const LineVueProps = {
   hide: { type: Boolean, default: false },
   label: { type: [Boolean, Object] },
   legendType: { type: String as PropType<LegendType>, default: 'line' },
-  onAnimationEnd: { type: Function },
-  onAnimationStart: { type: Function },
   stroke: { type: String, default: 'var(--v-charts-series, #3182bd)' },
   strokeWidth: { type: Number, default: 1 },
   tooltipType: { type: String as PropType<TooltipType> },

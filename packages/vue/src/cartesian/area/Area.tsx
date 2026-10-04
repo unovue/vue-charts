@@ -1,8 +1,10 @@
+import { useSeriesPointEvents } from '@/events/usePointEvents'
+import { areaEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { AreaDotSlotProps, AreaProps, AreaPropsWithSVG } from './type'
+import type { AreaDotSlotProps, AreaProps } from './type'
 import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
 import { Layer } from '@/container/Layer'
@@ -31,6 +33,7 @@ const AreaView = defineComponent({
     const attrs = view.svgAttrs
     const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
     const { shouldRender, areaData } = useArea(trackedProps, attrs, slots.dot)
+    const activeListeners = useSeriesPointEvents(areaEvents.use(), () => props.dataKey, () => areaData.value?.points ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
@@ -50,14 +53,16 @@ const AreaView = defineComponent({
           <Layer class={['v-charts-area', attrs.class]}>
             <StaticArea />
           </Layer>
-          <ActivePoints
-            points={areaData.value?.points ?? []}
-            mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
-            itemDataKey={props.dataKey}
-            activeDot={props.activeDot}
-          >
-            {activeDot}
-          </ActivePoints>
+          <Layer {...activeListeners}>
+            <ActivePoints
+              points={areaData.value?.points ?? []}
+              mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
+              itemDataKey={props.dataKey}
+              activeDot={props.activeDot}
+            >
+              {activeDot}
+            </ActivePoints>
+          </Layer>
         </Fragment>
       )
 
@@ -67,12 +72,14 @@ const AreaView = defineComponent({
   },
 })
 
-const _Area = defineComponent<AreaPropsWithSVG>({
+const _Area = defineComponent({
   name: 'Area',
+  emits: areaEvents.emits,
   props: AreaVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<AreaSlots>,
-  setup(props: AreaProps, { attrs, slots }: { attrs: SVGAttributes, slots: AreaSlots }) {
+  setup(props, { attrs, slots, emit }) {
+    areaEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)
     return () => h(View, { item: props, data, svgAttrs: attrs }, slots)

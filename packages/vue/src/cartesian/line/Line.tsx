@@ -1,3 +1,5 @@
+import { useSeriesPointEvents } from '@/events/usePointEvents'
+import { lineEvents } from '@/events/itemEvents'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
@@ -29,6 +31,7 @@ const LineView = defineComponent({
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, needClip, clipPathId, lineData, points } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
+    const activeListeners = useSeriesPointEvents(lineEvents.use(), () => props.dataKey, () => lineData.value ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
@@ -60,14 +63,16 @@ const LineView = defineComponent({
             <StaticLine />
             {defaultContent}
           </Layer>
-          <ActivePoints
-            points={lineData.value ?? []}
-            mainColor={attrs.stroke ?? props.stroke!}
-            itemDataKey={props.dataKey}
-            activeDot={props.activeDot}
-          >
-            {activeDot}
-          </ActivePoints>
+          <Layer {...activeListeners}>
+            <ActivePoints
+              points={lineData.value ?? []}
+              mainColor={attrs.stroke ?? props.stroke!}
+              itemDataKey={props.dataKey}
+              activeDot={props.activeDot}
+            >
+              {activeDot}
+            </ActivePoints>
+          </Layer>
         </Fragment>
       )
 
@@ -79,10 +84,12 @@ const LineView = defineComponent({
 
 export const Line = defineComponent({
   name: 'Line',
+  emits: lineEvents.emits,
   props: LineVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<ActivePointsSlots & { default?: () => any, shape?: (props: any) => any, dot?: (props: any) => any, label?: (props: any) => any }>,
-  setup(props: LineProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
+  setup(props, { attrs, slots, emit }) {
+    lineEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'line')
     const View = useDeferredView(LineView)
     return () => h(View, { item: props, svgAttrs: attrs, data }, slots)

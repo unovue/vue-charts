@@ -1,3 +1,4 @@
+import { barEvents } from '@/events/itemEvents'
 import { defineComponent, watch } from 'vue'
 import { useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
@@ -26,6 +27,7 @@ export const BarRectangles = defineComponent({
   inheritAttrs: false,
 
   setup() {
+    const emit = barEvents.use()
     const tooltip = useChartTooltip()
     const activeIndex = useAppSelector(selectActiveTooltipIndex)
     const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
@@ -63,8 +65,8 @@ export const BarRectangles = defineComponent({
         exitTo: ({ bar, index }) => ({ index, bar: atBaseline(bar) }),
         isActive: () => props.isAnimationActive !== false,
         transition: () => props.transition,
-        onStart: () => props.onAnimationStart?.(),
-        onEnd: () => props.onAnimationEnd?.(),
+        onStart: () => emit('animation-start'),
+        onEnd: () => emit('animation-end'),
       },
     )
     watch(transitioning, (value) => {
@@ -118,9 +120,9 @@ export const BarRectangles = defineComponent({
               <Layer
                 key={key}
                 class="v-charts-bar-rectangle"
-                onMouseenter={() => activate('hover', bar, index)}
-                onMouseleave={() => tooltip.mouseLeaveItem()}
-                onClick={() => activate('click', bar, index)}
+                onMouseenter={(event: MouseEvent) => { activate('hover', bar, index); emit('mouseenter', bar, index, event) }}
+                onMouseleave={(event: MouseEvent) => { tooltip.mouseLeaveItem(); emit('mouseleave', bar, index, event) }}
+                onClick={(event: MouseEvent) => { activate('click', bar, index); emit('click', bar, index, event) }}
               >
                 {shape}
               </Layer>

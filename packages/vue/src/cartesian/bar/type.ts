@@ -60,14 +60,6 @@ export const BarVueProps = {
     type: [Number, Array] as PropType<number | [number, number, number, number]>,
     default: undefined,
   },
-  onAnimationStart: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
-  onAnimationEnd: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
   isAnimationActive: { type: Boolean, default: true },
   activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, any> | boolean>, default: false },
   activeIndex: { type: Number, default: undefined },
@@ -100,17 +92,4 @@ export type BarSettings = {
   maxBarSize?: number
   minPointSize: MinPointSize
   stackId?: string | number
-}
-
-export type BarMouseEvent = (
-  data: BarRectangleItem,
-  index: number,
-  event: MouseEvent,
-) => void
-
-export interface BarEvents {
-  onClick: BarMouseEvent
-  onMouseEnter: BarMouseEvent
-  onMouseLeave: BarMouseEvent
-  onMouseMove: BarMouseEvent
 }

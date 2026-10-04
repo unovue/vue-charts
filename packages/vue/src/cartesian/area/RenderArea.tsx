@@ -1,3 +1,5 @@
+import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { areaEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
 import { Fragment, defineComponent, watch } from 'vue'
 import { Layer } from '@/container/Layer'
@@ -25,7 +27,9 @@ export const Dots = defineComponent({
     },
   },
   setup(_props) {
+    const emit = areaEvents.use()
     const { clipPathId, props, attrs, dotSlot } = useAreaContext()
+    const listeners = usePointEvents<AreaPointItem>(emit, () => props.dataKey)
 
     return () => {
       const { points } = _props
@@ -48,9 +52,9 @@ export const Dots = defineComponent({
             points?.map((point, index) => {
               const dotProps = { ...dotsProps, ...attrs, r: 3, cx: point.x, cy: point.y, class: 'v-charts-area-dot', clipDot }
               if (dotSlot) {
-                return <g key={_props.keys[index]}>{dotSlot(dotProps)}</g>
+                return <g key={_props.keys[index]} {...listeners(point as AreaPointItem, index)}>{dotSlot(dotProps)}</g>
               }
-              return <Dot key={_props.keys[index]} {...dotProps} />
+              return <g key={_props.keys[index]} {...listeners(point as AreaPointItem, index)}><Dot {...dotProps} /></g>
             })
           }
         </Layer>
@@ -63,7 +67,9 @@ export const Dots = defineComponent({
 export const StaticArea = defineComponent({
   name: 'StaticArea',
   setup() {
+    const emit = areaEvents.use()
     const { points, clipPathId, layout, attrs, areaData, props, isAnimating } = useAreaContext()
+    const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const categoryAxis = useAppSelector(state => layout.value === 'vertical'
       ? selectAxisSettings(state, 'yAxis', props.yAxisId)
@@ -77,8 +83,8 @@ export const StaticArea = defineComponent({
       baseline: () => areaData.value?.baseLine,
       isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
-      onStart: () => props.onAnimationStart?.(),
-      onEnd: () => props.onAnimationEnd?.(),
+      onStart: () => emit('animation-start'),
+      onEnd: () => emit('animation-end'),
     })
     const currentPoints = display.points
     const currentBaseLine = display.baseline
@@ -112,7 +118,7 @@ export const StaticArea = defineComponent({
           </defs>
           <g clip-path={display.reveal.value < 1 ? `url(#${sweepId})` : undefined}>
             {currentPoints.value && currentPoints.value.length > 1 && (
-              <Layer clip-path={props.needClip ? `url(#clipPath-${clipPathId.value})` : undefined}>
+              <Layer {...seriesListeners} clip-path={props.needClip ? `url(#clipPath-${clipPathId.value})` : undefined}>
                 <Curve
                   {...curveAttrs}
                   points={currentPoints.value}

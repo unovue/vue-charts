@@ -20,8 +20,6 @@ export const RadialBarVueProps = {
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   background: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
   label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,

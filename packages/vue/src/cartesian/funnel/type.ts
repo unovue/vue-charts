@@ -27,8 +27,6 @@ export interface FunnelProps {
   lastShapeType?: 'triangle' | 'rectangle'
   legendType?: LegendType
   nameKey?: DataKey<any>
-  onAnimationEnd?: () => void
-  onAnimationStart?: () => void
   reversed?: boolean
   // shape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
   tooltipType?: TooltipType
@@ -50,8 +48,6 @@ export const FunnelVueProps = {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,
   },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   width: { type: [Number, String] as PropType<number | string>, default: undefined },
   class: classProp,
 }

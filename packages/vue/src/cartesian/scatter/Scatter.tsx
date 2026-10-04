@@ -1,3 +1,4 @@
+import { scatterEvents } from '@/events/itemEvents'
 import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
@@ -57,8 +58,6 @@ const ScatterVueProps = {
   label: { type: [Boolean, Object], default: false },
   legendType: { type: String, default: 'circle' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
 
@@ -74,6 +73,7 @@ const ScatterView = defineComponent({
     default?: () => any
   }>,
   setup(view, { slots }) {
+    const emit = scatterEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
     const data = view.data
@@ -127,7 +127,7 @@ const ScatterView = defineComponent({
     })
 
     const createDisplay = () => {
-      const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+      const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
       return useKeyedTransition(() => points.value, {
         key: (_point, index) => index,
         interpolate: (from, to, t) => ({
@@ -181,14 +181,15 @@ const ScatterView = defineComponent({
           <g
             key={i}
             class="v-charts-scatter-symbol"
-            onMouseenter={() => dispatchScatterHover(point, i)}
+            onMouseenter={(event: MouseEvent) => { dispatchScatterHover(point, i); emit('mouseenter', point, i, event) }}
             onMousemove={(e: MouseEvent) => {
               // Stop propagation to prevent SVG-level mousemove from overriding
               // our per-dot index with the axis-computed index
               e.stopPropagation()
               dispatchScatterHover(point, i)
             }}
-            onMouseleave={onMouseLeaveSymbol}
+            onMouseleave={(event: MouseEvent) => { onMouseLeaveSymbol(); emit('mouseleave', point, i, event) }}
+            onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(i), activeDataKey: props.dataKey, activeCoordinate: point.tooltipPosition }); emit('click', point, i, event) }}
           >
             {Symbols(symbolProps)}
           </g>
@@ -290,12 +291,14 @@ const ScatterView = defineComponent({
 
 export const Scatter = defineComponent({
   name: 'Scatter',
+  emits: scatterEvents.emits,
   props: ScatterVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
+    scatterEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
     const data = useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })

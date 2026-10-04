@@ -1,3 +1,5 @@
+import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { lineEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
 import { Fragment, defineComponent, watch } from 'vue'
 import { useOffset } from '@/context/chartLayoutContext'
@@ -24,7 +26,9 @@ export const Dots = defineComponent({
     },
   },
   setup(_props) {
+    const emit = lineEvents.use()
     const { clipPathId, clipDot, props, attrs, needClip, dotSlot } = useLineContext()
+    const listeners = usePointEvents<LinePointItem>(emit, () => props.dataKey)
 
     return () => {
       const { points } = _props
@@ -47,9 +51,9 @@ export const Dots = defineComponent({
             points?.map((point, index) => {
               const pointAsLine = point as LinePointItem
               if (dotSlot) {
-                return <g key={_props.keys[index]}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
+                return <g key={_props.keys[index]} {...listeners(pointAsLine, index)}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
               }
-              return <Dot key={_props.keys[index]} r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} />
+              return <g key={_props.keys[index]} {...listeners(pointAsLine, index)}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
             })
           }
         </Layer>
@@ -61,7 +65,9 @@ export const Dots = defineComponent({
 export const StaticLine = defineComponent({
   name: 'StaticLine',
   setup() {
+    const emit = lineEvents.use()
     const { points, clipPathId, layout, attrs, lineData, props, isAnimating, needClip, shapeSlot, labelSlot } = useLineContext()
+    const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const categoryAxis = useAppSelector(state => layout.value === 'vertical'
       ? selectAxisSettings(state, 'yAxis', props.yAxisId)
@@ -74,8 +80,8 @@ export const StaticLine = defineComponent({
       },
       isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
-      onStart: () => props.onAnimationStart?.(),
-      onEnd: () => props.onAnimationEnd?.(),
+      onStart: () => emit('animation-start'),
+      onEnd: () => emit('animation-end'),
     })
     watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
     return () => {
@@ -106,7 +112,7 @@ export const StaticLine = defineComponent({
             />
           </defs>
           <g clip-path={display.reveal.value < 1 ? `url(#${sweepId})` : undefined}>
-            <Layer clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
+            <Layer {...seriesListeners} clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
               {display.points.value.length > 1 && (shapeSlot ? shapeSlot(curveProps) : <Curve {...curveProps} />)}
             </Layer>
             <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} />

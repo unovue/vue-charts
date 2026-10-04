@@ -1,5 +1,6 @@
+import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { PropType } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
@@ -15,7 +16,6 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { LabelList } from '@/components/label/LabelList'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { interpolate } from '@/utils/data-utils'
-import type { RadialBarPropsWithSVG } from './type'
 import { RadialBarVueProps } from './type'
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
@@ -26,10 +26,11 @@ const RadialBarView = defineComponent({
   name: 'RadialBarView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<RadialBarPropsWithSVG>, required: true },
+    item: { type: Object as PropType<ExtractPropTypes<typeof RadialBarVueProps>>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
+    const emit = radialBarEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
     const tooltip = useChartTooltip()
@@ -70,7 +71,7 @@ const RadialBarView = defineComponent({
       })),
     })
 
-    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.payload?.name ?? index,
       interpolate: (from, to, t) => ({
@@ -147,14 +148,16 @@ const RadialBarView = defineComponent({
               return null
             }
             const sectorFill = (sector as any).fill ?? defaultFill
-            const onMouseenter = () => {
+            const onMouseenter = (event: MouseEvent) => {
               tooltip.setActiveMouseOverItemIndex({
                 activeIndex: String(sector.index),
                 activeDataKey: props.dataKey,
               })
+              emit('mouseenter', sector, sector.index, event)
             }
-            const onMouseleave = () => {
+            const onMouseleave = (event: MouseEvent) => {
               tooltip.mouseLeaveItem()
+              emit('mouseleave', sector, sector.index, event)
             }
             return (
               <Sector
@@ -175,6 +178,7 @@ const RadialBarView = defineComponent({
                 stroke-dasharray={props.strokeDasharray}
                 onMouseenter={onMouseenter}
                 onMouseleave={onMouseleave}
+                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(sector.index), activeDataKey: props.dataKey }); emit('click', sector, sector.index, event) }}
               />
             )
           })}
@@ -206,11 +210,13 @@ const RadialBarView = defineComponent({
   },
 })
 
-export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
+export const RadialBar = defineComponent({
   name: 'RadialBar',
+  emits: radialBarEvents.emits,
   props: RadialBarVueProps,
   inheritAttrs: false,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
+    radialBarEvents.provide(emit)
     SetPolarGraphicalItem(computed(() => ({
       type: 'radialBar' as const,
       data: undefined,

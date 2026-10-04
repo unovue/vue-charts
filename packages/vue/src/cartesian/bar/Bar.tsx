@@ -1,8 +1,9 @@
+import { barEvents } from '@/events/itemEvents'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { BarProps, BarPropsWithSVG } from './type'
+import type { BarProps } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
 import { Layer } from '@/container/Layer'
@@ -38,7 +39,7 @@ const BarView = defineComponent({
   name: 'BarView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<BarPropsWithSVG>, required: true },
+    item: { type: Object as PropType<BarProps>, required: true },
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
@@ -144,8 +145,9 @@ const BarView = defineComponent({
   },
 })
 
-export const Bar = defineComponent<BarPropsWithSVG>({
+export const Bar = defineComponent({
   name: 'Bar',
+  emits: barEvents.emits,
   props: BarVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
@@ -154,7 +156,8 @@ export const Bar = defineComponent<BarPropsWithSVG>({
     shape?: (props: any) => any
     activeBar?: (props: any) => any
   }>,
-  setup(props: BarProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
+  setup(props, { attrs, slots, emit }) {
+    barEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
     const data = useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })

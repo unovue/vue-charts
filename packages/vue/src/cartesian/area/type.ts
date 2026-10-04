@@ -46,14 +46,6 @@ export const AreaVueProps = {
     default: undefined,
   },
   legendType: { type: String as PropType<LegendType>, default: 'line' },
-  onAnimationEnd: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
-  onAnimationStart: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,

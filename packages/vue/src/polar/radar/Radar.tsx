@@ -1,3 +1,5 @@
+import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
@@ -64,8 +66,6 @@ const RadarViewProps = {
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   connectNulls: { type: Boolean, default: false },
   label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
-  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
@@ -82,7 +82,9 @@ const RadarView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
+    const emit = radarEvents.use()
     const props = view.item
+    const listeners = usePointEvents<RadarPoint>(emit, () => props.dataKey)
     const attrs = view.svgAttrs
     const isPanorama = useIsPanorama()
 
@@ -93,7 +95,7 @@ const RadarView = defineComponent({
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef()
 
-    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })
     const centre = (point: RadarPoint): RadarPoint => ({ ...point, x: point.cx ?? 0, y: point.cy ?? 0 })
     const { items, isAnimating } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
@@ -125,6 +127,8 @@ const RadarView = defineComponent({
       }))
     }))
 
+    const seriesListeners = useSeriesPointEvents<RadarPoint>(emit, () => props.dataKey, () => radarPoints.value?.points ?? [])
+
     const renderPolygon = (
       points: RadarPoint[],
       baseLinePoints: RadarPoint[],
@@ -145,7 +149,7 @@ const RadarView = defineComponent({
 
       return (
         <Layer class="v-charts-radar">
-          <g class="v-charts-radar-polygon">
+          <g class="v-charts-radar-polygon" {...seriesListeners}>
             {isRange && baseLinePoints.length > 0
               ? (
                   <g>
@@ -192,15 +196,16 @@ const RadarView = defineComponent({
               {points.map((point, i) => {
                 const dotProps = typeof props.dot === 'object' ? props.dot : {}
                 return (
-                  <Dot
-                    key={items.value[i].key}
-                    cx={point.x}
-                    cy={point.y}
-                    r={3}
-                    fill={props.fill}
-                    stroke={stroke}
-                    {...dotProps}
-                  />
+                  <g key={items.value[i].key} {...listeners(point, i)}>
+                    <Dot
+                      cx={point.x}
+                      cy={point.y}
+                      r={3}
+                      fill={props.fill}
+                      stroke={stroke}
+                      {...dotProps}
+                    />
+                  </g>
                 )
               })}
             </g>
@@ -223,12 +228,14 @@ const RadarView = defineComponent({
       const mainColor = getLegendItemColor(props.stroke, props.fill) ?? props.fill
 
       const activePointsEl = (
-        <ActivePoints
-          points={points}
-          mainColor={mainColor}
-          itemDataKey={props.dataKey}
-          activeDot={props.activeDot}
-        />
+        <Layer {...seriesListeners}>
+          <ActivePoints
+            points={points}
+            mainColor={mainColor}
+            itemDataKey={props.dataKey}
+            activeDot={props.activeDot}
+          />
+        </Layer>
       )
       const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
@@ -249,9 +256,11 @@ const RadarView = defineComponent({
 
 export const Radar = defineComponent({
   name: 'Radar',
+  emits: radarEvents.emits,
   inheritAttrs: false,
   props: RadarViewProps,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
+    radarEvents.provide(emit)
     SetPolarGraphicalItem(computed(() => ({
       type: 'radar' as const,
       data: undefined,

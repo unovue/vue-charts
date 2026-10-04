@@ -1,4 +1,5 @@
-import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
+import { funnelEvents } from '@/events/itemEvents'
+import type { ComputedRef, ExtractPropTypes, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartTooltip } from '@/state/chartContext'
@@ -15,14 +16,14 @@ import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
-import type { FunnelPropsWithSVG, FunnelTrapezoidItem } from './type'
+import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 
 const FunnelView = defineComponent({
   name: 'FunnelView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<FunnelPropsWithSVG>, required: true },
+    item: { type: Object as PropType<ExtractPropTypes<typeof FunnelVueProps>>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     trapezoids: { type: Object as PropType<ComputedRef<readonly FunnelTrapezoidItem[]>>, required: true },
@@ -33,6 +34,7 @@ const FunnelView = defineComponent({
     default?: () => any
   }>,
   setup(view, { slots }) {
+    const emit = funnelEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
     const data = view.data
@@ -47,8 +49,8 @@ const FunnelView = defineComponent({
       connected: true,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
-      onStart: () => props.onAnimationStart?.(),
-      onEnd: () => props.onAnimationEnd?.(),
+      onStart: () => emit('animation-start'),
+      onEnd: () => emit('animation-end'),
     })
 
     SetTooltipEntrySettings({
@@ -150,8 +152,9 @@ const FunnelView = defineComponent({
             return (
               <g
                 key={key}
-                onMouseenter={() => handleTrapezoidEnter(trap, trap.index)}
-                onMouseleave={handleTrapezoidLeave}
+                onMouseenter={(event: MouseEvent) => { handleTrapezoidEnter(trap, trap.index); emit('mouseenter', trap, trap.index, event) }}
+                onMouseleave={(event: MouseEvent) => { handleTrapezoidLeave(); emit('mouseleave', trap, trap.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(trap.index), activeDataKey: props.dataKey, activeCoordinate: trap.tooltipPosition }); emit('click', trap, trap.index, event) }}
               >
                 {content}
               </g>
@@ -164,15 +167,17 @@ const FunnelView = defineComponent({
   },
 })
 
-export const Funnel = defineComponent<FunnelPropsWithSVG>({
+export const Funnel = defineComponent({
   name: 'Funnel',
+  emits: funnelEvents.emits,
   props: FunnelVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
     shape?: (props: FunnelTrapezoidItem) => any
     default?: () => any
   }>,
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, emit }) {
+    funnelEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const cellPropsRef = shallowRef<Record<string, any>[]>([])
     const funnelSettings = computed<ResolvedFunnelSettings>(() => ({
