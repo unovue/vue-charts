@@ -20,6 +20,8 @@ export const Dots = defineComponent({
   name: 'LineDots',
   props: {
     keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },
+    indices: { type: Array as PropType<number[]>, default: () => [] },
+    exiting: { type: Array as PropType<boolean[]>, default: () => [] },
     points: {
       type: Array as PropType<ReadonlyArray<Point>>,
       default: () => [],
@@ -48,12 +50,15 @@ export const Dots = defineComponent({
           clip-path={needClip.value ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
-            points?.map((point, index) => {
+            points?.map((point, position) => {
+              const index = _props.indices[position] ?? position
+              const exiting = _props.exiting[position]
+              const handlers = exiting ? {} : listeners(point as LinePointItem, index)
               const pointAsLine = point as LinePointItem
               if (dotSlot) {
-                return <g key={_props.keys[index]} {...listeners(pointAsLine, index)}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
+                return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
               }
-              return <g key={_props.keys[index]} {...listeners(pointAsLine, index)}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
+              return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
             })
           }
         </Layer>
@@ -115,7 +120,7 @@ export const StaticLine = defineComponent({
             <Layer {...seriesListeners} clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
               {display.points.value.length > 1 && (shapeSlot ? shapeSlot(curveProps) : <Curve {...curveProps} />)}
             </Layer>
-            <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} />
+            <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} />
           </g>
           {!isAnimating.value && (props.label || labelSlot) && (
             <LabelList

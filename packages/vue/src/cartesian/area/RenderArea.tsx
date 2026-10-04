@@ -21,6 +21,8 @@ export const Dots = defineComponent({
   name: 'Dots',
   props: {
     keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },
+    indices: { type: Array as PropType<number[]>, default: () => [] },
+    exiting: { type: Array as PropType<boolean[]>, default: () => [] },
     points: {
       type: Array as PropType<ReadonlyArray<Point>>,
       default: () => [],
@@ -49,12 +51,15 @@ export const Dots = defineComponent({
           clip-path={props.needClip ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
-            points?.map((point, index) => {
+            points?.map((point, position) => {
+              const index = _props.indices[position] ?? position
+              const exiting = _props.exiting[position]
+              const handlers = exiting ? {} : listeners(point as AreaPointItem, index)
               const dotProps = { ...dotsProps, ...attrs, r: 3, cx: point.x, cy: point.y, class: 'v-charts-area-dot', clipDot }
               if (dotSlot) {
-                return <g key={_props.keys[index]} {...listeners(point as AreaPointItem, index)}>{dotSlot(dotProps)}</g>
+                return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot(dotProps)}</g>
               }
-              return <g key={_props.keys[index]} {...listeners(point as AreaPointItem, index)}><Dot {...dotProps} /></g>
+              return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot {...dotProps} /></g>
             })
           }
         </Layer>
@@ -155,7 +160,7 @@ export const StaticArea = defineComponent({
                 )}
               </Layer>
             )}
-            <Dots points={currentPoints.value} keys={display.items.value.map(item => item.key)} />
+            <Dots points={currentPoints.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} />
           </g>
           {
             showLabels && (
