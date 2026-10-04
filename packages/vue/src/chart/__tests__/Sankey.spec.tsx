@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { nextTick, shallowRef } from 'vue'
 import { Tooltip } from '@/components/Tooltip'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { Sankey } from '../Sankey'
@@ -38,6 +38,50 @@ describe('<Sankey />', () => {
     expect(Array.from(container.querySelectorAll('[data-source]'), node => node.getAttribute('data-source'))).toEqual(['0', '1'])
     expect(Array.from(container.querySelectorAll('[data-target]'), node => node.getAttribute('data-target'))).toEqual(['2', '2'])
     expect(container.querySelectorAll('.v-charts-sankey-node')).toHaveLength(3)
+  })
+
+  it('drops invalid graph links and recovers through good, invalid, and good updates', async () => {
+    const data = shallowRef(sampleData)
+    const errors: unknown[] = []
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const { container } = render(() => (
+        <Sankey data={data.value} width={600} height={400} isAnimationActive={false} />
+      ), { global: { config: { errorHandler: error => errors.push(error) } } })
+      const paths = () => Array.from(container.querySelectorAll('.v-charts-sankey-link'), path => path.getAttribute('d'))
+      const goodPaths = paths()
+      expect(goodPaths).toHaveLength(4)
+
+      data.value = {
+        nodes: sampleData.nodes,
+        links: [
+          ...sampleData.links,
+          { source: 99, target: 1, value: 5 },
+          { source: 0, target: 99, value: 5 },
+          { source: 0, target: 1, value: 0 },
+          { source: 0, target: 1, value: -1 },
+          { source: 0, target: 1, value: Number.POSITIVE_INFINITY },
+          { source: 0, target: 1, value: Number.NEGATIVE_INFINITY },
+          { source: 0, target: 1, value: Number.NaN },
+          { source: 1, target: 1, value: 5 },
+          { source: 3, target: 0, value: 5 },
+        ],
+      }
+      await nextTick()
+      expect(errors).toEqual([])
+      expect(paths()).toEqual(goodPaths)
+      expect(container.innerHTML).not.toMatch(/NaN|Infinity/)
+      expect(warning).toHaveBeenCalledTimes(1)
+      expect(warning).toHaveBeenCalledWith('Sankey dropped 9 invalid or cyclic links.')
+
+      data.value = sampleData
+      await nextTick()
+      expect(errors).toEqual([])
+      expect(paths()).toEqual(goodPaths)
+    }
+    finally {
+      warning.mockRestore()
+    }
   })
 
   it('renders one rect per node', () => {
