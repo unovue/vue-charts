@@ -27,7 +27,7 @@ export function usePointTransition<T extends Point>(
   const callbacks = useAnimationCallbacks(options.onStart, options.onEnd)
   const mixPoint = <P extends Point>(from: P, to: P, t: number): P => ({
     ...to,
-    x: from.x + (to.x - from.x) * t,
+    x: from.x == null || to.x == null ? to.x : from.x + (to.x - from.x) * t,
     // Null values are gaps, never coordinates to interpolate through zero.
     y: from.y == null || to.y == null ? to.y : from.y + (to.y - from.y) * t,
   })
