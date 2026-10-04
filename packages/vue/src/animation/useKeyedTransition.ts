@@ -5,7 +5,7 @@ import type { ShallowRef } from 'vue'
 import { onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { motionTokens } from './motion'
-import { shouldSkipEntrance, useChartSize } from './renderPhase'
+import { shouldSkipEntrance, useChartSize, useSeriesMotion } from './renderPhase'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
 
@@ -35,6 +35,8 @@ export interface KeyedTransitionOptions<T> {
    * Separate shapes (bars) leave faster than they arrive.
    */
   connected?: boolean
+  /** Axes and grids follow the series; they do not count as an animated series themselves. */
+  followsSeries?: boolean
   /** A user `transition` prop. When set, every phase follows it instead of the motion tokens. */
   transition?: () => ChartTransition | undefined
   onStart?: () => void
@@ -89,6 +91,8 @@ export function useKeyedTransition<T>(
   // chart then follows its box directly instead of trailing it.
   const chartSize = useChartSize()
   let lastSize: string | undefined
+  if (!options.followsSeries)
+    useSeriesMotion().register(options.isActive)
   let controls: AnimationPlaybackControls | undefined
 
   function stop() {

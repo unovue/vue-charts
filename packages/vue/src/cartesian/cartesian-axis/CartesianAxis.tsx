@@ -10,7 +10,8 @@ import type { CartesianTickItem } from '@/types/tick'
 import type { ComponentPublicInstance, PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
-import { defineComponent, getCurrentInstance, reactive } from 'vue'
+import { computed, defineComponent, getCurrentInstance, reactive } from 'vue'
+import { useTickMotion } from '@/animation/useTickMotion'
 import { get } from 'es-toolkit/compat'
 import Text from '@/components/Text.vue'
 import { Label } from '@/components/label'
@@ -207,9 +208,18 @@ export const CartesianAxis = defineComponent({
       )
     }
 
-    const renderTicks = (props: any, fontSize: string, letterSpacing: string) => {
+    const targetTicks = computed<readonly CartesianTickItem[]>(() => getTicks(props as any, state.fontSize, state.letterSpacing, canMeasureText.value))
+    const { items: movingTicks } = useTickMotion(
+      () => props.hide ? [] : targetTicks.value,
+      () => props.scale,
+      () => props.orientation === 'left' || props.orientation === 'right'
+        ? [props.y, props.y + props.height] as const
+        : [props.x, props.x + props.width] as const,
+    )
+
+    const renderTicks = (props: any) => {
       const { tickLine, stroke, tick, tickFormatter, unit } = props
-      const finalTicks = getTicks(props as any, fontSize, letterSpacing, canMeasureText.value)
+      const finalTicks = movingTicks.value
       const textAnchor = getTickTextAnchor()
       const verticalAnchor = getTickVerticalAnchor()
       const axisProps = filterProps(props, false)
@@ -219,7 +229,7 @@ export const CartesianAxis = defineComponent({
         fill: 'none',
         ...filterProps(tickLine, false),
       }
-      const items = finalTicks.map((entry: CartesianTickItem, i: number) => {
+      const items = finalTicks.map(({ key, value: entry }, i: number) => {
         const { line: lineCoord, tick: tickCoord } = getTickLineCoord(entry)
         const tickProps = {
           textAnchor,
@@ -238,7 +248,8 @@ export const CartesianAxis = defineComponent({
         return (
           <Layer
             class="v-charts-cartesian-axis-tick"
-            key={`tick-${entry.value}-${entry.coordinate}-${entry.tickCoord}`}
+            key={key}
+            opacity={entry.opacity < 1 ? entry.opacity : undefined}
           >
             {tickLine && (
               <line
@@ -296,7 +307,9 @@ export const CartesianAxis = defineComponent({
           class={['v-charts-cartesian-axis']}
           ref={(ref: ComponentPublicInstance) => {
             const elm = ref?.$el as HTMLElement
-            if (elm) {
+            // Reading computed style forces a style recalculation; ticks re-render every frame
+            // while they move, so measure once.
+            if (elm && !state.fontSize) {
               const tick: Element | undefined = elm?.getElementsByClassName('v-charts-cartesian-axis-tick-value')[0]
               if (tick) {
                 const calculatedFontSize = window.getComputedStyle(tick).fontSize
@@ -310,7 +323,7 @@ export const CartesianAxis = defineComponent({
           }}
         >
           {axisLine && renderAxisLine()}
-          {renderTicks(props, state.fontSize, state.letterSpacing)}
+          {renderTicks(props)}
           {renderLabel()}
         </Layer>
       )

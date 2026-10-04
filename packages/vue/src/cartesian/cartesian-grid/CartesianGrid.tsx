@@ -1,4 +1,5 @@
-import { defineComponent, h } from 'vue'
+import { computed, defineComponent, h } from 'vue'
+import { useTickMotion } from '@/animation/useTickMotion'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
@@ -126,6 +127,48 @@ const CartesianGridView = defineComponent({
       selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'yAxis', props.yAxisId!, isPanorama),
     )
 
+    // Default grid lines follow the axis ticks by value, on the same clock as the ticks, so the
+    // grid never lags behind or runs ahead of the labels. Custom points and generators are drawn
+    // as given.
+    const gridItems = (axis: typeof xAxis, start: number, end: number, sync: boolean | undefined) => {
+      if (!axis.value)
+        return []
+      const ticks = getTicks({
+        ...CartesianAxisDefaultProps,
+        ...axis.value,
+        ticks: getTicksOfAxis(axis.value, true)!,
+        viewBox: { x: 0, y: 0, width: chartWidth.value, height: chartHeight.value },
+      }) as ReadonlyArray<{ value?: unknown, coordinate: number }>
+      const items = ticks.map(tick => ({ value: tick.value, coordinate: tick.coordinate }))
+      if (!sync) {
+        if (!items.some(item => item.coordinate === start))
+          items.push({ value: '\u0000start', coordinate: start })
+        if (!items.some(item => item.coordinate === end))
+          items.push({ value: '\u0000end', coordinate: end })
+      }
+      return items
+    }
+    const usesDefault = (points: unknown[] | undefined, generator: unknown, values: unknown[] | undefined) =>
+      (!points || !points.length) && !generator && !(values && values.length)
+    const horizontal = useTickMotion(
+      () => usesDefault(props.horizontalPoints, props.horizontalCoordinatesGenerator, props.horizontalValues)
+        ? gridItems(yAxis, offset.value.top!, offset.value.top! + offset.value.height!, props.syncWithTicks)
+        : [],
+      () => yAxis.value?.scale,
+      () => [offset.value.top!, offset.value.top! + offset.value.height!],
+    )
+    const vertical = useTickMotion(
+      () => usesDefault(props.verticalPoints, props.verticalCoordinatesGenerator, props.verticalValues)
+        ? gridItems(xAxis, offset.value.left!, offset.value.left! + offset.value.width!, props.syncWithTicks)
+        : [],
+      () => xAxis.value?.scale,
+      () => [offset.value.left!, offset.value.left! + offset.value.width!],
+    )
+    const moving = computed(() => ({
+      horizontal: horizontal.items.value.map(item => item.value),
+      vertical: vertical.items.value.map(item => item.value),
+    }))
+
     return () => {
       const propsIncludingDefaults = {
         ...resolveDefaultProps({ ...props, ...attrs }, defaultProps),
@@ -140,6 +183,16 @@ const CartesianGridView = defineComponent({
       const horizontalCoordinatesGenerator = propsIncludingDefaults.horizontalCoordinatesGenerator || defaultHorizontalCoordinatesGenerator
 
       let { horizontalPoints, verticalPoints } = propsIncludingDefaults
+      let horizontalOpacity: number[] | undefined
+      let verticalOpacity: number[] | undefined
+      if (moving.value.horizontal.length) {
+        horizontalPoints = moving.value.horizontal.map(item => item.coordinate)
+        horizontalOpacity = moving.value.horizontal.map(item => item.opacity)
+      }
+      if (moving.value.vertical.length) {
+        verticalPoints = moving.value.vertical.map(item => item.coordinate)
+        verticalOpacity = moving.value.vertical.map(item => item.opacity)
+      }
       // No horizontal points are specified
       if ((!horizontalPoints || !horizontalPoints.length) && typeof horizontalCoordinatesGenerator === 'function') {
         const isHorizontalValues = horizontalValues && horizontalValues.length
@@ -224,6 +277,7 @@ const CartesianGridView = defineComponent({
             {...propsIncludingDefaults}
             offset={offset.value}
             horizontalPoints={horizontalPoints}
+            pointOpacity={horizontalOpacity}
             xAxis={xAxis.value!}
             yAxis={yAxis.value!}
             v-slots={slots.horizontal ? { horizontal: slots.horizontal } : undefined}
@@ -233,6 +287,7 @@ const CartesianGridView = defineComponent({
             {...propsIncludingDefaults}
             offset={offset}
             verticalPoints={verticalPoints}
+            pointOpacity={verticalOpacity}
             xAxis={xAxis}
             yAxis={yAxis}
             v-slots={slots.vertical ? { vertical: slots.vertical } : undefined}

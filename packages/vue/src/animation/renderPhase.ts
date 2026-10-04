@@ -1,9 +1,27 @@
 import type { InjectionKey, Ref } from 'vue'
 import { Global } from '@/utils/Global'
-import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, provide, ref, ssrContextKey } from 'vue'
+import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, onScopeDispose, provide, ref, ssrContextKey } from 'vue'
 
 const renderPhaseKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-render-phase')
 const chartSizeKey: InjectionKey<() => string | undefined> = Symbol('v-charts-size')
+const seriesMotionKey: InjectionKey<Set<() => boolean>> = Symbol('v-charts-series-motion')
+
+/**
+ * Whether the chart's series animate. Each animated series registers its `isActive`; axes and
+ * grids move only when at least one series does, so turning animation off on the series keeps
+ * the whole chart still.
+ */
+export function useSeriesMotion() {
+  const registry = hasInjectionContext() ? inject(seriesMotionKey, null) : null
+  return {
+    register(isActive: () => boolean) {
+      registry?.add(isActive)
+      if (registry && getCurrentInstance())
+        onScopeDispose(() => registry.delete(isActive))
+    },
+    anyActive: () => registry != null && [...registry].some(isActive => isActive()),
+  }
+}
 
 /**
  * Called by the chart root with its settled size (undefined until a responsive chart has measured
@@ -42,6 +60,7 @@ export function provideRenderPhase() {
     }))
   }
   provide(renderPhaseKey, skip)
+  provide(seriesMotionKey, new Set())
 }
 
 /** True when an element created now must appear in its final state. Call during setup. */
