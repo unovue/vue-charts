@@ -6,13 +6,14 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
-import { Animate } from '@/animation/Animate'
+import { getValueByDataKey } from '@/utils/chart'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelPropsWithSVG, FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
@@ -38,7 +39,17 @@ const FunnelView = defineComponent({
     const trapezoids = view.trapezoids
     const cellPropsRef = view.cellPropsRef
     const tooltip = useChartTooltip()
-    const isAnimating = useIsAnimating(() => props.isAnimationActive)
+    const { items, isAnimating } = useKeyedTransition(() => trapezoids.value, {
+      key: (trap, index) => getValueByDataKey(trap.payload, props.nameKey, index),
+      interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, upperWidth: from.upperWidth + (to.upperWidth - from.upperWidth) * t, lowerWidth: from.lowerWidth + (to.lowerWidth - from.lowerWidth) * t, height: from.height + (to.height - from.height) * t }),
+      enterFrom: to => ({ ...to, height: 0 }),
+      exitTo: from => ({ ...from, height: 0 }),
+      connected: true,
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onStart: () => props.onAnimationStart?.(),
+      onEnd: () => props.onAnimationEnd?.(),
+    })
 
     SetTooltipEntrySettings({
       fn: v => v,
@@ -64,7 +75,7 @@ const FunnelView = defineComponent({
       if (props.isAnimationActive && isAnimating.value)
         return undefined
       const trapList = trapezoids.value
-      if (!trapList || trapList.length === 0)
+      if (trapList.length === 0)
         return undefined
       return trapList.map((trap: any) => ({
         x: trap.x,
@@ -95,8 +106,8 @@ const FunnelView = defineComponent({
         return null
       }
 
-      const trapList = trapezoids.value
-      if (!trapList || trapList.length === 0) {
+      const trapList = items.value
+      if (trapList.length === 0) {
         return null
       }
 
@@ -109,68 +120,44 @@ const FunnelView = defineComponent({
 
       return (
         <Layer class={['v-charts-funnel', props.class]}>
-          <Animate
-            isActive={props.isAnimationActive}
-            from={0}
-            to={1}
-            transition={props.transition}
-            onAnimationStart={props.onAnimationStart}
-            onAnimationEnd={() => { isAnimating.value = false; props.onAnimationEnd?.() }}
-          >
-            {(progress: number) => {
-              return trapList.map((trap: any, i: number) => {
-                // Scale height + widths from center
-                const animatedHeight = trap.height * progress
-                const yOffset = trap.height * (1 - progress)
-                const animatedUpperWidth = trap.upperWidth * progress
-                const animatedLowerWidth = trap.lowerWidth * progress
-                const centerX = trap.x + trap.upperWidth / 2
-                const animatedX = centerX - animatedUpperWidth / 2
+          {items.value.map(({ key, value: trap }, i) => {
+            const cellProps = cells[i] ?? {}
+            const trapFill = cellProps.fill ?? trap.payload?.fill ?? props.fill
+            const trapStroke = cellProps.stroke ?? stroke
 
-                const cellProps = cells[i] ?? {}
-                const trapFill = cellProps.fill ?? trap.fill ?? props.fill
-                const trapStroke = cellProps.stroke ?? stroke
+            const trapezoidProps = {
+              ...trap,
+              fill: trapFill,
+              stroke: trapStroke,
+              animationProgress: isAnimating.value ? 0 : 1,
+            }
 
-                const trapezoidProps = {
-                  ...trap,
-                  x: animatedX,
-                  y: trap.y + yOffset / 2,
-                  height: animatedHeight,
-                  upperWidth: animatedUpperWidth,
-                  lowerWidth: animatedLowerWidth,
-                  fill: trapFill,
-                  stroke: trapStroke,
-                  animationProgress: progress,
-                }
-
-                const content = slots.shape
-                  ? slots.shape(trapezoidProps)
-                  : (
-                      <Trapezoid
-                        {...attrs}
-                        x={trapezoidProps.x}
-                        y={trapezoidProps.y}
-                        upperWidth={trapezoidProps.upperWidth}
-                        lowerWidth={trapezoidProps.lowerWidth}
-                        height={trapezoidProps.height}
-                        fill={trapFill}
-                        stroke={trapStroke}
-                      />
-                    )
-
-                return (
-                  <g
-                    key={`trapezoid-${i}`}
-                    onMouseenter={() => handleTrapezoidEnter(trap, i)}
-                    onMouseleave={handleTrapezoidLeave}
-                  >
-                    {content}
-                  </g>
+            const content = slots.shape
+              ? slots.shape(trapezoidProps)
+              : (
+                  <Trapezoid
+                    {...attrs}
+                    x={trapezoidProps.x}
+                    y={trapezoidProps.y}
+                    upperWidth={trapezoidProps.upperWidth}
+                    lowerWidth={trapezoidProps.lowerWidth}
+                    height={trapezoidProps.height}
+                    fill={trapFill}
+                    stroke={trapStroke}
+                  />
                 )
-              })
-            }}
-          </Animate>
-          {nonCellContent}
+
+            return (
+              <g
+                key={key}
+                onMouseenter={() => handleTrapezoidEnter(trap, i)}
+                onMouseleave={handleTrapezoidLeave}
+              >
+                {content}
+              </g>
+            )
+          })}
+          <FadeIn isActive={props.isAnimationActive && !isAnimating.value}>{nonCellContent}</FadeIn>
         </Layer>
       )
     }

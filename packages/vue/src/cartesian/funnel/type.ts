@@ -48,10 +48,7 @@ export const FunnelVueProps = {
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
-    default: () => ({
-      duration: 0.8,
-      ease: 'easeOut',
-    }),
+    default: undefined,
   },
   onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
   onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
