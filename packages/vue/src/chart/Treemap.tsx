@@ -1,3 +1,4 @@
+import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, ref, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
@@ -409,7 +410,7 @@ const TreemapInner = defineComponent({
     return () => (
       <>
         {renderBreadcrumb()}
-        <Surface width={props.width} height={props.height}>
+        <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
           <Layer class="v-charts-treemap">
             <Animate
               key={animationKey.value}
@@ -444,22 +445,28 @@ const TreemapInner = defineComponent({
  */
 export const Treemap = defineComponent({
   name: 'Treemap',
-  props: TreemapVueProps,
+  props: { ...TreemapVueProps, ...chartSizeProps },
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: treemapOptions }, 'Treemap')
     provideChartContext(store)
+    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {
+      const { aspect, initialDimension, ...innerProps } = props
       if (!props.data || props.data.length === 0)
         return null
 
       return (
         <ChartsWrapper
-          width={props.width}
-          height={props.height}
+          isResponsive={isResponsive.value}
+          aspect={props.aspect}
+          interactive={!isResponsive.value || measured.value}
+          onResize={handleResize}
+          width={effectiveWidth.value}
+          height={effectiveHeight.value}
         >
-          <TreemapInner {...props}>
+          <TreemapInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ content: slots.content }}
           </TreemapInner>
           {slots.default?.()}

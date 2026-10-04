@@ -21,14 +21,14 @@ const data = [
 ]
 
 /**
- * The `responsive` prop makes the chart fill its parent via CSS and measure itself
+ * Charts with no numeric dimensions fill their parent via CSS and measure themselves
  * with a ResizeObserver — no `ResponsiveContainer` wrapper needed.
  */
 export const Responsive: StoryObj = {
   render: () => {
     return (
       <div style={{ width: '100%', height: '300px' }}>
-        <LineChart responsive data={[...data]}>
+        <LineChart data={[...data]}>
           <CartesianGrid stroke-dasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />

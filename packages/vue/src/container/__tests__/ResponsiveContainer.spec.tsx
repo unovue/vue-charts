@@ -231,7 +231,7 @@ describe('responsiveContainer', () => {
   })
 
   describe('initial dimension', () => {
-    it('does not render children when initial dimensions are negative', () => {
+    it('renders children immediately without injecting dimensions', () => {
       mockGetBoundingClientRect({ width: 0, height: 0 })
 
       const { container } = render(() => (
@@ -242,7 +242,8 @@ describe('responsiveContainer', () => {
 
       const wrapper = container.querySelector('.v-charts-responsive-container')
       expect(wrapper).toBeTruthy()
-      // Children should still render because getBoundingClientRect returns 0,0 which is >= 0
+      expect(container.querySelector('.child-content')?.textContent).toBe('test')
+      expect(container.querySelector('.child-content')?.hasAttribute('width')).toBe(false)
     })
   })
 })

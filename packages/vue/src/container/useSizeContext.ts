@@ -1,13 +1,7 @@
-import { createContext } from '../utils/createContext'
 import type { Ref } from 'vue'
+import { createContext } from '../utils/createContext'
+import type { RoundedSize } from '@/hooks/useRoundedSize'
 
-export interface SizeContextValue {
-  sizes: Ref<{ width: number, height: number }>
-  calculatedWidth: Ref<number>
-  calculatedHeight: Ref<number>
-  // Future properties can be added here
-}
+const [useInitialDimension, provideInitialDimension] = createContext<Ref<RoundedSize | undefined>>('InitialDimension')
 
-const [useSizeContext, provideSizeContext] = createContext<SizeContextValue>('SizeContext')
-
-export { provideSizeContext, useSizeContext }
+export { provideInitialDimension, useInitialDimension }

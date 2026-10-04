@@ -1,5 +1,4 @@
-import { type PropType, type StyleValue, defineComponent, ref, watch } from 'vue'
-import { useResizeObserver } from '@vueuse/core'
+import { type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { mouseLeaveChart } from '../state/tooltipSlice'
 import { useAppDispatch } from '../state/hooks'
 import { useChartInteractions } from '@/events/useChartInteractions'
@@ -29,7 +28,9 @@ export const ChartsWrapper = defineComponent({
     onTouchEnd: { type: Function as PropType<CategoricalChartFunc> },
     onTouchMove: { type: Function as PropType<CategoricalChartFunc> },
     onTouchStart: { type: Function as PropType<CategoricalChartFunc> },
-    responsive: { type: Boolean, default: false },
+    isResponsive: { type: Boolean, default: false },
+    aspect: { type: Number },
+    interactive: { type: Boolean, default: true },
     style: { type: [String, Object, Array] as PropType<StyleValue> },
     width: { type: Number, required: true },
   },
@@ -53,18 +54,24 @@ export const ChartsWrapper = defineComponent({
       wrapperEl.value = node
     }
 
-    watch(() => props.responsive, (responsive, _, onCleanup) => {
-      if (!responsive) {
-        return
-      }
-      const stop = useResizeObserver(wrapperEl, (entries) => {
-        const { width, height } = entries[0].contentRect
-        props.onResize?.(width, height)
-      })
-      onCleanup(stop.stop)
-    }, { immediate: true })
+    let observer: ResizeObserver | undefined
+    onMounted(() => {
+      watch(() => props.isResponsive, (responsive, _, onCleanup) => {
+        if (!responsive || !wrapperEl.value || typeof ResizeObserver === 'undefined')
+          return
+        observer = new ResizeObserver((entries) => {
+          const { width, height } = entries[0].contentRect
+          props.onResize?.(width, height)
+        })
+        observer.observe(wrapperEl.value)
+        onCleanup(() => observer?.disconnect())
+      }, { immediate: true })
+    })
+    onUnmounted(() => observer?.disconnect())
 
     const myOnClick = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.click(chartPointer)
@@ -73,6 +80,8 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseEnter = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.move(chartPointer)
@@ -81,11 +90,15 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       dispatch(mouseLeaveChart())
       callHandler(props.onMouseLeave, e)
     }
 
     const myOnMouseMove = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
         interactions.move(chartPointer)
@@ -102,31 +115,45 @@ export const ChartsWrapper = defineComponent({
     }
 
     const myOnContextMenu = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onContextMenu, e)
     }
 
     const myOnDoubleClick = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onDoubleClick, e)
     }
 
     const myOnMouseDown = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onMouseDown, e)
     }
 
     const myOnMouseUp = (e: MouseEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onMouseUp, e)
     }
 
     const myOnTouchStart = (e: TouchEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onTouchStart, e)
     }
 
     const myOnTouchMove = (e: TouchEvent) => {
+      if (!props.interactive)
+        return
       interactions.touchMove(e)
       callHandler(props.onTouchMove, e)
     }
 
     const myOnTouchEnd = (e: TouchEvent) => {
+      if (!props.interactive)
+        return
       callHandler(props.onTouchEnd, e)
     }
 
@@ -134,10 +161,11 @@ export const ChartsWrapper = defineComponent({
       <div
         class={['v-charts-wrapper', props.class]}
         style={[
-          props.responsive
-            ? { position: 'relative', cursor: 'default', width: '100%', height: '100%' }
+          props.isResponsive
+            ? { position: 'relative', cursor: 'default', width: '100%', height: props.aspect ? 'auto' : '100%', aspectRatio: props.aspect }
             : { position: 'relative', cursor: 'default', width: `${props.width}px`, height: `${props.height}px` },
           props.style,
+          !props.interactive && { pointerEvents: 'none' },
         ]}
         role="application"
         onClick={myOnClick}

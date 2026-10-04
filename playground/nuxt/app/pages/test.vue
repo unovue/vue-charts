@@ -45,12 +45,11 @@ const data = [
 
 <template>
   <LineChart
+    :aspect="1.618"
     :style="{
       width: '100%',
-      aspectRatio: 1.618,
       maxWidth: '600px',
     }"
-    responsive
     :data="data"
     :margin="{
       top: 20,

@@ -1,3 +1,4 @@
+import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
@@ -339,7 +340,7 @@ const SankeyInner = defineComponent({
     }
 
     return () => (
-      <Surface width={props.width} height={props.height}>
+      <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sankey">
           <Animate
             isActive={props.isAnimationActive}
@@ -371,19 +372,21 @@ const SankeyInner = defineComponent({
  */
 const _Sankey = defineComponent({
   name: 'Sankey',
-  props: SankeyVueProps,
+  props: { ...SankeyVueProps, ...chartSizeProps },
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: sankeyOptions }, 'Sankey')
     provideChartContext(store)
+    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {
+      const { aspect, initialDimension, ...innerProps } = props
       if (!props.data || !props.data.nodes || props.data.nodes.length === 0)
         return null
 
       return (
-        <ChartsWrapper width={props.width} height={props.height}>
-          <SankeyInner {...props}>
+        <ChartsWrapper isResponsive={isResponsive.value} aspect={props.aspect} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <SankeyInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>
           {slots.default?.()}

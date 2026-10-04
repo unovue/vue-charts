@@ -11,7 +11,7 @@ const data = [
   { name: 'C', uv: 200 },
 ]
 
-describe('responsive prop', () => {
+describe('default responsive sizing', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
     MockResizeObserver.instances = []
@@ -20,7 +20,7 @@ describe('responsive prop', () => {
 
   it('renders the wrapper div with 100% CSS sizing in responsive mode', async () => {
     const { container } = render(() => (
-      <LineChart responsive data={data}>
+      <LineChart data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
@@ -32,23 +32,23 @@ describe('responsive prop', () => {
     expect(wrapper.style.height).toBe('100%')
   })
 
-  it('does not render the chart surface until the wrapper is measured', () => {
-    // Initial measurement of 0x0 keeps the chart gated out.
+  it('preserves initial geometry until a nonzero box is measured', () => {
+    // A zero-sized box retains the initial server geometry.
     mockGetBoundingClientRect({ width: 0, height: 0 })
 
     const { container } = render(() => (
-      <LineChart responsive data={data}>
+      <LineChart data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
 
     expect(container.querySelector('.v-charts-wrapper')).toBeTruthy()
-    expect(container.querySelector('.v-charts-surface')).toBeNull()
+    expect(container.querySelector('.v-charts-surface')?.getAttribute('viewBox')).toBe('0 0 640 360')
   })
 
   it('renders the chart at the measured size once mounted', async () => {
     const { container } = render(() => (
-      <LineChart responsive data={data}>
+      <LineChart data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
@@ -62,7 +62,7 @@ describe('responsive prop', () => {
 
   it('updates the chart size when the ResizeObserver reports a new size', async () => {
     const { container } = render(() => (
-      <LineChart responsive data={data}>
+      <LineChart data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
@@ -78,7 +78,7 @@ describe('responsive prop', () => {
     expect(svg.getAttribute('height')).toBe('480')
   })
 
-  it('renders at fixed px size and creates no ResizeObserver when responsive is not set', async () => {
+  it('renders at fixed px size and creates no ResizeObserver when both numeric dimensions are set', async () => {
     const { container } = render(() => (
       <LineChart width={400} height={320} data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
@@ -92,10 +92,10 @@ describe('responsive prop', () => {
     expect(MockResizeObserver.instances.length).toBe(0)
   })
 
-  it('starts observing and measures when responsive is toggled on at runtime', async () => {
-    const responsive = ref(false)
+  it('starts observing and measures when fixed dimensions are removed at runtime', async () => {
+    const fixed = ref(true)
     const { container } = render(() => (
-      <LineChart responsive={responsive.value} width={400} height={320} data={data}>
+      <LineChart width={fixed.value ? 400 : undefined} height={fixed.value ? 320 : undefined} data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
@@ -104,7 +104,7 @@ describe('responsive prop', () => {
     expect(MockResizeObserver.instances.length).toBe(0)
     expect((container.querySelector('.v-charts-surface') as SVGElement).getAttribute('width')).toBe('400')
 
-    responsive.value = true
+    fixed.value = false
     await nextTick()
     await nextTick()
 
@@ -115,11 +115,11 @@ describe('responsive prop', () => {
     expect(svg.getAttribute('height')).toBe('300')
   })
 
-  it('stops observing and falls back to props size when responsive is toggled off at runtime', async () => {
+  it('stops observing and falls back to props size when fixed dimensions are added at runtime', async () => {
     const disconnectSpy = vi.spyOn(MockResizeObserver.prototype, 'disconnect')
-    const responsive = ref(true)
+    const fixed = ref(false)
     const { container } = render(() => (
-      <LineChart responsive={responsive.value} width={400} height={320} data={data}>
+      <LineChart width={fixed.value ? 400 : undefined} height={fixed.value ? 320 : undefined} data={data}>
         <Line dataKey="uv" isAnimationActive={false} />
       </LineChart>
     ))
@@ -128,9 +128,9 @@ describe('responsive prop', () => {
     expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
     expect((container.querySelector('.v-charts-surface') as SVGElement).getAttribute('width')).toBe('500')
 
-    // Mount-time observer churn already disconnected once; only the toggle-off must disconnect now.
+    // Only switching to fixed dimensions should disconnect the active observer.
     disconnectSpy.mockClear()
-    responsive.value = false
+    fixed.value = true
     await nextTick()
     await nextTick()
 

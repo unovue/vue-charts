@@ -24,7 +24,6 @@ const charts = [
     code: `<template>
   <AreaChart
     :data="data"
-    responsive
   >
     <Area
       type="monotone"
@@ -42,7 +41,6 @@ const charts = [
     code: `<template>
   <BarChart
     :data="data"
-    responsive
   >
     <Bar
       data-key="value"
@@ -57,7 +55,7 @@ const charts = [
     label: 'Pie',
     desc: '',
     code: `<template>
-  <PieChart responsive>
+  <PieChart>
     <Pie
       :data="data"
       data-key="value"
@@ -79,7 +77,6 @@ const charts = [
     code: `<template>
   <RadarChart
     :data="data"
-    responsive
   >
     <Radar
       data-key="value"

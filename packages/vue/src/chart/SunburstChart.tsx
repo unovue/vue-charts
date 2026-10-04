@@ -1,3 +1,4 @@
+import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
@@ -210,7 +211,7 @@ const SunburstInner = defineComponent({
     }
 
     return () => (
-      <Surface width={props.width} height={props.height}>
+      <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sunburst">
           {nodes.value.map((node, index) => renderSector(node, index))}
         </Layer>
@@ -221,22 +222,28 @@ const SunburstInner = defineComponent({
 
 export const SunburstChart = defineComponent({
   name: 'SunburstChart',
-  props: SunburstChartVueProps,
+  props: { ...SunburstChartVueProps, ...chartSizeProps },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots }) {
     const store = createRechartsStore({ options: sunburstOptions }, 'SunburstChart')
     provideChartContext(store)
+    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {
+      const { aspect, initialDimension, ...innerProps } = props
       if (!props.data?.children || props.data.children.length === 0)
         return null
 
       return (
         <ChartsWrapper
-          width={props.width}
-          height={props.height}
+          isResponsive={isResponsive.value}
+          aspect={props.aspect}
+          interactive={!isResponsive.value || measured.value}
+          onResize={handleResize}
+          width={effectiveWidth.value}
+          height={effectiveHeight.value}
         >
-          <SunburstInner {...props}>
+          <SunburstInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ content: slots.content }}
           </SunburstInner>
           {slots.default?.()}

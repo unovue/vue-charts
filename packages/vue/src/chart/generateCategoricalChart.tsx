@@ -17,7 +17,7 @@ import type { ChartOptions } from '@/state/optionsSlice'
 import ReportChartProps from '@/state/ReportChartProps'
 import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
-import { useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { provideIndependentChart } from '@/context/PanoramaContextProvider'
 
 const defaultLayout: LayoutType = 'horizontal'
@@ -62,9 +62,6 @@ export const CategoricalProps = {
   endAngle: {
     type: Number,
   },
-  height: {
-    type: Number,
-  },
   id: {
     type: String,
   },
@@ -85,10 +82,7 @@ export const CategoricalProps = {
   outerRadius: {
     type: [Number, String],
   },
-  responsive: {
-    type: Boolean,
-    default: false,
-  },
+  ...chartSizeProps,
   reverseStackOrder: {
     type: Boolean,
     default: false,
@@ -121,9 +115,6 @@ export const CategoricalProps = {
   },
   title: {
     type: String,
-  },
-  width: {
-    type: Number,
   },
   to: {
     type: [String, Object] as PropType<string | HTMLElement | null>,
@@ -166,7 +157,7 @@ export function generateCategoricalChart({
 
       const clipPathId = provideClipPathId(props)
 
-      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize } = useResponsiveSize(props)
+      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured } = useResponsiveSize(props)
 
       function renderPolarOptions(isPolarChart: boolean) {
         if (!isPolarChart) {
@@ -185,7 +176,7 @@ export function generateCategoricalChart({
       }
 
       return () => {
-        const { compact, width, height, title, desc, responsive, ...rest } = props
+        const { compact, width, height, title, desc, aspect, initialDimension, ...rest } = props
         const attributes = { ...attrs }
 
         const layout = props.layout ?? defaultProps.layout ?? defaultLayout
@@ -208,11 +199,8 @@ export function generateCategoricalChart({
           )
         }
 
-        // Non-responsive charts bail out early when the size is invalid (unchanged behavior).
-        // Responsive charts must still render the wrapper so the ResizeObserver can measure it.
-        if (!responsive && !hasValidSize.value) {
+        if (!isResponsive.value && !hasValidSize.value)
           return null
-        }
 
         if (props.accessibilityLayer) {
           attributes.tabindex = props.tabIndex ?? 0
@@ -236,7 +224,9 @@ export function generateCategoricalChart({
             {hasValidSize.value && <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />}
             {hasValidSize.value && renderPolarOptions(isPolarChart)}
             <ChartsWrapper
-              responsive={responsive}
+              isResponsive={isResponsive.value}
+              aspect={props.aspect}
+              interactive={!isResponsive.value || measured.value}
               onResize={handleResize}
               style={props.style}
               class={props.class}
