@@ -51,14 +51,18 @@ export function usePointTransition<T extends Point>(
           : to.baseline,
       reveal: from.reveal + (to.reveal - from.reveal) * t,
     }),
+    // Points grow out of and fold into their neighbours. With no neighbour on screen (first
+    // appearance, or data that was or becomes empty) the whole path sweeps in or out instead.
     enterFrom: (to, { previous, next }) => {
-      if (!appeared)
+      const neighbor = previous ?? next
+      if (!appeared || !neighbor)
         return { ...to, reveal: 0 }
-      const neighbor = previous ?? next ?? to
       return { ...to, point: { ...to.point, x: neighbor.point.x, y: neighbor.point.y }, baseline: neighbor.baseline }
     },
     exitTo: (from, { previous, next }) => {
-      const neighbor = previous ?? next ?? from
+      const neighbor = previous ?? next
+      if (!neighbor)
+        return { ...from, reveal: 0 }
       return { ...from, point: { ...from.point, x: neighbor.point.x, y: neighbor.point.y }, baseline: neighbor.baseline }
     },
     isActive: options.isActive,
