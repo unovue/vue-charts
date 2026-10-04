@@ -80,6 +80,13 @@ const routes = [
     count: 1,
   },
   {
+    path: '/cell-charts',
+    name: 'Cell Charts',
+    description: 'Uptime tracker and contribution calendar.',
+    icon: LayoutGrid,
+    count: 2,
+  },
+  {
     path: '/sunburst-charts',
     name: 'Sunburst Charts',
     description: 'Hierarchical data displayed as concentric ring sectors.',
