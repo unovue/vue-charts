@@ -1,3 +1,5 @@
+import type { Coordinate, DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
@@ -14,7 +16,6 @@ import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
-import type { Coordinate } from '@/types'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 const DEFAULT_COLORS = [
@@ -47,11 +48,11 @@ interface BreadcrumbEntry {
 /**
  * Recursively sum all descendant values for a given dataKey.
  */
-function sumValues(item: Record<string, any>, dataKey: string): number {
+function sumValues(item: Record<string, any>, dataKey: DataKey<Record<string, any>>): number {
   if (item.children && item.children.length > 0) {
     return item.children.reduce((sum: number, child: Record<string, any>) => sum + sumValues(child, dataKey), 0)
   }
-  const val = item[dataKey]
+  const val = getValueByDataKey(item, dataKey)
   return typeof val === 'number' && val > 0 ? val : 0
 }
 
@@ -81,8 +82,8 @@ const treemapOptions: ChartOptions = {
  */
 function buildNodeTree(
   data: Record<string, any>[],
-  dataKey: string,
-  nameKey: string,
+  dataKey: DataKey<Record<string, any>>,
+  nameKey: DataKey<Record<string, any>>,
   parentIndex: string = '',
 ): Record<string, any> {
   const children = data.map((item, i) => {
@@ -106,8 +107,8 @@ function buildNodeTree(
 
 export const TreemapVueProps = {
   data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
-  dataKey: { type: String, default: 'value' },
-  nameKey: { type: String, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   aspectRatio: { type: Number, default: 4 / 3 },
@@ -157,7 +158,7 @@ const TreemapInner = defineComponent({
       return data.map((item) => {
         const aggregatedValue = sumValues(item, props.dataKey)
         const { children: _, ...rest } = item
-        return { ...rest, [props.dataKey]: aggregatedValue }
+        return { ...rest, value: aggregatedValue }
       })
     }
 
@@ -170,7 +171,7 @@ const TreemapInner = defineComponent({
         data: dataToLayout,
         width: props.width,
         height: props.height,
-        dataKey: props.dataKey,
+        dataKey: isNestMode.value ? 'value' : props.dataKey,
         nameKey: props.nameKey,
         aspectRatio: props.aspectRatio,
         colorPanel: colors.value,
@@ -181,7 +182,7 @@ const TreemapInner = defineComponent({
       const paths = new Map<object, string>()
       const visit = (data: Record<string, unknown>[], parent: string) => {
         data.forEach((item, index) => {
-          const path = `${parent}/${String(item[props.nameKey] ?? index)}`
+          const path = `${parent}/${String(getValueByDataKey(item, props.nameKey) ?? index)}`
           paths.set(toRaw(item), path)
           if (Array.isArray(item.children))
             visit(item.children, path)
@@ -191,7 +192,7 @@ const TreemapInner = defineComponent({
       return paths
     })
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
-    const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => item[props.nameKey] === node.name) ?? {})) ?? node.name })), {
+    const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => getValueByDataKey(item, props.nameKey) === node.name) ?? {})) ?? node.name })), {
       key: (node, index) => node.path || index,
       interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, width: from.width + (to.width - from.width) * t, height: from.height + (to.height - from.height) * t }),
       enterFrom: to => ({ ...to, x: to.x + to.width / 2, y: to.y + to.height / 2, width: 0, height: 0 }),
@@ -238,13 +239,13 @@ const TreemapInner = defineComponent({
     // Map layout node name → tooltipIndex from nodeTree
     function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
       const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-      const idx = data.findIndex(item => item[props.nameKey] === node.name)
+      const idx = data.findIndex(item => getValueByDataKey(item, props.nameKey) === node.name)
       if (idx >= 0)
         return `children[${idx}]`
       // For flat mode with nested data, search leaves
       for (let i = 0; i < data.length; i++) {
         if (data[i].children) {
-          const childIdx = data[i].children.findIndex((c: any) => c[props.nameKey] === node.name)
+          const childIdx = data[i].children.findIndex((c: any) => getValueByDataKey(c, props.nameKey) === node.name)
           if (childIdx >= 0)
             return `children[${i}].children[${childIdx}]`
         }
@@ -254,12 +255,12 @@ const TreemapInner = defineComponent({
 
     function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent) {
       const sourceData = nestCurrentData.value ?? []
-      const clickedItem = sourceData.find(item => item[props.nameKey] === node.name)
+      const clickedItem = sourceData.find(item => getValueByDataKey(item, props.nameKey) === node.name)
 
       if (clickedItem?.children && clickedItem.children.length > 0) {
         breadcrumbTrail.value = [
           ...breadcrumbTrail.value,
-          { name: clickedItem[props.nameKey] ?? clickedItem.name, data: sourceData },
+          { name: getValueByDataKey(clickedItem, props.nameKey) ?? clickedItem.name, data: sourceData },
         ]
         currentData.value = clickedItem.children
       }
@@ -349,7 +350,7 @@ const TreemapInner = defineComponent({
       // Check if this node has children in the original source data (for nest mode arrow)
       const hasChildren = isNestMode.value && (() => {
         const sourceData = nestCurrentData.value ?? []
-        const item = sourceData.find(d => d[props.nameKey] === node.name)
+        const item = sourceData.find(d => getValueByDataKey(d, props.nameKey) === node.name)
         return item?.children && item.children.length > 0
       })()
 

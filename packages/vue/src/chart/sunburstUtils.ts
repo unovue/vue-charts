@@ -1,3 +1,5 @@
+import type { DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
 import { hierarchy, partition } from 'd3-hierarchy'
 
 export interface SunburstData {
@@ -33,7 +35,8 @@ export interface SunburstLayoutOptions {
   outerRadius: number
   startAngle: number
   endAngle: number
-  dataKey: string
+  dataKey: DataKey<Record<string, any>>
+  nameKey?: DataKey<SunburstData>
   ringPadding?: number
   padding?: number
 }
@@ -68,7 +71,7 @@ function buildTooltipIndex(node: any): string {
 }
 
 export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstLayoutNode[] {
-  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey, ringPadding = 0, padding = 0 } = options
+  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey, nameKey = 'name', ringPadding = 0, padding = 0 } = options
 
   if (!data.children || data.children.length === 0)
     return []
@@ -77,7 +80,7 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
     .sum((d: any) => {
       if (d.children && d.children.length > 0)
         return 0
-      const val = d[dataKey]
+      const val = getValueByDataKey(d, dataKey)
       return typeof val === 'number' && val > 0 ? val : 0
     })
 
@@ -119,12 +122,12 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
       startAngle: nodeStartAngle,
       endAngle: nodeEndAngle,
       depth: d.depth,
-      name: d.data.name,
+      name: getValueByDataKey(d.data, nameKey, ''),
       value: d.value ?? 0,
       fill: d.data.fill,
       payload: d.data,
       tooltipIndex: buildTooltipIndex(d),
-      path: d.ancestors().reverse().slice(1).map((a: any) => String(a.data.name)).join('\u0000'),
+      path: d.ancestors().reverse().slice(1).map((a: any) => String(getValueByDataKey(a.data, nameKey, ''))).join('\u0000'),
     })
   })
 

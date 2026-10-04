@@ -1,3 +1,5 @@
+import type { DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy'
 
 export interface TreemapLayoutNode {
@@ -17,9 +19,9 @@ export interface TreemapLayoutOptions {
   data: Record<string, any>[]
   width: number
   height: number
-  dataKey: string
+  dataKey: DataKey<Record<string, any>>
   aspectRatio?: number
-  nameKey?: string
+  nameKey?: DataKey<Record<string, any>>
   colorPanel?: string[]
 }
 
@@ -33,7 +35,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
     .sum((d: any) => {
       if (d.children && d.children.length > 0)
         return 0
-      const val = d[dataKey]
+      const val = getValueByDataKey(d, dataKey)
       return typeof val === 'number' && val > 0 ? val : 0
     })
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
@@ -55,7 +57,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
       width: leaf.x1! - leaf.x0!,
       height: leaf.y1! - leaf.y0!,
       depth: leaf.depth,
-      name: d[nameKey] ?? '',
+      name: getValueByDataKey(d, nameKey, ''),
       value: leaf.value ?? 0,
       payload: d,
       root: rootIndex,

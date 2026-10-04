@@ -1,3 +1,4 @@
+import type { Coordinate, DataKey } from '@/types'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase } from '@/animation/renderPhase'
@@ -19,7 +20,6 @@ import type {
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
 } from '@/state/chartTooltip'
-import type { Coordinate } from '@/types'
 import {
   type SunburstData,
   type SunburstLayoutNode,
@@ -56,8 +56,8 @@ const sunburstOptions: ChartOptions = {
 
 export const SunburstChartVueProps = {
   data: { type: Object as PropType<SunburstData>, required: true as const },
-  dataKey: { type: String, default: 'value' },
-  nameKey: { type: String, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   cx: { type: Number, default: undefined },
@@ -100,6 +100,7 @@ const SunburstInner = defineComponent({
         startAngle: props.startAngle,
         endAngle: props.endAngle,
         dataKey: props.dataKey,
+        nameKey: props.nameKey,
         ringPadding: props.ringPadding,
         padding: props.padding,
       }),
