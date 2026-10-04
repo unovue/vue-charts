@@ -1,0 +1,72 @@
+// Geometry flags shared by the report and its regression checks.
+const nums = s => (String(s).match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number)
+
+// Normalised progress per element: the coordinate that moves most, from its first to last value.
+export function curves(frames) {
+  const ids = [...new Set(frames.flatMap(f => Object.keys(f.shapes)))]
+  const result = []
+  for (const id of ids) {
+    // Arc endpoints move along circles, so a coordinate is not a progress measure; sectors are
+    // judged by video.
+    // Rounded bars keep x/y/width/height, which are measured instead of their path.
+    const arcs = frames.some(f => /A\s*[\d.]/.test(f.shapes[id] ?? ''))
+    const value = shape => arcs ? shape.split('|').slice(1).join('|') : shape
+    if (arcs && !frames.some(f => f.shapes[id] && nums(value(f.shapes[id])).length))
+      continue
+    const series = frames.map(f => f.shapes[id] == null ? null : nums(value(f.shapes[id])))
+    const present = series.map((v, i) => [v, i]).filter(([v]) => v)
+    if (present.length < 3)
+      continue
+    const [first, i0] = present[0]
+    const [last] = present.at(-1)
+    if (first.length !== last.length)
+      continue
+    let k = -1
+    let span = 0
+    first.forEach((v, j) => {
+      const d = Math.abs(last[j] - v)
+      if (d > span) {
+        span = d
+        k = j
+      }
+    })
+    if (span < 2)
+      continue
+    const pts = present.filter(([v]) => v.length === first.length).map(([v, i]) => [frames[i].t, (v[k] - first[k]) / (last[k] - first[k])])
+    result.push({ id, span, appearsAt: i0 ? frames[i0].t : 0, pts })
+  }
+  return result
+}
+
+export function flags(curveList, frames) {
+  const issues = []
+  for (const c of curveList) {
+    for (let i = 1; i < c.pts.length; i++) {
+      const [t, p] = c.pts[i]
+      const [, prev] = c.pts[i - 1]
+      if (c.id !== 'tooltip' && p - prev < -0.04 && prev < 1.02)
+        issues.push(`backwards ${c.id} @${Math.round(t)}ms ${prev.toFixed(2)}→${p.toFixed(2)}`)
+      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6)
+        issues.push(`jump ${c.id} @${Math.round(t)}ms +${((p - prev) * 100).toFixed(0)}% (${(c.span * (p - prev)).toFixed(0)}px)`)
+    }
+    // A stall: progress stuck mid-way for 3+ frames.
+    let still = 0
+    for (let i = 1; i < c.pts.length; i++) {
+      const p = c.pts[i][1]
+      still = Math.abs(p - c.pts[i - 1][1]) < 0.002 && p > 0.1 && p < 0.9 ? still + 1 : 0
+      if (still === 3)
+        issues.push(`stall ${c.id} @${Math.round(c.pts[i][0])}ms at ${(p * 100).toFixed(0)}%`)
+    }
+    const settle = c.pts.find(([, p]) => Math.abs(1 - p) < 0.01)
+    if (!settle)
+      issues.push(`unsettled ${c.id}`)
+  }
+  // Bars that cover each other mid-transition although neither layout overlaps.
+  if (frames.length && !frames[0].overlap && !frames.at(-1).overlap) {
+    const worst = frames.reduce((a, f) => f.overlap > a.overlap ? f : a, frames[0])
+    if (worst.overlap > 4)
+      issues.push(`overlap bars @${Math.round(worst.t)}ms ${Math.round(worst.overlap)}px²`)
+  }
+  const intervals = frames.slice(1).map((f, i) => f.t - frames[i].t)
+  return { issues, intervals }
+}

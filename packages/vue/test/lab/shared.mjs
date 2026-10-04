@@ -64,3 +64,24 @@ export function collectErrors(page) {
   })
   return errors
 }
+
+// Playwright schedules rAF on 16 ms boundaries and rounds runFor up to whole ms.
+// Advancing 1000/60 therefore occasionally executes TWO animation frames per sample.
+export const FRAME = 16
+export async function advanceFrame(page) {
+  const now = await page.evaluate(() => performance.now())
+  await page.clock.runFor(FRAME - now % FRAME)
+}
+export async function settle(page) {
+  let previous = JSON.stringify(await page.evaluate(() => window.__snapshot()))
+  let still = 0
+  for (let elapsed = 0; elapsed < 2000; elapsed += FRAME) {
+    await advanceFrame(page)
+    const current = JSON.stringify(await page.evaluate(() => window.__snapshot()))
+    still = current === previous ? still + 1 : 0
+    if (still === 3)
+      return true
+    previous = current
+  }
+  return false
+}

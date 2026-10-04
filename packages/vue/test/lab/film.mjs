@@ -5,12 +5,11 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { collectErrors, flag, launchBrowser, positional, repo, startServer } from './shared.mjs'
+import { FRAME, advanceFrame, collectErrors, flag, launchBrowser, positional, repo, startServer } from './shared.mjs'
 
 const dark = process.argv.includes('--dark')
 const every = Number(flag('every', 3))
 const out = flag('out', join(repo, '.evidence/motion-film'))
-const FRAME = 1000 / 60
 const WINDOW = Number(flag('window', 900))
 const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'sunburst', 'resize']
 const scenarios = positional()
@@ -172,6 +171,7 @@ async function film(page, name, dir, action, pointer, perFrame) {
     await page.evaluate(action)
   if (pointer)
     await pointer()
+  // One sample per fake-clock animation frame; see advanceFrame in shared.mjs.
   for (let t = 0, i = 0; t <= WINDOW; t += FRAME, i++) {
     const snap = await page.evaluate(capture)
     frames.push({ t: Math.round(t), ...snap })
@@ -182,7 +182,7 @@ async function film(page, name, dir, action, pointer, perFrame) {
     }
     if (perFrame)
       await perFrame()
-    await page.clock.runFor(FRAME)
+    await advanceFrame(page)
   }
   const sheet = join(out, `${dir.split('/').at(-1)}__${name}.png`)
   const cols = 5

@@ -13,7 +13,6 @@ export default antfu(
       'storybook-static/**',
       'packages/vue/src/__breakit__/**',
       'packages/vue/test/fixtures/lab/**',
-      'packages/vue/test/lab/**',
       '.evidence/**',
     ],
   },

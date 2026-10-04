@@ -1,4 +1,4 @@
-// Motion report: frame-exact 60 fps videos (1x and 4x slow motion) of every transition, each
+// Motion report: frame-exact videos (1x and 4x slow motion) of every transition, each
 // moving shape's progress against the ideal easing, and real-clock frame timing at normal speed
 // and with the CPU slowed 4x. Writes an HTML report.
 // pnpm motion:report [scenario...] [--steps=a,b] [--out=dir] [--no-throttle] [--prod] [--browser=…] [--check]
@@ -7,7 +7,8 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { flag, has, launchBrowser, positional, repo, startServer } from './shared.mjs'
+import { curves, flags } from './report-metrics.mjs'
+import { FRAME, advanceFrame, flag, has, launchBrowser, positional, repo, settle, startServer } from './shared.mjs'
 
 const out = flag('out', join(repo, '.evidence/motion-report'))
 const only = flag('steps', '')
@@ -162,78 +163,6 @@ function SAMPLER() {
   })
 }
 
-const nums = s => (String(s).match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number)
-
-// Normalised progress per element: the coordinate that moves most, from its first to last value.
-function curves(frames) {
-  const ids = [...new Set(frames.flatMap(f => Object.keys(f.shapes)))]
-  const result = []
-  for (const id of ids) {
-    // Arc endpoints move along circles, so a coordinate is not a progress measure; sectors are
-    // judged by video.
-    // Rounded bars keep x/y/width/height, which are measured instead of their path.
-    const arcs = frames.some(f => /A\s*[\d.]/.test(f.shapes[id] ?? ''))
-    const value = shape => arcs ? shape.split('|').slice(1).join('|') : shape
-    if (arcs && !frames.some(f => f.shapes[id] && nums(value(f.shapes[id])).length))
-      continue
-    const series = frames.map(f => f.shapes[id] == null ? null : nums(value(f.shapes[id])))
-    const present = series.map((v, i) => [v, i]).filter(([v]) => v)
-    if (present.length < 3)
-      continue
-    const [first, i0] = present[0]
-    const [last] = present.at(-1)
-    if (first.length !== last.length)
-      continue
-    let k = -1
-    let span = 0
-    first.forEach((v, j) => {
-      const d = Math.abs(last[j] - v)
-      if (d > span) {
-        span = d
-        k = j
-      }
-    })
-    if (span < 2)
-      continue
-    const pts = present.filter(([v]) => v.length === first.length).map(([v, i]) => [frames[i].t, (v[k] - first[k]) / (last[k] - first[k])])
-    result.push({ id, span, appearsAt: i0 ? frames[i0].t : 0, pts })
-  }
-  return result
-}
-
-function flags(curveList, frames) {
-  const issues = []
-  for (const c of curveList) {
-    for (let i = 1; i < c.pts.length; i++) {
-      const [t, p] = c.pts[i]
-      const [, prev] = c.pts[i - 1]
-      if (c.id !== 'tooltip' && p - prev < -0.04 && prev < 1.02)
-        issues.push(`backwards ${c.id} @${Math.round(t)}ms ${prev.toFixed(2)}→${p.toFixed(2)}`)
-      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6)
-        issues.push(`jump ${c.id} @${Math.round(t)}ms +${((p - prev) * 100).toFixed(0)}% (${(c.span * (p - prev)).toFixed(0)}px)`)
-    }
-    // A stall: progress stuck mid-way for 3+ frames.
-    let still = 0
-    for (let i = 1; i < c.pts.length; i++) {
-      const p = c.pts[i][1]
-      still = Math.abs(p - c.pts[i - 1][1]) < 0.002 && p > 0.1 && p < 0.9 ? still + 1 : 0
-      if (still === 3)
-        issues.push(`stall ${c.id} @${Math.round(c.pts[i][0])}ms at ${(p * 100).toFixed(0)}%`)
-    }
-    const settle = c.pts.find(([, p]) => Math.abs(1 - p) < 0.01)
-    if (!settle)
-      issues.push(`unsettled ${c.id}`)
-  }
-  // Bars that cover each other mid-transition although neither layout overlaps.
-  if (frames.length && !frames[0].overlap && !frames.at(-1).overlap) {
-    const worst = frames.reduce((a, f) => f.overlap > a.overlap ? f : a, frames[0])
-    if (worst.overlap > 4)
-      issues.push(`overlap bars @${Math.round(worst.t)}ms ${Math.round(worst.overlap)}px²`)
-  }
-  const intervals = frames.slice(1).map((f, i) => f.t - frames[i].t)
-  return { issues, intervals }
-}
-
 function stats(intervals) {
   const sorted = [...intervals].sort((a, b) => a - b)
   return { frames: intervals.length, worst: sorted.at(-1) ?? 0, p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0, slow: intervals.filter(v => v > 20).length }
@@ -252,26 +181,29 @@ function svgCurves(curveList, kind) {
   return `<svg viewBox="0 0 ${W} ${H}" class="curves">${grid}${ticks}${lines}<polyline fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" points="${idealPts}"/></svg>`
 }
 
-// Frame-exact rendering: a fake clock advanced one 60 Hz frame at a time, one screenshot per frame.
+// Frame-exact rendering: advance to each fake-clock animation frame, one screenshot per frame.
 // What each frame shows is exact; real-time cost is measured separately on a real clock.
-const FRAME = 1000 / 60
 async function record(page, dir, name, act) {
   const frameDir = join(dir, `${name}-frames`)
   mkdirSync(frameDir, { recursive: true })
   const clip = await page.locator('.frame').boundingBox()
   const frames = []
   await act()
-  for (let i = 0, t = 0; t <= WINDOW; i++, t += FRAME) {
+  const started = await page.evaluate(() => performance.now())
+  for (let i = 0, t = 0; t <= WINDOW; i++) {
     frames.push({ t, ...await page.evaluate(() => ({ shapes: window.__snapshot(), overlap: window.__overlap() })) })
     await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
-    await page.clock.runFor(FRAME)
+    await advanceFrame(page)
+    t = await page.evaluate(start => performance.now() - start, started)
   }
   const video = join(dir, `${name}.mp4`)
   const slow = join(dir, `${name}-slow.mp4`)
   const scale = 'scale=trunc(iw/2)*2:trunc(ih/2)*2'
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '60', '-i', join(frameDir, '%04d.jpg'), '-vf', scale, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', video])
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '15', '-i', join(frameDir, '%04d.jpg'), '-vf', `${scale},fps=60`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', slow])
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(1000 / FRAME), '-i', join(frameDir, '%04d.jpg'), '-vf', scale, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', video])
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(1000 / FRAME / 4), '-i', join(frameDir, '%04d.jpg'), '-vf', `${scale},fps=60`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', slow])
   rmSync(frameDir, { recursive: true, force: true })
+  if (has('frames'))
+    writeFileSync(join(dir, `${name}.frames.json`), JSON.stringify(frames))
   return { frames, video, slow }
 }
 
@@ -326,14 +258,14 @@ for (const s of scenarios.length ? scenarios : all) {
       continue
     if (step === 'interrupt') {
       for (const p of [visual.page, timingPage.page]) await p.evaluate(() => window.lab.step('fromOne'))
-      await visual.page.clock.runFor(1200)
       await timingPage.page.waitForTimeout(900)
     }
-    if (step !== 'entrance')
-      await visual.page.clock.runFor(1200)
+    const settled = step === 'entrance' || await settle(visual.page)
     const recorded = await record(visual.page, dir, step, () => act(step))
     const curveList = curves(recorded.frames)
     let { issues } = flags(curveList, recorded.frames)
+    if (!settled)
+      issues.push('did not settle before recording (2s cap)')
     // An interrupted change legitimately reverses direction.
     if (step === 'interrupt')
       issues = issues.filter(issue => !issue.startsWith('backwards'))
