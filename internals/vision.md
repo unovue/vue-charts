@@ -237,6 +237,33 @@ enter/exit; tooltip spring; browser frame-budget tests.
 Generic components, typed emits, `v-model` everywhere, public composables, generated API
 docs, accessibility additions. Then propose the shadcn-vue chart registry on vccs upstream.
 
+## Chart types beyond Recharts
+
+Research 2026-10-04 (Opus review plus a Codex market scan of 18 libraries and real SaaS
+dashboards). Goal: the best Vue engine for product dashboards, not the longest chart list.
+Many types already exist in Vue (ECharts, Unovis, Vue Data UI); the gap is quality: Vue slots,
+server SVG, CSS-variable theming and keyed, interruptible motion.
+
+**One cell grid, four charts.** Tracker, calendar, matrix heatmap and cohort grid are all keyed
+rectangles with a color scale, a tooltip and arrow-key navigation. They share
+`chart/CellGridLayer.tsx`, so they look and move the same.
+
+| Tier | Chart | State |
+|---|---|---|
+| 1 | Tracker (uptime, status history) | shipped on `feat/cell-grid` |
+| 1 | CalendarHeatmap (contributions) | shipped on `feat/cell-grid` |
+| 1 | Journey Sankey: path highlight, ended-here segment, step headers, `paths` input | after the `feat/vision` release; builds on its keyed Sankey motion |
+| 1 | Matrix heatmap and cohort retention grid | next on the cell grid |
+| 1 | Sparkline cards, bar list, donut with center value, gauge, funnel drop-off | mostly recipes on existing charts |
+| 2 | Histogram, waterfall, bullet, status timeline, box plot | when Tier 1 is stable |
+| 3 | Slope, bump, stream, icicle, circle packing, candlestick, violin, map | on a real request |
+| skip | Marimekko, chord, force network, parallel coordinates, full Gantt | high cost, no named user |
+
+Sankey defaults to copy from Rybbit's journeys view: links at 0.2 opacity, 0.45 on the hovered
+path and 0.07 for the rest, 8 px nodes with 2 px corners, a grey segment for sessions that end
+at a node, wide invisible hit strokes. Plain nodes and links are enough for connected-path
+highlighting; exact path pinning and "ended here" numbers need path data, so accept both.
+
 ## Decisions for Matthias
 
 1. **Upstream or fork?** Recommendation: upstream (`unovue/vue-charts`). The shadcn-vue org owns
