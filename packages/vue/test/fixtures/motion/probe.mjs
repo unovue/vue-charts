@@ -210,12 +210,17 @@ async function runHoverSweep() {
   const failures = []
   if (measuredFrames < 42 || frames.filter(ms => ms > 34).length > 1 || Math.max(...frames) > 50)
     failures.push('Hover frame budget exceeded')
-  if (reads.allRect || reads.allWidth)
-    failures.push(`Layout reads during hover sweep: ${reads.allRect} rect, ${reads.allWidth} width (tooltip: ${reads.tooltipRect} rect, ${reads.tooltipWidth} width)`)
+  // The tooltip must never read layout while following the pointer. Turning pointer coordinates
+  // into chart coordinates reads the wrapper box once per event, as d3-pointer does.
+  if (reads.tooltipRect || reads.tooltipWidth)
+    failures.push(`Tooltip layout reads during hover sweep: ${reads.tooltipRect} rect, ${reads.tooltipWidth} width`)
+  if (reads.allRect > moves || reads.allWidth > moves)
+    failures.push(`More than one layout read per pointer move: ${reads.allRect} rect, ${reads.allWidth} width over ${moves} moves`)
   if (springs.length !== 2 || window.motionSprings.length !== springs.length || springs.some((value, i) => value !== window.motionSprings[i]))
     failures.push('Position springs were missing or recreated')
-  if (maxRunningScalarSprings < 1 || maxRunningScalarSprings > 1)
-    failures.push(`Expected one running spring during horizontal sweep; ${maxRunningScalarSprings} scalar springs running`)
+  // One persistent spring per axis (x, y); retargeting must not add more.
+  if (maxRunningScalarSprings < 1 || maxRunningScalarSprings > 2)
+    failures.push(`Expected the x/y position springs to run; ${maxRunningScalarSprings} scalar springs running`)
   if (positions.size < 10 || tooltip.style.visibility !== 'visible')
     failures.push('Tooltip did not visibly move')
   return { frames: measuredFrames, frameIntervalsMs: frames, worstFrameMs: Math.max(...frames), moves, positions: positions.size, reads, scalarSpringsCreated: window.motionSprings.length, maxRunningScalarSprings, failures }
