@@ -1,9 +1,8 @@
 import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/cartesian/type'
-import type { LabelPosition, LabelProps } from '@/components/label/types'
+import type { LabelProps } from '@/components/label/types'
 import type { Coordinate } from '@/types'
 import { isNumber, isPercent } from '@/utils'
 import { getPercentValue, mathSign } from '@/utils/data'
-import { uniqueId } from '@/utils/data-utils'
 
 export function parseViewBox(props: any): ViewBox | undefined {
   const {
@@ -89,6 +88,7 @@ export function renderRadialLabel(
   label: string | number | undefined,
   attrs: Record<string, any>,
   viewBox: PolarViewBox,
+  generatedId: string,
 ) {
   const { offset = 5, class: className, id: labelId } = labelProps
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, clockWise } = viewBox
@@ -120,7 +120,7 @@ export function renderRadialLabel(
   const startPoint = polarToCartesian(cx!, cy!, radius, labelAngle)
   const endPoint = polarToCartesian(cx!, cy!, radius, labelAngle + (direction ? 1 : -1) * 359)
   const path = `M${startPoint.x},${startPoint.y} A${radius},${radius},0,1,${direction ? 0 : 1},${endPoint.x},${endPoint.y}`
-  const id = labelId == null ? uniqueId('v-charts-radial-line-') : labelId
+  const id = labelId ?? generatedId
 
   return (
     <text {...attrs} dominant-baseline="central" class={['v-charts-radial-bar-label', className]}>

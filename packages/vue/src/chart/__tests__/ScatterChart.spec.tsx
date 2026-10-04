@@ -5,11 +5,10 @@ import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from '@/ind
 import { Tooltip } from '@/components/Tooltip'
 import { Legend } from '@/components/legend'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useViewBox } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
-import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 
-describe('ScatterChart', () => {
+describe('scatterChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -137,7 +136,7 @@ describe('ScatterChart', () => {
     })
   })
 
-  describe('Tooltip integration', () => {
+  describe('tooltip integration', () => {
     it('renders with Tooltip', () => {
       const { container } = render(() => (
         <ScatterChart width={400} height={400} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -228,7 +227,7 @@ describe('ScatterChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides width', () => {

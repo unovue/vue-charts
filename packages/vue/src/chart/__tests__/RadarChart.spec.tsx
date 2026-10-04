@@ -7,7 +7,7 @@ import { Radar } from '@/polar/radar/Radar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
-import { useViewBox, useChartWidth, useChartHeight } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
 
 type ExpectedRadarPolygon = {
@@ -30,7 +30,7 @@ function getRadarPolygonPaths(container: Element): Element[] {
   return Array.from(container.querySelectorAll('.v-charts-radar-polygon path'))
 }
 
-describe('RadarChart', () => {
+describe('radarChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -98,7 +98,7 @@ describe('RadarChart', () => {
     })
   })
 
-  describe('PolarGrid, PolarAngleAxis, PolarRadiusAxis rendering', () => {
+  describe('polarGrid, PolarAngleAxis, PolarRadiusAxis rendering', () => {
     it('renders 1 PolarGrid, 1 PolarAngleAxis and 1 PolarRadiusAxis', () => {
       const { container } = render(() => (
         <RadarChart
@@ -247,7 +247,7 @@ describe('RadarChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides width', () => {

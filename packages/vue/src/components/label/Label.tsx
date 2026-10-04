@@ -1,5 +1,5 @@
 import type { SlotsType } from 'vue'
-import { computed, defineComponent } from 'vue'
+import { defineComponent, useId } from 'vue'
 import type { LabelSlots } from './types'
 import { LabelVueProps } from './types'
 import { useViewBox } from '@/context/chartLayoutContext'
@@ -13,6 +13,7 @@ export const Label = defineComponent({
   props: LabelVueProps,
   slots: Object as SlotsType<LabelSlots>,
   setup(props, { slots, attrs }) {
+    const radialLabelId = `v-charts-radial-line-${useId().replace(/[^\w-]/g, '_')}`
     const viewBoxFromContext = useViewBox()
     const polarLabelViewBox = usePolarLabelViewBox()
 
@@ -40,7 +41,7 @@ export const Label = defineComponent({
 
       // Render radial label for polar positions insideStart/insideEnd/end
       if (isPolarLabel && (position === 'insideStart' || position === 'insideEnd' || position === 'end')) {
-        return renderRadialLabel(props, position, label, attrs, viewBox)
+        return renderRadialLabel(props, position, label, attrs, viewBox, radialLabelId)
       }
 
       const positionAttrs = isPolarLabel ? getAttrsOfPolarLabel(props, viewBox) : getAttrsOfCartesianLabel(props, viewBox)

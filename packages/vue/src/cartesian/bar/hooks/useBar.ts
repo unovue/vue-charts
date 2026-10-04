@@ -1,12 +1,11 @@
 import type { Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, ref, shallowRef, useAttrs } from 'vue'
+import { computed, ref, shallowRef, useAttrs, useId } from 'vue'
 import { createContext } from 'motion-v'
 import type { BarProps } from '../type'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { getNormalizedStackId } from '@/utils/chart'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
-import { uniqueId } from '@/utils'
 import { useAppSelector } from '@/state/hooks'
 import { selectBarRectangles } from '@/state/selectors/barSelectors'
 import type { BarRectangleItem } from '@/types/bar'
@@ -44,7 +43,7 @@ export function useBar(props: BarProps, shapeSlot?: (props: any) => any, activeB
     return (layout.value === 'vertical' || layout.value === 'horizontal') && !props.hide
   })
 
-  const clipPathId = uniqueId('v-charts-bar-')
+  const clipPathId = `v-charts-bar-${useId().replace(/[^\w-]/g, '_')}`
   const isAnimating = ref(false)
   const cellPropsRef = shallowRef<Record<string, any>[]>([])
 

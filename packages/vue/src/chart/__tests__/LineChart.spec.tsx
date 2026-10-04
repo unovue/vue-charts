@@ -7,7 +7,7 @@ import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
 
-describe('LineChart', () => {
+describe('lineChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 100, height: 100 })
   })
@@ -390,7 +390,7 @@ describe('LineChart', () => {
       ))
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides width', () => {

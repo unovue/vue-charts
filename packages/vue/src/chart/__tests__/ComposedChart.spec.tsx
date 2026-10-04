@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, test, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, Tooltip, XAxis, YAxis } from '@/index'
+import { Area, Bar, CartesianGrid, ComposedChart, Line, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
@@ -21,7 +21,7 @@ describe('<ComposedChart />', () => {
     { name: 'Page F', uv: 1400, pv: 680, amt: 1700 },
   ]
 
-  test('Render 1 line, 1 area, 1 bar in the ComposedChart', () => {
+  it('render 1 line, 1 area, 1 bar in the ComposedChart', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -38,7 +38,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-area .v-charts-area-area')).toHaveLength(1)
   })
 
-  test('Render 1 bar, 1 dot when data has only one element', () => {
+  it('render 1 bar, 1 dot when data has only one element', () => {
     const singleData = [data[0]]
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={singleData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -54,7 +54,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-bar .v-charts-bar-rectangle')).toHaveLength(1)
   })
 
-  test('Renders mixed chart with multiple Bar and Line components', () => {
+  it('renders mixed chart with multiple Bar and Line components', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -69,7 +69,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-line .v-charts-line-curve')).toHaveLength(1)
   })
 
-  test('Renders empty chart when data is empty', () => {
+  it('renders empty chart when data is empty', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={[]} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -83,7 +83,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-line .v-charts-line-curve')).toHaveLength(0)
   })
 
-  test('Renders CartesianGrid in ComposedChart', () => {
+  it('renders CartesianGrid in ComposedChart', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data}>
         <XAxis dataKey="name" />
@@ -96,7 +96,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-cartesian-grid')).toHaveLength(1)
   })
 
-  test('MouseEnter ComposedChart should show tooltip and cursor', async () => {
+  it('mouseEnter ComposedChart should show tooltip and cursor', async () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -118,7 +118,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-tooltip-cursor')).toHaveLength(1)
   })
 
-  describe('ComposedChart layout context', () => {
+  describe('composedChart layout context', () => {
     it('should provide viewBox', () => {
       let viewBoxValue: any
       const Comp = defineComponent({
@@ -153,7 +153,7 @@ describe('<ComposedChart />', () => {
         </ComposedChart>
       ))
 
-      expect(clipPathIdValue).toMatch(/v-charts\d+-clip/)
+      expect(clipPathIdValue).toMatch(/^v-charts[\w-]+-clip$/)
     })
 
     it('should provide width', () => {

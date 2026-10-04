@@ -4,10 +4,10 @@ import { defineComponent } from 'vue'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
-import { useViewBox, useChartWidth, useChartHeight } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
 
-describe('RadialBarChart', () => {
+describe('radialBarChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -350,7 +350,7 @@ describe('RadialBarChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides width', () => {

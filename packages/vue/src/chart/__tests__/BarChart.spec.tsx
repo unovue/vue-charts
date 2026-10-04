@@ -260,7 +260,7 @@ describe('barChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides correct width', () => {

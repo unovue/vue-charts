@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { type MockInstance, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Area, AreaChart, CartesianAxis, Tooltip, XAxis, YAxis } from '@/index'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Area, AreaChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull, expectAreaCurve } from '@/test/helper'
 import type { ActivePointSlotProps } from '@/cartesian/area/ActivePoints'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -419,7 +419,7 @@ describe('areaChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('should provide width', async () => {

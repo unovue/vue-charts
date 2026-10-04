@@ -6,11 +6,10 @@ import { Tooltip } from '@/components/Tooltip'
 import { Legend } from '@/components/legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useViewBox } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
-import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 
-describe('PieChart', () => {
+describe('pieChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -254,7 +253,7 @@ describe('PieChart', () => {
     })
   })
 
-  describe('Tooltip integration', () => {
+  describe('tooltip integration', () => {
     it('renders sectors alongside Tooltip without errors', () => {
       const { container } = render(() => (
         <PieChart width={800} height={400}>
@@ -340,7 +339,7 @@ describe('PieChart', () => {
       })
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
+      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
     })
 
     it('provides width', () => {

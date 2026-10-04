@@ -1,25 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { interpolate, uniqueId } from '@/utils/data-utils'
-
-describe('uniqueId', () => {
-  it('returns incrementing ids without prefix', () => {
-    const id1 = uniqueId()
-    const id2 = uniqueId()
-    const num1 = Number(id1)
-    const num2 = Number(id2)
-    expect(num2).toBe(num1 + 1)
-  })
-
-  it('returns incrementing ids with prefix', () => {
-    const id1 = uniqueId('prefix-')
-    const id2 = uniqueId('prefix-')
-    expect(id1).toMatch(/^prefix-\d+$/)
-    expect(id2).toMatch(/^prefix-\d+$/)
-    const num1 = Number(id1.replace('prefix-', ''))
-    const num2 = Number(id2.replace('prefix-', ''))
-    expect(num2).toBe(num1 + 1)
-  })
-})
+import { interpolate } from '@/utils/data-utils'
 
 describe('interpolate', () => {
   it('interpolates between two numbers', () => {
