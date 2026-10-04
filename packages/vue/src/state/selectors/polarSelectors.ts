@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { AppliedChartData, ChartData } from '../chartData'
 import type { RechartsRootState } from '../store'
-import type { AxisId, BaseCartesianAxis } from '../cartesianAxisSlice'
+import type { AxisId, BaseCartesianAxis } from '../chartCartesianAxis'
 import { selectChartDataAndAlwaysIgnoreIndexes, selectChartDataWithIndexes } from './dataSelectors'
 import type {
   AppliedChartDataWithErrorDomain,
@@ -22,7 +22,7 @@ import {
   selectDomainDefinition,
   selectRealScaleType,
 } from './axisSelectors'
-import type { PolarGraphicalItemSettings } from '../graphicalItemsSlice'
+import type { PolarGraphicalItemSettings } from '../chartGraphicalItems'
 import { pickAxisType } from './pickAxisType'
 import { pickAxisId } from './pickAxisId'
 import { selectStackOffsetType } from './rootPropsSelectors'

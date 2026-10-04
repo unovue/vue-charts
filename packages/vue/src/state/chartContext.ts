@@ -1,3 +1,5 @@
+import { createChartCartesianAxis } from './chartCartesianAxis'
+import { createChartGraphicalItems } from './chartGraphicalItems'
 import type { ChartOptions } from './chartOptions'
 import { createChartReferenceElements } from './chartReferenceElements'
 import { createChartPolarAxis } from './chartPolarAxis'
@@ -31,12 +33,16 @@ interface ChartContext {
   polarOptions: ReturnType<typeof createChartPolarOptions>
   polarAxis: ReturnType<typeof createChartPolarAxis>
   referenceElements: ReturnType<typeof createChartReferenceElements>
+  cartesianAxis: ReturnType<typeof createChartCartesianAxis>
+  graphicalItems: ReturnType<typeof createChartGraphicalItems>
   tooltip: ReturnType<typeof createChartTooltip>
 }
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
 export function provideChartContext(store: ChartStore, layout = createChartLayout(), initialOptions?: ChartOptions) {
+  const cartesianAxis = createChartCartesianAxis()
+  const graphicalItems = createChartGraphicalItems()
   const brush = createChartBrush()
   const legend = createChartLegend()
   const options = createChartOptions(initialOptions)
@@ -54,6 +60,8 @@ export function provideChartContext(store: ChartStore, layout = createChartLayou
   })
   const state = computed(() => ({
     ...legacyState.value,
+    cartesianAxis: cartesianAxis.state.value,
+    graphicalItems: graphicalItems.state.value,
     layout: layout.state.value,
     chartData: data.state.value,
     brush: brush.state.value,
@@ -65,7 +73,7 @@ export function provideChartContext(store: ChartStore, layout = createChartLayou
     referenceElements: referenceElements.state.value,
     tooltip: tooltip.state.value,
   }))
-  provide(chartContextKey, { state, dispatch: store.dispatch, layout, data, brush, legend, options, rootProps, polarOptions, polarAxis, referenceElements, tooltip })
+  provide(chartContextKey, { state, dispatch: store.dispatch, layout, data, brush, legend, options, rootProps, polarOptions, polarAxis, referenceElements, tooltip, cartesianAxis, graphicalItems })
 }
 
 function useChartContext() {
@@ -123,4 +131,12 @@ export function useChartPolarAxis() {
 
 export function useChartReferenceElements() {
   return useChartContext().referenceElements
+}
+
+export function useChartCartesianAxis() {
+  return useChartContext().cartesianAxis
+}
+
+export function useChartGraphicalItems() {
+  return useChartContext().graphicalItems
 }

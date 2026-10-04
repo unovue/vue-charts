@@ -1,11 +1,11 @@
+import { useChartCartesianAxis } from '@/state/chartContext'
 /**
  * @fileOverview X Axis
  */
 import type { PropType } from 'vue'
-import { defineComponent, onUnmounted, watchEffect } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import type { XAxisSettings } from '@/state/cartesianAxisSlice'
-import { addXAxis, removeXAxis } from '@/state/cartesianAxisSlice'
+import { defineComponent, onUnmounted, watch } from 'vue'
+import { useAppSelector } from '@/state/hooks'
+import type { XAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitXAxis, selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize } from '@/state/selectors/axisSelectors'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
@@ -89,10 +89,10 @@ const XAxisSettingsDispatcher = defineComponent({
     tickFormatter: Function as PropType<TickFormatter>,
   },
   setup(props, { slots: dispatcherSlots }) {
-    const dispatch = useAppDispatch()
+    const { addXAxis, removeXAxis } = useChartCartesianAxis()
     let registeredSettings: XAxisSettings | undefined
-    watchEffect(() => {
-      const settings = {
+    watch(() => {
+      return {
         interval: props.interval ?? 'preserveEnd',
         id: props.xAxisId,
         scale: props.scale,
@@ -118,16 +118,17 @@ const XAxisSettingsDispatcher = defineComponent({
         tick: props.tick ?? true,
         tickFormatter: props.tickFormatter,
       } as XAxisSettings
+    }, (settings) => {
       if (registeredSettings && registeredSettings.id !== settings.id) {
-        dispatch(removeXAxis(registeredSettings))
+        removeXAxis(registeredSettings)
       }
-      dispatch(addXAxis(settings))
+      addXAxis(settings)
       registeredSettings = settings
-    })
-    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
+    }, { immediate: true })
+    // SSR stops watch immediately; its cleanup would remove settings before rendering.
     onUnmounted(() => {
       if (registeredSettings) {
-        dispatch(removeXAxis(registeredSettings))
+        removeXAxis(registeredSettings)
         registeredSettings = undefined
       }
     })

@@ -3,7 +3,7 @@ import type { Series } from 'd3-shape'
 import { selectChartDataAndAlwaysIgnoreIndexes, selectChartDataWithIndexes } from './dataSelectors'
 import type { RechartsRootState } from '../store'
 import type { ChartDataState } from '../chartData'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 import { selectPolarAxisScale, selectPolarAxisTicks, selectPolarGraphicalItemAxisTicks } from './polarScaleSelectors'
 import type { BaseAxisWithScale, StackGroup } from './axisSelectors'
 import { combineStackGroups } from './axisSelectors'
@@ -25,7 +25,7 @@ import {
   selectRootMaxBarSize,
   selectStackOffsetType,
 } from './rootPropsSelectors'
-import type { PolarGraphicalItemSettings } from '../graphicalItemsSlice'
+import type { PolarGraphicalItemSettings } from '../chartGraphicalItems'
 import type {
   PolarAxisType,
 } from './polarSelectors'

@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue'
-import type { AxisId } from './cartesianAxisSlice'
+import type { AxisId } from './chartCartesianAxis'
 import type { IfOverflow } from '@/types'
 
 export type ReferenceElementSettings = {

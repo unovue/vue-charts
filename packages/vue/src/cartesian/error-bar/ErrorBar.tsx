@@ -6,7 +6,7 @@ import { useAppSelector } from '@/state/hooks'
 import { selectAxisWithScale } from '@/state/selectors/axisSelectors'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { ErrorBarsSettings } from '@/state/graphicalItemsSlice'
+import type { ErrorBarsSettings } from '@/state/chartGraphicalItems'
 
 interface LineCoordinate {
   x1: number

@@ -68,8 +68,7 @@ export const Pie = defineComponent<PiePropsWithSVG>({
     const offset = useAppSelector(state => selectChartOffset(state))
 
     const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
-    // Keep Immer from freezing caller-owned rows referenced by legend payloads.
-    SetLegendPayload(computed(() => Object.freeze(legendPayload.value ?? [])))
+    SetLegendPayload(computed(() => legendPayload.value ?? []))
 
     const sectors = computed(() => {
       if (synchronisedSettings.value == null || displayedData.value == null) {

@@ -12,7 +12,7 @@ import {
   selectTicksOfGraphicalItem,
   selectUnfilteredCartesianItems,
 } from './axisSelectors'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 import type { ChartData } from '../chartData'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import { selectChartOffset } from './selectChartOffset'

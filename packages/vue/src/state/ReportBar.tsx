@@ -1,13 +1,12 @@
-import { useAppDispatch } from './hooks'
-import { addBar, removeBar } from './graphicalItemsSlice'
+import { useChartGraphicalItems } from '@/state/chartContext'
 import { watch } from 'vue'
 
 export function ReportBar(): null {
-  const dispatch = useAppDispatch()
+  const { addBar, removeBar } = useChartGraphicalItems()
   watch(() => ({}), (_, __, onCleanup) => {
-    dispatch(addBar())
+    addBar()
     onCleanup(() => {
-      dispatch(removeBar())
+      removeBar()
     })
   })
   return null

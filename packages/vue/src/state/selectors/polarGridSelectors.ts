@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 import { selectPolarAxisTicks } from './polarScaleSelectors'
 import type { CartesianTickItem } from '@/types/tick'
 

@@ -78,8 +78,7 @@ const SunburstInner = defineComponent({
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots }) {
     const trackedData = useTrackedData(() => [props.data])
-    // The object-shaped API needs a root wrapper that Immer cannot freeze recursively.
-    const data = computed(() => Object.freeze({ ...trackedData.value![0] }))
+    const data = computed(() => ({ ...trackedData.value![0] }))
     const tooltip = useChartTooltip()
 
     const resolvedCx = computed(() => props.cx ?? props.width / 2)

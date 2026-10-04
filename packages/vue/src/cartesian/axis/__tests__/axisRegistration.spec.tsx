@@ -1,4 +1,4 @@
-import { provideChartContext } from '@/state/chartContext'
+import { provideChartContext, useChartCartesianAxis } from '@/state/chartContext'
 import { render } from '@testing-library/vue'
 import { createSSRApp, defineComponent, h, nextTick, reactive } from 'vue'
 import { renderToString } from 'vue/server-renderer'
@@ -29,39 +29,47 @@ beforeEach(() => {
 describe.each(axes)('$axisType registration', ({ renderAxis, axisType }) => {
   function createFixture() {
     const store = createRechartsStore()
+    let axis: ReturnType<typeof useChartCartesianAxis>
+    const Reader = defineComponent({
+      props: { axisId: { type: [String, Number], default: 0 }, tickCount: { type: Number, default: 5 } },
+      setup(props) {
+        axis = useChartCartesianAxis()
+        return () => renderAxis(props)
+      },
+    })
     const Fixture = defineComponent({
       props: { axisId: { type: [String, Number], default: 0 }, tickCount: { type: Number, default: 5 } },
       setup(props) {
         provideChartContext(store)
-        return () => renderAxis(props)
+        return () => h(Reader, props)
       },
     })
-    return { store, Fixture }
+    return { axisState: () => axis.state.value, Fixture }
   }
 
   it('keeps explicit settings registered during SSR', async () => {
-    const { store, Fixture } = createFixture()
+    const { axisState, Fixture } = createFixture()
     await renderToString(createSSRApp(Fixture, { axisId: 'custom', tickCount: 3 }))
-    expect(store.getState().cartesianAxis[axisType].custom).toMatchObject({ id: 'custom', tickCount: 3 })
+    expect(axisState()[axisType].custom).toMatchObject({ id: 'custom', tickCount: 3 })
   })
 
   it('updates settings, removes old IDs, and unregisters on unmount', async () => {
-    const { store, Fixture } = createFixture()
+    const { axisState, Fixture } = createFixture()
     const props = reactive<AxisFixtureProps>({ axisId: 0, tickCount: 5 })
     const { unmount } = render(() => <Fixture {...props} />)
-    expect(store.getState().cartesianAxis[axisType][0]).toMatchObject({ tickCount: 5 })
+    expect(axisState()[axisType][0]).toMatchObject({ tickCount: 5 })
 
     props.tickCount = 3
     await nextTick()
-    expect(store.getState().cartesianAxis[axisType][0]).toMatchObject({ tickCount: 3 })
+    expect(axisState()[axisType][0]).toMatchObject({ tickCount: 3 })
 
     props.axisId = 'custom'
     await nextTick()
-    expect(store.getState().cartesianAxis[axisType][0]).toBeUndefined()
-    expect(store.getState().cartesianAxis[axisType].custom).toMatchObject({ id: 'custom', tickCount: 3 })
+    expect(axisState()[axisType][0]).toBeUndefined()
+    expect(axisState()[axisType].custom).toMatchObject({ id: 'custom', tickCount: 3 })
 
     unmount()
-    expect(store.getState().cartesianAxis[axisType]).toEqual({})
+    expect(axisState()[axisType]).toEqual({})
   })
 })
 

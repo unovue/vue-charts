@@ -69,7 +69,7 @@ export const Funnel = defineComponent<FunnelPropsWithSVG>({
         payload: trap.payload,
       }))
     })
-    SetLegendPayload(computed(() => Object.freeze(legendPayload.value)))
+    SetLegendPayload(computed(() => legendPayload.value))
 
     SetTooltipEntrySettings({
       fn: v => v,

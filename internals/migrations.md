@@ -8,11 +8,11 @@
 - Dependents: categorical charts, Sankey, Treemap, Sunburst, and internal chart hooks.
 - Event handling now runs through chart-local Vue composables. Native callbacks
   no longer dispatch transport actions; pointer, keyboard, and touch handlers
-  call the existing calculations directly. Their final state transitions still
-  use the temporary Redux reducers.
+  call the existing calculations directly. Their final state transitions use
+  chart-local typed operations.
 - Layout is now Vue-owned: dimensions, direction, margins, and scale live in
   `chartLayout.ts`, not Redux. The context combines this immutable shallow
-  snapshot with remaining reducer state for existing pure selectors. There is
+  snapshot with the other Vue-owned domains for existing pure selectors. There is
   no mirrored layout slice or action-dispatch adapter. Remove this combined
   view when all remaining domains and calculations have migrated.
 - Temporary code: `ChartStore` input and its subscription in
@@ -32,16 +32,10 @@
   selector bindings. No persisted-data migration or public API change is involved.
 - Tracking: local `tasks/todo.md`, Stage 3; no external issue created.
 
-- Immer freeze guards (added 2026-10-04, commit 4d67b1a): `Object.freeze` on library-owned
-  data snapshots and legend/tooltip payload arrays in `state/SetGraphicalItem.ts`, `polar/pie/Pie.tsx`,
-  `cartesian/funnel/Funnel.tsx`, `cartesian/scatter/Scatter.tsx`, `chart/SunburstChart.tsx`. They stop
-  Immer auto-freeze from deep-freezing caller-owned (mutable, reactive) rows. Remove them together
-  with the Redux/Immer reducers.
-
 ### Ownership cutover constraints
 
-- Ten domains remain reducer-owned after the layout/data cutovers. Existing identity-memoized
-  selectors require structural replacement of every changed ancestor; mutating
+- No domains remain reducer-owned after the cartesian-axis/graphical-item
+  cutover. Existing identity-memoized selectors require structural replacement of every changed ancestor; mutating
   Vue state in place under those selectors would return stale calculations.
 - Move state types/defaults and typed operations together into one chart-local
   owner. Do not mirror layout or tooltip state between Redux and Vue, or replace

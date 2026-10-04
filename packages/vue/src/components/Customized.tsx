@@ -4,7 +4,7 @@ import { useAppSelector } from '@/state/hooks'
 import { selectUnfilteredCartesianItems } from '@/state/selectors/axisSelectors'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
-import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/graphicalItemsSlice'
+import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/chartGraphicalItems'
 import type { DataKey } from '@/types'
 
 export interface FormattedGraphicalItem {
@@ -55,7 +55,8 @@ export const Customized = defineComponent({
     })
 
     return () => {
-      if (!slots.default) return null
+      if (!slots.default)
+        return null
 
       return slots.default({
         formattedGraphicalItems: formattedGraphicalItems.value,

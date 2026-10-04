@@ -1,7 +1,7 @@
 import type { AreaProps, AreaPropsWithSVG } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
-import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/graphicalItemsSlice'
+import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/chartGraphicalItems'
 import { SetCartesianGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'

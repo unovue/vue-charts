@@ -11,7 +11,7 @@ import type {
   YAxisOrientation,
   YAxisSettings,
   ZAxisSettings,
-} from '../cartesianAxisSlice'
+} from '../chartCartesianAxis'
 import type { RechartsRootState } from '../store'
 import { selectChartDataWithIndexes, selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
@@ -20,7 +20,7 @@ import type {
   ErrorBarsSettings,
   GraphicalItemSettings,
   PolarGraphicalItemSettings,
-} from '../graphicalItemsSlice'
+} from '../chartGraphicalItems'
 import type {
   ReferenceAreaSettings,
   ReferenceDotSettings,

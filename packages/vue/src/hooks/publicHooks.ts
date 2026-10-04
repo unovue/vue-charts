@@ -3,7 +3,7 @@ import { useAppSelector } from '@/state/chartContext'
 import { selectActiveLabel, selectActiveTooltipCoordinate, selectIsTooltipActive } from '@/state/selectors/tooltipSelectors'
 import { selectAxisDomain, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis } from '@/state/selectors/axisSelectors'
 import { useChartHeight, useChartWidth, useMargin, useOffset } from '@/context/chartLayoutContext'
-import type { AxisId } from '@/state/cartesianAxisSlice'
+import type { AxisId } from '@/state/chartCartesianAxis'
 import type { Coordinate } from '@/types/common'
 
 export type { InverseScaleFunction } from '@/utils/createCategoricalInverse'

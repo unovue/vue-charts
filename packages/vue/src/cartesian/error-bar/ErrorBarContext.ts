@@ -4,8 +4,8 @@ import { createContext } from 'motion-v'
 import { createContext as createNullableContext } from '@/utils/createContext'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { DataKey } from '@/types'
-import type { AxisId } from '@/state/cartesianAxisSlice'
-import type { ErrorBarsSettings } from '@/state/graphicalItemsSlice'
+import type { AxisId } from '@/state/chartCartesianAxis'
+import type { ErrorBarsSettings } from '@/state/chartGraphicalItems'
 
 export interface ErrorBarDataItem {
   x: number | undefined

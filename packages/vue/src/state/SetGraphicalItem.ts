@@ -1,17 +1,8 @@
-import { useAppDispatch } from '@/state/hooks'
-import {
-  type CartesianGraphicalItemSettings,
-  type PolarGraphicalItemSettings,
-  addCartesianGraphicalItem,
-  addPolarGraphicalItem,
-  removeCartesianGraphicalItem,
-  removePolarGraphicalItem,
-  replaceCartesianGraphicalItem,
-  replacePolarGraphicalItem,
-} from './graphicalItemsSlice'
+import { useChartGraphicalItems } from '@/state/chartContext'
+import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from './chartGraphicalItems'
 
 import type { StackId } from '@/types/tick'
-import { onUnmounted, unref, watchEffect } from 'vue'
+import { onUnmounted, unref, watch } from 'vue'
 import { getNormalizedStackId } from '@/utils/chart'
 import type { MaybeRef } from 'vue'
 
@@ -20,53 +11,45 @@ type SetCartesianGraphicalItemProps = Partial<Omit<CartesianGraphicalItemSetting
 }>
 
 export function SetCartesianGraphicalItem(_props: MaybeRef<SetCartesianGraphicalItemProps>) {
-  const dispatch = useAppDispatch()
+  const { addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem } = useChartGraphicalItems()
   let preSetting: CartesianGraphicalItemSettings | null = null
-  watchEffect(() => {
-    const props = unref(_props)
-    // Only freeze the library-owned snapshot. Immer must not recursively freeze caller-owned rows.
-    if (props.data)
-      Object.freeze(props.data)
+  watch(() => ({ ...unref(_props) }), (props) => {
     const settings: CartesianGraphicalItemSettings = {
       ...(props as CartesianGraphicalItemSettings),
       stackId: getNormalizedStackId(props.stackId),
     }
     if (preSetting === null) {
-      dispatch(addCartesianGraphicalItem(settings))
+      addCartesianGraphicalItem(settings)
+      preSetting = settings
     }
     else if (preSetting !== settings) {
-      dispatch(replaceCartesianGraphicalItem({ prev: preSetting, next: settings }))
+      preSetting = replaceCartesianGraphicalItem({ prev: preSetting, next: settings })
     }
-    preSetting = settings
-  })
+  }, { immediate: true })
   onUnmounted(() => {
     if (preSetting) {
-      dispatch(removeCartesianGraphicalItem(preSetting))
+      removeCartesianGraphicalItem(preSetting)
       preSetting = null
     }
   })
 }
 
 export function SetPolarGraphicalItem(_props: MaybeRef<Partial<PolarGraphicalItemSettings>>) {
-  const dispatch = useAppDispatch()
+  const { addPolarGraphicalItem, removePolarGraphicalItem, replacePolarGraphicalItem } = useChartGraphicalItems()
   let preSetting: PolarGraphicalItemSettings | null = null
-  watchEffect(() => {
-    const props = unref(_props)
-    // Only freeze the library-owned snapshot. Immer must not recursively freeze caller-owned rows.
-    if (props.data)
-      Object.freeze(props.data)
+  watch(() => ({ ...unref(_props) }), (props) => {
     const settings = props as PolarGraphicalItemSettings
     if (preSetting === null) {
-      dispatch(addPolarGraphicalItem(settings))
+      addPolarGraphicalItem(settings)
+      preSetting = settings
     }
     else if (preSetting !== settings) {
-      dispatch(replacePolarGraphicalItem({ prev: preSetting, next: settings }))
+      preSetting = replacePolarGraphicalItem({ prev: preSetting, next: settings })
     }
-    preSetting = settings
-  })
+  }, { immediate: true })
   onUnmounted(() => {
     if (preSetting) {
-      dispatch(removePolarGraphicalItem(preSetting))
+      removePolarGraphicalItem(preSetting)
       preSetting = null
     }
   })

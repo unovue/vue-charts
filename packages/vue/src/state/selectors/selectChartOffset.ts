@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { get } from 'es-toolkit/compat'
 import { selectLegendSettings, selectLegendSize } from './legendSelectors'
-import type { XAxisSettings, YAxisSettings } from '../cartesianAxisSlice'
+import type { XAxisSettings, YAxisSettings } from '../chartCartesianAxis'
 import type { LegendSettings } from '../chartLegend'
 import { selectChartHeight, selectChartWidth, selectMargin } from './containerSelectors'
 import { selectAllXAxes, selectAllYAxes } from './selectAllAxes'

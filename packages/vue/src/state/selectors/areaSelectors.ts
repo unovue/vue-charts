@@ -10,7 +10,7 @@ import {
   selectUnfilteredCartesianItems,
 } from './axisSelectors'
 import type { RechartsRootState } from '../store'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
 import type { ChartData } from '../chartData'
 import type { Point as CurvePoint } from '@/shape'

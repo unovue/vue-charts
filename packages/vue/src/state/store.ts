@@ -6,18 +6,16 @@ import type { ChartOptions } from './chartOptions'
 import type { LegendState } from './chartLegend'
 import type { BrushSettings } from './chartBrush'
 import type { Action, Dispatch, Store } from '@reduxjs/toolkit'
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import { configureStore } from '@reduxjs/toolkit'
 import type { TooltipState } from './chartTooltip'
 import type { ChartDataState } from './chartData'
 import type { ChartLayoutState } from './chartLayout'
 import { reduxDevtoolsJsonStringifyReplacer } from './reduxDevtoolsJsonStringifyReplacer'
-import { cartesianAxisReducer } from './cartesianAxisSlice'
-import { graphicalItemsReducer } from './graphicalItemsSlice'
+import type { CartesianAxisState } from './chartCartesianAxis'
+import type { GraphicalItemsState } from './chartGraphicalItems'
 
-const rootReducer = combineReducers({
-  cartesianAxis: cartesianAxisReducer,
-  graphicalItems: graphicalItemsReducer,
-})
+// Retained until the store bridge is removed in the next slice. No domains remain.
+const rootReducer = (state: Record<string, never> = {}) => state
 
 export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, chartName: string = 'Chart'): Store<LegacyChartState> {
   return configureStore<LegacyChartState>({
@@ -41,7 +39,9 @@ export function createRechartsStore(preloadedState?: Partial<LegacyChartState>, 
 }
 
 export type LegacyChartState = ReturnType<typeof rootReducer>
-export type RechartsRootState = LegacyChartState & {
+export type RechartsRootState = {
+  cartesianAxis: CartesianAxisState
+  graphicalItems: GraphicalItemsState
   layout: ChartLayoutState
   chartData: ChartDataState
   tooltip: TooltipState

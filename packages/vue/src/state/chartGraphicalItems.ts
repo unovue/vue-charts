@@ -1,8 +1,6 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { createSlice, current } from '@reduxjs/toolkit'
-import { castDraft } from 'immer'
+import { computed, shallowRef } from 'vue'
 import type { ChartData } from './chartData'
-import type { AxisId } from './cartesianAxisSlice'
+import type { AxisId } from './chartCartesianAxis'
 import type { MaybeStackedGraphicalItem } from './selectors/barSelectors'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { DataKey } from '@/types'
@@ -118,66 +116,62 @@ export type GraphicalItemsState = {
   polarItems: ReadonlyArray<PolarGraphicalItemSettings>
 }
 
-const initialState: GraphicalItemsState = {
-  countOfBars: 0,
-  cartesianItems: [],
-  polarItems: [],
+export function createChartGraphicalItems() {
+  const state = shallowRef<GraphicalItemsState>({ countOfBars: 0, cartesianItems: [], polarItems: [] })
+
+  function addBar() {
+    state.value = { ...state.value, countOfBars: state.value.countOfBars + 1 }
+  }
+
+  function removeBar() {
+    state.value = { ...state.value, countOfBars: state.value.countOfBars - 1 }
+  }
+
+  function addCartesianGraphicalItem(item: CartesianGraphicalItemSettings) {
+    state.value = { ...state.value, cartesianItems: [...state.value.cartesianItems, item] }
+  }
+
+  function removeCartesianGraphicalItem(item: CartesianGraphicalItemSettings) {
+    const index = state.value.cartesianItems.indexOf(item)
+    if (index === -1)
+      return
+    state.value = { ...state.value, cartesianItems: state.value.cartesianItems.filter((_, i) => i !== index) }
+  }
+
+  function replaceCartesianGraphicalItem({ prev, next }: ReplacePayload<CartesianGraphicalItemSettings>) {
+    const index = state.value.cartesianItems.indexOf(prev)
+    if (index === -1)
+      return prev
+    if (prev === next || (Object.keys(prev).length === Object.keys(next).length
+      && Object.keys(next).every(key => Object.is(Reflect.get(prev, key), Reflect.get(next, key))))) {
+      return prev
+    }
+    state.value = { ...state.value, cartesianItems: state.value.cartesianItems.map((item, i) => i === index ? next : item) }
+    return next
+  }
+
+  function addPolarGraphicalItem(item: PolarGraphicalItemSettings) {
+    state.value = { ...state.value, polarItems: [...state.value.polarItems, item] }
+  }
+
+  function removePolarGraphicalItem(item: PolarGraphicalItemSettings) {
+    const index = state.value.polarItems.indexOf(item)
+    if (index === -1)
+      return
+    state.value = { ...state.value, polarItems: state.value.polarItems.filter((_, i) => i !== index) }
+  }
+
+  function replacePolarGraphicalItem({ prev, next }: ReplacePayload<PolarGraphicalItemSettings>) {
+    const index = state.value.polarItems.indexOf(prev)
+    if (index === -1)
+      return prev
+    if (prev === next || (Object.keys(prev).length === Object.keys(next).length
+      && Object.keys(next).every(key => Object.is(Reflect.get(prev, key), Reflect.get(next, key))))) {
+      return prev
+    }
+    state.value = { ...state.value, polarItems: state.value.polarItems.map((item, i) => i === index ? next : item) }
+    return next
+  }
+
+  return { state: computed(() => state.value), addBar, removeBar, addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem, addPolarGraphicalItem, removePolarGraphicalItem, replacePolarGraphicalItem }
 }
-
-const graphicalItemsSlice = createSlice({
-  name: 'graphicalItems',
-  initialState,
-  reducers: {
-    addBar(state) {
-      state.countOfBars += 1
-    },
-    removeBar(state) {
-      state.countOfBars -= 1
-    },
-    addCartesianGraphicalItem(state, action: PayloadAction<CartesianGraphicalItemSettings>) {
-      state.cartesianItems.push(castDraft(action.payload))
-    },
-    replaceCartesianGraphicalItem(state, action: PayloadAction<ReplacePayload<CartesianGraphicalItemSettings>>) {
-      const { prev, next } = action.payload
-      const index = current(state).cartesianItems.indexOf(castDraft(prev))
-      if (index > -1) {
-        state.cartesianItems[index] = castDraft(next)
-      }
-    },
-    removeCartesianGraphicalItem(state, action: PayloadAction<CartesianGraphicalItemSettings>) {
-      const index = current(state).cartesianItems.indexOf(castDraft(action.payload))
-      if (index > -1) {
-        state.cartesianItems.splice(index, 1)
-      }
-    },
-    addPolarGraphicalItem(state, action: PayloadAction<PolarGraphicalItemSettings>) {
-      state.polarItems.push(castDraft(action.payload))
-    },
-    removePolarGraphicalItem(state, action: PayloadAction<PolarGraphicalItemSettings>) {
-      const index = current(state).polarItems.indexOf(castDraft(action.payload))
-      if (index > -1) {
-        state.polarItems.splice(index, 1)
-      }
-    },
-    replacePolarGraphicalItem(state, action: PayloadAction<ReplacePayload<PolarGraphicalItemSettings>>) {
-      const { prev, next } = action.payload
-      const index = current(state).polarItems.indexOf(castDraft(prev))
-      if (index > -1) {
-        state.polarItems[index] = castDraft(next)
-      }
-    },
-  },
-})
-
-export const {
-  addBar,
-  removeBar,
-  addCartesianGraphicalItem,
-  removeCartesianGraphicalItem,
-  addPolarGraphicalItem,
-  replaceCartesianGraphicalItem,
-  removePolarGraphicalItem,
-  replacePolarGraphicalItem,
-} = graphicalItemsSlice.actions
-
-export const graphicalItemsReducer = graphicalItemsSlice.reducer

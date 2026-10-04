@@ -17,7 +17,7 @@ import {
   useChartName,
 } from '@/state/selectors/selectors'
 import { useMagicKeys, usePreferredReducedMotion } from '@vueuse/core'
-import type { AxisId } from '@/state/cartesianAxisSlice'
+import type { AxisId } from '@/state/chartCartesianAxis'
 import type {
   ChartCoordinate,
   Coordinate,

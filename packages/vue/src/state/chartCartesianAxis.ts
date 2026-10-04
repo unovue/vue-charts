@@ -1,6 +1,4 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { createSlice } from '@reduxjs/toolkit'
-import { castDraft } from 'immer'
+import { computed, shallowRef } from 'vue'
 import type { AxisRange } from './selectors/axisSelectors'
 import type { SVGAttributes } from 'vue'
 import type { RechartsScale, ScaleType } from '@/types/scale'
@@ -90,68 +88,81 @@ export type ZAxisSettings = BaseCartesianAxis & {
   range: AxisRange
 }
 
-type AxisMapState = {
+export type CartesianAxisState = {
   xAxis: Record<AxisId, XAxisSettings>
   yAxis: Record<AxisId, YAxisSettings>
   zAxis: Record<AxisId, ZAxisSettings>
 }
 
-const initialState: AxisMapState = {
-  xAxis: {},
-  yAxis: {},
-  zAxis: {},
+export function createChartCartesianAxis() {
+  const state = shallowRef<CartesianAxisState>({ xAxis: {}, yAxis: {}, zAxis: {} })
+
+  function addXAxis(axis: XAxisSettings) {
+    const previous = state.value.xAxis[axis.id!]
+    if (previous && Object.keys(previous).length === Object.keys(axis).length
+      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
+      return
+    }
+    state.value = { ...state.value, xAxis: { ...state.value.xAxis, [axis.id!]: axis } }
+  }
+
+  function removeXAxis(axis: XAxisSettings) {
+    if (!Object.hasOwn(state.value.xAxis, axis.id!))
+      return
+    const xAxis = { ...state.value.xAxis }
+    delete xAxis[axis.id!]
+    state.value = { ...state.value, xAxis }
+  }
+
+  function addYAxis(axis: YAxisSettings) {
+    const previous = state.value.yAxis[axis.id!]
+    if (previous && Object.keys(previous).length === Object.keys(axis).length
+      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
+      return
+    }
+    state.value = { ...state.value, yAxis: { ...state.value.yAxis, [axis.id!]: axis } }
+  }
+
+  function removeYAxis(axis: YAxisSettings) {
+    if (!Object.hasOwn(state.value.yAxis, axis.id!))
+      return
+    const yAxis = { ...state.value.yAxis }
+    delete yAxis[axis.id!]
+    state.value = { ...state.value, yAxis }
+  }
+
+  function addZAxis(axis: ZAxisSettings) {
+    const previous = state.value.zAxis[axis.id!]
+    if (previous && Object.keys(previous).length === Object.keys(axis).length
+      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
+      return
+    }
+    state.value = { ...state.value, zAxis: { ...state.value.zAxis, [axis.id!]: axis } }
+  }
+
+  function removeZAxis(axis: ZAxisSettings) {
+    if (!Object.hasOwn(state.value.zAxis, axis.id!))
+      return
+    const zAxis = { ...state.value.zAxis }
+    delete zAxis[axis.id!]
+    state.value = { ...state.value, zAxis }
+  }
+
+  function updateYAxisWidth({ id, width }: { id: AxisId, width: number }) {
+    const axis = state.value.yAxis[id]
+    if (!axis || axis.width === width)
+      return
+    const history = axis.widthHistory || []
+    // Suppress subpixel A → B → A oscillation, as in the original reducer.
+    if (history.length === 3 && history[0] === history[2] && width === history[1]
+      && Math.abs(width - (history[0] ?? 0)) <= 1) {
+      return
+    }
+    state.value = {
+      ...state.value,
+      yAxis: { ...state.value.yAxis, [id]: { ...axis, width, widthHistory: [...history, width].slice(-3) } },
+    }
+  }
+
+  return { state: computed(() => state.value), addXAxis, removeXAxis, addYAxis, removeYAxis, addZAxis, removeZAxis, updateYAxisWidth }
 }
-
-/**
- * This is the slice where each individual Axis element pushes its own configuration.
- * Prefer to use this one instead of axisSlice.
- */
-const cartesianAxisSlice = createSlice({
-  name: 'cartesianAxis',
-  initialState,
-  reducers: {
-    addXAxis(state, action: PayloadAction<XAxisSettings>) {
-      state.xAxis[action.payload.id!] = castDraft(action.payload)
-    },
-    removeXAxis(state, action: PayloadAction<XAxisSettings>) {
-      delete state.xAxis[action.payload.id!]
-    },
-    addYAxis(state, action: PayloadAction<YAxisSettings>) {
-      state.yAxis[action.payload.id!] = castDraft(action.payload)
-    },
-    removeYAxis(state, action: PayloadAction<YAxisSettings>) {
-      delete state.yAxis[action.payload.id!]
-    },
-    updateYAxisWidth(state, action: PayloadAction<{ id: AxisId, width: number }>) {
-      const { id, width } = action.payload
-      const axis = state.yAxis[id]
-      if (axis) {
-        const history = axis.widthHistory || []
-        // An oscillation is detected when the new width is the same as the width before the last one.
-        // This is a simple A -> B -> A pattern. If the next width is B, and the difference is less than 1 pixel, we ignore it.
-        if (
-          history.length === 3
-          && history[0] === history[2]
-          && width === history[1]
-          && width !== axis.width
-          && Math.abs(width - (history[0] ?? 0)) <= 1
-        ) {
-          return
-        }
-        const newHistory = [...history, width].slice(-3)
-        axis.width = width
-        axis.widthHistory = newHistory
-      }
-    },
-    addZAxis(state, action: PayloadAction<ZAxisSettings>) {
-      state.zAxis[action.payload.id!] = castDraft(action.payload)
-    },
-    removeZAxis(state, action: PayloadAction<ZAxisSettings>) {
-      delete state.zAxis[action.payload.id!]
-    },
-  },
-})
-
-export const { addXAxis, removeXAxis, addYAxis, removeYAxis, addZAxis, removeZAxis, updateYAxisWidth } = cartesianAxisSlice.actions
-
-export const cartesianAxisReducer = cartesianAxisSlice.reducer

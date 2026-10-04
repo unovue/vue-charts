@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { RechartsRootState } from '../store'
 import type { ChartDataState } from '../chartData'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 
 /**
  * This selector always returns the data with the indexes set by a Brush.

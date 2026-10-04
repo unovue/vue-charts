@@ -38,10 +38,10 @@ import {
   selectReferenceDots,
   selectReferenceLines,
 } from './axisSelectors'
-import type { AxisId } from '../cartesianAxisSlice'
+import type { AxisId } from '../chartCartesianAxis'
 import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
-import type { GraphicalItemSettings } from '../graphicalItemsSlice'
+import type { GraphicalItemSettings } from '../chartGraphicalItems'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '../chartReferenceElements'
 import { selectChartName, selectStackOffsetType } from './rootPropsSelectors'
 // import { mathSign } from '../../util/DataUtils'

@@ -1,8 +1,7 @@
+import { useChartCartesianAxis } from '@/state/chartContext'
 import type { PropType } from 'vue'
-import { defineComponent, watchEffect } from 'vue'
-import { useAppDispatch } from '@/state/hooks'
-import type { ZAxisSettings } from '@/state/cartesianAxisSlice'
-import { addZAxis, removeZAxis } from '@/state/cartesianAxisSlice'
+import { defineComponent, onUnmounted, watch } from 'vue'
+import type { ZAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitZAxis } from '@/state/selectors/axisSelectors'
 import type { AxisRange } from '@/state/selectors/axisSelectors'
 import type { DataKey } from '@/types'
@@ -46,10 +45,11 @@ export const ZAxis = defineComponent({
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const { addZAxis, removeZAxis } = useChartCartesianAxis()
 
-    watchEffect((onCleanup) => {
-      const settings: ZAxisSettings = {
+    let registeredSettings: ZAxisSettings | undefined
+    watch((): ZAxisSettings => {
+      return {
         id: props.zAxisId,
         dataKey: props.dataKey,
         type: props.type,
@@ -63,11 +63,15 @@ export const ZAxis = defineComponent({
         reversed: implicitZAxis.reversed,
         includeHidden: implicitZAxis.includeHidden,
       }
-      dispatch(addZAxis(settings))
-
-      onCleanup(() => {
-        dispatch(removeZAxis(settings))
-      })
+    }, (settings) => {
+      if (registeredSettings && registeredSettings.id !== settings.id)
+        removeZAxis(registeredSettings)
+      addZAxis(settings)
+      registeredSettings = settings
+    }, { immediate: true })
+    onUnmounted(() => {
+      if (registeredSettings)
+        removeZAxis(registeredSettings)
     })
 
     return () => null

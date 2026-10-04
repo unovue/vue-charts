@@ -83,7 +83,7 @@ export const Scatter = defineComponent({
     SetTooltipEntrySettings({
       fn: input => ({
         // This owned array contains payloads that reference caller-owned rows.
-        dataDefinedOnItem: input.points && Object.freeze(input.points.map(p => p.tooltipPayload)),
+        dataDefinedOnItem: input.points && input.points.map(p => p.tooltipPayload),
         positions: undefined,
         settings: {
           stroke: input.stroke,

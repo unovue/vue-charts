@@ -1,13 +1,14 @@
+import { useChartCartesianAxis } from '@/state/chartContext'
 import type { ComponentPublicInstance, PropType } from 'vue'
-import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch, watchEffect } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import type { YAxisSettings } from '@/state/cartesianAxisSlice'
-import { addYAxis, removeYAxis, updateYAxisWidth } from '@/state/cartesianAxisSlice'
+import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch } from 'vue'
+import { useAppSelector } from '@/state/hooks'
+import type { YAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitYAxis, selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize } from '@/state/selectors/axisSelectors'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { CartesianAxis } from '@/cartesian'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
+import type { TickFormatter } from '@/types/tick'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
@@ -24,7 +25,7 @@ const YAxisImpl = defineComponent({
   setup(props, { attrs }) {
     const isPanorama = useIsPanorama()
     const axisType = 'yAxis'
-    const dispatch = useAppDispatch()
+    const { updateYAxisWidth } = useChartCartesianAxis()
     const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId, isPanorama))
     const axisSize = useAppSelector(state => selectYAxisSize(state, props.yAxisId!))
     const position = useAppSelector(state => selectYAxisPosition(state, props.yAxisId!))
@@ -51,7 +52,7 @@ const YAxisImpl = defineComponent({
     // Reset to the default width when data becomes available so the axis can shrink back (Recharts 3.x parity)
     watch(chartDataLengthEmpty, (empty) => {
       if (empty === false && isAutoWidth()) {
-        dispatch(updateYAxisWidth({ id: props.yAxisId!, width: DEFAULT_Y_AXIS_WIDTH }))
+        updateYAxisWidth({ id: props.yAxisId!, width: DEFAULT_Y_AXIS_WIDTH })
       }
     })
 
@@ -69,13 +70,13 @@ const YAxisImpl = defineComponent({
       if (updatedYAxisWidth == null) {
         return
       }
-      // if the width has changed, dispatch an action to update the width
+      // Update the stored measurement only when its rounded width changes
       if (Math.round(axisSize.value.width) !== Math.round(updatedYAxisWidth)) {
-        dispatch(updateYAxisWidth({ id: props.yAxisId!, width: updatedYAxisWidth }))
+        updateYAxisWidth({ id: props.yAxisId!, width: updatedYAxisWidth })
       }
     }
 
-    // Measure in a deferred nextTick: dispatching synchronously inside a watchPostEffect
+    // Measure in a deferred nextTick: updating state synchronously inside a watchPostEffect
     // would hit Vue's activeEffect self-trigger skip and the follow-up re-measure would never run.
     watch(
       [axisSize, cartesianTickItems, () => attrs.label],
@@ -137,7 +138,7 @@ const YAxisSettingsDispatcher = defineComponent({
     angle: Number,
     minTickGap: Number,
     tick: { type: [Boolean, Object], default: true },
-    tickFormatter: Function,
+    tickFormatter: Function as PropType<TickFormatter>,
     domain: Array as PropType<AxisDomain>,
     dataKey: {
       type: [String, Number, Function] as PropType<DataKey<any>>,
@@ -145,10 +146,10 @@ const YAxisSettingsDispatcher = defineComponent({
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const { addYAxis, removeYAxis } = useChartCartesianAxis()
     let registeredSettings: YAxisSettings | undefined
-    watchEffect(() => {
-      const settings = {
+    watch(() => {
+      return {
         ...props,
         interval: props.interval ?? 'preserveEnd',
         id: props.yAxisId,
@@ -157,17 +158,18 @@ const YAxisSettingsDispatcher = defineComponent({
         angle: props.angle ?? 0,
         minTickGap: props.minTickGap ?? 5,
         tick: props.tick ?? true,
-      } as any
+      } as YAxisSettings
+    }, (settings) => {
       if (registeredSettings && registeredSettings.id !== settings.id) {
-        dispatch(removeYAxis(registeredSettings))
+        removeYAxis(registeredSettings)
       }
-      dispatch(addYAxis(settings))
+      addYAxis(settings)
       registeredSettings = settings
-    })
-    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
+    }, { immediate: true })
+    // SSR stops watch immediately; its cleanup would remove settings before rendering.
     onUnmounted(() => {
       if (registeredSettings) {
-        dispatch(removeYAxis(registeredSettings))
+        removeYAxis(registeredSettings)
         registeredSettings = undefined
       }
     })
@@ -236,7 +238,7 @@ export const YAxis = defineComponent({
       default: undefined,
     },
     tickFormatter: {
-      type: Function,
+      type: Function as PropType<TickFormatter>,
       default: undefined,
     },
     unit: {

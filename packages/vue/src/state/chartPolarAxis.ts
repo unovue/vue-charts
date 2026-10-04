@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue'
-import type { AxisId, BaseCartesianAxis, TicksSettings } from './cartesianAxisSlice'
+import type { AxisId, BaseCartesianAxis, TicksSettings } from './chartCartesianAxis'
 
 export type RadiusAxisSettings = BaseCartesianAxis & TicksSettings
 

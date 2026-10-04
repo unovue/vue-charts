@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createSSRApp, defineComponent } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { provideChartContext, useAppSelector, useChartBrush, useChartDataActions, useChartLayoutActions, useChartLegend, useChartOptions, useChartPolarOptions, useChartReferenceElements, useChartRootProps, useChartTooltip } from '../chartContext'
+import { provideChartContext, useAppSelector, useChartBrush, useChartCartesianAxis, useChartDataActions, useChartGraphicalItems, useChartLayoutActions, useChartLegend, useChartOptions, useChartPolarOptions, useChartReferenceElements, useChartRootProps, useChartTooltip } from '../chartContext'
 import { createRechartsStore } from '../store'
 import type { RechartsRootState } from '../store'
 
@@ -59,6 +59,8 @@ describe('chart context SSR', () => {
           expect(state.value.rootProps.syncId).toBeUndefined()
           expect(state.value.polarOptions).toBeNull()
           expect(state.value.referenceElements.dots).toEqual([])
+          expect(useChartCartesianAxis().state.value).toEqual({ xAxis: {}, yAxis: {}, zAxis: {} })
+          expect(useChartGraphicalItems().state.value).toEqual({ countOfBars: 0, cartesianItems: [], polarItems: [] })
           const tooltip = useChartTooltip()
           const index = useAppSelector(state => state.tooltip.keyboardInteraction.index)
           expect(index.value).toBeNull()
@@ -92,7 +94,7 @@ describe('chart context SSR', () => {
     }
     expect(await Promise.all([renderRequest(100), renderRequest(300)]))
       .toEqual(['<span>100</span>', '<span>300</span>'])
-    for (const domain of ['brush', 'legend', 'options', 'rootProps', 'polarOptions', 'polarAxis', 'referenceElements'] as const)
+    for (const domain of ['brush', 'legend', 'options', 'rootProps', 'polarOptions', 'polarAxis', 'referenceElements', 'cartesianAxis', 'graphicalItems'] as const)
       expect(snapshots[0][domain]).not.toBe(snapshots[1][domain])
     expect(snapshots[0].options.eventEmitter).not.toBe(snapshots[1].options.eventEmitter)
     expect(snapshots[0].polarAxis.angleAxis).not.toBe(snapshots[1].polarAxis.angleAxis)
