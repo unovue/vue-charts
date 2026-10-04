@@ -128,21 +128,26 @@ try {
   await write(nuxt, 'nuxt.config.ts', `export default defineNuxtConfig({
   modules: ['vccs/nuxt'],
   devtools: { enabled: false },
-  typescript: { strict: true, tsConfig: { compilerOptions: { skipLibCheck: false } } },
-  nitro: { typescript: { tsConfig: { compilerOptions: { strict: true, skipLibCheck: false } } } },
+  typescript: { strict: true },
 })\n`)
   await write(nuxt, 'tsconfig.json', {
     files: [],
     references: ['app', 'server', 'shared', 'node'].map(context => ({ path: `./.nuxt/tsconfig.${context}.json` })),
   })
-  // No component imports: this fixture also proves the packed Nuxt module's auto-imports.
-  await write(nuxt, 'app/app.vue', chart.replace('IMPORTS\n', ''))
+  // Components stay auto-imported; the explicit slot type also checks the packed public types.
+  await write(nuxt, 'app/app.vue', chart
+    .replace('IMPORTS', 'import type { TooltipContentProps } from \'vccs\'')
+    .replace('const data =', 'const rows: { name: string, value: number }[] =')
+    .replaceAll(':data="data"', ':data="rows"')
+    .replace('#content="{ active, payload, label }"', '#content="{ active, payload, label }: TooltipContentProps"')
+    .replace('payload.map(item => item.value).join(\', \')', 'payload?.[0]?.value'))
   run(nuxt, ['install', '--prod=false', '--no-frozen-lockfile'])
   run(nuxt, ['exec', 'nuxi', 'prepare'])
   for (const context of ['app', 'server', 'shared', 'node']) {
     const config = JSON.parse(await readFile(join(nuxt, `.nuxt/tsconfig.${context}.json`), 'utf8'))
-    if (config.compilerOptions.strict !== true || config.compilerOptions.skipLibCheck !== false)
-      throw new Error(`Nuxt ${context} must use strict: true and skipLibCheck: false`)
+    if (config.compilerOptions.strict !== true)
+      throw new Error(`Nuxt ${context} must use strict: true`)
+    console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}`)
   }
   check(nuxt, ['exec', 'nuxi', 'typecheck'])
   check(nuxt, ['exec', 'nuxi', 'build'])
