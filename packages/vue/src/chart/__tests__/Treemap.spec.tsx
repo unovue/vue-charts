@@ -36,9 +36,10 @@ describe('computeTreemapLayout', () => {
     })
 
     expect(nodes).toHaveLength(3)
+    // Value sorting places C in the left half, then B and A in the right half.
+    expect(nodes.map(node => node.x)).toEqual([0, 300, 300])
+    expect(nodes.map(node => node.y)).toEqual([0, 0, 267])
     for (const node of nodes) {
-      expect(node.x).toBeGreaterThanOrEqual(0)
-      expect(node.y).toBeGreaterThanOrEqual(0)
       expect(node.width).toBeGreaterThan(0)
       expect(node.height).toBeGreaterThan(0)
       expect(node.x + node.width).toBeLessThanOrEqual(600)

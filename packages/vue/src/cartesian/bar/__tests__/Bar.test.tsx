@@ -17,13 +17,13 @@ describe('bar', () => {
       <BarChart width={400} height={300} data={data}>
         <XAxis dataKey="name" />
         <YAxis />
-        <Bar dataKey="uv" fill="#8884d8" />
+        <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
       </BarChart>
     ))
 
     // Check that bars are rendered
     const bars = container.querySelectorAll('.v-charts-bar-rectangle')
-    expect(bars.length).toBeGreaterThanOrEqual(0)
+    expect(bars).toHaveLength(6)
   })
 
   it('renders background bars when background prop is true', () => {
@@ -31,13 +31,13 @@ describe('bar', () => {
       <BarChart width={400} height={300} data={data}>
         <XAxis dataKey="name" />
         <YAxis />
-        <Bar dataKey="uv" fill="#8884d8" background />
+        <Bar dataKey="uv" fill="#8884d8" background isAnimationActive={false} />
       </BarChart>
     ))
 
     // Check that background bars are rendered
     const backgroundBars = container.querySelectorAll('path[fill="#eee"]')
-    expect(backgroundBars.length).toBeGreaterThanOrEqual(0)
+    expect(backgroundBars).toHaveLength(6)
   })
 
   it('applies custom fill color', () => {
@@ -45,12 +45,15 @@ describe('bar', () => {
       <BarChart width={400} height={300} data={data}>
         <XAxis dataKey="name" />
         <YAxis />
-        <Bar dataKey="uv" fill="#ff0000" />
+        <Bar dataKey="uv" fill="#ff0000" isAnimationActive={false} />
       </BarChart>
     ))
 
     // Check that bars exist
     const bars = container.querySelectorAll('.v-charts-bar-rectangle')
-    expect(bars.length).toBeGreaterThanOrEqual(0)
+    expect(bars).toHaveLength(6)
+    for (const bar of bars) {
+      expect(bar.querySelector('path')!.getAttribute('fill')).toBe('#ff0000')
+    }
   })
 })
