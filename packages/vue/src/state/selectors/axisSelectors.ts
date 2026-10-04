@@ -43,7 +43,7 @@ import { combineAxisRangeWithReverse } from './combiners/combineAxisRangeWithRev
 import type { AxisDomain, AxisType, NumberDomain } from '@/types/axis'
 import { checkDomainOfScale, getDomainOfStackGroups, getStackedData, getValueByDataKey } from '@/utils/chart'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
-import { isCategoricalAxis, isNan, isNumOrStr, isNumber, isWellBehavedNumber } from '@/utils'
+import { flushTiny, isCategoricalAxis, isNan, isNumOrStr, isNumber, isWellBehavedNumber } from '@/utils'
 import type { CategoricalDomain, ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, StackOffsetType, TickItem } from '@/types'
 import type { AxisTick, StackId } from '@/types/tick'
 import { getPercentValue, hasDuplicate, mathSign } from '@/utils/data'
@@ -759,11 +759,12 @@ export function combineNumericalDomain(axisSettings: BaseCartesianAxis, domainDe
     return domainFromUserPreference
   }
 
-  return parseNumericalUserDomain(
+  const domain = parseNumericalUserDomain(
     domainDefinition,
     mergeDomains(domainOfStackGroups, referenceElementsDomain, computeNumericalDomain(allDataWithErrorDomains)),
     axisSettings.allowDataOverflow,
   )
+  return domain && [flushTiny(domain[0]), flushTiny(domain[1])]
 }
 
 const selectNumericalDomain: (
@@ -891,6 +892,22 @@ function getD3ScaleFromType(realScaleType: string | undefined) {
   return undefined
 }
 
+/**
+ * d3 scales convert their input with `+value` or `valueOf()`, which throws for an object
+ * without a prototype (`Object.create(null)`, as some parsers produce). Such a value is
+ * treated as missing instead of crashing the chart. Methods (domain, ticks, …) pass through.
+ */
+function guardScale<S extends (value: any) => any>(scale: S): S {
+  return new Proxy(scale, {
+    apply(target, thisArg, args) {
+      const value = args[0]
+      if (typeof value === 'object' && value !== null && typeof value.valueOf !== 'function')
+        return undefined
+      return Reflect.apply(target, thisArg, args)
+    },
+  })
+}
+
 export function combineScaleFunction(
   axis: BaseCartesianAxis,
   realScaleType: string | undefined,
@@ -902,16 +919,17 @@ export function combineScaleFunction(
   }
   if (typeof axis.scale === 'function') {
     // @ts-expect-error we're going to assume here that if axis.scale is a function then it is a d3Scale function
-    return axis.scale.copy().domain(axisDomain).range(axisRange)
+    return guardScale(axis.scale.copy().domain(axisDomain).range(axisRange))
   }
   const d3ScaleFunction = getD3ScaleFromType(realScaleType)
   if (d3ScaleFunction == null) {
     return undefined
   }
-  const scale = d3ScaleFunction.domain(axisDomain).range(axisRange)
+  const domain = axisDomain.map(value => typeof value === 'number' ? flushTiny(value) : value)
+  const scale = d3ScaleFunction.domain(domain).range(axisRange)
   // I don't like this function because it mutates the scale. We should come up with a way to compute the domain up front.
   checkDomainOfScale(scale)
-  return scale
+  return guardScale(scale)
 }
 
 export function combineNiceTicks(axisDomain: NumberDomain | CategoricalDomain | undefined, axisSettings: CartesianAxisSettings, realScaleType: string): ReadonlyArray<number> | undefined {

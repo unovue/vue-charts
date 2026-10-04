@@ -1,5 +1,5 @@
 import { useChartTooltip } from '@/state/chartContext'
-import { Fragment, Teleport, computed, defineComponent, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
+import { Fragment, Teleport, computed, defineComponent, isVNode, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import { useChartLayout, useOffsetInternal, useViewBox } from '@/context/chartLayoutContext'
@@ -135,6 +135,17 @@ export function getUniqPayload<T>(
 function defaultFormatter<TValue extends ValueType>(value: TValue) {
   return Array.isArray(value) && isNumOrStr(value[0]) && isNumOrStr(value[1]) ? (value.join(' ~ ') as TValue) : value
 }
+/**
+ * What the default content can print: text, numbers, booleans and nodes. Other values (objects
+ * in messy data) print nothing instead of "[object Object]" or, for objects without a
+ * prototype, a crash.
+ */
+function printable(value: unknown) {
+  if (value == null || typeof value !== 'object' || isVNode(value))
+    return value
+  return Array.isArray(value) ? value.map(printable) : undefined
+}
+
 // Default Tooltip Content Component
 const DefaultTooltipContent = defineComponent({
   name: 'DefaultTooltipContent',
@@ -174,7 +185,7 @@ const DefaultTooltipContent = defineComponent({
         <div class="v-charts-tooltip-content" style={finalStyle}>
           {props.label && (
             <div class="v-charts-tooltip-label" style={finalLabelStyle}>
-              {props.label}
+              {printable(props.label)}
             </div>
           )}
           <div class="v-charts-tooltip-list">
@@ -205,11 +216,11 @@ const DefaultTooltipContent = defineComponent({
               return (
                 <div key={index} class="v-charts-tooltip-item" style={finalItemStyle}>
                   <span class="v-charts-tooltip-item-name" style={{ color: entry.color }}>
-                    {entry.name}
+                    {printable(entry.name)}
                   </span>
                   <span class="v-charts-tooltip-separator">{props.separator}</span>
                   <span class="v-charts-tooltip-item-value">
-                    {finalValue}
+                    {printable(finalValue)}
                   </span>
                   <span class="v-charts-tooltip-item-unit">{entry.unit || ''}</span>
                 </div>

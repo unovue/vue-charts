@@ -19,7 +19,20 @@ export function toFiniteNumber(value: unknown): number | undefined {
     return undefined
   }
   const number = Number(value)
-  return Number.isFinite(number) ? number : undefined
+  if (!Number.isFinite(number))
+    return undefined
+  return flushTiny(number)
+}
+
+/** Below this magnitude a value counts as zero; see flushTiny. */
+const TINY = 1e-300
+
+/**
+ * A value smaller than 1e-300 as zero. No chart can show such a value apart from zero, and a
+ * domain that narrow overflows tick and pixel arithmetic (Infinity, division by zero).
+ */
+export function flushTiny(value: number): number {
+  return Math.abs(value) < TINY ? 0 : value
 }
 
 /**

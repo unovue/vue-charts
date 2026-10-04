@@ -34,9 +34,12 @@ export const LabelListView = defineComponent({
       const content = (
         <Layer class="v-charts-label-list">
           {data.map((entry, index) => {
-            const value = isNullish(dataKey)
+            const raw: unknown = isNullish(dataKey)
               ? valueAccessor(entry, index)
-              : (getValueByDataKey(entry && entry.payload, dataKey!) as string | number)
+              : getValueByDataKey(entry && entry.payload, dataKey!)
+            // Without a formatter only text and numbers make a label; other values in messy data
+            // show none. A formatter may turn any value into text.
+            const value = typeof raw === 'number' || typeof raw === 'string' || ('formatter' in others && others.formatter) ? raw as string | number : undefined
             const idProps = isNullish(id) ? undefined : `${id}-${index}`
             const viewBox = parseViewBox(isNullish(clockWise) ? entry : { ...entry, clockWise })
 
