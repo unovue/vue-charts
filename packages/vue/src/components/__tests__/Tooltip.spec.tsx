@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { nextTick } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
 import { Bar, BarChart, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -180,4 +180,56 @@ describe('tooltip', () => {
       expect(container.querySelector('.v-charts-surface')).toBeTruthy()
     })
   })
+})
+
+// Catches pointer/keyboard proposals overriding a controlled table-row selection.
+it.each([true, false])('keeps tooltip ownership when controlled=%s', async (controlled) => {
+  mockGetBoundingClientRect({ width: 500, height: 300 })
+  const activeIndex = ref<number | null | undefined>(controlled ? 1 : undefined)
+  const update = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={500} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Tooltip isAnimationActive={false} activeIndex={activeIndex.value} defaultIndex={0} {...{ 'onUpdate:activeIndex': update }}>
+        {{ content: ({ active, payload }) => <div data-testid="model-tooltip">{active ? payload.map(item => item.value).join(',') : 'hidden'}</div> }}
+      </Tooltip>
+    </BarChart>
+  ))
+  await nextTick()
+  const content = () => {
+    const box = container.querySelector<HTMLElement>('[role="tooltip"]')
+    return box?.style.visibility === 'hidden' ? 'hidden' : box?.textContent
+  }
+  const wrapper = container.querySelector('.v-charts-wrapper')!
+  expect(content()).toBe(controlled ? '20' : '10')
+  await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
+  expect(update.mock.calls).toEqual([[0]])
+  expect(content()).toBe(controlled ? '20' : '10')
+  await fireEvent.mouseLeave(wrapper)
+  await nextTick()
+  expect(update.mock.calls.at(-1)).toEqual([null])
+  expect(content()).toBe(controlled ? '20' : 'hidden')
+  if (controlled) {
+    activeIndex.value = 0
+    await nextTick()
+    expect(content()).toBe('10')
+    await fireEvent.keyDown(wrapper, { key: 'ArrowRight' })
+    expect(update.mock.calls.at(-1)).toEqual([1])
+    expect(content()).toBe('10')
+    activeIndex.value = 1
+    await nextTick()
+    expect(content()).toBe('20')
+    await fireEvent.keyDown(wrapper, { key: 'Enter' })
+    expect(update.mock.calls.at(-1)).toEqual([null])
+    expect(content()).toBe('20')
+    activeIndex.value = null
+    await nextTick()
+    await nextTick()
+    expect(content()).toBe('hidden')
+    await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
+    expect(update.mock.calls.at(-1)).toEqual([0])
+    expect(content()).toBe('hidden')
+  }
 })

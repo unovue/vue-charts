@@ -24,6 +24,13 @@ function hasBeenActivePreviously(tooltipInteractionState: TooltipInteractionStat
 }
 
 export function combineTooltipInteractionState(tooltipState: TooltipState, tooltipEventType: TooltipEventType | undefined, trigger: TooltipTrigger, defaultIndex: TooltipIndex | undefined): TooltipInteractionState {
+  if (tooltipState.settings.activeIndex !== undefined) {
+    return {
+      ...noInteraction,
+      active: tooltipState.settings.activeIndex !== null,
+      index: tooltipState.settings.activeIndex === null ? null : String(tooltipState.settings.activeIndex),
+    }
+  }
   const appropriateMouseInteraction = chooseAppropriateMouseInteraction(tooltipState, tooltipEventType!, trigger)
 
   if (appropriateMouseInteraction?.active) {

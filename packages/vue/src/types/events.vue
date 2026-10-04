@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Treemap } from '../index'
+import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Tooltip, Treemap } from '../index'
 import type { ChartPointerState } from '../index'
 
+const wrongModel = ref('wrong')
+const activePoint = ref<number | null>(null)
+const wrongTooltip = {} as InstanceType<typeof Tooltip>
+// @ts-expect-error Tooltip model values are numeric or null.
+wrongTooltip.$emit('update:activeIndex', '0')
 const from = ref(0)
 const to = ref(2)
 const wrongBrush = {} as InstanceType<typeof Brush>
@@ -50,6 +55,7 @@ brush.$emit('change', { startIndex: 0 })
       @change="({ startIndex }) => startIndex.toFixed()"
       @drag-end="({ endIndex }) => endIndex.toFixed()"
     />
+    <Tooltip v-model:active-index="activePoint" />
     <Legend @click="(entry, index, event) => { entry.value.toUpperCase(); index.toFixed(); event.preventDefault() }" />
   </BarChart>
   <PieChart
@@ -75,6 +81,10 @@ brush.$emit('change', { startIndex: 0 })
     :height="300"
     @link-click="(link, index, event) => { link.value.toFixed(); index.toFixed(); event.preventDefault() }"
   />
+  <!-- @vue-expect-error Brush models require numeric refs. -->
+  <Brush v-model:start-index="wrongModel" />
+  <!-- @vue-expect-error Tooltip models require numeric or null refs. -->
+  <Tooltip v-model:active-index="wrongModel" />
   <!-- @vue-expect-error Chart listeners must infer the state shape. -->
   <BarChart @click="(state) => state.missingProperty" />
   <!-- @vue-expect-error Brush listeners must infer the range shape. -->

@@ -14,6 +14,9 @@ export function combineTooltipPayloadConfigurations(tooltipState: TooltipState, 
     // No point filtering if the payload is empty
     return []
   }
+  if (tooltipState.settings.activeIndex !== undefined) {
+    return tooltipState.settings.activeIndex === null ? [] : [tooltipState.tooltipItemPayloads[0]]
+  }
   let filterByDataKey: DataKey<any> | undefined
   if (trigger === 'hover') {
     filterByDataKey = tooltipState.itemInteraction.hover.dataKey

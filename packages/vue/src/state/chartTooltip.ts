@@ -33,6 +33,7 @@ export type TooltipPayload = ReadonlyArray<TooltipPayloadEntry>
  * and return data.
  */
 export type TooltipIndex = string | null
+export type TooltipActiveIndex = number | null
 
 /**
  * Different items have different data shapes so the state has no opinion on what the data shape should be;
@@ -85,6 +86,7 @@ export type ActiveTooltipProps = {
 export type SharedTooltipSettings = boolean | undefined
 
 export type TooltipSettingsState = {
+  activeIndex?: TooltipActiveIndex
   shared: SharedTooltipSettings
   trigger: TooltipTrigger
   axisId: AxisId
@@ -252,6 +254,17 @@ export function createChartTooltip() {
     },
   })
 
+  let onActiveIndexChange: ((index: TooltipActiveIndex) => void) | undefined
+
+  function setActiveIndexListener(listener: typeof onActiveIndexChange) {
+    onActiveIndexChange = listener
+  }
+
+  function proposeIndex(index: TooltipIndex) {
+    onActiveIndexChange?.(index == null ? null : Number(index))
+    return state.value.settings.activeIndex !== undefined
+  }
+
   function sameInteraction(a: TooltipInteractionState, b: TooltipInteractionState) {
     return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate
   }
@@ -271,13 +284,15 @@ export function createChartTooltip() {
   function setTooltipSettingsState(settings: TooltipSettingsState) {
     const previous = state.value.settings
     if (previous.shared === settings.shared && previous.trigger === settings.trigger && previous.axisId === settings.axisId
-      && previous.active === settings.active && previous.defaultIndex === settings.defaultIndex) {
+      && previous.active === settings.active && previous.defaultIndex === settings.defaultIndex && previous.activeIndex === settings.activeIndex) {
       return
     }
     state.value = { ...state.value, settings }
   }
 
   function activate(channel: 'itemInteraction' | 'axisInteraction', trigger: 'hover' | 'click', payload: TooltipActionPayload) {
+    if (proposeIndex(payload.activeIndex))
+      return
     const current = state.value
     const interaction: TooltipInteractionState = {
       active: true,
@@ -302,6 +317,8 @@ export function createChartTooltip() {
   function setMouseClickAxisIndex(payload: TooltipActionPayload) { activate('axisInteraction', 'click', payload) }
 
   function mouseLeaveItem() {
+    if (proposeIndex(null))
+      return
     const current = state.value
     if (!current.itemInteraction.hover.active)
       return
@@ -309,6 +326,8 @@ export function createChartTooltip() {
   }
 
   function mouseLeaveChart() {
+    if (proposeIndex(null))
+      return
     const current = state.value
     if (!current.itemInteraction.hover.active && !current.axisInteraction.hover.active)
       return
@@ -328,6 +347,8 @@ export function createChartTooltip() {
   }
 
   function setKeyboardInteraction(payload: TooltipActionPayload & { active: boolean }) {
+    if (proposeIndex(payload.active ? payload.activeIndex : null))
+      return
     const interaction: TooltipInteractionState = {
       active: payload.active,
       index: payload.activeIndex,
@@ -344,6 +365,7 @@ export function createChartTooltip() {
     addTooltipEntrySettings,
     removeTooltipEntrySettings,
     setTooltipSettingsState,
+    setActiveIndexListener,
     setActiveMouseOverItemIndex,
     setActiveClickItemIndex,
     setMouseOverAxisIndex,

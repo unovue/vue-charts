@@ -8,7 +8,7 @@ import { usePortal } from '@/chart/TooltipPortalContext'
 import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { animate, useSpring } from 'motion-v'
 import type { AnimationOptions, AnimationPlaybackControls } from 'motion-dom'
-import type { TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
+import type { TooltipActiveIndex, TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
 import {
   selectActiveCoordinate,
   selectActiveLabel,
@@ -539,6 +539,7 @@ const TooltipVueProps = {
     type: Boolean,
     default: true,
   },
+  activeIndex: { type: Number as PropType<TooltipActiveIndex>, default: undefined },
   defaultIndex: [Number, String] as PropType<number | TooltipIndex>,
   isAnimationActive: {
     type: Boolean,
@@ -615,21 +616,28 @@ const TooltipVueProps = {
 // Main Tooltip Component
 export const Tooltip = defineComponent({
   name: 'Tooltip',
+  emits: { 'update:activeIndex': (_index: TooltipActiveIndex) => true },
   props: TooltipVueProps,
   slots: Object as SlotsType<{
     content?: (props: TooltipContentProps) => any
     cursor?: (props: CursorSlotProps) => any
     default?: () => any
   }>,
-  setup(props, { slots }) {
+  setup(props, { slots, emit }) {
     const tooltip = useChartTooltip()
 
+    tooltip.setActiveIndexListener(index => emit('update:activeIndex', index))
+    onScopeDispose(() => tooltip.setActiveIndexListener(undefined))
+
     const defaultIndexAsString = computed(() =>
-      typeof props.defaultIndex === 'number' ? String(props.defaultIndex) : props.defaultIndex,
+      props.activeIndex !== undefined
+        ? props.activeIndex === null ? null : String(props.activeIndex)
+        : typeof props.defaultIndex === 'number' ? String(props.defaultIndex) : props.defaultIndex,
     )
 
     // Register tooltip settings in store
     watch(computed(() => ({
+      activeIndex: props.activeIndex,
       shared: props.shared,
       trigger: props.trigger,
       axisId: props.axisId,
@@ -665,7 +673,7 @@ export const Tooltip = defineComponent({
     const tooltipPortal = computed(() => props.portal ?? tooltipPortalFromContext?.value)
 
     // Final states
-    const finalIsActive = computed(() => props.active ?? tooltipState.value?.isActive)
+    const finalIsActive = computed(() => props.activeIndex !== undefined ? props.activeIndex !== null : props.active ?? tooltipState.value?.isActive)
     const finalLabel = computed(() =>
       tooltipEventType.value === 'axis' ? selectedLabel.value : undefined,
     )

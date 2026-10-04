@@ -54,7 +54,9 @@ export function useChartInteractions() {
     if (!accessibilityLayerIsActive) {
       return
     }
-    const { keyboardInteraction } = state.tooltip
+    const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
+      ? { ...state.tooltip.keyboardInteraction, index: state.tooltip.settings.activeIndex === null ? null : String(state.tooltip.settings.activeIndex), active: state.tooltip.settings.activeIndex !== null }
+      : state.tooltip.keyboardInteraction
     if (key !== 'ArrowRight' && key !== 'ArrowLeft' && key !== 'Enter') {
       return
     }
@@ -97,7 +99,9 @@ export function useChartInteractions() {
     if (!accessibilityLayerIsActive) {
       return
     }
-    const { keyboardInteraction } = state.tooltip
+    const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
+      ? { ...state.tooltip.keyboardInteraction, index: state.tooltip.settings.activeIndex === null ? null : String(state.tooltip.settings.activeIndex), active: state.tooltip.settings.activeIndex !== null }
+      : state.tooltip.keyboardInteraction
     if (keyboardInteraction.active) {
       return
     }
