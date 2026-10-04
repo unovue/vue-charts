@@ -94,6 +94,8 @@ export function useKeyedTransition<T>(
   const chartSize = useChartSize()
   const gesture = useChartGesture()
   let lastSize: string | undefined
+  // The first appearance is animating.
+  let entering = false
   if (!options.followsSeries)
     useSeriesMotion().register(options.isActive)
   let controls: AnimationPlaybackControls | undefined
@@ -122,6 +124,7 @@ export function useKeyedTransition<T>(
 
   function snap(next: readonly T[]) {
     stop()
+    entering = false
     options.onStart?.()
     items.value = keyed(next).map(({ key, value }) => ({ key, value, phase: 'update' as const }))
     isAnimating.value = false
@@ -210,7 +213,10 @@ export function useKeyedTransition<T>(
     const { next, active, reduced, size, dragging } = state
     const nextItems = next ?? []
     const skip = skipEntrance && !hasEntered
-    const resized = lastSize !== undefined && size !== undefined && size !== lastSize
+    // A new size snaps. The first measurement replaces the initial size: an entrance still in
+    // flight re-targets to it, but anything else (a hydrated server render, or a small update
+    // after mount) snaps, instead of sliding from the initial size to the measured one.
+    const resized = size !== undefined && size !== lastSize && (lastSize !== undefined || (hasEntered && !entering))
     lastSize = size ?? lastSize
     skipEntrance = false
     if (skip || !active || reduced === 'reduce' || resized || dragging) {
@@ -225,6 +231,8 @@ export function useKeyedTransition<T>(
     const timing = (phase: TransitionPhase): PhaseTiming => motionTokens[first ? 'enter' : options.connected ? 'update' : phase]
     hasEntered = true
     stop()
+    // A change that interrupts the entrance (axes registering after mount) continues it.
+    entering ||= first
     isAnimating.value = true
     options.onStart?.()
 
@@ -236,6 +244,7 @@ export function useKeyedTransition<T>(
     }
     const finish = () => {
       controls = undefined
+      entering = false
       settle(steps)
       isAnimating.value = false
       options.onEnd?.()

@@ -1,9 +1,9 @@
 import { writeFileSync } from 'node:fs'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
-import { createSSRApp, nextTick } from 'vue'
+import { createSSRApp, nextTick, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { Bar, BarChart, ResponsiveContainer, Sankey, SunburstChart, Treemap, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Sankey, SunburstChart, Treemap, XAxis, YAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
 const data = [{ name: 'Alpha', value: 10 }, { name: 'Beta', value: 20 }]
@@ -64,6 +64,45 @@ describe('responsive server rendering', () => {
     app.unmount()
     container.remove()
   })
+})
+
+// A hydrated chart is already on screen at the initial size; sliding from there to the measured
+// size drew the line and ticks far outside a narrow box for half a second. An update that is
+// still animating when the size arrives (axis offsets settling after mount) must not count as
+// the entrance either.
+it('snaps hydrated geometry to the first measured size', async () => {
+  class DeferredObserver extends MockResizeObserver {
+    observe() {}
+  }
+  MockResizeObserver.instances = []
+  vi.stubGlobal('ResizeObserver', DeferredObserver)
+  const rows = ref(data)
+  const render = () => (
+    <LineChart data={rows.value}>
+      <XAxis dataKey="name" />
+      <Line dataKey="value" />
+      <Bar dataKey="value" />
+    </LineChart>
+  )
+  const container = document.createElement('div')
+  container.innerHTML = await renderToString(createSSRApp({ render }))
+  document.body.append(container)
+  const app = createSSRApp({ render })
+  app.mount(container)
+  await flushPromises()
+  await nextTick()
+  rows.value = [...data, { name: 'Gamma', value: 15 }]
+  await nextTick()
+  MockResizeObserver.instances.at(-1)!.trigger(320, 250)
+  await nextTick()
+  await nextTick()
+  const xs = (container.querySelector('.v-charts-line-curve')!.getAttribute('d')!.match(/[ML]\s*(-?[\d.]+)/g) ?? []).map(part => Number(part.slice(1)))
+  expect(Math.max(...xs)).toBeLessThanOrEqual(320)
+  const ticks = [...container.querySelectorAll('.v-charts-cartesian-axis-tick-value')].map(tick => Number(tick.getAttribute('x')))
+  expect(ticks.length).toBeGreaterThan(0)
+  expect(Math.max(...ticks)).toBeLessThanOrEqual(320)
+  app.unmount()
+  container.remove()
 })
 
 // These charts use separate layout engines but must share the public sizing contract.
