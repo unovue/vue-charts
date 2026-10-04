@@ -67,14 +67,7 @@ const PieView = defineComponent({
         pieSettings: pieSettings.value,
         displayedData: displayedData.value,
       })
-      // Cell fills override the selector's entry/pie fill (Bar pattern)
-      const cells = extractCellProps(slots.default?.() ?? [])
-      if (cells.length === 0) {
-        return result
-      }
-      return result?.map((sector, i) =>
-        cells[i]?.fill != null ? { ...sector, fill: cells[i].fill } : sector,
-      )
+      return result
     })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
@@ -176,7 +169,13 @@ const PieView = defineComponent({
     return () => {
       if (props.hide)
         return null
-      const sectorList = items.value
+      // Cell fills override the entry/pie fill. Slots are read here, during render, so their
+      // dependencies are tracked and server rendering sees them too.
+      const children = slots.default?.() ?? []
+      const cells = extractCellProps(children)
+      const sectorList = cells.length
+        ? items.value.map(item => cells[item.value.index]?.fill != null ? { ...item, value: { ...item.value, fill: cells[item.value.index].fill } } : item)
+        : items.value
       if (!sectorList || sectorList.length === 0) {
         return null
       }
@@ -215,7 +214,7 @@ const PieView = defineComponent({
               </g>
             )
           })}
-          {filterOutCells(slots.default?.() ?? [])}
+          {filterOutCells(children)}
           {!isAnimating.value && (props.label || slots.label) && <FadeIn isActive={props.isAnimationActive}>{sectorList.map(({ value }, index) => renderLabel(value, index))}</FadeIn>}
         </Layer>
       )
