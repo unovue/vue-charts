@@ -1,6 +1,6 @@
 import type { DataKey } from '@/types'
 import { getValueByDataKey } from '@/utils/chart'
-import { isNumber } from '@/utils/validate'
+import { toFiniteNumber } from '@/utils/validate'
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy'
 
 export interface TreemapLayoutNode {
@@ -36,8 +36,8 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
     .sum((d: any) => {
       if (d.children && d.children.length > 0)
         return 0
-      const val = getValueByDataKey(d, dataKey)
-      return isNumber(val) && val > 0 ? val : 0
+      const val = toFiniteNumber(getValueByDataKey(d, dataKey))
+      return val != null && val > 0 ? val : 0
     })
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 

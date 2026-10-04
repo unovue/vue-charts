@@ -1,6 +1,6 @@
 import type { Coordinate, DataKey } from '@/types'
 import { getValueByDataKey } from '@/utils/chart'
-import { isNumber } from '@/utils/validate'
+import { toFiniteNumber } from '@/utils/validate'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
@@ -53,8 +53,8 @@ function sumValues(item: Record<string, any>, dataKey: DataKey<Record<string, an
   if (item.children && item.children.length > 0) {
     return item.children.reduce((sum: number, child: Record<string, any>) => sum + sumValues(child, dataKey), 0)
   }
-  const val = getValueByDataKey(item, dataKey)
-  return isNumber(val) && val > 0 ? val : 0
+  const val = toFiniteNumber(getValueByDataKey(item, dataKey))
+  return val != null && val > 0 ? val : 0
 }
 
 /**

@@ -10,7 +10,7 @@ import type { LegendPayload } from '@/components/DefaultLegendContent'
 import { getPercentValue, mathSign } from '@/utils/data'
 import { getMaxRadius, polarToCartesian } from '@/utils/polar'
 import { getValueByDataKey } from '@/utils/chart'
-import { isNumber } from '@/utils/validate'
+import { toFiniteNumber } from '@/utils/validate'
 
 export type ResolvedPieSettings = {
   name?: string | number | undefined
@@ -198,7 +198,7 @@ export function computePieSectors({
 
   const values = displayedData.map((entry) => {
     const value = getValueByDataKey(entry, dataKey)
-    return isNumber(value) ? value : 0
+    return toFiniteNumber(value) ?? 0
   })
   const notZeroItemCount = values.filter(value => value !== 0).length
   const totalPaddingAngle = (absDeltaAngle >= 360 ? notZeroItemCount : notZeroItemCount - 1) * paddingAngle

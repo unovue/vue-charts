@@ -1,12 +1,12 @@
 import type { DataKey } from '@/types'
 import { getValueByDataKey } from '@/utils/chart'
-import { isNumber } from '@/utils/validate'
+import { toFiniteNumber } from '@/utils/validate'
 import { hierarchy, partition } from 'd3-hierarchy'
 
 export interface SunburstData {
   [key: string]: any
   name: string
-  value?: number
+  value?: number | string
   fill?: string
   children?: SunburstData[]
 }
@@ -81,8 +81,8 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
     .sum((d: any) => {
       if (d.children && d.children.length > 0)
         return 0
-      const val = getValueByDataKey(d, dataKey)
-      return isNumber(val) && val > 0 ? val : 0
+      const val = toFiniteNumber(getValueByDataKey(d, dataKey))
+      return val != null && val > 0 ? val : 0
     })
 
   // Record original child indices before sort mutates the order
