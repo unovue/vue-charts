@@ -79,6 +79,23 @@ function SAMPLER() {
       shapes.tooltip = tip.style.transform
     return shapes
   }
+  // The largest area (px²) two bars of the chart cover at once; bars that touch do not count.
+  window.__overlap = () => {
+    const boxes = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect)')]
+      .map(el => ['x', 'y', 'width', 'height'].map(a => Number(el.getAttribute(a))))
+      .filter(([x, y, w, h]) => [x, y, w, h].every(Number.isFinite) && Math.abs(w) > 0.5 && Math.abs(h) > 0.5)
+      .map(([x, y, w, h]) => [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)])
+    let worst = 0
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const w = Math.min(boxes[i][2], boxes[j][2]) - Math.max(boxes[i][0], boxes[j][0])
+        const h = Math.min(boxes[i][3], boxes[j][3]) - Math.max(boxes[i][1], boxes[j][1])
+        if (w > 0.5 && h > 0.5)
+          worst = Math.max(worst, w * h)
+      }
+    }
+    return worst
+  }
   window.__sample = ms => new Promise((resolve) => {
     const keyOf = (el) => {
       const parts = []
@@ -207,6 +224,12 @@ function flags(curveList, frames) {
     if (!settle)
       issues.push(`unsettled ${c.id}`)
   }
+  // Bars that cover each other mid-transition although neither layout overlaps.
+  if (frames.length && !frames[0].overlap && !frames.at(-1).overlap) {
+    const worst = frames.reduce((a, f) => f.overlap > a.overlap ? f : a, frames[0])
+    if (worst.overlap > 4)
+      issues.push(`overlap bars @${Math.round(worst.t)}ms ${Math.round(worst.overlap)}px²`)
+  }
   const intervals = frames.slice(1).map((f, i) => f.t - frames[i].t)
   return { issues, intervals }
 }
@@ -239,7 +262,7 @@ async function record(page, dir, name, act) {
   const frames = []
   await act()
   for (let i = 0, t = 0; t <= WINDOW; i++, t += FRAME) {
-    frames.push({ t, shapes: await page.evaluate(() => window.__snapshot()) })
+    frames.push({ t, ...await page.evaluate(() => ({ shapes: window.__snapshot(), overlap: window.__overlap() })) })
     await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
     await page.clock.runFor(FRAME)
   }
@@ -295,7 +318,7 @@ for (const s of scenarios.length ? scenarios : all) {
   const visual = await openPage(s, true)
   const timingPage = await openPage(s, false)
   const labSteps = await visual.page.evaluate(() => window.lab.steps)
-  const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(labSteps.includes('values') ? ['interrupt'] : [])]
+  const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(['values', 'removeMiddle', 'fromOne'].every(name => labSteps.includes(name)) ? ['interrupt'] : [])]
   const act = actions(visual.page, await visual.page.locator('.v-charts-wrapper').boundingBox())
   const actReal = actions(timingPage.page, await timingPage.page.locator('.v-charts-wrapper').boundingBox())
   for (const step of steps) {
