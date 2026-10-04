@@ -9,7 +9,7 @@ import { nextTick } from 'vue'
 import type { Component, VNode } from 'vue'
 import ts from 'typescript'
 import * as Vccs from '@/index'
-import { Area, Bar, Brush, CalendarHeatmap, CartesianGrid, CohortChart, ComposedChart, Customized, Funnel, FunnelChart, Heatmap, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, SunburstChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
+import { Area, Bar, BarList, Brush, CalendarHeatmap, CartesianGrid, CohortChart, ComposedChart, Customized, Funnel, FunnelChart, Heatmap, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, Sparkline, SunburstChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
 
 // Compile the unchanged docs SFCs against source exports, so this check also
 // works in a fresh checkout where the published dist entry does not exist yet.
@@ -76,6 +76,8 @@ const rows: Row[] = [
   ...['cell', 'default'].map(slot => ({ component: 'CalendarHeatmap', slot, standalone: true, render: (marker: Slot) => <CalendarHeatmap width={400} height={100} data={[{ date: '2026-01-01', value: 1 }]} start="2026-01-01" isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'cell' ? '.v-charts-cell-rect' : undefined })),
   ...['cell', 'default'].map(slot => ({ component: 'Heatmap', slot, standalone: true, render: (marker: Slot) => <Heatmap width={400} height={100} data={[{ x: 'a', y: 'b', value: 1 }]} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'cell' ? '.v-charts-cell-rect' : undefined })),
   ...['cell', 'default'].map(slot => ({ component: 'CohortChart', slot, standalone: true, render: (marker: Slot) => <CohortChart width={400} height={100} data={[{ cohort: 'Jan', values: [10, 5] }]} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'cell' ? '.v-charts-cell-rect' : undefined })),
+  ...['default'].map(slot => ({ component: 'Sparkline', slot, standalone: true, render: (marker: Slot) => <Sparkline width={100} height={30} data={[1, 2]} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: undefined })),
+  ...['name', 'value'].map(slot => ({ component: 'BarList', slot, standalone: true, render: (marker: Slot) => <BarList data={[{ name: 'a', value: 1 }]} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: undefined })),
 ]
 
 function renderRow(row: Row, marker?: Slot) {

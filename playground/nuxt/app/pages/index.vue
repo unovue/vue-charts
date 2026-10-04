@@ -80,11 +80,18 @@ const routes = [
     count: 1,
   },
   {
+    path: '/dashboard-charts',
+    name: 'Dashboard Charts',
+    description: 'Sparkline cards, bar list, donut, gauge and funnel.',
+    icon: BarChart3,
+    count: 7,
+  },
+  {
     path: '/cell-charts',
     name: 'Cell Charts',
     description: 'Uptime tracker and contribution calendar.',
     icon: LayoutGrid,
-    count: 2,
+    count: 4,
   },
   {
     path: '/sunburst-charts',
