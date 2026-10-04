@@ -141,10 +141,11 @@ Customization uses **named slots**: `shape`, `activeBar`, `dot`, `activeDot`, `l
 Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 
 ### Animation
-- **Chase pattern** (Bar, Line, Scatter, Radar, RadialBar): `previousData` + incrementing `animationId` as `Animate` key
-- **Area**: uses `ClipRect` for initial entrance + direct `motion-v` `animate()` for data changes (NOT `Animate` wrapper)
-- `Animate` respects `prefers-reduced-motion` via `usePreferredReducedMotion()`
-- `useIsAnimating` hook: shared by Bar, Line, Radar, RadialBar, Area, Funnel — pass getter: `useIsAnimating(() => props.isAnimationActive)`
+- `useKeyedTransition` matches data keys and keeps exiting items mounted until completion.
+- Interrupted transitions start from displayed geometry; connected shapes share one clock.
+- `motion.ts` supplies entrance, update, and exit tokens; `transition` overrides their timing.
+- Disabled animation, reduced motion, SSR, and hydration show final geometry immediately.
+- Pie sweeps on entrance, labels fade after settling, and tooltip position uses persistent springs.
 
 ### Funnel
 - Created via `generateCategoricalChart({ defaultTooltipEventType: 'item' })`
