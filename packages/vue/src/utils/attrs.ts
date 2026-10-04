@@ -34,6 +34,12 @@ function removeInvalidKeys(obj: Record<string, any>) {
   return copyObj
 }
 
+/** Test isolation only: measurements stubbed in one test must not leak into the next. */
+export function clearStringSizeCache() {
+  stringCache.widthCache = {}
+  stringCache.cacheCount = 0
+}
+
 export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !Global.isSsr): Size {
   if (text === undefined || text === null || !canMeasure) {
     return { width: 0, height: 0 }
