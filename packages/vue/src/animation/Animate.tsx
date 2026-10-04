@@ -3,6 +3,7 @@ import { defineComponent, onUnmounted, ref, watch } from 'vue'
 import { animate } from 'motion-v'
 import { usePreferredReducedMotion } from '@vueuse/core'
 import type { AnimationOptions } from 'motion-v'
+import { shouldSkipEntrance } from './entranceGate'
 
 const DEFAULT_TRANSITION: AnimationOptions = {
   duration: 0.4,
@@ -50,7 +51,9 @@ const Animate = defineComponent({
   },
   setup(props, { slots }) {
     let animationControls: any = null
-    const currentValue = ref(0)
+    // Server render and hydration show the final state; see entranceGate.ts.
+    let skipNext = shouldSkipEntrance()
+    const currentValue = ref(skipNext ? props.to : props.from)
     const reducedMotion = usePreferredReducedMotion()
 
     // 开始动画
@@ -91,8 +94,10 @@ const Animate = defineComponent({
 
     // 监听isActive变化
     watch([() => props.isActive, reducedMotion] as const, ([isActive, motion]) => {
+      const skipEntrance = skipNext
+      skipNext = false
       if (isActive) {
-        if (motion === 'reduce') {
+        if (motion === 'reduce' || skipEntrance) {
           // Skip animation — snap to final value
           stopAnimation()
           if (props.onAnimationStart) {

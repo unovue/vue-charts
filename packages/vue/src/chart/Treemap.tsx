@@ -1,3 +1,4 @@
+import { provideEntranceGate } from '@/animation/entranceGate'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, ref, watchEffect } from 'vue'
@@ -450,6 +451,7 @@ export const Treemap = defineComponent({
   setup(props, { slots }) {
     const store = createRechartsStore({ options: treemapOptions }, 'Treemap')
     provideChartContext(store)
+    provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {

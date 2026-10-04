@@ -1,3 +1,4 @@
+import { provideEntranceGate } from '@/animation/entranceGate'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
@@ -227,6 +228,7 @@ export const SunburstChart = defineComponent({
   setup(props, { slots }) {
     const store = createRechartsStore({ options: sunburstOptions }, 'SunburstChart')
     provideChartContext(store)
+    provideEntranceGate()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize } = useResponsiveSize(props)
 
     return () => {

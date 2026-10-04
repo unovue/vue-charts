@@ -10,6 +10,7 @@ import { animate } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-v'
 import { interpolate } from '@/utils'
 import { LabelList } from '@/components/label'
+import { shouldSkipEntrance } from '@/animation/entranceGate'
 
 // Dots component
 export const Dots = defineComponent({
@@ -65,6 +66,8 @@ export const StaticLine = defineComponent({
     // stroke-dashoffset ratio: 1 = fully hidden, 0 = fully revealed
     const strokeDashRatio = ref(1)
     let isFirstRender = true
+    // Server render and hydration show the final line; see entranceGate.ts.
+    const skipEntrance = shouldSkipEntrance()
     let prevPoints: ReadonlyArray<LinePointItem> = []
     // The target that the current animation is heading toward.
     // Used by the duplicate guard so that mid-animation arrivals matching the
@@ -96,8 +99,8 @@ export const StaticLine = defineComponent({
       }
 
       if (newPoints && newPoints.length > 0) {
-        if (!props.isAnimationActive) {
-          // Animation disabled — set points directly without animation
+        if (!props.isAnimationActive || (isFirstRender && skipEntrance)) {
+          // Animation disabled or entrance skipped — set points directly without animation
           isFirstRender = false
           stopCurrentAnimation()
           revealAnimationRunning = false
