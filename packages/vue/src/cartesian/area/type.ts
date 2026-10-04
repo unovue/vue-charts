@@ -6,7 +6,7 @@ import type {
   VuePropsToType,
   WithSVGProps,
 } from '@/types'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import type { BaseValue } from '@/types/area'
 import type { AxisId } from '@/types/axis'
 import type { LegendType } from '@/types/legend'
@@ -55,7 +55,7 @@ export const AreaVueProps = {
     default: undefined,
   },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: {
       duration: 0.8,
       ease: 'easeOut',

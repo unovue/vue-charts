@@ -6,7 +6,7 @@ import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { animate } from 'motion-v'
-import type { AnimationOptions, AnimationPlaybackControls } from 'motion-v'
+import type { AnimationOptions, AnimationPlaybackControls } from 'motion-dom'
 import type { TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/tooltipSlice'
 import { setTooltipSettingsState } from '@/state/tooltipSlice'
 import {

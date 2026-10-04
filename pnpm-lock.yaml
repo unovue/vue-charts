@@ -192,6 +192,9 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
+      motion-dom:
+        specifier: ^13.3.0
+        version: 13.5.1
       motion-v:
         specifier: ^2.4.0
         version: 2.5.2(@vueuse/core@13.1.0(vue@3.5.18(typescript@6.0.3)))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vue@3.5.18(typescript@6.0.3))

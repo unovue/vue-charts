@@ -1,6 +1,6 @@
 import { Teleport, computed, defineComponent, proxyRefs, toRefs, useAttrs } from 'vue'
 import type { PropType, SVGAttributes, SlotsType } from 'vue'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { Layer } from '@/container/Layer'
@@ -54,7 +54,7 @@ const ScatterVueProps = {
   label: { type: [Boolean, Object], default: false },
   legendType: { type: String, default: 'circle' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  transition: { type: Object as PropType<AnimationOptions>, default: undefined },
+  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
 
 export const Scatter = defineComponent({

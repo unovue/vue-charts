@@ -7,7 +7,7 @@ import type { LinePointItem } from './type'
 import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
 import { animate } from 'motion-v'
-import type { AnimationPlaybackControls } from 'motion-v'
+import type { AnimationPlaybackControls } from 'motion-dom'
 import { interpolate } from '@/utils'
 import { LabelList } from '@/components/label'
 import { shouldSkipEntrance } from '@/animation/entranceGate'
@@ -124,7 +124,7 @@ export const StaticLine = defineComponent({
           stopCurrentAnimation()
           currentAnimation = animate(1 as number, 0, {
             ...props.transition,
-            onUpdate(v) {
+            onUpdate(v: number) {
               if (!revealAnimationRunning)
                 return
               strokeDashRatio.value = v
@@ -163,7 +163,7 @@ export const StaticLine = defineComponent({
           stopCurrentAnimation()
           currentAnimation = animate(0 as number, 1, {
             ...props.transition,
-            onUpdate(t) {
+            onUpdate(t: number) {
               if (prevPoints.length) {
                 const prevPointsDiffFactor = prevPoints.length / newPoints.length
                 const stepPoints = t === 1

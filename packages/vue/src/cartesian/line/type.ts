@@ -1,6 +1,6 @@
 import type { DataKey, LayoutType, TooltipType, VueClassValue, VuePropsToType, WithSVGProps } from '@/types'
 import type { AxisId } from '@/types/axis'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
 import type { CurveType, Point } from '@/shape/Curve'
@@ -35,7 +35,7 @@ export interface LineProps {
   stroke?: string
   strokeWidth?: number
   tooltipType?: TooltipType
-  transition?: AnimationOptions
+  transition?: ValueAnimationTransition<number>
   type?: CurveType
   unit?: string | number
   xAxisId?: AxisId
@@ -64,7 +64,7 @@ export const LineVueProps = {
   strokeWidth: { type: Number, default: 1 },
   tooltipType: { type: String as PropType<TooltipType> },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: () => ({
       duration: 0.8,
       ease: 'easeOut',

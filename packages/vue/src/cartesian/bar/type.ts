@@ -6,7 +6,7 @@ import type {
   VuePropsToType,
   WithSVGProps,
 } from '@/types'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import type { AxisId } from '@/types/axis'
 import type { PropType } from 'vue'
 import type { LegendType } from '@/types/legend'
@@ -79,7 +79,7 @@ export const BarVueProps = {
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: {
       duration: 0.4,
       ease: 'easeOut',

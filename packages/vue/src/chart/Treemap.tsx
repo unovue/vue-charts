@@ -3,7 +3,7 @@ import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, ref, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
@@ -117,7 +117,7 @@ export const TreemapVueProps = {
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
   colorPanel: { type: Array as PropType<string[]>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
-  transition: { type: Object as PropType<AnimationOptions>, default: () => ({ duration: 0.8, ease: 'easeOut' as const }) },
+  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: () => ({ duration: 0.8, ease: 'easeOut' as const }) },
   onClick: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
   onMouseEnter: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
   onMouseLeave: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },

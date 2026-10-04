@@ -1,4 +1,4 @@
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import type { PropType } from 'vue'
 import { classProp } from '@/types'
 import type { ViewBox } from '@/cartesian/type'
@@ -22,7 +22,7 @@ export interface FunnelProps {
   hide?: boolean
   id?: string
   isAnimationActive?: boolean
-  transition?: AnimationOptions
+  transition?: ValueAnimationTransition<number>
   // label?: ImplicitLabelListType<any>
   lastShapeType?: 'triangle' | 'rectangle'
   legendType?: LegendType
@@ -47,7 +47,7 @@ export const FunnelVueProps = {
   hide: { type: Boolean, default: false },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: () => ({
       duration: 0.8,
       ease: 'easeOut',

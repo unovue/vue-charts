@@ -81,7 +81,7 @@ export const StaticArea = defineComponent({
         isAnimating.value = true
         const animation = animate(0 as number, 1, {
           ...props.transition,
-          onUpdate(t) {
+          onUpdate(t: number) {
             if (animationStopped)
               return
             if (prevPoints.length) {

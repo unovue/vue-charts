@@ -1,4 +1,4 @@
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import type { VueClassValue } from '@/types/common'
 
 export interface Point {
@@ -20,5 +20,5 @@ export interface TrapezoidProps {
   height?: number
 
   isUpdateAnimationActive?: boolean
-  transition?: AnimationOptions
+  transition?: ValueAnimationTransition<number>
 }

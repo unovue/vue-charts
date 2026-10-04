@@ -2,10 +2,10 @@ import type { PropType } from 'vue'
 import { defineComponent, onUnmounted, ref, watch } from 'vue'
 import { animate } from 'motion-v'
 import { usePreferredReducedMotion } from '@vueuse/core'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { shouldSkipEntrance } from './entranceGate'
 
-const DEFAULT_TRANSITION: AnimationOptions = {
+const DEFAULT_TRANSITION: ValueAnimationTransition<number> = {
   duration: 0.4,
   ease: 'easeOut',
 }
@@ -20,7 +20,7 @@ const Animate = defineComponent({
     },
     // 动画配置选项
     transition: {
-      type: Object as PropType<AnimationOptions>,
+      type: Object as PropType<ValueAnimationTransition<number>>,
       default: undefined,
     },
     // 动画开始回调
@@ -69,7 +69,7 @@ const Animate = defineComponent({
       animationControls = animate(props.from, props.to, {
         ...DEFAULT_TRANSITION,
         ...props.transition,
-        onUpdate: (latest) => {
+        onUpdate: (latest: number) => {
           currentValue.value = latest
           if (props.onUpdate) {
             props.onUpdate(latest)

@@ -1,5 +1,5 @@
 import type { PropType } from 'vue'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
@@ -25,7 +25,7 @@ export const PieVueProps = {
   activeIndex: { type: Number, default: -1 },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: () => ({ duration: 1.2, ease: 'easeOut' }),
   },
   label: { type: Boolean, default: false },

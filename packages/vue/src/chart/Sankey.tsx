@@ -3,7 +3,7 @@ import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watchEffect } from 'vue'
 import { get } from 'es-toolkit/compat'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { provideChartContext } from '@/state/chartContext'
 import { Animate } from '@/animation/Animate'
 import { Layer } from '@/container/Layer'
@@ -97,7 +97,7 @@ export const SankeyVueProps = {
   linkStroke: { type: String, default: 'none' },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
-    type: Object as PropType<AnimationOptions>,
+    type: Object as PropType<ValueAnimationTransition<number>>,
     default: () => ({ duration: 0.8, ease: 'easeOut' as const }),
   },
   onClick: {

@@ -1,6 +1,6 @@
 import { Fragment, Teleport, computed, defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-dom'
 import { useAppSelector } from '@/state/hooks'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -82,7 +82,7 @@ export const Radar = defineComponent({
     label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
     isAnimationActive: { type: Boolean, default: true },
     transition: {
-      type: Object as PropType<AnimationOptions>,
+      type: Object as PropType<ValueAnimationTransition<number>>,
       default: () => ({ duration: 0.8, ease: 'easeOut' }),
     },
     activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
