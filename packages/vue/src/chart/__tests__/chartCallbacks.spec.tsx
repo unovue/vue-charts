@@ -201,6 +201,10 @@ it('delivers Treemap node entry, index, and event separately from its container 
     />
   ))
   const node = container.querySelector('.v-charts-treemap-node')!
+  // Vue ignores an event that bubbles into a listener attached in the same millisecond as the
+  // event's first handler ran (runtime-dom invoker timestamps). Real clicks never happen in the
+  // millisecond the chart mounted; let time pass so the container listener is eligible.
+  await new Promise(resolve => setTimeout(resolve, 5))
   for (const [name, listener] of [['click', nodeClick], ['mouseenter', enter], ['mouseleave', leave]] as const) {
     const event = new MouseEvent(name, { bubbles: name === 'click' })
     node.dispatchEvent(event)
