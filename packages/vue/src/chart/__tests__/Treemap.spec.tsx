@@ -101,7 +101,7 @@ describe('computeTreemapLayout', () => {
   })
 })
 
-describe('Treemap component', () => {
+describe('treemap component', () => {
   it('renders rect elements for each leaf node', () => {
     const { container } = render(() => (
       <Treemap data={flatData} dataKey="value" width={600} height={400} isAnimationActive={false} />
@@ -232,8 +232,14 @@ describe('nest mode', () => {
 
   it('renders top-level groups initially', () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     const rects = container.querySelectorAll('.v-charts-treemap-node')
     expect(rects.length).toBe(2) // 2 top-level groups
@@ -241,8 +247,14 @@ describe('nest mode', () => {
 
   it('drills down on click and shows breadcrumb', async () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     const firstGroup = container.querySelector('.v-charts-treemap-node')!
     await fireEvent.click(firstGroup)
@@ -257,8 +269,14 @@ describe('nest mode', () => {
 
   it('navigates back via breadcrumb click', async () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     // Drill down
     const firstGroup = container.querySelector('.v-charts-treemap-node')!

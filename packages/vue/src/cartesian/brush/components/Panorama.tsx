@@ -1,6 +1,5 @@
-import type { VNode } from 'vue'
+import type { PropType, VNode } from 'vue'
 import { cloneVNode, defineComponent } from 'vue'
-import type { PropType } from 'vue'
 import { PanoramaContextProvider } from '@/context/PanoramaContextProvider'
 import type { Padding } from '@/types/common'
 

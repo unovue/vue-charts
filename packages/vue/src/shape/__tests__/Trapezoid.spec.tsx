@@ -2,7 +2,7 @@ import { render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { Trapezoid } from '../Trapezoid'
 
-describe('Trapezoid', () => {
+describe('trapezoid', () => {
   it('renders a path with correct d attribute', () => {
     const { container } = render(() => (
       <Trapezoid x={10} y={20} upperWidth={100} lowerWidth={60} height={50} />

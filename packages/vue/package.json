@@ -54,8 +54,8 @@
   "files": [
     "./LICENSE",
     "./README.md",
-    "./dist/**/*.mjs",
-    "./dist/**/*.d.ts"
+    "./dist/**/*.d.ts",
+    "./dist/**/*.mjs"
   ],
   "scripts": {
     "clean": "rm -rf dist",

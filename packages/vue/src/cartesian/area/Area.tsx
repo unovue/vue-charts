@@ -50,14 +50,16 @@ const AreaView = defineComponent({
             <StaticArea v-slots={{ label: slots.label }} />
           </Layer>
           <Layer {...activeListeners}>
-            {!props.hide && <ActivePoints
-              points={areaData.value?.points ?? []}
-              mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
-              itemDataKey={props.dataKey}
-              activeDot={props.activeDot}
-              isAnimationActive={props.isAnimationActive}
-              v-slots={{ activeDot: slots.activeDot }}
-            />}
+            {!props.hide && (
+              <ActivePoints
+                points={areaData.value?.points ?? []}
+                mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
+                itemDataKey={props.dataKey}
+                activeDot={props.activeDot}
+                isAnimationActive={props.isAnimationActive}
+                v-slots={{ activeDot: slots.activeDot }}
+              />
+            )}
           </Layer>
         </Fragment>
       )

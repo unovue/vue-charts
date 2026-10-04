@@ -19,8 +19,9 @@ export const FadeIn = defineComponent({
         el.style.opacity = '0'
         controls = animate(el, { opacity: [0, 1] }, { duration: 0.2 })
       }
-      else if (el)
+      else if (el) {
         el.style.opacity = '1'
+      }
     }, { flush: 'post' })
     onScopeDispose(() => controls?.stop())
     return () => <g ref={element}>{slots.default?.()}</g>

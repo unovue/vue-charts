@@ -31,7 +31,7 @@ describe('lineSelectors', () => {
     const moveAndLine = d.match(/[ML]\s*([\d.eE+-]+)[,\s]+([\d.eE+-]+)/g)
     if (moveAndLine) {
       for (const cmd of moveAndLine) {
-        const nums = cmd.match(/([\d.eE+-]+)/g)
+        const nums = cmd.match(/([\d.e+-]+)/gi)
         if (nums && nums.length >= 2) {
           points.push({ x: Number.parseFloat(nums[0]), y: Number.parseFloat(nums[1]) })
         }

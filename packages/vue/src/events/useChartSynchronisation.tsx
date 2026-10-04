@@ -18,7 +18,6 @@ function useTooltipSyncEventsListener() {
   const layout = useChartLayout()
   const viewBox = useViewBox()
 
-
   // Subscribe only to what identifies the channel. The listener reads ticks, layout and viewBox
   // when a message arrives; watching them re-queued this job for every series registration and
   // tripped Vue's recursion guard in charts with many series.

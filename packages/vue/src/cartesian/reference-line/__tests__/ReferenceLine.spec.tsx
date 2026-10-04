@@ -1,5 +1,5 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, ReferenceLine, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -22,7 +22,7 @@ describe('<ReferenceLine />', () => {
     { name: '201112', uv: 4.3, pv: 0 },
   ]
 
-  test('Renders 1 line in each ReferenceLine (x and y)', () => {
+  it('renders 1 line in each ReferenceLine (x and y)', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -43,7 +43,7 @@ describe('<ReferenceLine />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(2)
   })
 
-  test('Renders 1 line in ReferenceLine in vertical barchart', () => {
+  it('renders 1 line in ReferenceLine in vertical barchart', () => {
     const { container } = render(() => (
       <BarChart
         layout="vertical"
@@ -65,7 +65,7 @@ describe('<ReferenceLine />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(2)
   })
 
-  test("Don't render line when no x or y is set", () => {
+  it('don\'t render line when no x or y is set', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -85,7 +85,7 @@ describe('<ReferenceLine />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(0)
   })
 
-  test("Don't render line when reference line is outside domain", () => {
+  it('don\'t render line when reference line is outside domain', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -106,7 +106,7 @@ describe('<ReferenceLine />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(0)
   })
 
-  test('Render line and label when ifOverflow is "extendDomain"', () => {
+  it('render line and label when ifOverflow is "extendDomain"', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -127,7 +127,7 @@ describe('<ReferenceLine />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(2)
   })
 
-  test('Render line when ifOverflow is "visible" even if outside domain', () => {
+  it('render line when ifOverflow is "visible" even if outside domain', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}

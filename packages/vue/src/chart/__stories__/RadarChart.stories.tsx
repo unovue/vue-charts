@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { Fragment, defineComponent, ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { RadarChart } from '@/chart/RadarChart'
 import { Radar } from '@/polar/radar/Radar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'

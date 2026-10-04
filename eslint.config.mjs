@@ -4,6 +4,18 @@ export default antfu(
   {
     vue: true,
     typescript: true,
+    ignores: [
+      '**/dist/**',
+      '**/.nuxt/**',
+      '**/.output/**',
+      '**/.data/**',
+      '**/coverage/**',
+      'storybook-static/**',
+      'packages/vue/src/__breakit__/**',
+      'packages/vue/test/fixtures/lab/**',
+      'packages/vue/test/lab/**',
+      '.evidence/**',
+    ],
   },
   {
     ignores: ['*.js'],

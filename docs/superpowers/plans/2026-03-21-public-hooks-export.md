@@ -42,9 +42,9 @@ import { Customized } from '@/components/Customized'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
 import {
-  useIsTooltipActive,
   useActiveTooltipCoordinate,
   useActiveTooltipLabel,
+  useIsTooltipActive,
 } from '../publicHooks'
 
 describe('Tooltip public hooks', () => {
@@ -188,7 +188,7 @@ Expected: FAIL — module `../publicHooks` not found
 ```ts
 // packages/vue/src/hooks/publicHooks.ts
 import { useAppSelector } from '@/state/hooks'
-import { selectIsTooltipActive, selectActiveTooltipCoordinate, selectActiveLabel } from '@/state/selectors/tooltipSelectors'
+import { selectActiveLabel, selectActiveTooltipCoordinate, selectIsTooltipActive } from '@/state/selectors/tooltipSelectors'
 
 /**
  * Returns whether the Tooltip is currently active (visible due to user interaction).
@@ -314,7 +314,7 @@ Add to `publicHooks.ts`:
 
 ```ts
 import { computed } from 'vue'
-import { useOffset, useChartWidth, useChartHeight, useMargin } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useMargin, useOffset } from '@/context/chartLayoutContext'
 
 // Re-export existing layout hooks
 export { useChartWidth, useChartHeight, useMargin, useOffset }
@@ -328,7 +328,8 @@ export function usePlotArea() {
   const offset = useOffset()
   return computed(() => {
     const o = offset.value
-    if (o == null) return undefined
+    if (o == null)
+      return undefined
     return {
       x: o.left,
       y: o.top,
@@ -370,8 +371,8 @@ import { LineChart } from '@/chart/LineChart'
 import { Line } from '@/cartesian/line/Line'
 import {
   useXAxisDomain,
-  useYAxisDomain,
   useXAxisTicks,
+  useYAxisDomain,
   useYAxisTicks,
 } from '../publicHooks'
 

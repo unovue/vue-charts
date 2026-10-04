@@ -1,8 +1,8 @@
 packages:
   - 'packages/*'
-  - 'packages/vue/test/fixtures/nuxt-app'
+  - packages/vue/test/fixtures/nuxt-app
   - 'playground/*'
-  - 'docs'
+  - docs
 
 onlyBuiltDependencies:
   - better-sqlite3

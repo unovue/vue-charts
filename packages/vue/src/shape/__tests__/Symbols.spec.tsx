@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { Symbols } from '@/shape/Symbols'
 
 describe('<Symbols />', () => {
-  it('Render 1 symbol', () => {
+  it('render 1 symbol', () => {
     const { container } = render(() => (
       <Symbols type="circle" cx={100} cy={100} />
     ))
@@ -11,7 +11,7 @@ describe('<Symbols />', () => {
     expect(container.querySelectorAll('.v-charts-symbols')).toHaveLength(1)
   })
 
-  it('Render 1 symbol when type is undefined (falls back to circle)', () => {
+  it('render 1 symbol when type is undefined (falls back to circle)', () => {
     const { container } = render(() => (
       // @ts-expect-error testing invalid type
       <Symbols cx={100} cy={100} type={undefined} />
@@ -20,7 +20,7 @@ describe('<Symbols />', () => {
     expect(container.querySelectorAll('.v-charts-symbols')).toHaveLength(1)
   })
 
-  it("Don't render any symbol when cx is invalid", () => {
+  it('don\'t render any symbol when cx is invalid', () => {
     const { container } = render(() => (
       <Symbols cy={100} type="circle" />
     ))
@@ -28,7 +28,7 @@ describe('<Symbols />', () => {
     expect(container.querySelectorAll('.v-charts-symbols')).toHaveLength(0)
   })
 
-  it("Don't render any symbol when cy is invalid", () => {
+  it('don\'t render any symbol when cy is invalid', () => {
     const { container } = render(() => (
       <Symbols cx={100} type="circle" />
     ))
@@ -36,7 +36,7 @@ describe('<Symbols />', () => {
     expect(container.querySelectorAll('.v-charts-symbols')).toHaveLength(0)
   })
 
-  it('Applies transform with cx and cy', () => {
+  it('applies transform with cx and cy', () => {
     const { container } = render(() => (
       <Symbols type="circle" cx={150} cy={200} />
     ))
@@ -46,7 +46,7 @@ describe('<Symbols />', () => {
     expect(path!.getAttribute('transform')).toBe('translate(150, 200)')
   })
 
-  it('Generates a valid d attribute', () => {
+  it('generates a valid d attribute', () => {
     const { container } = render(() => (
       <Symbols type="circle" cx={100} cy={100} size={64} />
     ))
@@ -56,7 +56,7 @@ describe('<Symbols />', () => {
     expect(path!.getAttribute('d')).toBeTruthy()
   })
 
-  it('Renders different symbol types', () => {
+  it('renders different symbol types', () => {
     const types = ['circle', 'cross', 'diamond', 'square', 'star', 'triangle', 'wye'] as const
 
     for (const type of types) {
@@ -68,7 +68,7 @@ describe('<Symbols />', () => {
     }
   })
 
-  it('Merges custom class', () => {
+  it('merges custom class', () => {
     const { container } = render(() => (
       <Symbols type="circle" cx={100} cy={100} class="custom-symbol" />
     ))
@@ -77,7 +77,7 @@ describe('<Symbols />', () => {
     expect(path).not.toBeNull()
   })
 
-  it('Passes through SVG attributes', () => {
+  it('passes through SVG attributes', () => {
     const { container } = render(() => (
       <Symbols type="circle" cx={100} cy={100} fill="#ff7300" stroke="#333" />
     ))

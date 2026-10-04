@@ -100,9 +100,13 @@ const hidden = ref<string[]>([])
 </script>
 
 <template>
-  <BarChart :data="rows">                         <!-- generic: data-key is typed as keyof Visit -->
+  <BarChart :data="rows">
+    <!-- generic: data-key is typed as keyof Visit -->
     <XAxis data-key="date" />
-    <Bar data-key="desktop" @click="openDay" />  <!-- typed emits, not on* props -->
+    <Bar
+      data-key="desktop"
+      @click="openDay"
+    />  <!-- typed emits, not on* props -->
     <Tooltip v-model:active-index="active" />    <!-- controlled or uncontrolled -->
     <Legend v-model:hidden="hidden" />           <!-- click to toggle series -->
     <Brush v-model:range="range" />

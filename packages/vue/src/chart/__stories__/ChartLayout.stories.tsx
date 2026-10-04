@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { defineComponent } from 'vue'
 import { BarChart } from '@/chart/BarChart'
-import { useChartWidth, useChartHeight } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 import { useAppSelector } from '@/state/hooks'
 import { selectContainerScale } from '@/state/selectors/containerSelectors'
 
@@ -15,7 +15,8 @@ const ChartSizeDimensions = defineComponent({
     const height = useChartHeight()
 
     return () => {
-      if (width.value == null || height.value == null) return null
+      if (width.value == null || height.value == null)
+        return null
       const w = width.value
       const h = height.value
       const strokeWidth = 2
@@ -76,7 +77,8 @@ const ShowScale = defineComponent({
     const scale = useAppSelector(selectContainerScale)
 
     return () => {
-      if (width.value == null || height.value == null) return null
+      if (width.value == null || height.value == null)
+        return null
       return (
         <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
           <text

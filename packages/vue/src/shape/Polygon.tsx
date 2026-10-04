@@ -12,9 +12,9 @@ export interface PolygonProps {
 }
 
 function getPolygonPath(points: PolygonPoint[]): string {
-  return points.reduce((path, point, i) => {
+  return `${points.reduce((path, point, i) => {
     return `${path}${i === 0 ? 'M' : 'L'}${point.x},${point.y}`
-  }, '') + 'Z'
+  }, '')}Z`
 }
 
 export function Polygon(props: PolygonProps & SVGAttributes) {

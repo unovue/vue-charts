@@ -65,14 +65,16 @@ const LineView = defineComponent({
             {defaultContent}
           </Layer>
           <Layer {...activeListeners}>
-            {!props.hide && <ActivePoints
-              points={lineData.value ?? []}
-              mainColor={attrs.stroke ?? props.stroke!}
-              itemDataKey={props.dataKey}
-              activeDot={props.activeDot}
-              isAnimationActive={props.isAnimationActive}
-              v-slots={{ activeDot: slots.activeDot }}
-            />}
+            {!props.hide && (
+              <ActivePoints
+                points={lineData.value ?? []}
+                mainColor={attrs.stroke ?? props.stroke!}
+                itemDataKey={props.dataKey}
+                activeDot={props.activeDot}
+                isAnimationActive={props.isAnimationActive}
+                v-slots={{ activeDot: slots.activeDot }}
+              />
+            )}
           </Layer>
         </Fragment>
       )

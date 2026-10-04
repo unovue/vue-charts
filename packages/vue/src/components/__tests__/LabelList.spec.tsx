@@ -4,7 +4,7 @@ import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from '@/index'
 import { LabelList } from '@/components/label/LabelList'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('LabelList', () => {
+describe('labelList', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })

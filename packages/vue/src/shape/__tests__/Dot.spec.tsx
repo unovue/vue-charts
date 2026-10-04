@@ -2,7 +2,7 @@ import { render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { Dot } from '@/shape/Dot'
 
-describe('Dot', () => {
+describe('dot', () => {
   it('renders a circle element with cx, cy, r', () => {
     const { container } = render(() => <Dot cx={100} cy={100} r={5} fill="#ff7300" />)
 

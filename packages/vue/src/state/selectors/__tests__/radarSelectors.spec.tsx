@@ -29,7 +29,7 @@ describe('radarSelectors', () => {
     const matches = d.match(/[ML]\s*([\d.eE+-]+)[,\s]+([\d.eE+-]+)/g)
     if (matches) {
       for (const cmd of matches) {
-        const nums = cmd.match(/([\d.eE+-]+)/g)
+        const nums = cmd.match(/([\d.e+-]+)/gi)
         if (nums && nums.length >= 2) {
           points.push({ x: Number.parseFloat(nums[0]), y: Number.parseFloat(nums[1]) })
         }

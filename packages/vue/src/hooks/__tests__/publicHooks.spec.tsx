@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick, ref } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
 import { BarChart } from '@/chart/BarChart'
 import { LineChart } from '@/chart/LineChart'
 import { Bar } from '@/cartesian/bar/Bar'
@@ -11,7 +11,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { Customized } from '@/components/Customized'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
-import { useIsTooltipActive, useActiveTooltipCoordinate, useActiveTooltipLabel, usePlotArea, useXAxisDomain, useYAxisDomain, useXAxisTicks, useYAxisTicks, useXAxisScale, useYAxisScale, useXAxisInverseScale, useYAxisInverseScale, useXAxisInverseDataSnapScale, useYAxisInverseDataSnapScale, useXAxisInverseTickSnapScale, useYAxisInverseTickSnapScale, useCartesianScale } from '../publicHooks'
+import { useActiveTooltipCoordinate, useActiveTooltipLabel, useCartesianScale, useIsTooltipActive, usePlotArea, useXAxisDomain, useXAxisInverseDataSnapScale, useXAxisInverseScale, useXAxisInverseTickSnapScale, useXAxisScale, useXAxisTicks, useYAxisDomain, useYAxisScale, useYAxisTicks } from '../publicHooks'
 
 describe('publicHooks - tooltip hooks', () => {
   beforeEach(() => {
@@ -150,7 +150,7 @@ describe('publicHooks - tooltip hooks', () => {
   })
 })
 
-describe('Layout public hooks', () => {
+describe('layout public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })
@@ -212,7 +212,7 @@ describe('Layout public hooks', () => {
   })
 })
 
-describe('Axis public hooks', () => {
+describe('axis public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })
@@ -360,7 +360,7 @@ describe('Axis public hooks', () => {
   })
 })
 
-describe('Scale public hooks', () => {
+describe('scale public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })
