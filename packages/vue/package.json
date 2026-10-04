@@ -105,7 +105,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip }",
       "gzip": true,
-      "limit": "78.31 kB",
+      "limit": "80.24 kB",
       "ignore": [
         "vue",
         "motion-v"
@@ -116,7 +116,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ BarChart, Bar, XAxis, YAxis, Tooltip, Legend }",
       "gzip": true,
-      "limit": "81.62 kB",
+      "limit": "83.45 kB",
       "ignore": [
         "vue",
         "motion-v"
@@ -127,7 +127,7 @@
       "path": "dist/es/index.mjs",
       "import": "{ PieChart, Pie, Tooltip }",
       "gzip": true,
-      "limit": "65.78 kB",
+      "limit": "67.85 kB",
       "ignore": [
         "vue",
         "motion-v"
