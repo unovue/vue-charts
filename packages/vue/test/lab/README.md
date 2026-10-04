@@ -1,6 +1,6 @@
 # Motion lab
 
-A Vite app with one chart per scenario (`?s=bar`, `?s=areaStacked`, `?s=brush`, `?s=stress&type=line&n=10000`…) and a list of data steps per scenario (`window.lab.steps`), plus tools that drive it in a headless browser. Everything runs against `packages/vue/src`.
+A Vite app with chart scenarios (`?s=bar`, `?s=areaStacked`, `?s=brush`, `?s=stress&type=line&n=10000`…) and a list of data steps per scenario (`window.lab.steps`), plus tools that drive it in a headless browser. Everything runs against `packages/vue/src`.
 
 | Command | What it proves |
 |---|---|
@@ -27,3 +27,21 @@ Arc shapes (pie, radial and sunburst sectors) are not measured by the progress c
 The report advances to each Playwright fake-clock animation frame (16 ms, encoded at 62.5 fps), and uses the actual clock time for curves. This avoids combining two animation frames into one sample when fractional clock advances round up. Before each data or pointer step, it waits for three unchanged geometry frames, up to 2 seconds; failure adds a `did not settle` flag. Entrance is recorded immediately so its motion remains visible. Interrupt resets the data with `fromOne` before settling.
 
 Use `--frames` to also save each transition's geometry as `<scenario>/<step>.frames.json` beside the videos. Run `node --test packages/vue/test/lab/report-metrics.test.mjs` to check that a synthetic one-frame 40 px jump still triggers the jump flag. The jump, backwards, stall, unsettled and overlap thresholds are unchanged.
+
+Dashboard scenarios:
+
+- `heatmap`: seven day rows × 24 hour columns at 720×240; `values`, `dropDay`
+  (Wednesday), `addDay`, `xOrder` (reverse hours), `empty`, `refill`.
+- `cohort`: six triangular monthly cohorts at 720×240; `values`, `nextMonth`
+  (drop January, append a period to each retained cohort, add July), `count`, `percent`.
+- `sparkline`: line, area and bar side by side at 224×80 each, sharing 30 ISO-date
+  keyed points; `shift`, `shift5`, `gap` (one null), `values`, `to10`, `to30`, `empty`, `refill`.
+- `barList`: six ranked rows; `rerank`, `add`, `remove`, `values` (same rank),
+  `empty`, `refill`. A fixed 252px frame keeps empty/refill recordings visible.
+
+Report and film collect every SVG surface, prefixing identities only for additional
+surfaces. Overlap is measured within each surface's coordinate system. HTML BarList
+rows retain their keyed identities and contribute translateY progress; their bars'
+percentage widths resolve to pixels for progress and jump thresholds. Films also
+capture row opacity. HTML rows do not participate in the SVG overlap metric.
+Color-only heatmap/cohort changes are visible in films but have no geometry curves.

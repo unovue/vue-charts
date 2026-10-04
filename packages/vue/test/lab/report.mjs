@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { curves, flags } from './report-metrics.mjs'
+import { installHTMLGeometry } from './html-geometry.mjs'
 import { FRAME, advanceFrame, flag, has, launchBrowser, positional, repo, settle, startServer } from './shared.mjs'
 
 const out = flag('out', join(repo, '.evidence/motion-report'))
@@ -45,7 +46,7 @@ const server = await startServer()
 const url = server.url
 const browser = await launchBrowser()
 
-// In-page per-frame sampler. Light on purpose: attribute reads only.
+// In-page per-frame sampler: SVG attributes and HTML widths resolved against layout.
 function SAMPLER() {
   window.__snapshot = () => {
     const keyOf = (el) => {
@@ -66,15 +67,19 @@ function SAMPLER() {
     }
     const shapes = {}
     const counts = {}
-    const svg = document.querySelector('svg.v-charts-surface')
-    for (const el of svg ? svg.querySelectorAll('rect,path,circle,polygon') : []) {
+    const svgs = [...document.querySelectorAll('svg.v-charts-surface')]
+    for (const el of svgs.flatMap(svg => [...svg.querySelectorAll('rect,path,circle,polygon')])) {
       if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper, .v-charts-tooltip-cursor'))
         continue
       const cls = (el.getAttribute('class') || '').split(' ')[0]
-      const base = `${el.tagName}.${cls}#${keyOf(el)}`
+      const surface = svgs.indexOf(el.ownerSVGElement)
+      const prefix = surface > 0 ? `svg${surface}/` : ''
+      const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
       counts[base] = (counts[base] ?? 0) + 1
       shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
     }
+    for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
+      shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
     const tip = document.querySelector('[role="tooltip"]')
     if (tip && tip.style.visibility === 'visible')
       shapes.tooltip = tip.style.transform
@@ -82,17 +87,20 @@ function SAMPLER() {
   }
   // The largest area (px²) two bars or cells cover at once; touching shapes do not count.
   window.__overlap = () => {
-    const boxes = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect')]
-      .map(el => ['x', 'y', 'width', 'height'].map(a => Number(el.getAttribute(a))))
-      .filter(([x, y, w, h]) => [x, y, w, h].every(Number.isFinite) && Math.abs(w) > 0.5 && Math.abs(h) > 0.5)
-      .map(([x, y, w, h]) => [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)])
+    const elements = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect')]
     let worst = 0
-    for (let i = 0; i < boxes.length; i++) {
-      for (let j = i + 1; j < boxes.length; j++) {
-        const w = Math.min(boxes[i][2], boxes[j][2]) - Math.max(boxes[i][0], boxes[j][0])
-        const h = Math.min(boxes[i][3], boxes[j][3]) - Math.max(boxes[i][1], boxes[j][1])
-        if (w > 0.5 && h > 0.5)
-          worst = Math.max(worst, w * h)
+    for (const svg of document.querySelectorAll('svg.v-charts-surface')) {
+      const boxes = elements.filter(el => el.ownerSVGElement === svg)
+        .map(el => ['x', 'y', 'width', 'height'].map(a => Number(el.getAttribute(a))))
+        .filter(([x, y, w, h]) => [x, y, w, h].every(Number.isFinite) && Math.abs(w) > 0.5 && Math.abs(h) > 0.5)
+        .map(([x, y, w, h]) => [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)])
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          const w = Math.min(boxes[i][2], boxes[j][2]) - Math.max(boxes[i][0], boxes[j][0])
+          const h = Math.min(boxes[i][3], boxes[j][3]) - Math.max(boxes[i][1], boxes[j][1])
+          if (w > 0.5 && h > 0.5)
+            worst = Math.max(worst, w * h)
+        }
       }
     }
     return worst
@@ -125,15 +133,19 @@ function SAMPLER() {
     const tick = (now) => {
       const shapes = {}
       const counts = {}
-      const svg = document.querySelector('svg.v-charts-surface')
-      for (const el of svg ? svg.querySelectorAll('rect,path,circle,polygon') : []) {
+      const svgs = [...document.querySelectorAll('svg.v-charts-surface')]
+      for (const el of svgs.flatMap(svg => [...svg.querySelectorAll('rect,path,circle,polygon')])) {
         if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper'))
           continue
         const cls = (el.getAttribute('class') || '').split(' ')[0]
-        const base = `${el.tagName}.${cls}#${keyOf(el)}`
+        const surface = svgs.indexOf(el.ownerSVGElement)
+        const prefix = surface > 0 ? `svg${surface}/` : ''
+        const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
         counts[base] = (counts[base] ?? 0) + 1
         shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points'].map(a => el.getAttribute(a) ?? '').join('|')
       }
+      for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
+        shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
       const tip = document.querySelector('[role="tooltip"]')
       if (tip && tip.style.visibility === 'visible')
         shapes.tooltip = tip.style.transform
@@ -219,6 +231,7 @@ async function openPage(s, fake) {
     if (m.type() === 'error' || m.type() === 'warning')
       errors.push(m.text().slice(0, 200))
   })
+  await page.addInitScript(installHTMLGeometry)
   await page.addInitScript(SAMPLER)
   if (fake) {
     await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
@@ -227,10 +240,10 @@ async function openPage(s, fake) {
   await page.goto(`${url}?s=${s}`)
   if (fake) {
     // Responsive charts reveal their measured layout on rAF; the paused clock must release it.
-    await page.waitForSelector('svg.v-charts-surface', { state: 'attached' })
+    await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list', { state: 'attached' })
     await advanceFrame(page)
   }
-  await page.waitForSelector('svg.v-charts-surface')
+  await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list')
   return { context, page, errors }
 }
 function actions(page, box) {
@@ -256,8 +269,8 @@ for (const s of scenarios.length ? scenarios : all) {
   const timingPage = await openPage(s, false)
   const labSteps = await visual.page.evaluate(() => window.lab.steps)
   const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(['values', 'removeMiddle', 'fromOne'].every(name => labSteps.includes(name)) ? ['interrupt'] : [])]
-  const act = actions(visual.page, await visual.page.locator('.v-charts-wrapper').boundingBox())
-  const actReal = actions(timingPage.page, await timingPage.page.locator('.v-charts-wrapper').boundingBox())
+  const act = actions(visual.page, await visual.page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox())
+  const actReal = actions(timingPage.page, await timingPage.page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox())
   for (const step of steps) {
     if (only && !only.split(',').includes(step))
       continue

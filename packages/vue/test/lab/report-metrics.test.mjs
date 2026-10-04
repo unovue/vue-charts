@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 // This script also runs directly with node, without the app's browser test harness.
 // eslint-disable-next-line test/no-import-node-test
 import { test } from 'node:test'
+import { installHTMLGeometry } from './html-geometry.mjs'
 import { curves, flags } from './report-metrics.mjs'
 import { advanceFrame, launchBrowser } from './shared.mjs'
 
@@ -40,6 +41,42 @@ test('each clock advance samples exactly one animation frame at every phase', as
         previous = current
       }
     }
+  }
+  finally {
+    await browser.close()
+  }
+})
+
+// Catch HTML rows being lost/reidentified on rerank, or percent spans treated as pixels.
+test('HTML bar list geometry keeps row identities and resolves widths to pixels', async () => {
+  const browser = await launchBrowser()
+  try {
+    const page = await browser.newPage()
+    await page.setContent(`<ul class="v-charts-bar-list">
+      <li class="v-charts-bar-list-row" style="transform:translateY(0px);height:32px;opacity:1">
+        <div style="width:400px"><div class="v-charts-bar-list-bar" style="width:25%"></div><span class="v-charts-bar-list-name">Alpha</span></div>
+      </li>
+      <li class="v-charts-bar-list-row" style="transform:translateY(36px);height:32px;opacity:1">
+        <div style="width:400px"><div class="v-charts-bar-list-bar" style="width:50%"></div><span class="v-charts-bar-list-name">Beta</span></div>
+      </li>
+    </ul>`)
+    await page.evaluate(installHTMLGeometry)
+    const frames = []
+    for (const [i, progress] of [0, 0.5, 1].entries()) {
+      const shapes = await page.evaluate((progress) => {
+        const list = document.querySelector('ul')
+        const row = [...list.children].find(row => row.textContent.trim() === 'Alpha')
+        row.style.transform = `translateY(${progress * 36}px)`
+        row.querySelector('.v-charts-bar-list-bar').style.width = `${25 + progress * 50}%`
+        list.append(row)
+        return Object.fromEntries(Object.entries(window.__htmlGeometry()).map(([id, attrs]) => [id, [attrs.transform ?? '', attrs.width ?? ''].join('|')]))
+      }, progress)
+      frames.push({ t: i * 16, shapes, overlap: 0 })
+    }
+    assert.deepEqual(curves(frames).map(({ id, span, pts }) => ({ id, span, pts })), [
+      { id: 'li.v-charts-bar-list-row#barList0/Alpha', span: 36, pts: [[0, 0], [16, 0.5], [32, 1]] },
+      { id: 'div.v-charts-bar-list-bar#barList0/Alpha', span: 200, pts: [[0, 0], [16, 0.5], [32, 1]] },
+    ])
   }
   finally {
     await browser.close()

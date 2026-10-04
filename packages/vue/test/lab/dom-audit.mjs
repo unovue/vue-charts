@@ -15,7 +15,7 @@ try {
   let total = 0
   for (const s of positional().length ? positional() : all) {
     await page.goto(`${server.url}?s=${s}`, { timeout: 120000 })
-    await page.waitForSelector('svg.v-charts-surface', { timeout: 120000 })
+    await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list', { timeout: 120000 })
     await page.waitForTimeout(1300)
     if (s === 'tooltip') {
       const box = await page.locator('.v-charts-wrapper').boundingBox()
@@ -25,7 +25,7 @@ try {
     const found = await page.evaluate((camelOk) => {
       const ok = new Set(camelOk)
       const out = {}
-      for (const el of document.querySelectorAll('.v-charts-wrapper *')) {
+      for (const el of document.querySelectorAll('.v-charts-wrapper *, .v-charts-bar-list, .v-charts-bar-list *')) {
         for (const a of el.attributes) {
           const bad = /\[object |^undefined$|^NaN$|^null$|^function/.test(a.value) ? 'value' : (/[A-Z]/.test(a.name) && !ok.has(a.name)) ? 'camelCase' : null
           if (bad) {

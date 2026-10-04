@@ -5,6 +5,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { installHTMLGeometry } from './html-geometry.mjs'
 import { FRAME, advanceFrame, collectErrors, flag, launchBrowser, positional, repo, startServer } from './shared.mjs'
 
 const dark = process.argv.includes('--dark')
@@ -32,17 +33,17 @@ function capture() {
   }
   const shapes = {}
   const counts = {}
-  const svg = document.querySelector('svg.v-charts-surface')
-  if (!svg)
-    return { shapes, bad: [] }
+  const svgs = [...document.querySelectorAll('svg.v-charts-surface')]
   const bad = []
-  for (const el of svg.querySelectorAll('rect,path,circle,polygon,line,text,g[transform]')) {
+  for (const el of svgs.flatMap(svg => [...svg.querySelectorAll('rect,path,circle,polygon,line,text,g[transform]')])) {
     if (el.closest('defs, clipPath'))
       continue
     const cls = el.getAttribute('class') || ''
     if (/axis|grid|legend|tick|recharts-layer$/.test(cls) && !/curve|area|bar|sector|dot/.test(cls))
       continue
-    const base = `${el.tagName}.${cls.split(' ')[0]}#${keyOf(el)}`
+    const surface = svgs.indexOf(el.ownerSVGElement)
+    const prefix = surface > 0 ? `svg${surface}/` : ''
+    const base = `${prefix}${el.tagName}.${cls.split(' ')[0]}#${keyOf(el)}`
     counts[base] = (counts[base] ?? 0) + 1
     const id = `${base}@${counts[base]}`
     const attrs = {}
@@ -62,6 +63,13 @@ function capture() {
       attrs.opacity = String(o)
     }
     shapes[id] = attrs
+  }
+  for (const [id, attrs] of Object.entries(window.__htmlGeometry())) {
+    shapes[id] = attrs
+    for (const [name, value] of Object.entries(attrs)) {
+      if (/NaN|Infinity|undefined/.test(value))
+        bad.push(`${id} ${name}=${value}`)
+    }
   }
   const tip = document.querySelector('[role="tooltip"]')
   if (tip)
@@ -200,13 +208,14 @@ try {
     mkdirSync(dir, { recursive: true })
     const page = await browser.newPage({ viewport: { width: 800, height: 480 }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' })
     const errors = collectErrors(page)
+    await page.addInitScript(installHTMLGeometry)
     await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
     await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'))
     await page.goto(`${url}?s=${s}${dark ? '&dark=1' : ''}`, { timeout: 120000 })
-    await page.waitForSelector('svg.v-charts-surface', { state: 'attached', timeout: 120000 })
+    await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list', { state: 'attached', timeout: 120000 })
     // Responsive charts reveal their measured layout on rAF; the paused clock must release it.
     await advanceFrame(page)
-    await page.waitForSelector('svg.v-charts-surface', { timeout: 15000 })
+    await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list', { timeout: 15000 })
     report[s] = { entrance: await film(page, '00-entrance', dir), errors }
     if (s === 'tooltip') {
       const box = await page.locator('.v-charts-wrapper').boundingBox()

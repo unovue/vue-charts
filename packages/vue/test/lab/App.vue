@@ -5,12 +5,15 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  BarList,
   Brush,
   CalendarHeatmap,
   CartesianGrid,
+  CohortChart,
   ComposedChart,
   Funnel,
   FunnelChart,
+  Heatmap,
   LabelList,
   Legend,
   Line,
@@ -27,6 +30,7 @@ import {
   Sankey,
   Scatter,
   ScatterChart,
+  Sparkline,
   SunburstChart,
   Tooltip,
   Tracker,
@@ -82,6 +86,29 @@ function shiftCalendar(days) {
   calendarRows.value = calendarData()
 }
 
+const heatDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const hours = Array.from({ length: 24 }, (_, i) => i)
+const heatX = shallowRef(hours)
+const heatData = (days = heatDays, variant = 0) => days.flatMap((y, i) => hours.map(x => ({ x, y, value: (x * 13 + i * 19 + variant * 31) % 101 })))
+const heatRows = shallowRef(heatData())
+const cohortMode = ref('percent')
+function cohortData(start = 0, variant = 0) {
+  return Array.from({ length: 6 }, (_, i) => {
+    const size = 800 + (start + i) * 137
+    return { cohort: months[start + i], values: Array.from({ length: 6 - i }, (_, period) => Math.round(size * (period ? Math.max(0.1, 0.8 - period * 0.09 + variant * 0.04) : 1))) }
+  })
+}
+const cohortRows = shallowRef(cohortData())
+const sparkStart = trackerStart
+const sparkData = (start, count = 30, variant = 0) => Array.from({ length: count }, (_, i) => ({ date: isoDay(start + i), value: Math.round(50 + 25 * Math.sin((start + i) * 0.7 + variant) + variant * 10) }))
+const sparkRows = shallowRef(sparkData(sparkStart))
+function shiftSpark(count) {
+  const next = dayOf(sparkRows.value.at(-1).date) + 1
+  sparkRows.value = [...sparkRows.value.slice(count), ...sparkData(next, count)]
+}
+const listData = () => months.slice(0, 6).map((name, i) => ({ name, value: 600 - i * 75 }))
+const listRows = shallowRef(listData())
+
 // Steps shared by most categorical scenarios.
 const categorical = [
   ['values', () => { rows.value = mk(rows.value.map(r => r.name), alt) }],
@@ -111,6 +138,40 @@ const scatterRows = computed(() => rows.value.map((r, i) => ({ name: r.name, x: 
 
 const nullGap = ['nullGap', () => { rows.value = rows.value.map((r, i) => i === 2 ? { ...r, a: null } : r) }]
 const steps = {
+  heatmap: [
+    ['values', () => { heatRows.value = heatData(heatDays, 1) }],
+    ['dropDay', () => { heatRows.value = heatRows.value.filter(row => row.y !== 'Wed') }],
+    ['addDay', () => { heatRows.value = heatData(heatDays, 1) }],
+    ['xOrder', () => { heatX.value = [...heatX.value].reverse() }],
+    ['empty', () => { heatRows.value = [] }],
+    ['refill', () => { heatRows.value = heatData() }],
+  ],
+  cohort: [
+    ['values', () => { cohortRows.value = cohortData(0, 1) }],
+    ['nextMonth', () => {
+      cohortRows.value = [...cohortRows.value.slice(1).map(row => ({ ...row, values: [...row.values, Math.round(row.values.at(-1) * 0.85)] })), { cohort: 'Jul', values: [1622] }]
+    }],
+    ['count', () => { cohortMode.value = 'count' }],
+    ['percent', () => { cohortMode.value = 'percent' }],
+  ],
+  sparkline: [
+    ['shift', () => shiftSpark(1)],
+    ['shift5', () => shiftSpark(5)],
+    ['gap', () => { sparkRows.value = sparkRows.value.map((row, i) => i === 12 ? { ...row, value: null } : row) }],
+    ['values', () => { sparkRows.value = sparkData(dayOf(sparkRows.value[0].date), sparkRows.value.length, 1) }],
+    ['to10', () => { sparkRows.value = sparkRows.value.slice(-10) }],
+    ['to30', () => { sparkRows.value = sparkData(dayOf(sparkRows.value.at(-1).date) - 29) }],
+    ['empty', () => { sparkRows.value = [] }],
+    ['refill', () => { sparkRows.value = sparkData(sparkStart) }],
+  ],
+  barList: [
+    ['rerank', () => { listRows.value = listRows.value.map((row, i) => ({ ...row, value: 150 + i * 110 })).reverse() }],
+    ['add', () => { listRows.value = [...listRows.value, { name: 'Jul', value: 480 }] }],
+    ['remove', () => { listRows.value = listRows.value.filter(row => row.name !== 'Mar') }],
+    ['values', () => { listRows.value = listRows.value.map(row => ({ ...row, value: row.value * 0.6 + 90 })) }],
+    ['empty', () => { listRows.value = [] }],
+    ['refill', () => { listRows.value = listData() }],
+  ],
   tracker: [
     ['shift', () => shiftTracker(1)],
     ['shift3', () => shiftTracker(3)],
@@ -283,6 +344,38 @@ if (scenario === 'stress') {
         :end="isoDay(calendarEnd)"
         :week-start="weekStart"
       />
+      <Heatmap
+        v-else-if="scenario === 'heatmap'"
+        :data="heatRows"
+        :x-domain="heatX"
+        :height="240"
+      />
+      <CohortChart
+        v-else-if="scenario === 'cohort'"
+        :data="cohortRows"
+        :mode="cohortMode"
+        :height="240"
+      />
+      <div
+        v-else-if="scenario === 'sparkline'"
+        style="display: flex; gap: 12px; padding: 12px"
+      >
+        <Sparkline
+          v-for="type in ['line', 'area', 'bar']"
+          :key="type"
+          :type="type"
+          :data="sparkRows"
+          name-key="date"
+          :width="224"
+          :height="80"
+        />
+      </div>
+      <div
+        v-else-if="scenario === 'barList'"
+        style="height: 252px"
+      >
+        <BarList :data="listRows" />
+      </div>
       <BarChart
         v-else-if="scenario === 'barStacked'"
         :height="360"
