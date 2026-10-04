@@ -21,6 +21,8 @@ interface IndexedBar {
   index: number
   /** The category band along the category axis: start and size in pixels. */
   band?: { start: number, size: number }
+  /** Below 1 while the bar fades in or out. */
+  opacity?: number
 }
 
 export const BarRectangles = defineComponent({
@@ -58,24 +60,26 @@ export const BarRectangles = defineComponent({
     }
     // A series shown or hidden from the legend has no neighbours of its own: its bars open or
     // close at the nearer edge of their band while the other series of the group make room.
-    // The first appearance grows in place.
+    // Stacked series share the whole band, so theirs grow from and sink to the baseline, like
+    // the first appearance.
     let shown = false
     const nearerEdge = ({ bar, band }: IndexedBar) => {
-      if (!shown || !band)
+      if (!shown || !band || props.stackId != null)
         return undefined
       const [position, size] = layout.value === 'vertical' ? [bar.y ?? 0, bar.height ?? 0] : [bar.x ?? 0, bar.width ?? 0]
       return position + size / 2 < band.start + band.size / 2 ? band.start : band.start + band.size
     }
+    // Bars keep their value and are pushed aside: they narrow to nothing at the seam and fade.
     const collapsed = (item: IndexedBar, neighbors: Neighbors<IndexedBar>): IndexedBar => {
       const { bar, index } = item
       const at = seam(neighbors) ?? nearerEdge(item)
-      const flat = atBaseline(bar)
       if (at == null)
-        return { index, bar: flat }
+        return { index, bar: atBaseline(bar) }
       return {
         index,
-        bar: layout.value === 'vertical' ? { ...flat, y: at, height: 0 } : { ...flat, x: at, width: 0 },
+        bar: layout.value === 'vertical' ? { ...bar, y: at, height: 0 } : { ...bar, x: at, width: 0 },
         band: { start: at, size: 0 },
+        opacity: 0,
       }
     }
 
@@ -88,8 +92,9 @@ export const BarRectangles = defineComponent({
           const category = dataKey == null ? undefined : getValueByDataKey(bar.payload, dataKey)
           return category == null ? index : String(category)
         },
-        interpolate: ({ bar: from, band: fromBand }, { bar: to, index, band: toBand }, t) => ({
+        interpolate: ({ bar: from, band: fromBand, opacity: fromOpacity = 1 }, { bar: to, index, band: toBand, opacity: toOpacity = 1 }, t) => ({
           index,
+          opacity: interpolate(fromOpacity, toOpacity, t),
           band: fromBand && toBand && {
             start: interpolate(fromBand.start, toBand.start, t),
             size: interpolate(fromBand.size, toBand.size, t),
@@ -140,7 +145,7 @@ export const BarRectangles = defineComponent({
 
       return (
         <g>
-          {items.value.map(({ key, value: { bar, index }, phase }) => {
+          {items.value.map(({ key, value: { bar, index, opacity }, phase }) => {
             // The activeIndex prop takes priority over tooltip interaction.
             const isActive = phase !== 'exit' && activeEnabled && (props.activeIndex != null
               ? index === props.activeIndex
@@ -171,6 +176,7 @@ export const BarRectangles = defineComponent({
               <g
                 key={key}
                 class="v-charts-layer v-charts-bar-rectangle"
+                opacity={opacity != null && opacity < 1 ? opacity : undefined}
                 onMouseenter={(event: MouseEvent) => { activate('hover', bar, index); emit('mouseenter', bar, index, event) }}
                 onMouseleave={(event: MouseEvent) => { tooltip.mouseLeaveItem(); emit('mouseleave', bar, index, event) }}
                 onClick={(event: MouseEvent) => { activate('click', bar, index); emit('click', bar, index, event) }}
