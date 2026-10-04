@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/vue'
 import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { SunburstChart } from '../SunburstChart'
+import { computeSunburstLayout } from '../sunburstUtils'
 import { Tooltip } from '@/components'
 
 const simpleData = {
@@ -33,6 +34,21 @@ const nestedData = {
 }
 
 describe('sunburstChart', () => {
+  it('keeps all 10,000 positive sectors with default padding and at least half their angle', () => {
+    const data = {
+      name: 'root',
+      children: Array.from({ length: 10_000 }, (_, index) => ({ name: `N${index}`, value: 1 })),
+    }
+    const nodes = computeSunburstLayout({ data, cx: 250, cy: 250, innerRadius: 50, outerRadius: 250, startAngle: 0, endAngle: 360, dataKey: 'value', padding: 2 })
+    expect(nodes).toHaveLength(10_000)
+    for (const node of nodes)
+      expect(node.endAngle - node.startAngle).toBeCloseTo(0.018, 10)
+
+    const { container } = render(() => <SunburstChart data={data} width={500} height={500} isAnimationActive={false} />)
+    expect(container.querySelectorAll('.v-charts-sunburst-sector')).toHaveLength(10_000)
+    expect(container.innerHTML).not.toMatch(/NaN|Infinity/)
+  }, 120_000)
+
   it('keeps each sector element by name when the value order changes', async () => {
     const data = ref(simpleData)
     const { container } = render(() => <SunburstChart data={data.value} width={500} height={500} isAnimationActive={false} />)

@@ -102,9 +102,11 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
     if (d.depth === 0)
       return
 
-    // Angular padding: shrink each sector by half padding on each side (in degrees)
-    const nodeStartAngle = startAngle + d.x0 * angleRange + padding / 2
-    const nodeEndAngle = startAngle + d.x1 * angleRange - padding / 2
+    // Keep at least half each positive sector's angle, even in dense charts.
+    const sectorAngle = (d.x1 - d.x0) * angleRange
+    const sectorPadding = Math.min(Math.max(padding, 0), Math.abs(sectorAngle) / 2)
+    const nodeStartAngle = startAngle + d.x0 * angleRange + sectorPadding / 2
+    const nodeEndAngle = startAngle + d.x1 * angleRange - sectorPadding / 2
 
     // Radial padding: add ringPadding to inner, subtract from outer
     const nodeInnerRadius = innerRadius + d.y0 * radiusRange + ringPadding / 2
