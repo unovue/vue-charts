@@ -2,17 +2,14 @@ import type { Size } from '@/types'
 import { Global } from '@/utils/Global'
 import type { CSSProperties } from 'vue'
 
-interface StringCache {
-  widthCache: Record<string, any>
-  cacheCount: number
-}
+// Measured sizes by style and text. Category axes with thousands of labels measure every label,
+// so the cache must hold them all, and a full cache drops its oldest quarter instead of
+// everything (which made every update re-measure every label).
+const MAX_CACHE_NUM = 20000
+const sizeCache = new Map<string, Size>()
+const styleKeys = new WeakMap<object, string>()
+let appliedStyleKey: string | undefined
 
-const stringCache: StringCache = {
-  widthCache: {},
-  cacheCount: 0,
-}
-
-const MAX_CACHE_NUM = 2000
 const SPAN_STYLE = {
   position: 'absolute',
   top: '-20000px',
@@ -34,10 +31,19 @@ function removeInvalidKeys(obj: Record<string, any>) {
   return copyObj
 }
 
+function styleKeyOf(style: CSSProperties): string {
+  let key = styleKeys.get(style)
+  if (key === undefined) {
+    key = JSON.stringify(removeInvalidKeys(style))
+    styleKeys.set(style, key)
+  }
+  return key
+}
+
 /** Test isolation only: measurements stubbed in one test must not leak into the next. */
 export function clearStringSizeCache() {
-  stringCache.widthCache = {}
-  stringCache.cacheCount = 0
+  sizeCache.clear()
+  appliedStyleKey = undefined
 }
 
 export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !Global.isSsr): Size {
@@ -45,11 +51,11 @@ export function getStringSize(text: string | number, style: CSSProperties = {}, 
     return { width: 0, height: 0 }
   }
 
-  const copyStyle = removeInvalidKeys(style)
-  const cacheKey = JSON.stringify({ text, copyStyle })
-
-  if (stringCache.widthCache[cacheKey]) {
-    return stringCache.widthCache[cacheKey]
+  const styleKey = styleKeyOf(style)
+  const cacheKey = `${styleKey}\u0000${text}`
+  const cached = sizeCache.get(cacheKey)
+  if (cached) {
+    return cached
   }
 
   try {
@@ -59,23 +65,30 @@ export function getStringSize(text: string | number, style: CSSProperties = {}, 
       measurementSpan.setAttribute('id', MEASUREMENT_SPAN_ID)
       measurementSpan.setAttribute('aria-hidden', 'true')
       document.body.appendChild(measurementSpan)
+      appliedStyleKey = undefined
     }
     // Need to use CSS Object Model (CSSOM) to be able to comply with Content Security Policy (CSP)
     // https://en.wikipedia.org/wiki/Content_Security_Policy
-    const measurementSpanStyle: Record<string, any> = { ...SPAN_STYLE, ...copyStyle }
-    Object.assign(measurementSpan.style, measurementSpanStyle)
+    if (appliedStyleKey !== styleKey) {
+      measurementSpan.removeAttribute('style')
+      Object.assign(measurementSpan.style, { ...SPAN_STYLE, ...removeInvalidKeys(style) })
+      appliedStyleKey = styleKey
+    }
 
     measurementSpan.textContent = `${text}`
 
     const rect = measurementSpan.getBoundingClientRect()
     const result = { width: rect.width, height: rect.height }
 
-    stringCache.widthCache[cacheKey] = result
-
-    if (++stringCache.cacheCount > MAX_CACHE_NUM) {
-      stringCache.cacheCount = 0
-      stringCache.widthCache = {}
+    if (sizeCache.size >= MAX_CACHE_NUM) {
+      let drop = MAX_CACHE_NUM / 4
+      for (const key of sizeCache.keys()) {
+        sizeCache.delete(key)
+        if (--drop <= 0)
+          break
+      }
     }
+    sizeCache.set(cacheKey, result)
 
     return result
   }

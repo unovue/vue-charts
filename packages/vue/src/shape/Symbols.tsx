@@ -34,12 +34,12 @@ const symbolFactories: SymbolFactory = {
 
 const RADIAN = Math.PI / 180
 
-const getSymbolFactory = (type: SymbolType): D3SymbolType => {
+function getSymbolFactory(type: SymbolType): D3SymbolType {
   const name = `symbol${upperFirst(type)}`
   return symbolFactories[name] || symbolCircle
 }
 
-const calculateAreaSize = (size: number, sizeType: SizeType, type: SymbolType): number => {
+function calculateAreaSize(size: number, sizeType: SizeType, type: SymbolType): number {
   if (sizeType === 'area') {
     return size
   }
@@ -76,6 +76,8 @@ export interface SymbolsProps {
   [key: string]: any
 }
 
+const pathCache = new Map<string, string | undefined>()
+
 export function Symbols(props: SymbolsProps) {
   const {
     type = 'circle',
@@ -93,15 +95,19 @@ export function Symbols(props: SymbolsProps) {
   }
 
   const getPath = (): string | undefined => {
+    // A scatter series draws thousands of identical symbols; build each shape once.
+    const cacheKey = `${realType}|${sizeType}|${size}`
+    if (pathCache.has(cacheKey))
+      return pathCache.get(cacheKey)
     const symbolFactory = getSymbolFactory(realType)
     const sym = shapeSymbol()
       .type(symbolFactory)
       .size(calculateAreaSize(size, sizeType, realType))
 
-    const s = sym()
-    if (s === null) {
-      return undefined
-    }
+    const s = sym() ?? undefined
+    if (pathCache.size > 500)
+      pathCache.clear()
+    pathCache.set(cacheKey, s)
     return s
   }
 

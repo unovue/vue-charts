@@ -80,3 +80,20 @@ it('folds a hidden series with a baseline onto it', async () => {
   expect(display.points.value.map(point => point.y)).toEqual([55, 60])
   scope.stop()
 })
+
+it('keeps the same points while only the entrance sweep moves, so the path is not rebuilt', async () => {
+  const scope = effectScope()
+  const display = scope.run(() => usePointTransition(() => [{ x: 40, y: 10 }, { x: 80, y: 20 }], {
+    key: (_point, index) => index,
+    isActive: () => true,
+    transition: () => ({ duration: 1, ease: 'linear' }),
+    onStart: () => {},
+    onEnd: () => {},
+  }))!
+  clock.update(0.2)
+  const first = display.points.value
+  clock.update(0.6)
+  expect(display.reveal.value).toBe(0.6)
+  expect(display.points.value).toBe(first)
+  scope.stop()
+})

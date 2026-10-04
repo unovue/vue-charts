@@ -11,6 +11,18 @@ interface PointState<T> {
   reveal: number
 }
 
+// While only the reveal sweep moves, the points keep their identity; returning the previous
+// array then keeps the path from being regenerated on every frame.
+function stable<V>(read: () => V[]) {
+  let last: V[] = []
+  return computed(() => {
+    const next = read()
+    if (next.length === last.length && next.every((value, i) => value === last[i]))
+      return last
+    return (last = next)
+  })
+}
+
 /** Top and baseline share identity and a clock, including the initial clip sweep. */
 export function usePointTransition<T extends Point>(
   target: () => readonly T[] | undefined,
@@ -32,12 +44,16 @@ export function usePointTransition<T extends Point>(
 ) {
   let appeared = false
   const callbacks = useAnimationCallbacks(options.onStart, options.onEnd)
-  const mixPoint = <P extends Point>(from: P, to: P, t: number): P => ({
-    ...to,
-    x: from.x == null || to.x == null ? to.x : from.x + (to.x - from.x) * t,
-    // Null values are gaps, never coordinates to interpolate through zero.
-    y: from.y == null || to.y == null ? to.y : from.y + (to.y - from.y) * t,
-  })
+  const mixPoint = <P extends Point>(from: P, to: P, t: number): P => {
+    if (from.x === to.x && from.y === to.y)
+      return to
+    return {
+      ...to,
+      x: from.x == null || to.x == null ? to.x : from.x + (to.x - from.x) * t,
+      // Null values are gaps, never coordinates to interpolate through zero.
+      y: from.y == null || to.y == null ? to.y : from.y + (to.y - from.y) * t,
+    }
+  }
   // What a hidden series animates to: its points as they were, flattened onto their baseline.
   const folded = shallowRef<PointState<T>[]>([])
   const { items, isAnimating } = useKeyedTransition<PointState<T>>(() => {
@@ -52,16 +68,18 @@ export function usePointTransition<T extends Point>(
     }))
   }, {
     key: ({ point, index }) => options.key(point, index),
-    interpolate: (from, to, t) => ({
-      ...to,
-      point: mixPoint(from.point, to.point, t),
-      baseline: typeof from.baseline === 'number' && typeof to.baseline === 'number'
-        ? from.baseline + (to.baseline - from.baseline) * t
-        : typeof from.baseline === 'object' && typeof to.baseline === 'object'
-          ? mixPoint(from.baseline, to.baseline, t)
-          : to.baseline,
-      reveal: from.reveal + (to.reveal - from.reveal) * t,
-    }),
+    interpolate: (from, to, t) => from.point === to.point && from.baseline === to.baseline
+      ? (from.reveal === to.reveal ? to : { ...to, reveal: from.reveal + (to.reveal - from.reveal) * t })
+      : ({
+          ...to,
+          point: mixPoint(from.point, to.point, t),
+          baseline: typeof from.baseline === 'number' && typeof to.baseline === 'number'
+            ? from.baseline + (to.baseline - from.baseline) * t
+            : typeof from.baseline === 'object' && typeof to.baseline === 'object'
+              ? mixPoint(from.baseline, to.baseline, t)
+              : to.baseline,
+          reveal: from.reveal + (to.reveal - from.reveal) * t,
+        }),
     // Points grow out of and fold into their neighbours. With no neighbour on screen (first
     // appearance, or data that was or becomes empty) the whole path sweeps in or out instead.
     enterFrom: (to, { previous, next }) => {
@@ -99,14 +117,15 @@ export function usePointTransition<T extends Point>(
       point: { ...value.point, [axis]: typeof value.baseline === 'number' ? value.baseline : value.baseline![axis] },
     }))
   }, { flush: 'sync' })
+  const baselinePoints = stable(() => items.value.map(item => item.value.baseline).filter((point): point is Point => point != null && typeof point === 'object'))
   return {
     items,
-    points: computed(() => items.value.map(item => item.value.point)),
+    points: stable(() => items.value.map(item => item.value.point)),
     baseline: computed(() => {
       const first = items.value[0]?.value.baseline
-      return typeof first === 'number' ? first : items.value.map(item => item.value.baseline).filter((point): point is Point => point != null && typeof point === 'object')
+      return typeof first === 'number' ? first : baselinePoints.value
     }),
-    reveal: computed(() => Math.min(1, ...items.value.map(item => item.value.reveal))),
+    reveal: computed(() => items.value.reduce((min, item) => Math.min(min, item.value.reveal), 1)),
     isAnimating,
   }
 }
