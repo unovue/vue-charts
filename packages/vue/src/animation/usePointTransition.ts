@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import type { Point } from '@/shape/Curve'
 import type { ChartTransition } from './motion'
 import { useAnimationCallbacks } from './useAnimationCallbacks'
@@ -17,6 +17,13 @@ export function usePointTransition<T extends Point>(
   options: {
     key: (point: T, index: number) => PropertyKey
     baseline?: () => number | readonly Point[] | undefined
+    /**
+     * The series is hidden (legend). A series with a baseline (an area) folds onto it, so a
+     * stack closes smoothly over it; one without (a line) sweeps out.
+     */
+    hidden?: () => boolean
+    /** The value axis a hidden series folds along: 'x' in vertical layouts. */
+    valueAxis?: () => 'x' | 'y'
     isActive: () => boolean
     transition: () => ChartTransition | undefined
     onStart: () => void
@@ -31,7 +38,11 @@ export function usePointTransition<T extends Point>(
     // Null values are gaps, never coordinates to interpolate through zero.
     y: from.y == null || to.y == null ? to.y : from.y + (to.y - from.y) * t,
   })
+  // What a hidden series animates to: its points as they were, flattened onto their baseline.
+  const folded = shallowRef<PointState<T>[]>([])
   const { items, isAnimating } = useKeyedTransition<PointState<T>>(() => {
+    if (options.hidden?.())
+      return folded.value
     const baseline = options.baseline?.()
     return target()?.map((point, index) => ({
       point,
@@ -79,6 +90,15 @@ export function usePointTransition<T extends Point>(
         callbacks.onEnd()
     },
   })
+  watch(() => options.hidden?.() ?? false, (hidden) => {
+    if (!hidden)
+      return
+    const axis = options.valueAxis?.() ?? 'y'
+    folded.value = items.value.filter(item => item.phase !== 'exit' && item.value.baseline != null).map(({ value }) => ({
+      ...value,
+      point: { ...value.point, [axis]: typeof value.baseline === 'number' ? value.baseline : value.baseline![axis] },
+    }))
+  }, { flush: 'sync' })
   return {
     items,
     points: computed(() => items.value.map(item => item.value.point)),

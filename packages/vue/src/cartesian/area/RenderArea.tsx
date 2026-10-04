@@ -86,6 +86,9 @@ export const StaticArea = defineComponent({
         return category == null ? index : String(category)
       },
       baseline: () => areaData.value?.baseLine,
+      // A series hidden from the legend folds onto its baseline; a stack closes over it.
+      hidden: () => !!props.hide,
+      valueAxis: () => layout.value === 'vertical' ? 'x' : 'y',
       isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
       onStart: () => emit('animation-start'),
@@ -96,6 +99,9 @@ export const StaticArea = defineComponent({
     watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
 
     return () => {
+      // Folded flat, a hidden area would still draw its stroke along the baseline.
+      if (props.hide && !display.isAnimating.value)
+        return null
       const curveAttrs = {
         ...attrs,
         'fill': props.fill,
@@ -106,7 +112,7 @@ export const StaticArea = defineComponent({
       }
       const sweepId = `animationClipPath-${clipPathId.value}`
       const isRange = areaData.value?.isRange
-      const showLabels = !isAnimating.value && (props.label || slots.label)
+      const showLabels = !isAnimating.value && !props.hide && (props.label || slots.label)
       const labelProps = typeof props.label === 'object' ? props.label : {}
       return (
         <Fragment>

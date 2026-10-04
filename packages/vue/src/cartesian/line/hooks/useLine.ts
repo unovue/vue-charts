@@ -59,8 +59,7 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
 
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
-    && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart')
-    && !props.hide,
+    && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart'),
   )
 
   const lineSettings = computed(

@@ -112,10 +112,10 @@ const BarView = defineComponent({
             )
           }
           <Layer class="v-charts-bar-rectangles" clip-path={clip ? `url(#clipPath-${clipPathId})` : null}>
-            {props.background && <BarBackground />}
+            {props.background && !props.hide && <BarBackground />}
             <BarRectangles />
           </Layer>
-          {!isAnimating.value && (props.label || slots.label) && (
+          {!isAnimating.value && !props.hide && (props.label || slots.label) && (
             <LabelList
               {...(typeof props.label === 'object' ? props.label : {})}
               data={barData.value}
@@ -144,7 +144,7 @@ const BarView = defineComponent({
       return teleport((
         <Layer class={['v-charts-bar', attrs.class]}>
           {h(Geometry)}
-          {cells.length > 0 ? filterOutCells(children) : children}
+          {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
         </Layer>
       ), graphicalLayerRef,
       )

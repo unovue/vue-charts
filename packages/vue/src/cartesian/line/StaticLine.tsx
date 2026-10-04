@@ -77,7 +77,8 @@ export const StaticLine = defineComponent({
     const categoryAxis = useAppSelector(state => layout.value === 'vertical'
       ? selectAxisSettings(state, 'yAxis', props.yAxisId)
       : selectAxisSettings(state, 'xAxis', props.xAxisId))
-    const display = usePointTransition(() => points.value, {
+    // A series hidden from the legend sweeps out instead of vanishing.
+    const display = usePointTransition(() => props.hide ? [] : points.value, {
       key: (point, index) => {
         const dataKey = categoryAxis.value?.dataKey
         const category = dataKey == null ? undefined : getValueByDataKey(point.payload, dataKey)
@@ -122,7 +123,7 @@ export const StaticLine = defineComponent({
             </Layer>
             <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} />
           </g>
-          {!isAnimating.value && (props.label || labelSlot) && (
+          {!isAnimating.value && !props.hide && (props.label || labelSlot) && (
             <LabelList
               {...labelProps}
               data={lineData.value ?? []}

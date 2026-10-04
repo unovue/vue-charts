@@ -28,15 +28,18 @@ it.each([
       <Legend hidden={hidden.value} />
     </Chart>
   ))
+  // A hidden series may keep an empty layer (so it can animate out), but draws nothing.
+  const drawn = () => [...container.querySelectorAll(`.v-charts-${name} path, .v-charts-${name} circle, .v-charts-${name} rect, .v-charts-${name} polygon`)]
+    .find(el => !el.closest('defs') && (el.tagName !== 'path' || el.getAttribute('d'))) ?? null
   await nextTick()
-  expect(container.querySelector(`.v-charts-${name}`)).toBeNull()
+  expect(drawn()).toBeNull()
   expect(container.querySelector('.v-charts-legend-item-text')).not.toBeNull()
   expect(container.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color).toBe('var(--v-charts-inactive, #a3a3a3)')
   hidden.value = []
   await nextTick()
   await nextTick()
-  expect(container.querySelector(`.v-charts-${name}`)).not.toBeNull()
+  expect(drawn()).not.toBeNull()
   hide.value = true
   await nextTick()
-  expect(container.querySelector(`.v-charts-${name}`)).toBeNull()
+  expect(drawn()).toBeNull()
 })

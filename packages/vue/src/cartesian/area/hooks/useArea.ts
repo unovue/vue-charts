@@ -70,8 +70,7 @@ export function useArea(props: AreaProps, attrs: SVGAttributes = {}, dotSlot?: (
    */
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
-    && (chartName.value === 'AreaChart' || chartName.value === 'ComposedChart')
-    && !props.hide,
+    && (chartName.value === 'AreaChart' || chartName.value === 'ComposedChart'),
   )
 
   const areaSettings = computed(

@@ -43,3 +43,23 @@ it('slides bars of a shifted window in and out with their neighbours', async () 
   expect(staying - b).toBeLessThan(-band / 4)
   expect(leaving - a).toBeCloseTo(staying - b, 0)
 })
+
+it('lets the bars of a series hidden from the legend collapse instead of vanishing', async () => {
+  const hide = ref(false)
+  const { container } = render(() => (
+    <BarChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+      <XAxis dataKey="name" />
+      <Bar dataKey="value" hide={hide.value} />
+    </BarChart>
+  ))
+  await nextTick()
+  clock.update(clock.to)
+  await nextTick()
+  const bars = () => container.querySelectorAll('.v-charts-bar-rectangle path')
+  expect(bars()).toHaveLength(2)
+  hide.value = true
+  await nextTick()
+  clock.update(clock.to / 8)
+  await nextTick()
+  expect(bars()).toHaveLength(2)
+})

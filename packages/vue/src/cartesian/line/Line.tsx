@@ -51,7 +51,7 @@ const LineView = defineComponent({
         return null
       }
 
-      const defaultContent = slots.default?.()
+      const defaultContent = props.hide ? undefined : slots.default?.()
 
       const lineContent = (
         <Fragment>
@@ -65,14 +65,14 @@ const LineView = defineComponent({
             {defaultContent}
           </Layer>
           <Layer {...activeListeners}>
-            <ActivePoints
+            {!props.hide && <ActivePoints
               points={lineData.value ?? []}
               mainColor={attrs.stroke ?? props.stroke!}
               itemDataKey={props.dataKey}
               activeDot={props.activeDot}
               isAnimationActive={props.isAnimationActive}
               v-slots={{ activeDot: slots.activeDot }}
-            />
+            />}
           </Layer>
         </Fragment>
       )

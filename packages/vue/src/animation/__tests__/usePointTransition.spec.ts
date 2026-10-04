@@ -60,3 +60,23 @@ it('sweeps a path out when its data empties and back in when it returns', async 
   expect(display.points.value.map(point => point.y)).toEqual([30, 40])
   scope.stop()
 })
+
+it('folds a hidden series with a baseline onto it', async () => {
+  const hidden = shallowRef(false)
+  const scope = effectScope()
+  const display = scope.run(() => usePointTransition(() => [{ x: 40, y: 10 }, { x: 80, y: 20 }], {
+    key: (_point, index) => index,
+    baseline: () => 100,
+    hidden: () => hidden.value,
+    isActive: () => true,
+    transition: () => ({ duration: 1, ease: 'linear' }),
+    onStart: () => {},
+    onEnd: () => {},
+  }))!
+  clock.finish()
+  hidden.value = true
+  await nextTick()
+  clock.update(0.5)
+  expect(display.points.value.map(point => point.y)).toEqual([55, 60])
+  scope.stop()
+})

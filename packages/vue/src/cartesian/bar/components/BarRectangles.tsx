@@ -57,7 +57,8 @@ export const BarRectangles = defineComponent({
       : { ...bar, x: (bar.x ?? 0) + by }
 
     const { items, isAnimating: transitioning } = useKeyedTransition<IndexedBar>(
-      () => barData.value?.map((bar, index) => ({ bar, index })),
+      // A series hidden from the legend lets its bars leave instead of vanishing.
+      () => props.hide ? [] : barData.value?.map((bar, index) => ({ bar, index })),
       {
         key: ({ bar, index }) => {
           const dataKey = categoryAxis.value?.dataKey

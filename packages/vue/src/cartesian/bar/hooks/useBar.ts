@@ -40,7 +40,8 @@ export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props
   const rects = useAppSelector(state => selectBarRectangles(state, props.xAxisId, props.yAxisId, isPanorama, barSettings.value))
 
   const shouldRender = computed(() => {
-    return (layout.value === 'vertical' || layout.value === 'horizontal') && !props.hide
+    // A hidden bar stays mounted so its bars can leave; it draws nothing once they have.
+    return layout.value === 'vertical' || layout.value === 'horizontal'
   })
 
   const clipPathId = useChartId('v-charts-bar')
