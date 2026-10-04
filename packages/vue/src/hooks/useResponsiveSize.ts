@@ -4,6 +4,7 @@ import { useRoundedSize } from '@/hooks/useRoundedSize'
 import type { RoundedSize } from '@/hooks/useRoundedSize'
 import { useInitialDimension } from '@/container/useSizeContext'
 import { validateWidthHeight } from '@/utils'
+import { provideChartSize } from '@/animation/renderPhase'
 
 export const chartSizeProps = {
   width: { type: Number },
@@ -40,6 +41,8 @@ export function useResponsiveSize(props: ChartSizeProps) {
   const effectiveWidth = computed(() => fixedWidth.value ?? (measured.value ? size.value.width : initial.value.width))
   const effectiveHeight = computed(() => fixedHeight.value ?? (measured.value ? size.value.height : initial.value.height))
   const hasValidSize = computed(() => validateWidthHeight({ width: effectiveWidth.value, height: effectiveHeight.value }))
+  // The first measurement replaces the initial size; it is not a resize the user sees.
+  provideChartSize(() => !isResponsive.value || measured.value ? `${effectiveWidth.value}x${effectiveHeight.value}` : undefined)
   /** Style of the measured box: fixed dimensions in px, the others fill the parent or follow `aspect`. */
   const boxStyle = computed<CSSProperties>(() => ({
     position: 'relative',

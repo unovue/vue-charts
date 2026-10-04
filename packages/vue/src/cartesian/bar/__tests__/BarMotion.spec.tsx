@@ -4,11 +4,12 @@ import { nextTick, ref } from 'vue'
 import { Bar, BarChart, XAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0 }))
+const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0, runs: 0 }))
 vi.mock('motion-v', async original => ({
   ...await original<typeof import('motion-v')>(),
   animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void }) => {
     if (typeof from === 'number') {
+      clock.runs++
       clock.update = options.onUpdate
       clock.to = to
     }
@@ -62,4 +63,24 @@ it('lets the bars of a series hidden from the legend collapse instead of vanishi
   clock.update(clock.to / 8)
   await nextTick()
   expect(bars()).toHaveLength(2)
+})
+
+it('follows a resize at once instead of trailing behind the box', async () => {
+  const width = ref(400)
+  const { container } = render(() => (
+    <BarChart width={width.value} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+      <XAxis dataKey="name" />
+      <Bar dataKey="value" />
+    </BarChart>
+  ))
+  await nextTick()
+  clock.update(clock.to)
+  await nextTick()
+  const runs = clock.runs
+  width.value = 200
+  await nextTick()
+  await nextTick()
+  expect(clock.runs).toBe(runs)
+  const right = Math.max(...[...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => Number(path.getAttribute('x')) + Number(path.getAttribute('width'))))
+  expect(right).toBeLessThanOrEqual(200)
 })

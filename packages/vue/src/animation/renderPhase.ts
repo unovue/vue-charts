@@ -1,8 +1,22 @@
 import type { InjectionKey, Ref } from 'vue'
 import { Global } from '@/utils/Global'
-import { computed, getCurrentInstance, inject, onMounted, provide, ref, ssrContextKey } from 'vue'
+import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, provide, ref, ssrContextKey } from 'vue'
 
 const renderPhaseKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-render-phase')
+const chartSizeKey: InjectionKey<() => string | undefined> = Symbol('v-charts-size')
+
+/**
+ * Called by the chart root with its settled size (undefined until a responsive chart has measured
+ * its box). Motion uses it to tell a resize from a data change.
+ */
+export function provideChartSize(size: () => string | undefined) {
+  provide(chartSizeKey, size)
+}
+
+/** The chart's settled size, as an opaque string; changes only when the chart is resized. */
+export function useChartSize(): () => string | undefined {
+  return hasInjectionContext() ? inject(chartSizeKey, () => undefined) : () => undefined
+}
 
 /** Vue's server renderer provides an SSR context to the app; a client app has none. */
 function isServerRender(): boolean {
