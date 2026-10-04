@@ -235,7 +235,8 @@ export const RadialBar = defineComponent({
     const legendPayload = useAppSelector(state =>
       selectRadialBarLegendPayload(state, props.legendType),
     )
-    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
+    // Rows without their own fill are drawn in the series colour; their legend icons match.
+    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
