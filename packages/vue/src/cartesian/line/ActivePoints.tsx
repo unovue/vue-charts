@@ -3,6 +3,7 @@ import type { PropType, SlotsType, VNode } from 'vue'
 import type { DataKey, VuePropsToType } from '@/types'
 import { useAppSelector } from '@/state/hooks'
 import { selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
+import type { LinePointItem } from './type'
 import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
 import { Dot } from '@/shape/Dot'
@@ -25,15 +26,17 @@ const ActivePointsVueProps = {
 
 export type ActivePointsProps = VuePropsToType<typeof ActivePointsVueProps>
 
-export type ActivePointSlotProps = ActivePointsProps & {
+export type ActivePointSlotProps = {
+  'index': number
+  'dataKey': DataKey<unknown>
   'cx': number
   'cy': number
-  'r': 4
+  'r': number
   'fill': string
   'stroke-width': number
   'stroke': string
-  'payload': any
-  'value': PointType
+  'payload': LinePointItem['payload']
+  'value'?: LinePointItem['value']
 }
 
 export type ActivePointsSlots = {

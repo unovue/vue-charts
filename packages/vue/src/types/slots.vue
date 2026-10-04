@@ -79,8 +79,8 @@ function text(value: string | undefined) { return value }
     <template #dot="{ cx, cy }">
       {{ number(cx) }} {{ number(cy) }}
     </template>
-    <template #activeDot="{ cx, cy }">
-      {{ number(cx) }} {{ number(cy) }}
+    <template #activeDot="{ cx, cy, value, index }">
+      {{ number(cx) }} {{ number(cy) }} {{ number(value) }} {{ number(index) }}
     </template>
     <template #shape="{ points }">
       {{ points?.[0]?.x }}
@@ -96,8 +96,8 @@ function text(value: string | undefined) { return value }
     <template #dot="{ cx, cy }">
       {{ number(cx) }} {{ number(cy) }}
     </template>
-    <template #activeDot="{ cx, cy }">
-      {{ number(cx) }} {{ number(cy) }}
+    <template #activeDot="{ cx, cy, value, index }">
+      {{ number(cx) }} {{ number(cy) }} {{ Array.isArray(value) ? number(value[0]) : number(value) }} {{ number(index) }}
     </template>
   </Area>
   <Pie data-key="value">
