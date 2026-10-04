@@ -274,6 +274,7 @@ if (scenario === 'stress') {
           :type="scenario === 'line' ? 'linear' : 'monotone'"
           :stroke="palette.a"
           :stroke-width="2"
+          label
         />
         <Line
           data-key="b"
@@ -295,6 +296,7 @@ if (scenario === 'stress') {
           :stroke="palette.a"
           :fill-opacity="0.3"
           dot
+          label
         />
         <Area
           data-key="b"
@@ -368,6 +370,7 @@ if (scenario === 'stress') {
         />
         <Scatter
           :data="scatterRows"
+          label
           :fill="palette.a"
         />
       </ScatterChart>
@@ -395,6 +398,7 @@ if (scenario === 'stress') {
         <PolarGrid /><PolarAngleAxis data-key="name" /><PolarRadiusAxis />
         <Radar
           data-key="a"
+          label
           :fill="palette.a"
           :fill-opacity="0.4"
           :stroke="palette.a"
@@ -417,6 +421,7 @@ if (scenario === 'stress') {
         <RadialBar
           data-key="a"
           :fill="palette.a"
+          label
           background
         />
         <Legend />

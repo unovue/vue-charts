@@ -14,8 +14,9 @@ import { selectRadarPoints } from '@/state/selectors/radarSelectors'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
 import { ActivePoints } from '@/cartesian/line/ActivePoints'
@@ -99,7 +100,7 @@ const RadarView = defineComponent({
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })
     const centre = (point: RadarPoint): RadarPoint => ({ ...point, x: point.cx ?? 0, y: point.cy ?? 0 })
-    const { items, isAnimating } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
+    const { items } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
       key: ({ point }, index) => point.name ?? index,
       interpolate: (from, to, t) => ({ point: mix(from.point, to.point, t), baseline: from.baseline && to.baseline ? mix(from.baseline, to.baseline, t) : to.baseline }),
       enterFrom: to => ({ point: centre(to.point), baseline: to.baseline && centre(to.baseline) }),
@@ -112,20 +113,25 @@ const RadarView = defineComponent({
 
     })
 
+    // Labels ride along with the points as drawn, show the new values at once and fade with
+    // points that enter or leave.
     provideCartesianLabelListData(computed(() => {
-      if (props.isAnimationActive && isAnimating.value)
+      if (items.value.length === 0)
         return undefined
-      const data = radarPoints.value
-      if (!data)
-        return undefined
-      return data.points.map(point => ({
-        x: point.x,
-        y: point.y,
-        width: 0,
-        height: 0,
-        value: point.value ?? '',
-        payload: point.payload,
-      }))
+      return items.value.map((item) => {
+        const point = item.value.point
+        const opacity = labelOpacity(item)
+        return {
+          x: point.x,
+          y: point.y,
+          width: 0,
+          height: 0,
+          value: point.value ?? '',
+          payload: point.payload,
+          key: item.key,
+          ...(opacity != null ? { opacity } : {}),
+        }
+      })
     }))
 
     const seriesListeners = useSeriesPointEvents<RadarPoint>(emit, () => props.dataKey, () => radarPoints.value?.points ?? [])
@@ -241,8 +247,8 @@ const RadarView = defineComponent({
       )
       const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
-      const labelEl = !isAnimating.value && props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} animate={props.isAnimationActive !== false} />
+      const labelEl = props.label
+        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
         : null
 
       return (

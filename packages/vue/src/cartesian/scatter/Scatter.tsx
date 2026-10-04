@@ -14,13 +14,14 @@ import type { SymbolType, SymbolsProps } from '@/shape/Symbols'
 import { Curve } from '@/shape/Curve'
 import type { CurveType } from '@/shape/Curve'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 import type { DataKey } from '@/types'
 import type { TooltipType } from '@/types/tooltip'
 import type { ScatterPointItem } from '@/types/common'
 import type { ErrorBarDirection } from '@/types/bar'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { getLinearRegression } from '@/utils/getLinearRegression'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
@@ -246,20 +247,27 @@ const ScatterView = defineComponent({
       return (
         <Fragment>
           {symbolsContent}
-          {props.label && !display.isAnimating.value && (() => {
-            const labelData = data.map(point => ({
-              x: point.cx ?? 0,
-              y: point.cy ?? 0,
-              width: 0,
-              height: 0,
-              value: undefined,
-              payload: point.payload,
-            }))
+          {props.label && (() => {
+            // Labels ride along with the points as drawn and fade with points that enter or leave.
+            const labelData = display.items.value.map((item) => {
+              const point = item.value
+              const opacity = labelOpacity(item)
+              return {
+                x: point.cx ?? 0,
+                y: point.cy ?? 0,
+                width: 0,
+                height: 0,
+                value: undefined,
+                payload: point.payload,
+                key: item.key,
+                ...(opacity != null ? { opacity } : {}),
+              }
+            })
             return (
               <LabelList
                 {...(typeof props.label === 'object' ? props.label : {})}
                 data={labelData}
-                animate={props.isAnimationActive !== false}
+
               />
             )
           })()}

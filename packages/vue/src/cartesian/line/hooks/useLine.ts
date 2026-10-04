@@ -3,7 +3,7 @@ import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartName } from '@/state/selectors/selectors'
 import type { LinePointItem, LinePropsInternal } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, inject, provide } from 'vue'
+import { computed, inject, provide, shallowRef } from 'vue'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectLinePoints } from '@/state/selectors/lineSelectors'
@@ -28,6 +28,8 @@ export interface LineContext {
   shapeSlot?: (props: any) => any
   dotSlot?: (props: any) => any
   labelSlot?: (props: any) => any
+  /** The labels as drawn on this frame; LabelList children read them. */
+  labelData: ShallowRef<readonly any[] | undefined>
 }
 
 // Injection Key
@@ -95,6 +97,7 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
     shapeSlot,
     dotSlot,
     labelSlot,
+    labelData: shallowRef(undefined),
   }
 
   // Provide context
@@ -107,5 +110,6 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
     points: lineContext.points,
     clipPathId,
     isAnimating,
+    labelData: lineContext.labelData,
   }
 }

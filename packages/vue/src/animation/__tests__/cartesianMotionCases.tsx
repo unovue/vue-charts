@@ -174,14 +174,17 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
       expect(view.start).toHaveBeenCalledTimes(2)
       expect(view.end).toHaveBeenCalledTimes(2)
     })
-    it('gates labels until geometry settles and fades them once', async () => {
+    it('keeps labels on screen while the geometry moves', async () => {
       const view = setup(true, { label: true })
       await nextTick()
-      expect(view.container.querySelector('.v-charts-label-list')).toBeNull()
       await frame()
       await nextTick()
+      view.rows.value = initial.map(row => ({ ...row, value: 90, x: 90 }))
+      await nextTick()
+      await frame(0.25)
+      await nextTick()
       expect(view.container.querySelector('.v-charts-label-list')).not.toBeNull()
-      expect(clock.fades).toBe(1)
+      expect(clock.fades).toBe(0)
     })
     it('skips label opacity motion under reduced motion', async () => {
       clock.reduced = true

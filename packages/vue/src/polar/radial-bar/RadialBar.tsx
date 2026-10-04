@@ -13,8 +13,9 @@ import { selectRadialBarLegendPayload, selectRadialBarSectors } from '@/state/se
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { interpolate } from '@/utils/data-utils'
 import { RadialBarVueProps } from './type'
@@ -73,7 +74,7 @@ const RadialBarView = defineComponent({
     })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
-    const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
+    const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.payload?.name ?? index,
       interpolate: (from, to, t) => ({
         ...to,
@@ -91,26 +92,31 @@ const RadialBarView = defineComponent({
 
     })
 
+    // Labels ride along with the bars as drawn, show the new values at once and fade with bars
+    // that enter or leave.
     provideCartesianLabelListData(computed(() => {
-      if (props.isAnimationActive && isAnimating.value)
-        return undefined
-      const data = sectors.value
-      if (!data)
+      if (items.value.length === 0)
         return undefined
       const defaultFill = props.fill
-      return data.map(sector => ({
-        value: sector.value ?? '',
-        payload: sector.payload,
-        parentViewBox: undefined,
-        fill: (sector as any).fill ?? defaultFill,
-        cx: sector.cx,
-        cy: sector.cy,
-        innerRadius: sector.innerRadius,
-        outerRadius: sector.outerRadius,
-        startAngle: sector.startAngle,
-        endAngle: sector.endAngle,
-        clockWise: false,
-      }))
+      return items.value.map((item) => {
+        const sector = item.value
+        const opacity = labelOpacity(item)
+        return {
+          key: item.key,
+          ...(opacity != null ? { opacity } : {}),
+          value: sector.value ?? '',
+          payload: sector.payload,
+          parentViewBox: undefined,
+          fill: (sector as any).fill ?? defaultFill,
+          cx: sector.cx,
+          cy: sector.cy,
+          innerRadius: sector.innerRadius,
+          outerRadius: sector.outerRadius,
+          startAngle: sector.startAngle,
+          endAngle: sector.endAngle,
+          clockWise: false,
+        }
+      })
     }))
 
     const renderSectors = (sectorData: RadialBarDataItem[]) => {
@@ -195,10 +201,10 @@ const RadialBarView = defineComponent({
       if (data.length === 0)
         return null
 
-      const labelEl = !isAnimating.value && props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} animate={props.isAnimationActive !== false} />
+      const labelEl = props.label
+        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
         : null
-      const slotChildren = !isAnimating.value ? slots.default?.() : null
+      const slotChildren = slots.default?.()
 
       return (
         <Fragment>

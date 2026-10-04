@@ -10,7 +10,7 @@ import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
 import { getValueByDataKey } from '@/utils/chart'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
-import { FadeIn } from '@/animation/FadeIn'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
@@ -90,25 +90,29 @@ const FunnelView = defineComponent({
       })),
     })
 
-    // Provide label list data for LabelList children — defer during animation
+    // LabelList children ride along with the trapezoids as drawn, show the new values at once
+    // and fade with trapezoids that enter or leave.
     provideCartesianLabelListData(computed(() => {
-      if (props.isAnimationActive && isAnimating.value)
+      if (items.value.length === 0)
         return undefined
-      const trapList = trapezoids.value
-      if (trapList.length === 0)
-        return undefined
-      return trapList.map((trap: any) => ({
-        x: trap.x,
-        y: trap.y,
-        width: Math.max(trap.upperWidth, trap.lowerWidth),
-        height: trap.height,
-        value: trap.value ?? trap.val ?? '',
-        payload: trap.payload,
-        dataKey: props.dataKey,
-        inactive: props.hide,
-        parentViewBox: trap.parentViewBox,
-        fill: trap.fill ?? props.fill,
-      }))
+      return items.value.map((item) => {
+        const trap = item.value as any
+        const opacity = labelOpacity(item)
+        return {
+          x: trap.x,
+          y: trap.y,
+          width: Math.max(trap.upperWidth, trap.lowerWidth),
+          height: trap.height,
+          value: trap.value ?? trap.val ?? '',
+          payload: trap.payload,
+          dataKey: props.dataKey,
+          inactive: props.hide,
+          parentViewBox: trap.parentViewBox,
+          fill: trap.fill ?? props.fill,
+          key: item.key,
+          ...(opacity != null ? { opacity } : {}),
+        }
+      })
     }))
 
     function handleTrapezoidEnter(trap: FunnelTrapezoidItem, index: number) {
@@ -180,7 +184,7 @@ const FunnelView = defineComponent({
               </g>
             )
           })}
-          <FadeIn isActive={props.isAnimationActive && !isAnimating.value}>{nonCellContent}</FadeIn>
+          {nonCellContent}
         </Layer>
       )
     }

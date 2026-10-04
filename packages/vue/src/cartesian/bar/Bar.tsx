@@ -15,7 +15,7 @@ import { BarRectangles } from '@/cartesian/bar/components/BarRectangles'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 import type { ErrorBarDataItem, ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 import type { BarRectangleItem } from '@/types/bar'
 import { getValueByDataKey } from '@/utils/chart'
@@ -118,7 +118,7 @@ const BarView = defineComponent({
             <LabelList
               {...(typeof props.label === 'object' ? props.label : {})}
               data={labelListData.value}
-              animate={false}
+
               v-slots={{ label: slots.label }}
             />
           )}

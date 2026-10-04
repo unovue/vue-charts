@@ -13,6 +13,8 @@ export interface DisplayItem<T> {
   key: PropertyKey
   value: T
   phase: TransitionPhase
+  /** Eased progress of this item's phase in [0, 1]; absent once settled. */
+  progress?: number
 }
 
 export interface KeyedTransitionOptions<T> {
@@ -229,7 +231,7 @@ export function useKeyedTransition<T>(
     const render = (progressOf: (phase: TransitionPhase) => number) => {
       items.value = steps.map(({ key, from, to, phase }) => {
         const t = progressOf(phase)
-        return { key, phase, value: t >= 1 ? to : options.interpolate(from, to, t) }
+        return { key, phase, progress: t, value: t >= 1 ? to : options.interpolate(from, to, t) }
       })
     }
     const finish = () => {

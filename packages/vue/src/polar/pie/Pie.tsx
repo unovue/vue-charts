@@ -9,8 +9,8 @@ import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
@@ -72,7 +72,7 @@ const PieView = defineComponent({
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     let appeared = false
-    const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
+    const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.name ?? index,
       connected: true,
       interpolate: (from, to, t) => ({ ...to, startAngle: from.startAngle + (to.startAngle - from.startAngle) * t, endAngle: from.endAngle + (to.endAngle - from.endAngle) * t, innerRadius: from.innerRadius + (to.innerRadius - from.innerRadius) * t, outerRadius: from.outerRadius + (to.outerRadius - from.outerRadius) * t, paddingAngle: from.paddingAngle + (to.paddingAngle - from.paddingAngle) * t }),
@@ -133,12 +133,15 @@ const PieView = defineComponent({
       tooltip.mouseLeaveItem()
     }
 
-    function renderLabel(sector: PieSectorDataItem, index: number) {
-      const edgePoint = polarToCartesian(sector.cx, sector.cy, sector.outerRadius, sector.midAngle)
-      const pos = polarToCartesian(sector.cx, sector.cy, sector.outerRadius + LABEL_OFFSET, sector.midAngle)
+    // Labels ride along with the sectors as drawn (their angle follows the moving sector), show
+    // the new value at once and fade with sectors that enter or leave.
+    function renderLabel(sector: PieSectorDataItem, index: number, key: PropertyKey, opacity: number | undefined) {
+      const midAngle = (sector.startAngle + sector.endAngle) / 2
+      const edgePoint = polarToCartesian(sector.cx, sector.cy, sector.outerRadius, midAngle)
+      const pos = polarToCartesian(sector.cx, sector.cy, sector.outerRadius + LABEL_OFFSET, midAngle)
       const anchor = pos.x > sector.cx ? 'start' : pos.x < sector.cx ? 'end' : 'middle'
       return (
-        <g key={`label-${index}`}>
+        <g key={`label-${String(key)}`} opacity={opacity}>
           {props.labelLine && (
             <line
               x1={edgePoint.x}
@@ -150,7 +153,7 @@ const PieView = defineComponent({
             />
           )}
           {slots.label
-            ? slots.label({ ...sector, index })
+            ? slots.label({ ...sector, midAngle, index })
             : (
                 <text
                   x={pos.x}
@@ -215,7 +218,7 @@ const PieView = defineComponent({
             )
           })}
           {filterOutCells(children)}
-          {!isAnimating.value && (props.label || slots.label) && <FadeIn isActive={props.isAnimationActive}>{sectorList.map(({ value }, index) => renderLabel(value, index))}</FadeIn>}
+          {(props.label || slots.label) && sectorList.map((item, index) => renderLabel(item.value, index, item.key, labelOpacity(item)))}
         </Layer>
       )
     }

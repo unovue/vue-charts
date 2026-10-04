@@ -1,7 +1,6 @@
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
-import { defineComponent, h } from 'vue'
+import { defineComponent } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
-import { FadeIn } from '@/animation/FadeIn'
 import { Label } from '@/components/label/Label'
 import type { LabelListVueProps } from '@/components/label/types'
 import { parseViewBox } from '@/components/label/utils'
@@ -15,7 +14,6 @@ export const LabelListView = defineComponent({
   name: 'LabelListView',
   inheritAttrs: true,
   props: {
-    fade: Boolean,
     item: { type: Object as PropType<ExtractPropTypes<typeof LabelListVueProps>>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
@@ -24,19 +22,14 @@ export const LabelListView = defineComponent({
     const labelLayerRef = useLabelLayerRef(null)
     const contextData = useCartesianLabelListData(null)
 
-    // Series withhold their labels while they animate. Labels that arrive after mount fade in;
-    // labels present from the start (no animation, server render) show at once.
-    let arrivedLate = false
     return () => {
       // Read per render: series pass a new item object whenever their labels change.
       const props = view.item
       const attrs = view.svgAttrs
       const { dataKey, valueAccessor, clockWise, id, ...others } = props
       const data = props.data ?? contextData?.value
-      if (!data || !data.length) {
-        arrivedLate = true
+      if (!data || !data.length)
         return null
-      }
 
       const content = (
         <Layer class="v-charts-label-list">
@@ -74,7 +67,7 @@ export const LabelListView = defineComponent({
         </Layer>
       )
 
-      return teleport(view.fade || arrivedLate ? h(FadeIn, { isActive: arrivedLate || view.fade }, () => content) : content, labelLayerRef)
+      return teleport(content, labelLayerRef)
     }
   },
 })

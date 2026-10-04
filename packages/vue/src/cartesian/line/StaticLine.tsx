@@ -1,7 +1,7 @@
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { lineEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
-import { Fragment, defineComponent, watch } from 'vue'
+import { Fragment, computed, defineComponent, watch } from 'vue'
 import { useOffset } from '@/context/chartLayoutContext'
 import { Layer } from '@/container/Layer'
 import type { Point } from '@/shape/Curve'
@@ -9,8 +9,9 @@ import { Curve } from '@/shape/Curve'
 import type { LinePointItem } from './type'
 import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 import { usePointTransition } from '@/animation/usePointTransition'
+import { labelOpacity, sweptLabels } from '@/animation/ridingLabels'
 import { SweepClip } from '@/animation/SweepClip'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
@@ -71,7 +72,7 @@ export const StaticLine = defineComponent({
   name: 'StaticLine',
   setup() {
     const emit = lineEvents.use()
-    const { points, clipPathId, layout, attrs, lineData, props, isAnimating, needClip, shapeSlot, labelSlot } = useLineContext()
+    const { points, clipPathId, layout, attrs, props, isAnimating, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
     const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const categoryAxis = useAppSelector(state => layout.value === 'vertical'
@@ -90,6 +91,17 @@ export const StaticLine = defineComponent({
       onEnd: () => emit('animation-end'),
     })
     watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
+    const sweep = computed(() => layout.value === 'vertical'
+      ? { start: offset.value.top - 8, size: offset.value.height + 16, vertical: true }
+      : { start: offset.value.left - 8, size: offset.value.width + 16, vertical: false })
+    // Labels ride along with the points as drawn, appear as the sweep reaches them and fade
+    // with points that enter or leave.
+    watch(() => sweptLabels(display.items.value.map((item) => {
+      const opacity = labelOpacity(item)
+      return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
+    }), display.reveal.value, sweep.value), (value) => {
+      labelData.value = value
+    }, { immediate: true, flush: 'sync' })
     return () => {
       const curveProps = {
         ...attrs,
@@ -123,12 +135,12 @@ export const StaticLine = defineComponent({
             </Layer>
             <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} />
           </g>
-          {!isAnimating.value && !props.hide && (props.label || labelSlot) && (
+          {(props.label || labelSlot) && (
             <LabelList
               {...labelProps}
-              data={lineData.value ?? []}
+              data={labelData.value ?? []}
               dataKey={props.dataKey}
-              animate={props.isAnimationActive !== false}
+
               v-slots={labelSlot ? { label: labelSlot } : undefined}
             />
           )}

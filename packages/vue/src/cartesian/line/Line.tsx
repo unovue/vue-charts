@@ -3,7 +3,7 @@ import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { lineEvents } from '@/events/itemEvents'
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
-import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { LineProps } from './type'
 import { LineVueProps } from './type'
@@ -38,13 +38,13 @@ const LineView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, needClip, clipPathId, lineData, points, isAnimating } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
+    const { shouldRender, needClip, clipPathId, lineData, points, labelData } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
     const activeListeners = useSeriesPointEvents(lineEvents.use(), () => props.dataKey, () => lineData.value ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 
-    // LabelList children show once the line has settled, like the series' own labels.
-    provideCartesianLabelListData(computed(() => isAnimating.value ? undefined : lineData.value as any))
+    // LabelList children ride along with the line, like the series' own labels.
+    provideCartesianLabelListData(labelData)
 
     return () => {
       if (!shouldRender.value) {

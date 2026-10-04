@@ -1,7 +1,7 @@
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { areaEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
-import { Fragment, defineComponent, watch } from 'vue'
+import { Fragment, computed, defineComponent, watch } from 'vue'
 import { Layer } from '@/container/Layer'
 import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
@@ -10,11 +10,12 @@ import { getValueByDataKey, isClipDot } from '@/utils/chart'
 import { Dot } from '@/shape/Dot'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
+import { labelOpacity, sweptLabels } from '@/animation/ridingLabels'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
 import { useAreaContext } from './hooks/useArea'
 import { useOffset } from '@/context/chartLayoutContext'
-import { AnimatedLabelList as LabelList } from '@/components/label/AnimatedLabelList'
+import { LabelList } from '@/components/label/LabelList'
 
 // 简化的 Dots 组件 - 使用 context
 export const Dots = defineComponent({
@@ -97,6 +98,15 @@ export const StaticArea = defineComponent({
     const currentPoints = display.points
     const currentBaseLine = display.baseline
     watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
+    const sweep = computed(() => layout.value === 'vertical'
+      ? { start: offset.value.top - 8, size: offset.value.height + 16, vertical: true }
+      : { start: offset.value.left - 8, size: offset.value.width + 16, vertical: false })
+    // Labels ride along with the points as drawn and fade with points that enter or leave; a
+    // series hidden from the legend fades its labels while it folds onto its baseline.
+    const labels = computed(() => sweptLabels(display.items.value.map((item) => {
+      const opacity = props.hide ? 1 - (item.progress ?? 1) : labelOpacity(item)
+      return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
+    }), display.reveal.value, sweep.value))
 
     return () => {
       // Folded flat, a hidden area would still draw its stroke along the baseline.
@@ -112,7 +122,7 @@ export const StaticArea = defineComponent({
       }
       const sweepId = `animationClipPath-${clipPathId.value}`
       const isRange = areaData.value?.isRange
-      const showLabels = !isAnimating.value && !props.hide && (props.label || slots.label)
+      const showLabels = props.label || slots.label
       const labelProps = typeof props.label === 'object' ? props.label : {}
       return (
         <Fragment>
@@ -170,7 +180,7 @@ export const StaticArea = defineComponent({
           </g>
           {
             showLabels && (
-              <LabelList {...labelProps} data={areaData.value?.points ?? []} dataKey={props.dataKey} animate={props.isAnimationActive !== false} v-slots={{ label: slots.label }} />
+              <LabelList {...labelProps} data={labels.value} dataKey={props.dataKey} v-slots={{ label: slots.label }} />
             )
           }
         </Fragment>
