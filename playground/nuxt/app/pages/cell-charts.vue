@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarHeatmap, Tooltip, Tracker } from 'vccs'
+import { CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from 'vccs'
 import { Button } from '@/components/ui/button'
 
 const statuses = ['up', 'up', 'up', 'up', 'up', 'up', 'up', 'up', 'up', 'degraded', 'down', 'maintenance'] as const
@@ -66,6 +66,26 @@ function showYear(next: number) {
 function reshuffle() {
   commits.value = contributions(year.value)
 }
+
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+function traffic() {
+  return weekdays.flatMap((day, d) => Array.from({ length: 24 }, (_, hour) => ({
+    day,
+    hour,
+    visits: Math.round((Math.sin((hour - 7) / 24 * Math.PI * 2) + 1.1) * (d < 5 ? 60 : 25) * (0.7 + random() * 0.6)),
+  })))
+}
+const visits = ref(traffic())
+
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+function cohorts() {
+  return months.map((cohort, i) => {
+    const size = 800 + Math.round(random() * 600)
+    return { cohort, values: Array.from({ length: months.length - i }, (_, period) => Math.round(size * (period ? (0.55 + random() * 0.1) * 0.85 ** period : 1))) }
+  })
+}
+const retention = ref(cohorts())
+const cohortMode = ref<'percent' | 'count'>('percent')
 </script>
 
 <template>
@@ -169,6 +189,57 @@ function reshuffle() {
           @click="weekStart = weekStart ? 0 : 1"
         >
           Week starts {{ weekStart ? 'Monday' : 'Sunday' }}
+        </Button>
+      </div>
+    </section>
+
+    <section class="rounded-xl border p-6 space-y-4">
+      <h2 class="font-medium">
+        Visits by weekday and hour
+      </h2>
+      <Heatmap
+        :data="visits"
+        x-key="hour"
+        y-key="day"
+        data-key="visits"
+        :x-label-format="h => `${h}h`"
+      >
+        <Tooltip :cursor="false" />
+      </Heatmap>
+      <Button
+        size="sm"
+        variant="outline"
+        @click="visits = traffic()"
+      >
+        New week
+      </Button>
+    </section>
+
+    <section class="rounded-xl border p-6 space-y-4">
+      <h2 class="font-medium">
+        Retention by signup month
+      </h2>
+      <CohortChart
+        :data="retention"
+        :mode="cohortMode"
+        :period-label="i => `Month ${i}`"
+      >
+        <Tooltip :cursor="false" />
+      </CohortChart>
+      <div class="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          @click="retention = cohorts()"
+        >
+          New cohorts
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          @click="cohortMode = cohortMode === 'percent' ? 'count' : 'percent'"
+        >
+          Show {{ cohortMode === 'percent' ? 'counts' : 'percent' }}
         </Button>
       </div>
     </section>

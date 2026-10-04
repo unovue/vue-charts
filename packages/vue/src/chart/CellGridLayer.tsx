@@ -358,6 +358,18 @@ export const CellGridLayer = defineComponent({
                   {slots.cell
                     ? slots.cell({ cell, index, active: isActive, x: cell.x, y: cell.y, width: cell.width, height: cell.height, fill: cell.fill, radius })
                     : <rect class="v-charts-cell-rect" x={cell.x} y={cell.y} width={cell.width} height={cell.height} rx={radius} style={{ fill: cell.fill, transition: fillTransition }} />}
+                  {cell.text && !slots.cell && cell.width >= cell.text.length * 6.2 + 4 && cell.height >= 13 && (
+                    <text
+                      class="v-charts-cell-text"
+                      x={cell.x + cell.width / 2}
+                      y={cell.y + cell.height / 2}
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      style={{ fill: cell.strong ? 'var(--v-charts-background, #fff)' : 'var(--v-charts-text, #666)', fontSize: '11px', fontVariantNumeric: 'tabular-nums', pointerEvents: 'none' }}
+                    >
+                      {cell.text}
+                    </text>
+                  )}
                   {half > 0 && <rect x={cell.x - half} y={cell.y - half} width={cell.width + props.gap} height={cell.height + props.gap} fill="transparent" />}
                 </g>
               )

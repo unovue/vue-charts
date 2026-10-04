@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { CalendarHeatmap, Tooltip, Tracker } from '@/index'
+import { CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { levelOf, toDayNumber } from '../cellGridUtils'
 
@@ -196,6 +196,57 @@ describe('<CalendarHeatmap />', () => {
     for (let i = 1; i < xs.length; i++)
       expect(xs[i] - xs[i - 1]).toBeGreaterThanOrEqual(step * 2.9)
     expect(container.querySelector('.v-charts-calendar-months text')!.textContent).toBe('Feb')
+  })
+})
+
+describe('<Heatmap />', () => {
+  const cellsOf = (container: Element) => Array.from(container.querySelectorAll<SVGGElement>('.v-charts-cell'), cell => [cell.getAttribute('aria-label'), cell.querySelector('rect')!.style.fill])
+
+  it('orders rows and columns by domain, sums duplicates and mixes colors by value', () => {
+    const { container } = render(() => (
+      <Heatmap
+        width={300}
+        height={100}
+        isAnimationActive={false}
+        color="blue"
+        emptyColor="white"
+        yDomain={['Tue', 'Mon']}
+        data={[{ x: 'am', y: 'Mon', value: 2 }, { x: 'pm', y: 'Mon', value: 1 }, { x: 'am', y: 'Tue', value: 1 }, { x: 'am', y: 'Tue', value: 1 }]}
+      />
+    ))
+    expect(cellsOf(container)).toEqual([
+      ['Tue, am: 2', 'blue'],
+      ['Tue, pm', 'white'],
+      ['Mon, am: 2', 'blue'],
+      ['Mon, pm: 1', 'color-mix(in oklab, blue 50%, white)'],
+    ])
+  })
+
+  it('thins column labels so they never overlap', () => {
+    const data = Array.from({ length: 24 }, (_, hour) => ({ x: `${hour}:00`, y: 'Mon', value: hour }))
+    const { container } = render(() => <Heatmap width={300} height={60} isAnimationActive={false} data={data} />)
+    const xs = Array.from(container.querySelectorAll('.v-charts-heatmap-x-labels text'), text => Number(text.getAttribute('x')))
+    expect(xs.length).toBeGreaterThan(1)
+    expect(xs.length).toBeLessThan(24)
+    for (let i = 1; i < xs.length; i++)
+      expect(xs[i] - xs[i - 1]).toBeGreaterThanOrEqual('23:00'.length * 6)
+  })
+})
+
+describe('<CohortChart />', () => {
+  it('shows each period as a share of the cohort size and leaves immature periods blank', () => {
+    const { container } = render(() => (
+      <CohortChart
+        width={400}
+        height={120}
+        isAnimationActive={false}
+        periodLabel={i => `M${i}`}
+        data={[{ cohort: 'Jan', values: [1200, 600, 300] }, { cohort: 'Feb', values: [800, 200] }]}
+      />
+    ))
+    const cells = Array.from(container.querySelectorAll('.v-charts-cell'), cell => cell.getAttribute('aria-label'))
+    expect(cells).toEqual(['Jan · 1,200, M0: 100%', 'Jan · 1,200, M1: 50%', 'Jan · 1,200, M2: 25%', 'Feb · 800, M0: 100%', 'Feb · 800, M1: 25%'])
+    expect(Array.from(container.querySelectorAll('.v-charts-cell-text'), text => text.textContent)).toEqual(['100%', '50%', '25%', '100%', '25%'])
   })
 })
 

@@ -14,6 +14,10 @@ export interface GridCell<P = unknown> {
   label: string
   /** Default tooltip value, e.g. "4" or "Operational". */
   value: string | number | null
+  /** Text drawn centered on the cell, e.g. "42%"; hidden when it does not fit. */
+  text?: string
+  /** Strong fill: the text is drawn light on it. */
+  strong?: boolean
   payload: P
 }
 
@@ -67,6 +71,16 @@ export function levelColors(color: string, empty: string, levels: number): strin
       return color
     return `color-mix(in oklab, ${color} ${Math.round(level / count * 100)}%, ${empty})`
   })
+}
+
+/** A continuous mix: ratio 0 is `empty`, 1 is `color`. */
+export function mixColor(color: string, empty: string, ratio: number): string {
+  const percent = Math.round(Math.min(1, Math.max(0, ratio)) * 100)
+  if (percent === 0)
+    return empty
+  if (percent === 100)
+    return color
+  return `color-mix(in oklab, ${color} ${percent}%, ${empty})`
 }
 
 /** Level 0 for zero or less, otherwise 1…levels in equal steps up to `max`. */
