@@ -70,7 +70,44 @@ type TypedComponent<Component extends ComponentConstructor, Row, Slots = Instanc
     }
   }
 
-const components = {
+// Keep component references in emitted declarations instead of expanding Vue internals.
+type RuntimeComponents = {
+  AreaChart: typeof AreaChart
+  BarChart: typeof BarChart
+  ComposedChart: typeof ComposedChart
+  FunnelChart: typeof FunnelChart
+  LineChart: typeof LineChart
+  PieChart: typeof PieChart
+  RadarChart: typeof RadarChart
+  RadialBarChart: typeof RadialBarChart
+  Sankey: typeof Sankey
+  ScatterChart: typeof ScatterChart
+  SunburstChart: typeof SunburstChart
+  Treemap: typeof Treemap
+  Area: typeof Area
+  Bar: typeof Bar
+  Funnel: typeof Funnel
+  Line: typeof Line
+  Pie: typeof Pie
+  Radar: typeof Radar
+  RadialBar: typeof RadialBar
+  Scatter: typeof Scatter
+  XAxis: typeof XAxis
+  YAxis: typeof YAxis
+  ZAxis: typeof ZAxis
+  PolarAngleAxis: typeof PolarAngleAxis
+  PolarRadiusAxis: typeof PolarRadiusAxis
+  Tooltip: typeof Tooltip
+  Legend: typeof Legend
+  Brush: typeof Brush
+  ReferenceLine: typeof ReferenceLine
+  ReferenceArea: typeof ReferenceArea
+  ReferenceDot: typeof ReferenceDot
+  LabelList: typeof LabelList
+  Cell: typeof Cell
+}
+
+const components: RuntimeComponents = {
   AreaChart,
   BarChart,
   ComposedChart,
