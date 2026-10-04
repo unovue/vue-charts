@@ -39,7 +39,7 @@ const FunnelView = defineComponent({
     const trapezoids = view.trapezoids
     const cellPropsRef = view.cellPropsRef
     const tooltip = useChartTooltip()
-    const { items, isAnimating } = useKeyedTransition(() => trapezoids.value, {
+    const { items, isAnimating } = useKeyedTransition(() => trapezoids.value.map((trap, index) => ({ ...trap, index })), {
       key: (trap, index) => getValueByDataKey(trap.payload, props.nameKey, index),
       interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, upperWidth: from.upperWidth + (to.upperWidth - from.upperWidth) * t, lowerWidth: from.lowerWidth + (to.lowerWidth - from.lowerWidth) * t, height: from.height + (to.height - from.height) * t }),
       enterFrom: to => ({ ...to, height: 0 }),
@@ -120,8 +120,8 @@ const FunnelView = defineComponent({
 
       return (
         <Layer class={['v-charts-funnel', props.class]}>
-          {items.value.map(({ key, value: trap }, i) => {
-            const cellProps = cells[i] ?? {}
+          {items.value.map(({ key, value: trap }) => {
+            const cellProps = cells[trap.index] ?? {}
             const trapFill = cellProps.fill ?? trap.payload?.fill ?? props.fill
             const trapStroke = cellProps.stroke ?? stroke
 
@@ -150,7 +150,7 @@ const FunnelView = defineComponent({
             return (
               <g
                 key={key}
-                onMouseenter={() => handleTrapezoidEnter(trap, i)}
+                onMouseenter={() => handleTrapezoidEnter(trap, trap.index)}
                 onMouseleave={handleTrapezoidLeave}
               >
                 {content}

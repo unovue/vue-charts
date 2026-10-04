@@ -13,6 +13,7 @@ import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
 import { ActivePoints } from '@/cartesian/line/ActivePoints'
 import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
@@ -63,6 +64,8 @@ const RadarViewProps = {
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   connectNulls: { type: Boolean, default: false },
   label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
+  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
@@ -90,6 +93,7 @@ const RadarView = defineComponent({
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef()
 
+    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
     const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })
     const centre = (point: RadarPoint): RadarPoint => ({ ...point, x: point.cx ?? 0, y: point.cy ?? 0 })
     const { items, isAnimating } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
@@ -100,6 +104,9 @@ const RadarView = defineComponent({
       connected: true,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+      onStart: callbacks.onStart,
+
     })
 
     provideCartesianLabelListData(computed(() => {

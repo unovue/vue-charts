@@ -169,10 +169,10 @@ const SankeyInner = defineComponent({
       onStart: callbacks.onStart,
 
     })
-    const displayNodes = computed(() => items.value.flatMap(({ value }) => value.kind === 'node' ? [value.node] : []))
+    const displayNodes = computed(() => items.value.flatMap(({ key, value }) => value.kind === 'node' ? [{ key, node: value.node }] : []))
     const displayLinks = computed(() => {
-      const byKey = new Map(displayNodes.value.map(node => [nodeKey(node), node]))
-      return items.value.flatMap(({ value }) => {
+      const byKey = new Map(displayNodes.value.map(({ node }) => [nodeKey(node), node]))
+      return items.value.flatMap(({ key, value }) => {
         if (value.kind !== 'link')
           return []
         const link = value.link
@@ -180,7 +180,7 @@ const SankeyInner = defineComponent({
         const target = byKey.get(nodeKey(link.target as SankeyLayoutNode))
         if (!source || !target)
           return []
-        return [Object.assign({}, link, { source, target, y0: (source.y0 ?? 0) + value.sourceFraction * ((source.y1 ?? 0) - (source.y0 ?? 0)), y1: (target.y0 ?? 0) + value.targetFraction * ((target.y1 ?? 0) - (target.y0 ?? 0)) })]
+        return [{ key, link: Object.assign({}, link, { source, target, y0: (source.y0 ?? 0) + value.sourceFraction * ((source.y1 ?? 0) - (source.y0 ?? 0)), y1: (target.y0 ?? 0) + value.targetFraction * ((target.y1 ?? 0) - (target.y0 ?? 0)) }) }]
       })
     })
 
@@ -292,7 +292,7 @@ const SankeyInner = defineComponent({
       props.onClick?.(link, 'link', e)
     }
 
-    function renderNode(node: SankeyLayoutNode, index: number, opacity: number) {
+    function renderNode(node: SankeyLayoutNode, index: number, opacity: number, key: PropertyKey) {
       const x = node.x0 ?? 0
       const y = node.y0 ?? 0
       const width = (node.x1 ?? 0) - x
@@ -310,7 +310,7 @@ const SankeyInner = defineComponent({
         }
         return (
           <g
-            key={`node:${nodeKey(node)}`}
+            key={key}
             class="v-charts-sankey-node"
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
@@ -324,7 +324,7 @@ const SankeyInner = defineComponent({
 
       return (
         <g
-          key={`node:${nodeKey(node)}`}
+          key={key}
           class="v-charts-sankey-node"
           style={{ opacity }}
           onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
@@ -343,7 +343,7 @@ const SankeyInner = defineComponent({
       )
     }
 
-    function renderLink(link: SankeyLayoutLink, index: number, opacity: number) {
+    function renderLink(link: SankeyLayoutLink, index: number, opacity: number, key: PropertyKey) {
       const d = linkPathGenerator(link) ?? ''
       const linkWidth = link.width ?? 0
 
@@ -357,7 +357,7 @@ const SankeyInner = defineComponent({
         }
         return (
           <g
-            key={`link:${linkKey(link)}`}
+            key={key}
             style={{ opacity }}
             onClick={(e: MouseEvent) => handleLinkClick(link, index, e)}
             onMouseenter={(e: MouseEvent) => handleLinkMouseEnter(link, index, e)}
@@ -370,7 +370,7 @@ const SankeyInner = defineComponent({
 
       return (
         <path
-          key={`link:${linkKey(link)}`}
+          key={key}
           class="v-charts-sankey-link"
           d={d}
           fill="none"
@@ -389,10 +389,10 @@ const SankeyInner = defineComponent({
       <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sankey">
           <g class="v-charts-sankey-links">
-            {displayLinks.value.map((link, i) => renderLink(link, link.index ?? i, 1))}
+            {displayLinks.value.map(({ key, link }, i) => renderLink(link, link.index ?? i, 1, key))}
           </g>
           <g class="v-charts-sankey-nodes">
-            {displayNodes.value.map((node, i) => renderNode(node, node.index ?? i, 1))}
+            {displayNodes.value.map(({ key, node }, i) => renderNode(node, node.index ?? i, 1, key))}
           </g>
         </Layer>
       </Surface>

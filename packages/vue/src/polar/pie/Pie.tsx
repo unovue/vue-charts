@@ -7,6 +7,7 @@ import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -69,8 +70,9 @@ const PieView = defineComponent({
       )
     })
 
+    const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
     let appeared = false
-    const { items, isAnimating } = useKeyedTransition(() => sectors.value, {
+    const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.name ?? index,
       connected: true,
       interpolate: (from, to, t) => ({ ...to, startAngle: from.startAngle + (to.startAngle - from.startAngle) * t, endAngle: from.endAngle + (to.endAngle - from.endAngle) * t, innerRadius: from.innerRadius + (to.innerRadius - from.innerRadius) * t, outerRadius: from.outerRadius + (to.outerRadius - from.outerRadius) * t, paddingAngle: from.paddingAngle + (to.paddingAngle - from.paddingAngle) * t }),
@@ -84,7 +86,10 @@ const PieView = defineComponent({
       },
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+
       onStart: () => {
+        callbacks.onStart()
         if (sectors.value?.length)
           appeared = true
       },
@@ -163,10 +168,10 @@ const PieView = defineComponent({
       const stroke = (attrs.stroke as string) ?? props.stroke
       return (
         <Layer class={['v-charts-pie', props.class]}>
-          {sectorList.map(({ key, value: sector }, i) => {
+          {sectorList.map(({ key, value: sector }) => {
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
-            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === i }
+            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === sector.index }
             const content = slots.shape
               ? slots.shape(shapeProps)
               : (
@@ -186,7 +191,7 @@ const PieView = defineComponent({
             return (
               <g
                 key={key}
-                onMouseenter={() => handleSectorEnter(sector, i)}
+                onMouseenter={() => handleSectorEnter(sector, sector.index)}
                 onMouseleave={handleSectorLeave}
               >
                 {content}

@@ -71,7 +71,7 @@ const RadialBarView = defineComponent({
     })
 
     const callbacks = useAnimationCallbacks(() => props.onAnimationStart?.(), () => props.onAnimationEnd?.())
-    const { items, isAnimating } = useKeyedTransition(() => sectors.value, {
+    const { items, isAnimating } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
       key: (sector, index) => sector.payload?.name ?? index,
       interpolate: (from, to, t) => ({
         ...to,
@@ -149,7 +149,7 @@ const RadialBarView = defineComponent({
             const sectorFill = (sector as any).fill ?? defaultFill
             const onMouseenter = () => {
               tooltip.setActiveMouseOverItemIndex({
-                activeIndex: String(i),
+                activeIndex: String(sector.index),
                 activeDataKey: props.dataKey,
               })
             }

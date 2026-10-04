@@ -23,6 +23,8 @@ export const PieVueProps = {
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   hide: { type: Boolean, default: false },
   activeIndex: { type: Number, default: -1 },
+  onAnimationStart: { type: Function as PropType<() => void>, default: undefined },
+  onAnimationEnd: { type: Function as PropType<() => void>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,

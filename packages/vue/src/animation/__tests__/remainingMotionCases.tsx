@@ -38,7 +38,9 @@ const initial = [{ name: 'B', value: 40 }, { name: 'C', value: 70 }]
 export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel' | 'treemap' | 'sankey') {
   function setup(active = true, override = false) {
     const rows = ref(initial)
-    const props = { isAnimationActive: active, transition: override ? { duration: 0.12, ease: 'linear' as const } : undefined }
+    const start = vi.fn()
+    const end = vi.fn()
+    const props = { onAnimationStart: start, onAnimationEnd: end, isAnimationActive: active, transition: override ? { duration: 0.12, ease: 'linear' as const } : undefined }
     const { container } = render(() => {
       switch (kind) {
         case 'pie': return <PieChart width={400} height={300}><Pie data={rows.value} dataKey="value" paddingAngle={4} {...props} v-slots={{ shape: (sector: { name: string, startAngle: number, endAngle: number, paddingAngle: number }) => <path data-name={sector.name} data-start={sector.startAngle} data-end={sector.endAngle} data-padding={sector.paddingAngle} d={`M${sector.startAngle},${sector.endAngle}`} /> }} /></PieChart>
@@ -61,7 +63,7 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       const shape = node.matches('circle,path') ? node : node.querySelector('path,rect')!
       return ['d', 'x', 'y', 'width', 'height', 'cx', 'cy'].map(attr => shape?.getAttribute(attr)).join('|')
     }
-    return { rows, container, nodes, geometry }
+    return { rows, container, nodes, geometry, start, end }
   }
   describe(`${kind} public keyed transitions`, () => {
     it('keeps DOM identity and screen geometry on prepend and reorder', async () => {
@@ -140,6 +142,19 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       expect(view.nodes().map(view.geometry)).not.toEqual(before)
       expect(clock.runs).toHaveLength(0)
     })
+    it('delivers one start and end callback per transition', async () => {
+      const view = setup()
+      await frame()
+      await nextTick()
+      expect(view.start).toHaveBeenCalledTimes(1)
+      expect(view.end).toHaveBeenCalledTimes(1)
+      view.rows.value = [{ name: 'B', value: 90 }, { name: 'C', value: 10 }]
+      await nextTick()
+      await frame()
+      await nextTick()
+      expect(view.start).toHaveBeenCalledTimes(2)
+      expect(view.end).toHaveBeenCalledTimes(2)
+    })
     it('uses the transition override for entrance and update', async () => {
       const view = setup(true, true)
       await nextTick()
@@ -149,6 +164,33 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       await nextTick()
       expect(clock.runs.at(-1)?.duration).toBe(0.12)
     })
+    if (kind === 'sankey') {
+      it('keeps links keyed and attached to displayed nodes through interruption and exit', async () => {
+        const view = setup()
+        await frame()
+        const links = Array.from(view.container.querySelectorAll('.v-charts-sankey-link'))
+        const oldPaths = links.map(link => link.getAttribute('d'))
+        view.rows.value = [{ name: 'A', value: 20 }, initial[1], initial[0]]
+        await nextTick()
+        links.forEach((link, index) => {
+          expect(view.container.contains(link)).toBe(true)
+          expect(link.getAttribute('d')).toBe(oldPaths[index])
+        })
+        await frame(0.15)
+        const midway = links.map(link => link.getAttribute('d'))
+        view.rows.value = [{ name: 'A', value: 90 }, initial[1], { name: 'B', value: 10 }]
+        await nextTick()
+        expect(links.map(link => link.getAttribute('d'))).toEqual(midway)
+        await frame()
+        view.rows.value = [initial[0]]
+        await nextTick()
+        expect(view.container.contains(links[1])).toBe(true)
+        await frame(0.5)
+        expect(links[1].getAttribute('stroke-width')).toBe('0')
+        await frame()
+        expect(view.container.contains(links[1])).toBe(false)
+      })
+    }
     if (kind === 'pie') {
       it('keeps the ring angle total through insert, exit, and interruption', async () => {
         const view = setup()
