@@ -37,9 +37,7 @@ describe('label', () => {
     return render(() => (
       <BarChart width={500} height={300} data={data}>
         <Bar dataKey="uv" isAnimationActive={false} />
-        <Label {...labelProps}>
-          {labelSlots}
-        </Label>
+        <Label {...labelProps} v-slots={labelSlots} />
       </BarChart>
     ))
   }
