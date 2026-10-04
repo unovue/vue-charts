@@ -6,7 +6,7 @@ import type {
   VuePropsToType,
   WithSVGProps,
 } from '@/types'
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ChartTransition } from '@/animation/motion'
 import type { AxisId } from '@/types/axis'
 import type { PropType } from 'vue'
 import type { LegendType } from '@/types/legend'
@@ -78,12 +78,10 @@ export const BarVueProps = {
   },
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
+  /** Overrides the default motion (see animation/motion.ts). */
   transition: {
-    type: Object as PropType<ValueAnimationTransition<number>>,
-    default: {
-      duration: 0.4,
-      ease: 'easeOut',
-    },
+    type: Object as PropType<ChartTransition>,
+    default: undefined,
   },
   needClip: { type: Boolean, default: false },
   label: {
