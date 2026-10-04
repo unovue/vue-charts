@@ -104,7 +104,7 @@ for (const kind of ['pie', 'treemap'] as const) {
 
 it('updates Sunburst hierarchy after field edits, push and replacement', async () => {
   const data = ref(reactive({ name: 'root', children: [{ name: 'A', value: 20 }, { name: 'B', value: 40 }] }))
-  const { container } = render(() => <SunburstChart width={500} height={300} data={data.value} />)
+  const { container } = render(() => <SunburstChart width={500} height={300} data={data.value} isAnimationActive={false} />)
   const sectors = () => container.querySelectorAll('.v-charts-sunburst-sector path')
   expect(sectors()).toHaveLength(2)
   const before = sectors()[0].getAttribute('d')

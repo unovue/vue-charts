@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { SunburstChart } from '../SunburstChart'
 import { Tooltip } from '@/components'
@@ -33,6 +33,17 @@ const nestedData = {
 }
 
 describe('sunburstChart', () => {
+  it('keeps each sector element by name when the value order changes', async () => {
+    const data = ref(simpleData)
+    const { container } = render(() => <SunburstChart data={data.value} width={500} height={500} isAnimationActive={false} />)
+    const sectors = () => [...container.querySelectorAll('.v-charts-sunburst-sector')]
+    // Sorted by value: C, B, A.
+    const [c, b, a] = sectors()
+    data.value = { name: 'root', children: [{ name: 'A', value: 600 }, { name: 'B', value: 200 }, { name: 'C', value: 100 }] }
+    await nextTick()
+    expect(sectors()).toEqual([a, b, c])
+  })
+
   it('renders sectors for simple data', () => {
     const { container } = render(() => (
       <SunburstChart data={simpleData} width={500} height={500} />

@@ -21,6 +21,8 @@ export interface SunburstLayoutNode {
   fill?: string
   payload: SunburstData
   tooltipIndex: string
+  /** Names from the top ring down to this node: its identity across data changes. */
+  path: string
 }
 
 export interface SunburstLayoutOptions {
@@ -122,6 +124,7 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
       fill: d.data.fill,
       payload: d.data,
       tooltipIndex: buildTooltipIndex(d),
+      path: d.ancestors().reverse().slice(1).map((a: any) => String(a.data.name)).join('\u0000'),
     })
   })
 

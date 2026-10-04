@@ -70,7 +70,7 @@ const rows: Row[] = [
     </RadarChart>
   ), replaced: component === 'PolarAngleAxis' ? '.v-charts-polar-angle-axis-tick-value' : '.v-charts-polar-radius-axis-tick-value' })),
   ...['content', 'default'].map(slot => ({ component: 'Treemap', slot, standalone: true, render: (marker: Slot) => <Treemap width={400} height={300} data={data} dataKey="value" isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'content' ? '.v-charts-treemap rect' : undefined })),
-  ...['content', 'default'].map(slot => ({ component: 'SunburstChart', slot, standalone: true, render: (marker: Slot) => <SunburstChart width={400} height={300} data={{ name: 'root', value: 30, children: data }} v-slots={{ [slot]: marker }} />, replaced: slot === 'content' ? '.v-charts-sunburst path' : undefined })),
+  ...['content', 'default'].map(slot => ({ component: 'SunburstChart', slot, standalone: true, render: (marker: Slot) => <SunburstChart width={400} height={300} data={{ name: 'root', value: 30, children: data }} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'content' ? '.v-charts-sunburst path' : undefined })),
   ...['node', 'link', 'default'].map(slot => ({ component: 'Sankey', slot, standalone: true, render: (marker: Slot) => <Sankey width={400} height={300} data={{ nodes: [{ name: 'A' }, { name: 'B' }], links: [{ source: 0, target: 1, value: 10 }] }} isAnimationActive={false} v-slots={{ [slot]: marker }} />, replaced: slot === 'node' ? '.v-charts-sankey-nodes rect' : slot === 'link' ? '.v-charts-sankey-links path' : undefined })),
 ]
 

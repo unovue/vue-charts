@@ -4,6 +4,9 @@ import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
+import type { ChartTransition } from '@/animation/motion'
 import { get } from 'es-toolkit/compat'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
@@ -65,15 +68,18 @@ export const SunburstChartVueProps = {
   endAngle: { type: Number, default: 360 },
   ringPadding: { type: Number, default: 2 },
   padding: { type: Number, default: 2 },
-  fill: { type: String, default: 'var(--v-charts-text, #333)' },
+  fill: { type: String, default: 'var(--v-charts-series, #3182bd)' },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
+  isAnimationActive: { type: Boolean, default: true },
+  transition: { type: Object as PropType<ChartTransition>, default: undefined },
 }
 
 const SunburstInner = defineComponent({
   name: 'SunburstInner',
   props: SunburstChartVueProps,
   slots: Object as SlotsType<SunburstSlots>,
-  setup(props, { slots }) {
+  emits: ['animationStart', 'animationEnd'],
+  setup(props, { slots, emit }) {
     const trackedData = useTrackedData(() => [props.data])
     const data = computed(() => ({ ...trackedData.value![0] }))
     const tooltip = useChartTooltip()
@@ -98,6 +104,38 @@ const SunburstInner = defineComponent({
         padding: props.padding,
       }),
     )
+
+    // Sectors match by their name path. The first appearance sweeps open from the start angle;
+    // later, new sectors grow out of the edge of their neighbour and removed ones fold into it.
+    const callbacks = useAnimationCallbacks(() => emit('animationStart'), () => emit('animationEnd'))
+    let appeared = false
+    const mix = (a: number, b: number, t: number) => a + (b - a) * t
+    const collapsed = (node: SunburstLayoutNode, angle: number) => ({ ...node, startAngle: angle, endAngle: angle })
+    const { items } = useKeyedTransition(() => nodes.value, {
+      key: node => node.path,
+      connected: true,
+      interpolate: (from, to, t) => ({
+        ...to,
+        startAngle: mix(from.startAngle, to.startAngle, t),
+        endAngle: mix(from.endAngle, to.endAngle, t),
+        innerRadius: mix(from.innerRadius, to.innerRadius, t),
+        outerRadius: mix(from.outerRadius, to.outerRadius, t),
+      }),
+      enterFrom: (to, { previous, next }) => collapsed(to, !appeared
+        ? props.startAngle
+        : previous?.depth === to.depth ? previous.endAngle : next?.depth === to.depth ? next.startAngle : to.startAngle),
+      exitTo: (from, { previous, next }) => collapsed(from, previous?.depth === from.depth
+        ? previous.endAngle
+        : next?.depth === from.depth ? next.startAngle : from.startAngle),
+      isActive: () => props.isAnimationActive,
+      transition: () => props.transition,
+      onStart: () => {
+        callbacks.onStart()
+        if (nodes.value.length)
+          appeared = true
+      },
+      onEnd: callbacks.onEnd,
+    })
 
     // Register tooltip entry settings
     watch(computed(() => {
@@ -157,7 +195,16 @@ const SunburstInner = defineComponent({
       })
     }
 
-    function renderSector(node: SunburstLayoutNode, index: number) {
+    // Leaving sectors are not interactive; their data is gone.
+    const listeners = (node: SunburstLayoutNode, exiting: boolean) => exiting
+      ? { style: { pointerEvents: 'none' as const } }
+      : {
+          onClick: (e: MouseEvent) => handleClick(node, e),
+          onMouseenter: (e: MouseEvent) => handleMouseEnter(node, e),
+          onMouseleave: (e: MouseEvent) => handleMouseLeave(node, e),
+        }
+
+    function renderSector(node: SunburstLayoutNode, index: number, key: PropertyKey, exiting: boolean) {
       const nodeFill = getNodeFill(node)
 
       const slotProps: SunburstContentSlotProps = { ...node, index }
@@ -165,11 +212,9 @@ const SunburstInner = defineComponent({
       if (slots.content) {
         return (
           <g
-            key={`sector-${index}`}
+            key={key}
             class="v-charts-sunburst-sector"
-            onClick={(e: MouseEvent) => handleClick(node, e)}
-            onMouseenter={(e: MouseEvent) => handleMouseEnter(node, e)}
-            onMouseleave={(e: MouseEvent) => handleMouseLeave(node, e)}
+            {...listeners(node, exiting)}
           >
             {slots.content(slotProps)}
           </g>
@@ -178,11 +223,9 @@ const SunburstInner = defineComponent({
 
       return (
         <g
-          key={`sector-${index}`}
+          key={key}
           class="v-charts-sunburst-sector"
-          onClick={(e: MouseEvent) => handleClick(node, e)}
-          onMouseenter={(e: MouseEvent) => handleMouseEnter(node, e)}
-          onMouseleave={(e: MouseEvent) => handleMouseLeave(node, e)}
+          {...listeners(node, exiting)}
         >
           <Sector
             cx={node.cx}
@@ -201,7 +244,7 @@ const SunburstInner = defineComponent({
     return () => (
       <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sunburst">
-          {nodes.value.map((node, index) => renderSector(node, index))}
+          {items.value.map(({ key, value, phase }, index) => renderSector(value, index, key, phase === 'exit'))}
         </Layer>
       </Surface>
     )
@@ -212,7 +255,7 @@ const _SunburstChart = defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
-  emits: { ...chartEmits },
+  emits: { ...chartEmits, 'animation-start': () => true, 'animation-end': () => true },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots, emit }) {
     provideChartContext(sunburstOptions)
@@ -234,7 +277,13 @@ const _SunburstChart = defineComponent({
           width={effectiveWidth.value}
           height={effectiveHeight.value}
         >
-          <SunburstInner {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
+          <SunburstInner
+            {...innerProps}
+            width={effectiveWidth.value}
+            height={effectiveHeight.value}
+            onAnimationStart={() => emit('animation-start')}
+            onAnimationEnd={() => emit('animation-end')}
+          >
             {{ content: slots.content }}
           </SunburstInner>
           {slots.default?.()}
