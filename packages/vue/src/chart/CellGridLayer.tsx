@@ -35,6 +35,57 @@ function isFocusVisible(element: Element) {
   }
 }
 
+interface Seams {
+  /** Where an arriving cell starts: a zero-thick line on the seam it opens. */
+  enter: Map<string, GridCell>
+  /** Where a leaving cell ends: a zero-thick line on the seam it closes. */
+  exit: Map<string, GridCell>
+}
+
+/**
+ * A cell removed between two staying grid neighbours (a row dropped from the middle) closes
+ * onto the line where those neighbours meet after the change; a cell added between two opens
+ * from the line where they met before. Both ends move on the same clock as the neighbours, so
+ * the cell always fills exactly the gap between them and never overlaps either.
+ */
+function findSeams(previous: readonly GridCell[], next: readonly GridCell[]): Seams {
+  const seams: Seams = { enter: new Map(), exit: new Map() }
+  const before = new Map(previous.map(cell => [cell.key, cell]))
+  const after = new Map(next.map(cell => [cell.key, cell]))
+  const position = (cells: readonly GridCell[]) => new Map(cells.map(cell => [`${cell.row}:${cell.column}`, cell]))
+  const oldAt = position(previous)
+  const newAt = position(next)
+  const seamBetween = (cell: GridCell, at: Map<string, GridCell>, stays: Map<string, GridCell>, other: (key: string) => GridCell | undefined) => {
+    const pair = (a: string, b: string) => {
+      const first = at.get(a)
+      const second = at.get(b)
+      return first && second && stays.has(first.key) && stays.has(second.key) ? [other(first.key)!, other(second.key)!] : undefined
+    }
+    const vertical = pair(`${cell.row - 1}:${cell.column}`, `${cell.row + 1}:${cell.column}`)
+    if (vertical)
+      return { ...cell, y: (vertical[0].y + vertical[0].height + vertical[1].y) / 2, height: 0 }
+    const horizontal = pair(`${cell.row}:${cell.column - 1}`, `${cell.row}:${cell.column + 1}`)
+    if (horizontal)
+      return { ...cell, x: (horizontal[0].x + horizontal[0].width + horizontal[1].x) / 2, width: 0 }
+    return undefined
+  }
+  for (const cell of previous) {
+    if (!after.has(cell.key)) {
+      const seam = seamBetween(cell, oldAt, after, key => after.get(key))
+      if (seam)
+        seams.exit.set(cell.key, seam)
+    }
+  }
+  for (const cell of next) {
+    if (!before.has(cell.key)) {
+      const seam = seamBetween(cell, newAt, before, key => before.get(key))
+      if (seam)
+        seams.enter.set(cell.key, seam)
+    }
+  }
+  return seams
+}
+
 const cellPayloadSearcher: TooltipPayloadSearcher = (data, activeIndex) =>
   data == null || activeIndex == null ? undefined : get(data, activeIndex as string)
 
@@ -110,48 +161,58 @@ export const CellGridLayer = defineComponent({
     })
 
     // Identity on screen. Usually the cell's own key, with two exceptions decided per change:
-    // - Nothing stays (a different year): new cells take over the node at the same grid position,
-    //   so the grid recolors in place instead of every cell shrinking and growing.
-    // - A few cells move against the common grid move (Sundays wrapping to the last row when
+    // - A few cells move far against the common grid move (Sundays wrapping to the last row when
     //   the week start changes): they shrink and regrow in place instead of streaking across.
+    // - Nothing stays, or most cells would have to jump (a different year, a reversed axis):
+    //   new cells take over the node at the same grid position, so the grid recolors in place
+    //   instead of every cell shrinking and growing at once.
     let screenKeys = new Map<string, string>()
     const jumping = new Set<string>()
+    let seams: Seams = { enter: new Map(), exit: new Map() }
     let generation = 0
     watch(() => props.cells, (next, previous = []) => {
       const before = new Map(previous.map(cell => [cell.key, cell]))
-      const overlap = next.some(cell => before.has(cell.key))
-      const byPosition = new Map(previous.map(cell => [`${cell.row}:${cell.column}`, screenKeys.get(cell.key) ?? cell.key]))
-      const keys = new Map<string, string>()
-      const used = new Set<string>()
-      generation++
-      for (const cell of next) {
-        let key = overlap || previous.length === 0
-          ? screenKeys.get(cell.key) ?? cell.key
-          : byPosition.get(`${cell.row}:${cell.column}`) ?? cell.key
-        if (used.has(key))
-          key = `${cell.key}\u0000${generation}`
-        used.add(key)
-        keys.set(cell.key, key)
-      }
-      screenKeys = keys
-
       jumping.clear()
       const moves = new Map<string, number>()
+      let staying = 0
       for (const cell of next) {
         const old = before.get(cell.key)
         if (old) {
+          staying++
           const move = `${cell.column - old.column}:${cell.row - old.row}`
           moves.set(move, (moves.get(move) ?? 0) + 1)
         }
       }
       const common = [...moves].reduce<[string, number] | undefined>((best, entry) => !best || entry[1] > best[1] ? entry : best, undefined)?.[0]
       if (common !== undefined) {
+        // Only moves that leave the common move by more than one cell would cross the grid;
+        // neighbours of a removed or added row or column simply slide one step.
+        const [commonColumn, commonRow] = common.split(':').map(Number)
         for (const cell of next) {
           const old = before.get(cell.key)
-          if (old && `${cell.column - old.column}:${cell.row - old.row}` !== common)
+          if (old && Math.abs(cell.column - old.column - commonColumn) + Math.abs(cell.row - old.row - commonRow) > 1)
             jumping.add(cell.key)
         }
       }
+      const inPlace = previous.length > 0 && (staying === 0 || jumping.size > staying / 2)
+      if (inPlace)
+        jumping.clear()
+
+      const byPosition = new Map(previous.map(cell => [`${cell.row}:${cell.column}`, screenKeys.get(cell.key) ?? cell.key]))
+      const keys = new Map<string, string>()
+      const used = new Set<string>()
+      generation++
+      for (const cell of next) {
+        let key = inPlace
+          ? byPosition.get(`${cell.row}:${cell.column}`) ?? cell.key
+          : screenKeys.get(cell.key) ?? cell.key
+        if (used.has(key))
+          key = `${cell.key}\u0000${generation}`
+        used.add(key)
+        keys.set(cell.key, key)
+      }
+      screenKeys = keys
+      seams = inPlace ? { enter: new Map(), exit: new Map() } : findSeams(previous, next)
     }, { immediate: true, flush: 'sync' })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
@@ -166,11 +227,19 @@ export const CellGridLayer = defineComponent({
         // Shrink where it was, then grow where it goes.
         return t < 0.5 ? lerp(from, collapse(from), t * 2) : lerp(collapse(to), to, t * 2 - 1)
       },
+      // Between grid neighbours a cell folds along the seam; at an edge it rides the belt
+      // through the clip.
       enterFrom: (to, neighbors) => {
+        const seam = seams.enter.get(to.key)
+        if (seam)
+          return seam
         const shift = shiftOf(neighbors.previousMove) ?? shiftOf(neighbors.nextMove)
         return isShift(shift) ? { ...to, x: to.x - shift.x, y: to.y - shift.y } : collapse(to)
       },
       exitTo: (from, neighbors) => {
+        const seam = seams.exit.get(from.key)
+        if (seam)
+          return seam
         const shift = shiftOf(neighbors.nextMove) ?? shiftOf(neighbors.previousMove)
         return isShift(shift) ? { ...from, x: from.x + shift.x, y: from.y + shift.y } : collapse(from)
       },

@@ -222,6 +222,43 @@ describe('<Heatmap />', () => {
     ])
   })
 
+  it('slides the rows below a removed row up instead of shrinking and regrowing them', async () => {
+    const days = ref(['Mon', 'Tue', 'Wed', 'Thu'])
+    const { container } = render(() => <Heatmap width={200} height={100} xLabels={false} yLabels={false} gap={0} data={days.value.map(y => ({ x: 'a', y, value: 1 }))} />)
+    await frame()
+    days.value = ['Mon', 'Wed', 'Thu']
+    await nextTick()
+    await frame(0.1)
+    const heights = Array.from(container.querySelectorAll('.v-charts-cell-rect'), rect => Number(rect.getAttribute('height')))
+    // Staying rows grow from 25 to 33.3 px; none collapses on the way.
+    expect(Math.min(...heights.slice(0, 1), ...heights.slice(-2))).toBeGreaterThan(25)
+  })
+
+  it.each([
+    { change: 'a removed middle row', next: { days: ['Mon', 'Wed', 'Thu'], hours: ['a', 'b', 'c'] } },
+    { change: 'an added middle row', next: { days: ['Mon', 'Tue', 'Extra', 'Wed', 'Thu'], hours: ['a', 'b', 'c'] } },
+    { change: 'reversed columns', next: { days: ['Mon', 'Tue', 'Wed', 'Thu'], hours: ['c', 'b', 'a'] } },
+  ])('keeps cells apart through $change', async ({ next }) => {
+    const grid = ref({ days: ['Mon', 'Tue', 'Wed', 'Thu'], hours: ['a', 'b', 'c'] })
+    const { container } = render(() => (
+      <Heatmap width={300} height={200} xLabels={false} yLabels={false} gap={0} xDomain={grid.value.hours} data={grid.value.days.flatMap(y => grid.value.hours.map(x => ({ x, y, value: 1 })))} />
+    ))
+    await frame()
+    grid.value = next
+    await nextTick()
+    for (const progress of [0.05, 0.1, 0.25, 0.5, 0.9]) {
+      await frame(progress)
+      const rects = Array.from(container.querySelectorAll<SVGRectElement>('.v-charts-cell-rect'), rect => ['x', 'y', 'width', 'height'].map(name => Number(rect.getAttribute(name))))
+      for (let i = 0; i < rects.length; i++) {
+        for (let j = i + 1; j < rects.length; j++) {
+          const [ax, ay, aw, ah] = rects[i]
+          const [bx, by, bw, bh] = rects[j]
+          expect(Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx)) * Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, by))).toBeLessThan(0.01)
+        }
+      }
+    }
+  })
+
   it('thins column labels so they never overlap', () => {
     const data = Array.from({ length: 24 }, (_, hour) => ({ x: `${hour}:00`, y: 'Mon', value: hour }))
     const { container } = render(() => <Heatmap width={300} height={60} isAnimationActive={false} data={data} />)
