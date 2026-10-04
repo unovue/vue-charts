@@ -25,6 +25,21 @@ describe('<Sankey />', () => {
     mockGetBoundingClientRect({ width: 600, height: 400 })
   })
 
+  it('attaches links to distinct indexed nodes with identical names', () => {
+    const { container } = render(() => (
+      <Sankey
+        width={600}
+        height={400}
+        isAnimationActive={false}
+        data={{ nodes: [{ name: 'A' }, { name: 'A' }, { name: 'sink' }], links: [{ source: 0, target: 2, value: 10 }, { source: 1, target: 2, value: 20 }] }}
+        v-slots={{ link: ({ payload }) => <path data-source={(payload.source as { index: number }).index} data-target={(payload.target as { index: number }).index} /> }}
+      />
+    ))
+    expect(Array.from(container.querySelectorAll('[data-source]'), node => node.getAttribute('data-source'))).toEqual(['0', '1'])
+    expect(Array.from(container.querySelectorAll('[data-target]'), node => node.getAttribute('data-target'))).toEqual(['2', '2'])
+    expect(container.querySelectorAll('.v-charts-sankey-node')).toHaveLength(3)
+  })
+
   it('renders one rect per node', () => {
     const { container } = render(() => (
       <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} />

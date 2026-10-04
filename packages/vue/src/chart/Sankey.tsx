@@ -134,23 +134,31 @@ const SankeyInner = defineComponent({
       })
     })
 
-    const nodeKey = (node: SankeyLayoutNode) => node.name ?? node.index ?? 0
-    const linkKey = (link: SankeyLayoutLink) => `${nodeKey(link.source as SankeyLayoutNode)}→${nodeKey(link.target as SankeyLayoutNode)}`
-    type Geometry = { kind: 'node', node: SankeyLayoutNode } | { kind: 'link', link: SankeyLayoutLink, sourceFraction: number, targetFraction: number }
+    type Geometry = { kind: 'node', node: SankeyLayoutNode, identity: string } | { kind: 'link', link: SankeyLayoutLink, sourceKey: string, targetKey: string, sourceFraction: number, targetFraction: number }
+    const targetGeometry = computed<Geometry[]>(() => {
+      const occurrences = new Map<string, number>()
+      const nodes = layout.value.nodes.map((node) => {
+        const base = `node:${node.name ?? node.index ?? 0}`
+        const count = occurrences.get(base) ?? 0
+        occurrences.set(base, count + 1)
+        return { kind: 'node' as const, node, identity: count === 0 ? base : `${base}\u0000${count}` }
+      })
+      // Resolve endpoints by the layout index, then retain occurrence identity through exits.
+      const keysByIndex = new Map(nodes.map(item => [item.node.index, item.identity]))
+      const links = layout.value.links.map((link) => {
+        const source = link.source as SankeyLayoutNode
+        const target = link.target as SankeyLayoutNode
+        const fraction = (y: number | undefined, node: SankeyLayoutNode) => ((y ?? 0) - (node.y0 ?? 0)) / ((node.y1 ?? 0) - (node.y0 ?? 0) || 1)
+        return { kind: 'link' as const, link, sourceKey: keysByIndex.get(source.index)!, targetKey: keysByIndex.get(target.index)!, sourceFraction: fraction(link.y0, source), targetFraction: fraction(link.y1, target) }
+      })
+      return [...nodes, ...links]
+    })
     const collapse = (item: Geometry): Geometry => item.kind === 'node'
       ? { ...item, node: { ...item.node, y1: item.node.y0 } }
       : { ...item, link: { ...item.link, width: 0 } }
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
-    const { items } = useKeyedTransition<Geometry>(() => [
-      ...layout.value.nodes.map(node => ({ kind: 'node' as const, node })),
-      ...layout.value.links.map((link) => {
-        const source = link.source as SankeyLayoutNode
-        const target = link.target as SankeyLayoutNode
-        const fraction = (y: number | undefined, node: SankeyLayoutNode) => ((y ?? 0) - (node.y0 ?? 0)) / ((node.y1 ?? 0) - (node.y0 ?? 0) || 1)
-        return { kind: 'link' as const, link, sourceFraction: fraction(link.y0, source), targetFraction: fraction(link.y1, target) }
-      }),
-    ], {
-      key: item => item.kind === 'node' ? `node:${nodeKey(item.node)}` : `link:${linkKey(item.link)}`,
+    const { items } = useKeyedTransition<Geometry>(() => targetGeometry.value, {
+      key: item => item.kind === 'node' ? item.identity : `link:${item.sourceKey.slice(5)}→${item.targetKey.slice(5)}`,
       interpolate: (from, to, t) => {
         const mix = (a: number | undefined, b: number | undefined) => (a ?? 0) + ((b ?? 0) - (a ?? 0)) * t
         if (from.kind === 'node' && to.kind === 'node')
@@ -170,13 +178,13 @@ const SankeyInner = defineComponent({
     })
     const displayNodes = computed(() => items.value.flatMap(({ key, value }) => value.kind === 'node' ? [{ key, node: value.node }] : []))
     const displayLinks = computed(() => {
-      const byKey = new Map(displayNodes.value.map(({ node }) => [nodeKey(node), node]))
+      const byKey = new Map(displayNodes.value.map(({ key, node }) => [key, node]))
       return items.value.flatMap(({ key, value }) => {
         if (value.kind !== 'link')
           return []
         const link = value.link
-        const source = byKey.get(nodeKey(link.source as SankeyLayoutNode))
-        const target = byKey.get(nodeKey(link.target as SankeyLayoutNode))
+        const source = byKey.get(value.sourceKey)
+        const target = byKey.get(value.targetKey)
         if (!source || !target)
           return []
         return [{ key, link: Object.assign({}, link, { source, target, y0: (source.y0 ?? 0) + value.sourceFraction * ((source.y1 ?? 0) - (source.y0 ?? 0)), y1: (target.y0 ?? 0) + value.targetFraction * ((target.y1 ?? 0) - (target.y0 ?? 0)) }) }]
