@@ -13,7 +13,7 @@ const props = defineProps({
   scaleToFit: { type: Boolean, default: false },
   textAnchor: { type: String, default: 'start' },
   verticalAnchor: { type: String, default: 'end' },
-  fill: { type: String, default: '#808080' },
+  fill: { type: String, default: 'var(--v-charts-text, #808080)' },
   angle: { type: Number, default: 0 },
   style: { type: Object, default: () => ({}) },
   breakAll: { type: Boolean, default: false },
@@ -165,7 +165,7 @@ const transforms = computed(() => {
     :y="y"
     :transform="transforms || undefined"
     :text-anchor="props.textAnchor"
-    :fill="props.fill && props.fill.includes('url') ? '#808080' : props.fill"
+    :fill="props.fill && props.fill.includes('url') ? 'var(--v-charts-text, #808080)' : props.fill"
     class="v-charts-text"
     :style="props.style"
   >

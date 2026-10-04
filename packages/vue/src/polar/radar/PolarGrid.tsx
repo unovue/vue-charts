@@ -21,7 +21,7 @@ export const PolarGrid = defineComponent({
     radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
     gridType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
     radialLines: { type: Boolean, default: true },
-    stroke: { type: String, default: '#ccc' },
+    stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
     fill: { type: String, default: 'none' },
     polarRadius: { type: Array as PropType<number[]>, default: undefined },
     strokeWidth: { type: Number, default: undefined },
@@ -33,7 +33,8 @@ export const PolarGrid = defineComponent({
     const polarRadiiFromRedux = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
 
     const polarRadii = computed(() => {
-      if (Array.isArray(props.polarRadius)) return props.polarRadius
+      if (Array.isArray(props.polarRadius))
+        return props.polarRadius
       return polarRadiiFromRedux.value
     })
 

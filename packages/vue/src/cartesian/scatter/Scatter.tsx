@@ -152,7 +152,7 @@ export const Scatter = defineComponent({
           cy: point.cy,
           size: isActive ? (point.size ?? 64) * 1.6 : point.size,
           type: props.shape as SymbolType,
-          ...(isActive ? { 'stroke': '#fff', 'stroke-width': 2 } : {}),
+          ...(isActive ? { 'stroke': 'var(--v-charts-background, #fff)', 'stroke-width': 2 } : {}),
         }
         return (
           <g

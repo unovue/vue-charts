@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent } from 'vue'
 
 export const Traveller = defineComponent({
   name: 'Traveller',
@@ -31,7 +31,7 @@ export const Traveller = defineComponent({
             x2={x! + width! - 1}
             y2={lineY}
             fill="none"
-            stroke="#fff"
+            stroke="var(--v-charts-background, #fff)"
           />
           <line
             x1={x! + 1}
@@ -39,10 +39,10 @@ export const Traveller = defineComponent({
             x2={x! + width! - 1}
             y2={lineY + 2}
             fill="none"
-            stroke="#fff"
+            stroke="var(--v-charts-background, #fff)"
           />
         </>
       )
     }
-  }
-});
+  },
+})

@@ -73,8 +73,8 @@ describe('radialBarSelectors', () => {
       </RadialBarChart>
     ))
 
-    // Background sectors rendered with fill="#eee"
-    const bgSectors = container.querySelectorAll('.v-charts-sector[fill="#eee"]')
+    // Background sectors rendered with fill="var(--v-charts-muted, #eee)"
+    const bgSectors = container.querySelectorAll('.v-charts-sector[fill="var(--v-charts-muted, #eee)"]')
     expect(bgSectors.length).toBe(4)
 
     // Foreground sectors should also exist

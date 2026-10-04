@@ -55,7 +55,7 @@ export const defaultPolarRadiusAxisProps = {
   orientation: 'right',
   radiusAxisId: 0,
   scale: 'auto',
-  stroke: '#ccc',
+  stroke: 'var(--v-charts-grid, #ccc)',
   tick: true,
   tickCount: 5,
   type: 'number',

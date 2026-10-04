@@ -19,7 +19,7 @@ export const ReferenceLineVueProps = {
   y: { type: [Number, String] as PropType<number | string>, default: undefined },
   xAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
-  stroke: { type: String, default: '#ccc' },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   strokeWidth: { type: [Number, String], default: 1 },
   fill: { type: String, default: 'none' },
   label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },

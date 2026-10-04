@@ -1,4 +1,4 @@
-import { defineComponent, h } from 'vue'
+import { defineComponent } from 'vue'
 import type { PropType, SlotsType, VNode } from 'vue'
 import type { DataKey, VuePropsToType } from '@/types'
 import { useAppSelector } from '@/state/hooks'
@@ -98,7 +98,7 @@ function renderActivePoint({
     'r': 4,
     'fill': mainColor,
     'stroke-width': 2,
-    'stroke': '#fff',
+    'stroke': 'var(--v-charts-background, #fff)',
     'payload': point.payload,
     'value': point.value,
   }

@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { Area, Bar, CartesianGrid, ComposedChart, Line, Tooltip, XAxis, YAxis } from '@/index'
+import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
@@ -20,6 +20,65 @@ describe('<ComposedChart />', () => {
     { name: 'Page E', uv: 1520, pv: 1108, amt: 1100 },
     { name: 'Page F', uv: 1400, pv: 680, amt: 1700 },
   ]
+
+  it('renders theme variables for default colors while preserving caller colors', async () => {
+    const { container } = render(() => (
+      <ComposedChart width={800} height={400} data={data}>
+        <CartesianGrid />
+        <XAxis dataKey="name" />
+        <YAxis stroke="#123456" />
+        <Bar dataKey="pv" background isAnimationActive={false} />
+        <Line dataKey="uv" dot isAnimationActive={false} />
+        <Tooltip defaultIndex={0} />
+        <Legend />
+        <ReferenceLine y={1000} />
+      </ComposedChart>
+    ))
+    await nextTick()
+    await nextTick()
+
+    const root = container.parentElement!
+    for (const selector of [
+      '.v-charts-cartesian-grid line',
+      '.v-charts-x-axis .v-charts-cartesian-axis-tick-value',
+      '.v-charts-y-axis .v-charts-cartesian-axis-tick-value',
+      'path[fill="var(--v-charts-muted, #eee)"]',
+      '.v-charts-line-dot',
+      '.v-charts-tooltip-content',
+      '.v-charts-tooltip-cursor',
+      '.v-charts-legend-item',
+      '.v-charts-reference-line-line',
+    ]) {
+      expect(root.querySelector(selector), selector).not.toBeNull()
+    }
+    expect(root.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('var(--v-charts-text, #666)')
+    expect(root.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('#123456')
+
+    const colors: string[] = []
+    for (const element of root.querySelectorAll('*')) {
+      for (const attribute of ['fill', 'stroke']) {
+        const value = element.getAttribute(attribute)
+        if (value)
+          colors.push(value)
+      }
+      const style = (element as HTMLElement | SVGElement).style
+      for (const property of Array.from(style)) {
+        if (/color|background|border/.test(property))
+          colors.push(style.getPropertyValue(property))
+      }
+    }
+    expect(colors).toContain('var(--v-charts-muted, #eee)')
+    expect(colors).toContain('var(--v-charts-background, #fff)')
+    expect(colors).toContain('var(--v-charts-series, #3182bd)')
+    expect(colors).toContain('var(--v-charts-tooltip-background, #fff)')
+    expect(colors).toContain('1px solid var(--v-charts-tooltip-border, #ccc)')
+    for (const color of colors) {
+      const withoutAllowedColors = color
+        .replace(/var\(--v-charts-[a-z-]+,\s*#[\da-f]{3,6}\)/gi, '')
+        .replace(/#123456|rgb\(18, 52, 86\)/g, '')
+      expect(withoutAllowedColors, color).not.toMatch(/#[\da-f]{3,6}|rgba?\(/i)
+    }
+  })
 
   it('render 1 line, 1 area, 1 bar in the ComposedChart', () => {
     const { container } = render(() => (

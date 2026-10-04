@@ -116,7 +116,7 @@ describe('barChart', () => {
         </BarChart>
       ))
 
-      const backgroundBars = container.querySelectorAll('path[fill="#eee"]')
+      const backgroundBars = container.querySelectorAll('path[fill="var(--v-charts-muted, #eee)"]')
       expect(backgroundBars.length).toBe(6)
     })
 

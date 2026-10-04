@@ -89,12 +89,12 @@ export default defineComponent({
                 >
                   <LegendSymbol
                     type={props.iconType ?? entry.type}
-                    color={entry.inactive ? '#a3a3a3' : entry.color}
+                    color={entry.inactive ? 'var(--v-charts-inactive, #a3a3a3)' : entry.color}
                     size={iconSize}
                     data={entry}
                   />
                 </Surface>
-                <span class="v-charts-legend-item-text" style={{ color: entry.inactive ? '#a3a3a3' : entry.color }}>
+                <span class="v-charts-legend-item-text" style={{ color: entry.inactive ? 'var(--v-charts-inactive, #a3a3a3)' : entry.color }}>
                   {formatValue(entry)}
                 </span>
               </li>

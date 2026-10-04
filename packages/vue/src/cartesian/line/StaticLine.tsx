@@ -30,7 +30,7 @@ export const Dots = defineComponent({
       }
       const dotObjProps = typeof props.dot === 'object' && props.dot !== null ? props.dot : {}
       const dotsProps = {
-        'fill': '#fff',
+        'fill': 'var(--v-charts-background, #fff)',
         'stroke': props.stroke,
         'stroke-width': props.strokeWidth,
         ...dotObjProps,

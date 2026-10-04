@@ -32,8 +32,8 @@ export const ReferenceDotVueProps = {
   r: { type: Number, default: 10 },
   xAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
-  fill: { type: String, default: '#fff' },
-  stroke: { type: String, default: '#ccc' },
+  fill: { type: String, default: 'var(--v-charts-background, #fff)' },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
 }

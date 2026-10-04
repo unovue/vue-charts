@@ -11,7 +11,7 @@ export const CartesianAxisDefaultProps = {
   // The ticks
   ticks: [] as CartesianAxisProps['ticks'],
 
-  stroke: '#666',
+  stroke: 'var(--v-charts-axis, #666)',
   tickLine: true,
   axisLine: true,
   tick: true,

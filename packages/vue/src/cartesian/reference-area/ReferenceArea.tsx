@@ -23,7 +23,7 @@ export const ReferenceAreaVueProps = {
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   stroke: { type: String, default: 'none' },
   strokeWidth: { type: [Number, String], default: 1 },
-  fill: { type: String, default: '#ccc' },
+  fill: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   fillOpacity: { type: Number, default: 0.5 },
   label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },

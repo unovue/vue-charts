@@ -20,11 +20,11 @@ export const BrushVueProps = {
   },
   fill: {
     type: String,
-    default: '#fff',
+    default: 'var(--v-charts-background, #fff)',
   },
   stroke: {
     type: String,
-    default: '#666',
+    default: 'var(--v-charts-axis, #666)',
   },
   padding: {
     type: Object as PropType<Padding>,

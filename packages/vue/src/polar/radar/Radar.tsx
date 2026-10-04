@@ -69,7 +69,7 @@ export const Radar = defineComponent({
     name: { type: String, default: undefined },
     angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
     radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    fill: { type: String, default: '#808080' },
+    fill: { type: String, default: 'var(--v-charts-series, #808080)' },
     stroke: { type: String, default: undefined },
     fillOpacity: { type: Number, default: 0.6 },
     strokeWidth: { type: Number, default: undefined },

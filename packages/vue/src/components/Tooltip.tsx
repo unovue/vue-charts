@@ -157,8 +157,8 @@ const DefaultTooltipContent = defineComponent({
       const finalStyle: CSSProperties = {
         margin: 0,
         padding: '10px',
-        backgroundColor: '#fff',
-        border: '1px solid #ccc',
+        backgroundColor: 'var(--v-charts-tooltip-background, #fff)',
+        border: '1px solid var(--v-charts-tooltip-border, #ccc)',
         whiteSpace: 'nowrap',
         ...contentStyle,
       }
@@ -181,7 +181,7 @@ const DefaultTooltipContent = defineComponent({
                 display: 'block',
                 paddingTop: 4,
                 paddingBottom: 4,
-                color: entry.color || '#000',
+                color: entry.color || 'var(--v-charts-tooltip-foreground, #000)',
                 ...itemStyle,
               }
               const finalFormatter = entry.formatter || formatter || defaultFormatter
@@ -378,7 +378,7 @@ const Cursor = defineComponent({
         const { offset: _offset, ...coord } = props.coordinate!
         const off = offset.value
         const crossProps = {
-          stroke: '#ccc',
+          stroke: 'var(--v-charts-cursor, #ccc)',
           fill: 'none',
           // spread offset first (matches Recharts), then variant-specific props override
           ...off,
@@ -400,7 +400,7 @@ const Cursor = defineComponent({
           // spread offset first (matches Recharts), then override with cursor-specific props
           ...off,
           stroke: 'none',
-          fill: '#ccc',
+          fill: 'var(--v-charts-cursor, #ccc)',
           x: layout.value === 'horizontal' ? coord.x - halfSize : off.left + 0.5,
           y: layout.value === 'horizontal' ? off.top + 0.5 : coord.y - halfSize,
           width: layout.value === 'horizontal' ? bandSize : off.width - 1,
@@ -417,7 +417,7 @@ const Cursor = defineComponent({
         const radialPoints = points.value as RadialCursorPoints
         const off = offset.value
         const sectorProps = {
-          stroke: '#ccc',
+          stroke: 'var(--v-charts-cursor, #ccc)',
           ...off,
           cx: radialPoints.cx,
           cy: radialPoints.cy,
@@ -437,7 +437,7 @@ const Cursor = defineComponent({
       else {
         const off = offset.value
         const cursorProps = {
-          stroke: '#ccc',
+          stroke: 'var(--v-charts-cursor, #ccc)',
           ...off,
           layout: layout.value,
           points: points.value as ReadonlyArray<Point>,

@@ -152,7 +152,7 @@ export const defaultProps: Partial<CartesianGridProps> = {
   // The abscissas of vertical grid lines
   verticalPoints: [],
 
-  stroke: '#ccc',
+  stroke: 'var(--v-charts-grid, #ccc)',
   fill: 'none',
   // The fill of colors of grid lines
   verticalFill: [],

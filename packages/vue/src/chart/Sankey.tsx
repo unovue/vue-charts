@@ -89,9 +89,9 @@ export const SankeyVueProps = {
     type: Object as PropType<{ top?: number, right?: number, bottom?: number, left?: number }>,
     default: () => ({ top: 5, right: 5, bottom: 5, left: 5 }),
   },
-  nodeFill: { type: String, default: '#0088fe' },
-  nodeStroke: { type: String, default: '#fff' },
-  linkFill: { type: String, default: '#0088fe' },
+  nodeFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
+  nodeStroke: { type: String, default: 'var(--v-charts-background, #fff)' },
+  linkFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
   linkStroke: { type: String, default: 'none' },
   isAnimationActive: { type: Boolean, default: true },
   transition: {

@@ -133,7 +133,7 @@ export const RadialBar = defineComponent<RadialBarPropsWithSVG>({
                 cornerRadius={props.cornerRadius}
                 forceCornerRadius={props.forceCornerRadius}
                 cornerIsExternal={props.cornerIsExternal}
-                fill="#eee"
+                fill="var(--v-charts-muted, #eee)"
                 fill-opacity={0.5}
                 {...backgroundProps}
               />

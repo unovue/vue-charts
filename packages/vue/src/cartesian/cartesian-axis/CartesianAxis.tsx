@@ -9,7 +9,7 @@ import type { CartesianTickItem } from '@/types/tick'
 import type { ComponentPublicInstance, PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
-import { defineComponent, reactive, ref } from 'vue'
+import { defineComponent, getCurrentInstance, reactive } from 'vue'
 import { get } from 'es-toolkit/compat'
 import Text from '@/components/Text.vue'
 import { Label } from '@/components/label'
@@ -70,11 +70,12 @@ export const CartesianAxis = defineComponent({
     interval: { type: [String, Number], default: 'preserveEnd' },
     angle: Number,
     scale: { type: [Function] as PropType<RechartsScale> },
-    stroke: { type: String, default: '#666' },
+    stroke: { type: String, default: 'var(--v-charts-axis, #666)' },
     /** Additional props to spread to each tick Text element. */
     tickTextProps: { type: Object, default: undefined },
   },
   setup(props, { slots }) {
+    const instance = getCurrentInstance()!
     const state = reactive({
       fontSize: '',
       letterSpacing: '',
@@ -223,7 +224,7 @@ export const CartesianAxis = defineComponent({
           verticalAnchor,
           ...axisProps,
           stroke: 'none',
-          fill: stroke,
+          fill: instance.vnode.props?.stroke === undefined ? 'var(--v-charts-text, #666)' : stroke,
           ...customTickProps,
           ...tickCoord,
           index: i,

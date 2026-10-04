@@ -110,8 +110,8 @@ export const TreemapVueProps = {
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   aspectRatio: { type: Number, default: 4 / 3 },
-  fill: { type: String, default: '#808080' },
-  stroke: { type: String, default: '#fff' },
+  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
   colorPanel: { type: Array as PropType<string[]>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
@@ -331,7 +331,7 @@ const TreemapInner = defineComponent({
         ? (
             <polygon
               points={`${node.x + 2},${node.y + node.height / 2} ${node.x + 6},${node.y + node.height / 2 + 3} ${node.x + 2},${node.y + node.height / 2 + 6}`}
-              fill="#fff"
+              fill="var(--v-charts-background, #fff)"
             />
           )
         : null
@@ -345,7 +345,7 @@ const TreemapInner = defineComponent({
             <text
               x={node.x + 8}
               y={node.y + node.height / 2 + 7}
-              fill="#fff"
+              fill="var(--v-charts-background, #fff)"
               font-size={14}
             >
               {node.name}

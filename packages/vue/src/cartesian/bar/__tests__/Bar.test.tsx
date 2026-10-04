@@ -36,7 +36,7 @@ describe('bar', () => {
     ))
 
     // Check that background bars are rendered
-    const backgroundBars = container.querySelectorAll('path[fill="#eee"]')
+    const backgroundBars = container.querySelectorAll('path[fill="var(--v-charts-muted, #eee)"]')
     expect(backgroundBars).toHaveLength(6)
   })
 

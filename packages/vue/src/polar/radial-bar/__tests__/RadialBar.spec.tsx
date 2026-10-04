@@ -1,6 +1,6 @@
 import { render } from '@testing-library/vue'
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
@@ -17,7 +17,7 @@ const data = [
   { name: 'unknown', uv: 6.67, pv: 4800, fill: '#ffc658' },
 ]
 
-describe('RadialBar', () => {
+describe('radialBar', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -110,7 +110,7 @@ describe('RadialBar', () => {
           <RadialBar background dataKey="uv" isAnimationActive={false} />
         </RadialBarChart>
       ))
-      const backgroundSectors = container.querySelectorAll('.v-charts-sector[fill="#eee"]')
+      const backgroundSectors = container.querySelectorAll('.v-charts-sector[fill="var(--v-charts-muted, #eee)"]')
       expect(backgroundSectors.length).toBe(7)
     })
 

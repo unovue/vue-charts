@@ -38,7 +38,7 @@ export const PolarRadiusAxis = defineComponent({
     tickCount: { type: Number, default: 5 },
     domain: { type: Array as PropType<AxisDomain>, default: undefined },
     type: { type: String as PropType<'number' | 'category' | 'auto'>, default: 'auto' },
-    stroke: { type: String, default: '#ccc' },
+    stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
     allowDecimals: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
