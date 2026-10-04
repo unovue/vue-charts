@@ -9,7 +9,7 @@ import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
 import { getValueByDataKey } from '@/utils/chart'
-import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { FadeIn } from '@/animation/FadeIn'
 import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -47,11 +47,23 @@ const FunnelView = defineComponent({
     const trapezoids = view.trapezoids
     const cellPropsRef = view.cellPropsRef
     const tooltip = useChartTooltip()
+    // A trapezoid enters from and leaves into the seam between its neighbours, so the stack
+    // stays closed while it opens or shrinks.
+    type Trap = (typeof trapezoids.value)[number] & { index: number }
+    const seam = (trap: Trap, { previous, next }: Neighbors<Trap>): Trap => {
+      if (next)
+        return { ...trap, x: next.x, y: next.y, upperWidth: next.upperWidth, lowerWidth: next.upperWidth, height: 0 }
+      if (previous) {
+        const x = previous.x + (previous.upperWidth - previous.lowerWidth) / 2
+        return { ...trap, x, y: previous.y + previous.height, upperWidth: previous.lowerWidth, lowerWidth: previous.lowerWidth, height: 0 }
+      }
+      return { ...trap, height: 0 }
+    }
     const { items, isAnimating } = useKeyedTransition(() => trapezoids.value.map((trap, index) => ({ ...trap, index })), {
       key: (trap, index) => getValueByDataKey(trap.payload, props.nameKey, index),
       interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, upperWidth: from.upperWidth + (to.upperWidth - from.upperWidth) * t, lowerWidth: from.lowerWidth + (to.lowerWidth - from.lowerWidth) * t, height: from.height + (to.height - from.height) * t }),
-      enterFrom: to => ({ ...to, height: 0 }),
-      exitTo: from => ({ ...from, height: 0 }),
+      enterFrom: (to, neighbors) => seam(to, neighbors),
+      exitTo: (from, neighbors) => seam(from, neighbors),
       connected: true,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
