@@ -105,6 +105,11 @@ export function getValueByDataKey<T>(obj: T, dataKey: DataKey<T>, defaultValue?:
   if (isNumOrStr(dataKey)) {
     // 使用 toRaw 获取原始对象，避免与 Vue 响应式系统冲突
     const rawObj = toRaw(obj)
+    // An exact own key takes precedence, including an explicitly undefined value.
+    if (Object.prototype.hasOwnProperty.call(rawObj, dataKey)) {
+      const value = Reflect.get(Object(rawObj), dataKey)
+      return value === undefined ? defaultValue : value
+    }
     return get(rawObj, dataKey, defaultValue)
   }
 

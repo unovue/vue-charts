@@ -35,6 +35,17 @@ describe('getValueByDataKey', () => {
     expect(getValueByDataKey(data, 'nested.score')).toBe(95)
   })
 
+  it.each([
+    { obj: { 'metrics.total': undefined, 'metrics': { total: 42 } }, key: 'metrics.total', expected: 'fallback' },
+    { obj: { metrics: { total: 42 } }, key: 'metrics.total', expected: 42 },
+    { obj: { 'a.b': 1, 'a': { b: 2 } }, key: 'a.b', expected: 1 },
+    { obj: ['a', 'b', 'c'], key: 1, expected: 'b' },
+    { obj: {}, key: 'missing', expected: 'fallback' },
+    { obj: { metrics: [{ total: 42 }] }, key: 'metrics[0].total', expected: 42 },
+  ])('prefers an own key over a path: $key → $expected', ({ obj, key, expected }) => {
+    expect(getValueByDataKey(obj, key, 'fallback')).toBe(expected)
+  })
+
   it('returns value by function key', () => {
     expect(getValueByDataKey(data, (d: any) => d.age * 2)).toBe(60)
   })
