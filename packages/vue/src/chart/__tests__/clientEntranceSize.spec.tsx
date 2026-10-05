@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest'
-import { createApp, nextTick } from 'vue'
+import { createApp, createSSRApp, nextTick } from 'vue'
+import { renderToString } from 'vue/server-renderer'
 import { Bar, BarChart, BarList, XAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
@@ -94,4 +95,26 @@ it.each([
   app.unmount()
   container.remove()
   vi.unstubAllGlobals()
+})
+
+// A server-rendered BarList (no chart wrapper, so no chart size) kept the server's empty bars
+// forever: hydration waited for a size that never comes outside a chart.
+it('plays a hydrated BarList entrance', async () => {
+  const view = () => <BarList data={[{ name: 'a', value: 2 }, { name: 'b', value: 1 }]} />
+  const container = document.createElement('div')
+  container.innerHTML = await renderToString(createSSRApp({ render: view }))
+  document.body.append(container)
+  const width = () => container.querySelector<HTMLElement>('.v-charts-bar-list-bar')!.style.width
+  expect(width()).toBe('0%')
+  clock.to = 0
+  const app = createSSRApp({ render: view })
+  app.mount(container)
+  await nextTick()
+  await nextTick()
+  expect(clock.to).toBeGreaterThan(0)
+  clock.update(clock.to)
+  await nextTick()
+  expect(width()).toBe('100%')
+  app.unmount()
+  container.remove()
 })

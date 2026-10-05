@@ -247,7 +247,7 @@ export function useKeyedTransition<T>(
         hasEntered = true
         return
       }
-      if (size == null || !seen) {
+      if (size === null || !seen) {
         // Hydrated but not measured or not on screen yet: keep the server's start and draw once
         // the real size is known and the reader can see it.
         items.value = start
