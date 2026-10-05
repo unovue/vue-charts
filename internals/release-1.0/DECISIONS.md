@@ -224,7 +224,8 @@ and `aria-valuetext` the category label. Never render a slider with a negative m
 | Polar charts (Pie, Radar) | bar props `barSize`, `barGap`, `barCategoryGap`, `maxBarSize` | removed (RadialBarChart keeps them) |
 | FunnelChart | polar and bar props | removed |
 | Line, Area | `points`, `path`, `baseLine`, `layout`, `left`, `top`, `width`, `height`, `animationId`, `activePoint`, `needClip`, `activeIndex` | removed from public props (internal view props only) |
-| Bar | `needClip`, `id`, `activeIndex` (see D-13) | removed from public props |
+| Bar | `needClip`, `id` | removed from public props |
+| Bar, Pie | one-way `activeIndex` contract | `v-model:active-index` (D-13); the new model declares an `activeIndex` prop and update emit |
 | Legend | `chartWidth`, `chartHeight`, `margin` | removed from public props |
 | Label | `parentViewBox`, `index` | removed from public props |
 | Tooltip | `content` prop; default slot as content | removed; use `#content` |
@@ -305,6 +306,22 @@ one development warning per app (through `src/utils/log.ts`), exactly:
 - Add `data-slot` attributes: `chart` (root wrapper), `surface` (root svg), `plot` (plot-area
   group), `grid`, `x-axis`, `y-axis`, `series` (each graphical item's root group), `tooltip`,
   `legend`, `brush`, `cell` (each cell in cell charts), `label`.
+
+**D-22a Series paint order is registration order.** Within the graphical layer, series paint
+in their stable registration order, including after SSR hydration, animated entrances and
+reduced-motion snaps. Keep the cursor → graphical → label tiers and existing geometry and
+motion. A keyed series retains its registration position; removal and a new registration follow
+the same registry rule as D-19's colors. Do not let the time at which a Teleport first renders
+choose its position.
+
+Evidence: the packed `83dc1b0` ComposedChart with Area, Bar, Line declared in that order paints
+Bar → Area → Line after animated hydration, versus Area → Bar → Line on an animation-disabled
+client mount. Both have identical path geometry and no browser errors; the captured comparison
+shows the area covering bars only in the hydrated chart. Reproduction:
+`.evidence/release-1.0/paint-order/probe.mjs`, `result.json`, `comparison.png` (Node 22.23.3,
+locked Chromium). This resolves the intended behavior for ssr-a11y.md P2 row 4; the regression
+and current-path fix belong to PLAN 2.0 and must survive the registry migration in 2.3. The
+finding is not fixed merely by recording this decision.
 
 **D-23 Slots and events to add.**
 - Radar: slots `shape`, `dot`, `activeDot`, `label` (the boolean/object props stay as toggles).
