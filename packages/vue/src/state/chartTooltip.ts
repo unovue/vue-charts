@@ -47,7 +47,17 @@ export type TooltipPayloadSearcher<T = any, R = T> = (
   nameKey?: DataKey<any>,
 ) => R | undefined
 
+export type TooltipKeyboardItem = {
+  index: string
+  coordinate: Coordinate
+  onClick?: (event: KeyboardEvent) => void
+}
+
 export type TooltipPayloadConfiguration = {
+  keyboardItems?: ReadonlyArray<TooltipKeyboardItem>
+  /** Hierarchy totals come from layout; parent rows need not store a value. */
+  values?: Readonly<Record<string, number>>
+
   // This is the data that is the same for all tooltip payloads, regardless of activeIndex
   settings: TooltipEntrySettings
   /**

@@ -74,7 +74,6 @@ import { isCategoricalAxis } from '@/utils'
 import { findEntryInArray, mathSign } from '@/utils/data'
 import { selectChartLayout } from '@/state/selectors/common'
 import { getTooltipEntry, getValueByDataKey } from '@/utils/chart'
-import type { BaseAxisProps } from '@/cartesian/axis/type'
 
 function getSliced<T>(
   arr: unknown | ReadonlyArray<T>,
@@ -100,7 +99,7 @@ function selectFinalData(dataDefinedOnItem: unknown, dataDefinedOnChart: Readonl
   return dataDefinedOnChart
 }
 
-export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: BaseAxisProps | undefined, activeLabel: string | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType): TooltipPayload | undefined {
+export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType): TooltipPayload | undefined {
   if (activeIndex == null || tooltipPayloadSearcher == null) {
     return undefined
   }
@@ -108,14 +107,13 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
 
   const init: Array<TooltipPayloadEntry> = []
 
-  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings }): Array<TooltipPayloadEntry> => {
+  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values }): Array<TooltipPayloadEntry> => {
     const finalData = selectFinalData(dataDefinedOnItem, chartData!)
 
     const sliced = getSliced(finalData, dataStartIndex, dataEndIndex)
 
     const finalDataKey: DataKey<any> | undefined = settings?.dataKey ?? tooltipAxis?.dataKey
-    // BaseAxisProps does not support nameKey but it could!
-    const finalNameKey: DataKey<any> | undefined = settings?.nameKey // ?? tooltipAxis?.nameKey;
+    const finalNameKey: DataKey<any> | undefined = settings?.nameKey
     let tooltipPayload: unknown
     if (
       tooltipAxis?.dataKey
@@ -169,7 +167,7 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
           tooltipEntrySettings: settings,
           dataKey: finalDataKey!,
           payload: tooltipPayload,
-          value: getValueByDataKey(tooltipPayload, finalDataKey),
+          value: values?.[activeIndex] ?? getValueByDataKey(tooltipPayload, finalDataKey),
           name: getValueByDataKey(tooltipPayload, finalNameKey) ?? settings?.name,
         }),
       )
@@ -505,13 +503,11 @@ export const selectActiveTooltipCoordinate: (state: RechartsRootState) => Coordi
     return tooltipInteractionState.coordinate ?? defaultIndexCoordinate
   },
 )
-// @ts-ignore
 export const selectIsTooltipActive: (state: RechartsRootState) => boolean = createSelector(
   [selectTooltipInteractionState],
   (tooltipInteractionState: TooltipInteractionState) => tooltipInteractionState.active,
 )
 
-// @ts-ignore
 export const selectActiveTooltipPayload: (state: RechartsRootState) => TooltipPayload | undefined = createSelector(
   [
     selectTooltipPayloadConfigurations,

@@ -11,6 +11,7 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { ChartsWrapper } from './ChartsWrapper'
+import { boxAttrs, rootAttrs } from './CellGridLayer'
 import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
@@ -69,6 +70,8 @@ const sankeyOptions: ChartOptions = {
 }
 
 export const SankeyVueProps = {
+  title: { type: String, default: 'Sankey diagram' },
+  desc: String,
   data: {
     type: Object as PropType<{ nodes: SankeyInputNode[], links: SankeyInputLink[] }>,
     required: true as const,
@@ -96,7 +99,7 @@ export const SankeyVueProps = {
 }
 
 const sankeyEmits = {
-  'node-click': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-click': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
   'node-mouseenter': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
   'node-mouseleave': (_entry: SankeyLayoutNode, _index: number, _event: MouseEvent) => true,
   'link-click': (_entry: SankeyLayoutLink, _index: number, _event: MouseEvent) => true,
@@ -218,6 +221,16 @@ const SankeyInner = defineComponent({
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: payloadTree.value,
         positions: undefined,
+        keyboardItems: [...layout.value.nodes].sort((a, b) =>
+          (a.x0 ?? 0) - (b.x0 ?? 0) || (a.y0 ?? 0) - (b.y0 ?? 0),
+        ).map(node => ({
+          index: `nodes[${node.index}]`,
+          coordinate: {
+            x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
+            y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
+          },
+          onClick: event => handleNodeClick(node, node.index!, event),
+        })),
         settings: {
           stroke: props.nodeStroke,
           strokeWidth: undefined,
@@ -276,7 +289,7 @@ const SankeyInner = defineComponent({
       emit('link-mouseleave', link, index, e)
     }
 
-    function handleNodeClick(node: SankeyLayoutNode, index: number, e: MouseEvent) {
+    function handleNodeClick(node: SankeyLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
       const coord: Coordinate = {
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
@@ -398,7 +411,7 @@ const SankeyInner = defineComponent({
     }
 
     return () => (
-      <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
+      <Surface title={props.title} desc={props.desc} width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sankey">
           <g class="v-charts-sankey-links">
             {displayLinks.value.map(({ key, link }, i) => renderLink(link, link.index ?? i, 1, key))}
@@ -423,7 +436,7 @@ const _Sankey = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...sankeyEmits },
   slots: Object as SlotsType<SankeySlots>,
-  setup(props, { slots, emit }) {
+  setup(props, { slots, emit, attrs }) {
     provideChartContext(sankeyOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -434,7 +447,20 @@ const _Sankey = defineComponent({
         return null
 
       return (
-        <ChartsWrapper {...chartListeners(emit)} isResponsive={isResponsive.value} boxStyle={boxStyle.value} interactive={!isResponsive.value || measured.value} onResize={handleResize} width={effectiveWidth.value} height={effectiveHeight.value}>
+        <ChartsWrapper
+          {...rootAttrs(attrs)}
+          {...boxAttrs(attrs)}
+          accessibilityLayer
+          title={props.title}
+          desc={props.desc}
+          {...chartListeners(emit)}
+          isResponsive={isResponsive.value}
+          boxStyle={boxStyle.value}
+          interactive={!isResponsive.value || measured.value}
+          onResize={handleResize}
+          width={effectiveWidth.value}
+          height={effectiveHeight.value}
+        >
           <SankeyInner {...{ 'onNode-click': (entry, index, event) => emit('node-click', entry, index, event) }} {...{ 'onNode-mouseenter': (entry, index, event) => emit('node-mouseenter', entry, index, event) }} {...{ 'onNode-mouseleave': (entry, index, event) => emit('node-mouseleave', entry, index, event) }} {...{ 'onLink-click': (entry, index, event) => emit('link-click', entry, index, event) }} {...{ 'onLink-mouseenter': (entry, index, event) => emit('link-mouseenter', entry, index, event) }} {...{ 'onLink-mouseleave': (entry, index, event) => emit('link-mouseleave', entry, index, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
             {{ node: slots.node, link: slots.link }}
           </SankeyInner>

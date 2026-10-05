@@ -14,6 +14,7 @@ import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
 import { ChartsWrapper } from './ChartsWrapper'
+import { boxAttrs, rootAttrs } from './CellGridLayer'
 import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
@@ -55,6 +56,8 @@ const sunburstOptions: ChartOptions = {
 }
 
 export const SunburstChartVueProps = {
+  title: { type: String, default: 'Sunburst chart' },
+  desc: String,
   data: { type: Object as PropType<SunburstData>, required: true as const },
   dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
   nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
@@ -78,7 +81,11 @@ const SunburstInner = defineComponent({
   name: 'SunburstInner',
   props: SunburstChartVueProps,
   slots: Object as SlotsType<SunburstSlots>,
-  emits: ['animationStart', 'animationEnd'],
+  emits: {
+    'animationStart': () => true,
+    'animationEnd': () => true,
+    'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
+  },
   setup(props, { slots, emit }) {
     const trackedData = useTrackedData(() => [props.data])
     const data = computed(() => ({ ...trackedData.value![0] }))
@@ -142,7 +149,19 @@ const SunburstInner = defineComponent({
     watch(computed(() => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: data.value,
+        values: Object.fromEntries(nodes.value.map(node => [node.tooltipIndex, node.value])),
         positions: undefined,
+        keyboardItems: [...nodes.value].sort((a, b) => {
+          if (a.tooltipIndex.startsWith(`${b.tooltipIndex}.`))
+            return 1
+          if (b.tooltipIndex.startsWith(`${a.tooltipIndex}.`))
+            return -1
+          return a.startAngle - b.startAngle || a.depth - b.depth
+        }).map(node => ({
+          index: node.tooltipIndex,
+          coordinate: getTooltipCoordinate(node),
+          onClick: event => handleClick(node, event),
+        })),
         settings: {
           stroke: props.stroke,
           strokeWidth: undefined,
@@ -188,12 +207,13 @@ const SunburstInner = defineComponent({
       tooltip.mouseLeaveItem()
     }
 
-    function handleClick(node: SunburstLayoutNode, e: MouseEvent) {
+    function handleClick(node: SunburstLayoutNode, e: MouseEvent | KeyboardEvent) {
       tooltip.setActiveClickItemIndex({
         activeIndex: node.tooltipIndex,
         activeDataKey: props.dataKey,
         activeCoordinate: getTooltipCoordinate(node),
       })
+      emit('node-click', node, nodes.value.indexOf(node), e)
     }
 
     // Leaving sectors are not interactive; their data is gone.
@@ -243,7 +263,7 @@ const SunburstInner = defineComponent({
     }
 
     return () => (
-      <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
+      <Surface title={props.title} desc={props.desc} width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
         <Layer class="v-charts-sunburst">
           {items.value.map(({ key, value, phase }, index) => renderSector(value, index, key, phase === 'exit'))}
         </Layer>
@@ -256,9 +276,9 @@ const _SunburstChart = defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
-  emits: { ...chartEmits, 'animation-start': () => true, 'animation-end': () => true },
+  emits: { ...chartEmits, 'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true, 'animation-start': () => true, 'animation-end': () => true },
   slots: Object as SlotsType<SunburstSlots>,
-  setup(props, { slots, emit }) {
+  setup(props, { slots, emit, attrs }) {
     provideChartContext(sunburstOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -270,6 +290,11 @@ const _SunburstChart = defineComponent({
 
       return (
         <ChartsWrapper
+          {...rootAttrs(attrs)}
+          {...boxAttrs(attrs)}
+          accessibilityLayer
+          title={props.title}
+          desc={props.desc}
           {...chartListeners(emit)}
           isResponsive={isResponsive.value}
           boxStyle={boxStyle.value}
@@ -282,6 +307,7 @@ const _SunburstChart = defineComponent({
             {...innerProps}
             width={effectiveWidth.value}
             height={effectiveHeight.value}
+            {...{ 'onNode-click': (node, index, event) => emit('node-click', node, index, event) }}
             onAnimationStart={() => emit('animation-start')}
             onAnimationEnd={() => emit('animation-end')}
           >

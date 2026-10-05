@@ -1,6 +1,6 @@
 import { chartEmits } from '@/events/componentEvents'
 import { useChartTooltip } from '@/state/chartContext'
-import { type CSSProperties, type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { type CSSProperties, type PropType, type StyleValue, defineComponent, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
@@ -16,6 +16,7 @@ export const ChartsWrapper = defineComponent({
   props: {
     accessibilityLayer: { type: Boolean, default: false },
     title: String,
+    desc: String,
     descriptionId: String,
     tabIndex: Number,
     class: classProp,
@@ -29,7 +30,8 @@ export const ChartsWrapper = defineComponent({
   },
   inheritAttrs: false,
   emits: { ...chartEmits, resize: (_width: number, _height: number) => true },
-  setup(props, { slots, emit }) {
+  setup(props, { slots, emit, attrs }) {
+    const descriptionId = useId()
     const tooltip = useChartTooltip()
     const callHandler = useChartCallbacks()
     const interactions = useChartInteractions()
@@ -120,7 +122,7 @@ export const ChartsWrapper = defineComponent({
       focusVisible.value = true
       if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End', 'Escape', 'Enter'].includes(e.key))
         e.preventDefault()
-      interactions.keyDown(e.key)
+      interactions.keyDown(e)
     }
 
     const myOnContextMenu = (e: MouseEvent) => {
@@ -155,6 +157,7 @@ export const ChartsWrapper = defineComponent({
 
     return () => (
       <div
+        {...attrs}
         class={['v-charts-wrapper', props.class]}
         style={[
           props.boxStyle,
@@ -167,7 +170,7 @@ export const ChartsWrapper = defineComponent({
         role={props.accessibilityLayer ? 'application' : undefined}
         tabindex={props.accessibilityLayer ? props.tabIndex ?? 0 : undefined}
         aria-label={props.accessibilityLayer ? props.title : undefined}
-        aria-describedby={props.accessibilityLayer ? props.descriptionId : undefined}
+        aria-describedby={props.accessibilityLayer ? props.descriptionId ?? (props.desc ? descriptionId : undefined) : undefined}
         data-focus-visible={focusVisible.value ? '' : undefined}
         onBlur={onBlur}
         onPointerdown={onPointerDown}
@@ -186,6 +189,7 @@ export const ChartsWrapper = defineComponent({
         onTouchstart={myOnTouchStart}
         ref={innerRef as any}
       >
+        {props.desc && <span id={descriptionId} hidden>{props.desc}</span>}
         {slots.default?.()}
         {props.accessibilityLayer && (
           <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', border: 0 }}>

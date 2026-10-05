@@ -48,15 +48,21 @@ export function useChartInteractions() {
     }
   }
 
-  function itemKeyDown(key: KeyboardEvent['key']) {
+  function itemKeyDown(event: KeyboardEvent) {
+    const { key } = event
     const state = chartState.value
     const targets = state.tooltip.tooltipItemPayloads.flatMap((configuration) => {
-      if (configuration.settings.hide || !Array.isArray(configuration.dataDefinedOnItem))
+      if (configuration.settings.hide)
+        return []
+      if (configuration.keyboardItems)
+        return configuration.keyboardItems.map(item => ({ ...item, configuration }))
+      if (!Array.isArray(configuration.dataDefinedOnItem))
         return []
       return configuration.dataDefinedOnItem.map((_, index) => ({
         configuration,
         index: String(index),
         coordinate: configuration.positions?.[index],
+        onClick: undefined,
       }))
     })
     const current = state.tooltip.keyboardInteraction
@@ -66,6 +72,10 @@ export function useChartInteractions() {
     }
     const position = targets.findIndex(target => target.configuration === current.configuration
       && target.index === current.index)
+    if (key === 'Enter') {
+      targets[position]?.onClick?.(event)
+      return
+    }
     let next: number
     if (key === 'Home')
       next = 0
@@ -89,14 +99,15 @@ export function useChartInteractions() {
     })
   }
 
-  function keyDown(key: KeyboardEvent['key']) {
+  function keyDown(event: KeyboardEvent) {
+    const { key } = event
     const state = chartState.value
     const accessibilityLayerIsActive = state.rootProps.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
       return
     }
     if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item') {
-      itemKeyDown(key)
+      itemKeyDown(event)
       return
     }
     const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined

@@ -16,6 +16,7 @@ import { Layer } from '@/container/Layer'
 import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
 import { ChartsWrapper } from './ChartsWrapper'
+import { boxAttrs, rootAttrs } from './CellGridLayer'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
@@ -108,6 +109,8 @@ function buildNodeTree(
 }
 
 export const TreemapVueProps = {
+  title: { type: String, default: 'Treemap' },
+  desc: String,
   data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
   dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
   nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
@@ -126,7 +129,7 @@ export const TreemapVueProps = {
  * Inner component that has access to chart-local Vue state (provided by Treemap wrapper).
  */
 const treemapEmits = {
-  'node-click': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-click': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
   'node-mouseenter': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
   'node-mouseleave': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
   'animation-start': () => true,
@@ -230,6 +233,14 @@ const TreemapInner = defineComponent({
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: nodeTree.value,
         positions: undefined,
+        keyboardItems: [...nodes.value].sort((a, b) =>
+          a.y + a.height / 2 - b.y - b.height / 2
+          || a.x + a.width / 2 - b.x - b.width / 2,
+        ).map(node => ({
+          index: getTooltipIndex(node)!,
+          coordinate: { x: node.x + node.width / 2, y: node.y + node.height / 2 },
+          onClick: event => handleNodeClick(node, nodes.value.indexOf(node), event),
+        })),
         settings: {
           stroke: props.stroke,
           strokeWidth: undefined,
@@ -254,21 +265,25 @@ const TreemapInner = defineComponent({
     // Map layout node name → tooltipIndex from nodeTree
     function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
       const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-      const idx = data.findIndex(item => getValueByDataKey(item, props.nameKey) === node.name)
-      if (idx >= 0)
-        return `children[${idx}]`
-      // For flat mode with nested data, search leaves
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].children) {
-          const childIdx = data[i].children.findIndex((c: any) => getValueByDataKey(c, props.nameKey) === node.name)
-          if (childIdx >= 0)
-            return `children[${i}].children[${childIdx}]`
+      function findPath(items: Record<string, unknown>[], parent: string): TooltipIndex {
+        for (const [index, item] of items.entries()) {
+          const path = `${parent}children[${index}]`
+          if (toRaw(item) === toRaw(node.payload)
+            || (isNestMode.value && getValueByDataKey(item, props.nameKey) === node.name)) {
+            return path
+          }
+          if (Array.isArray(item.children)) {
+            const nested = findPath(item.children, `${path}.`)
+            if (nested)
+              return nested
+          }
         }
+        return null
       }
-      return `children[0]`
+      return findPath(data, '')
     }
 
-    function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent) {
+    function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
       const sourceData = nestCurrentData.value ?? []
       const clickedItem = sourceData.find(item => getValueByDataKey(item, props.nameKey) === node.name)
 
@@ -318,7 +333,7 @@ const TreemapInner = defineComponent({
       emit('node-mouseleave', node, index, e)
     }
 
-    function handleNodeClick(node: TreemapLayoutNode, index: number, e: MouseEvent) {
+    function handleNodeClick(node: TreemapLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
       if (isNestMode.value) {
         handleNestClick(node, index, e)
       }
@@ -456,7 +471,7 @@ const TreemapInner = defineComponent({
     return () => (
       <>
         {renderBreadcrumb()}
-        <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
+        <Surface title={props.title} desc={props.desc} width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
           <Layer class="v-charts-treemap">
             {items.value.map((item, index) => renderNode(item.value, index, item.key, labelOpacity(item)))}
           </Layer>
@@ -484,7 +499,7 @@ const _Treemap = defineComponent({
   inheritAttrs: false,
   emits: { ...chartEmits, ...treemapEmits },
   slots: Object as SlotsType<TreemapSlots>,
-  setup(props, { slots, emit }) {
+  setup(props, { slots, emit, attrs }) {
     provideChartContext(treemapOptions)
     provideRenderPhase()
     const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
@@ -496,6 +511,11 @@ const _Treemap = defineComponent({
 
       return (
         <ChartsWrapper
+          {...rootAttrs(attrs)}
+          {...boxAttrs(attrs)}
+          accessibilityLayer
+          title={props.title}
+          desc={props.desc}
           {...chartListeners(emit)}
           isResponsive={isResponsive.value}
           boxStyle={boxStyle.value}

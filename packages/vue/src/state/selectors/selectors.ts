@@ -141,7 +141,6 @@ export const selectTooltipPayload: (
   tooltipEventType: TooltipEventType,
   trigger: TooltipTrigger,
   defaultIndex: TooltipIndex | undefined,
-  // @ts-expect-error
 ) => TooltipPayload | undefined = createSelector(
   [
     selectTooltipPayloadConfigurations,
