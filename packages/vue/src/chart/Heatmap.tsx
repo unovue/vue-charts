@@ -1,3 +1,4 @@
+import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
 import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext } from '@/state/chartContext'
@@ -124,8 +125,14 @@ const _Heatmap = defineComponent({
       const { xs, ys, cells: byKey } = matrix.value
       const width = size.effectiveWidth.value
       const height = size.effectiveHeight.value
-      if (xs.length === 0 || ys.length === 0 || !(width > 0) || !(height > 0))
-        return { cells: [] as GridCell<HeatmapCell>[], xLabels: [] as { x: number, text: string }[], yLabels: [] as { y: number, text: string }[], gap: 0 }
+      if (xs.length === 0 || ys.length === 0 || !(width > 0) || !(height > 0)) {
+        return {
+          cells: [] as GridCell<HeatmapCell>[],
+          xLabels: [] as MovingLabel[],
+          yLabels: [] as MovingLabel[],
+          gap: 0,
+        }
+      }
       const stepX = Math.max(0, (width - left.value) / xs.length)
       const stepY = Math.max(0, (height - bottom.value) / ys.length)
       const gap = Math.min(props.gap, stepX / 3, stepY / 3)
@@ -181,28 +188,47 @@ const _Heatmap = defineComponent({
       const every = Math.max(1, Math.ceil(widest / Math.max(stepX, 1)))
       return {
         cells,
-        xLabels: props.xLabels ? xs.flatMap((x, column) => column % every === 0 ? [{ x: left.value + column * stepX + (stepX - gap) / 2, text: xText(x) }] : []) : [],
-        yLabels: props.yLabels ? ys.map((y, row) => ({ y: row * stepY + (stepY - gap) / 2, text: yText(y) })) : [],
+        xLabels: props.xLabels
+          ? xs.flatMap((x, column) => column % every === 0
+              ? [{
+                  key: `${typeof x}:${x}`,
+                  x: left.value + column * stepX + (stepX - gap) / 2,
+                  y: height - 4,
+                  text: xText(x),
+                }]
+              : [])
+          : [],
+        yLabels: props.yLabels
+          ? ys.map((y, row) => ({
+              key: `${typeof y}:${y}`,
+              x: left.value - LABEL_GAP,
+              y: row * stepY + (stepY - gap) / 2,
+              text: yText(y),
+            }))
+          : [],
         gap,
       }
     })
-
-    const textStyle = { fill: 'var(--v-charts-text, #666)', fontSize: '10px' }
 
     return () => (
       <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
         <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <Layer class="v-charts-heatmap">
-            <g class="v-charts-heatmap-y-labels" aria-hidden="true">
-              {layout.value.yLabels.map(label => (
-                <text key={label.text} x={left.value - LABEL_GAP} y={label.y} text-anchor="end" dominant-baseline="central" style={textStyle}>{label.text}</text>
-              ))}
-            </g>
-            <g class="v-charts-heatmap-x-labels" aria-hidden="true">
-              {layout.value.xLabels.map(label => (
-                <text key={label.text} x={label.x} y={size.effectiveHeight.value - 4} text-anchor="middle" style={textStyle}>{label.text}</text>
-              ))}
-            </g>
+            <MovingLabels
+              class="v-charts-heatmap-y-labels"
+              labels={layout.value.yLabels}
+              isAnimationActive={props.isAnimationActive}
+              transition={props.transition}
+              textAnchor="end"
+              centered
+            />
+            <MovingLabels
+              class="v-charts-heatmap-x-labels"
+              labels={layout.value.xLabels}
+              isAnimationActive={props.isAnimationActive}
+              transition={props.transition}
+              textAnchor="middle"
+            />
             <CellGridLayer
               cells={layout.value.cells}
               gap={layout.value.gap}

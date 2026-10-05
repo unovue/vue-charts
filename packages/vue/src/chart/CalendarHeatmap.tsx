@@ -1,3 +1,4 @@
+import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
 import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext } from '@/state/chartContext'
@@ -115,8 +116,14 @@ const _CalendarHeatmap = defineComponent({
       const r = range.value
       const width = size.effectiveWidth.value
       const height = size.effectiveHeight.value
-      if (!r || !(width > 0) || !(height > 0))
-        return { cells: [] as GridCell<CalendarDay>[], months: [] as { x: number, text: string }[], weekdays: [] as { y: number, text: string }[], step: 0 }
+      if (!r || !(width > 0) || !(height > 0)) {
+        return {
+          cells: [] as GridCell<CalendarDay>[],
+          months: [] as MovingLabel[],
+          weekdays: [] as MovingLabel[],
+          step: 0,
+        }
+      }
       const step = Math.max(0, Math.min((width - left.value) / columns.value, (height - top.value) / 7))
       const gap = Math.min(props.gap, step / 3)
       const cellSize = step - gap
@@ -135,7 +142,7 @@ const _CalendarHeatmap = defineComponent({
       const dateFormat = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' } as const
 
       const cells: GridCell<CalendarDay>[] = []
-      const months: { column: number, text: string }[] = []
+      const months: { key: string, column: number, text: string }[] = []
       for (let day = r.start; day <= r.end; day++) {
         const column = Math.floor((day - firstColumn) / 7)
         const row = weekdayOffset(day)
@@ -158,8 +165,13 @@ const _CalendarHeatmap = defineComponent({
         // A month is labelled at the first column whose top cell belongs to it.
         if (iso.endsWith('-01') || day === r.start) {
           const labelColumn = row === 0 ? column : column + 1
-          if (labelColumn < columns.value)
-            months.push({ column: labelColumn, text: formatDay(day, props.locale, { month: 'short' }) })
+          if (labelColumn < columns.value) {
+            months.push({
+              key: iso.slice(0, 7),
+              column: labelColumn,
+              text: formatDay(day, props.locale, { month: 'short' }),
+            })
+          }
         }
       }
       // Drop a label that would collide with the next one (usually a partial first month).
@@ -167,34 +179,44 @@ const _CalendarHeatmap = defineComponent({
       const weekdays = props.weekdayLabels
         // Monday, Wednesday and Friday, wherever the week start puts them. 1970-01-04 (day 3) was a Sunday.
         ? [1, 3, 5].map(weekday => ({
+            key: weekday,
+            x: 0,
             y: top.value + ((weekday - props.weekStart + 7) % 7) * step + cellSize / 2,
             text: formatDay(3 + weekday, props.locale, { weekday: 'short' }),
           }))
         : []
       return {
         cells,
-        months: props.monthLabels ? visibleMonths.map(month => ({ x: left.value + month.column * step, text: month.text })) : [],
+        months: props.monthLabels
+          ? visibleMonths.map(month => ({
+              key: month.key,
+              x: left.value + month.column * step,
+              y: MONTH_BAND - 6,
+              text: month.text,
+            }))
+          : [],
         weekdays,
         step,
       }
     })
 
-    const textStyle = { fill: 'var(--v-charts-text, #666)', fontSize: '10px' }
-
     return () => (
       <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
         <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <Layer class="v-charts-calendar">
-            <g class="v-charts-calendar-months" aria-hidden="true">
-              {layout.value.months.map(month => (
-                <text key={`${month.text}-${month.x}`} x={month.x} y={MONTH_BAND - 6} style={textStyle}>{month.text}</text>
-              ))}
-            </g>
-            <g class="v-charts-calendar-weekdays" aria-hidden="true">
-              {layout.value.weekdays.map(weekday => (
-                <text key={weekday.text} x={0} y={weekday.y} dominant-baseline="central" style={textStyle}>{weekday.text}</text>
-              ))}
-            </g>
+            <MovingLabels
+              class="v-charts-calendar-months"
+              labels={layout.value.months}
+              isAnimationActive={props.isAnimationActive}
+              transition={props.transition}
+            />
+            <MovingLabels
+              class="v-charts-calendar-weekdays"
+              labels={layout.value.weekdays}
+              isAnimationActive={props.isAnimationActive}
+              transition={props.transition}
+              centered
+            />
             <CellGridLayer
               cells={layout.value.cells}
               gap={Math.min(props.gap, layout.value.step / 3)}

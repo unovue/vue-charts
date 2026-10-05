@@ -2,6 +2,7 @@ import { useReducedMotion } from '@/animation/useReducedMotion'
 import { animate } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-dom'
 import { defineComponent, nextTick, onMounted, onScopeDispose, ref } from 'vue'
+import { motionTokens } from './motion'
 import { shouldSkipEntrance } from './renderPhase'
 
 /** Radius and opacity appear together; pointer retargeting keeps the mounted dot. */
@@ -19,8 +20,8 @@ export const ActiveDot = defineComponent({
       const circle = el.querySelector('circle')
       const radius = circle?.getAttribute('r')
       controls = animate(0, 1, {
-        duration: 0.15,
-        ease: 'easeOut',
+        duration: motionTokens.feedback.duration,
+        ease: motionTokens.feedback.ease,
         onUpdate: (t) => {
           el.style.opacity = String(t)
           if (circle && radius)

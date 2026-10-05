@@ -57,15 +57,15 @@ it('retargets the same springs without starting position tweens or reading toolt
   expect(rect).not.toHaveBeenCalled()
   expect(width).not.toHaveBeenCalled()
 })
-it('fades and scales on show, retains content through hide, then hides after 0.1 seconds', async () => {
+it('fades and scales on show, retains content through hide, then hides after 0.15 seconds', async () => {
   const view = await setup()
   expect(motion.animations.at(-1)?.values).toEqual({ opacity: [0, 1], scale: [0.96, 1] })
-  expect(motion.animations.at(-1)?.options.duration).toBe(0.12)
+  expect(motion.animations.at(-1)?.options.duration).toBe(0.15)
   view.active.value = false
   await nextTick()
   expect(view.tooltip.style.visibility).toBe('visible')
   expect(view.tooltip.textContent).toContain('20')
-  expect(motion.animations.at(-1)?.options.duration).toBe(0.1)
+  expect(motion.animations.at(-1)?.options.duration).toBe(0.15)
   motion.animations.at(-1)?.options.onComplete?.()
   await nextTick()
   expect(view.tooltip.style.visibility).toBe('hidden')

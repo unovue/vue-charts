@@ -1,3 +1,4 @@
+import { type ChartTransition, motionTokens } from '@/animation/motion'
 import { useChartTooltip } from '@/state/chartContext'
 import { Fragment, Teleport, computed, defineComponent, isVNode, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
@@ -7,7 +8,7 @@ import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { animate, useSpring } from 'motion-v'
-import type { AnimationOptions, AnimationPlaybackControls } from 'motion-dom'
+import type { AnimationPlaybackControls } from 'motion-dom'
 import type { TooltipActiveIndex, TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
 import {
   selectActiveCoordinate,
@@ -253,7 +254,7 @@ const TooltipBoundingBox = defineComponent({
   props: {
     allowEscapeViewBox: Object as PropType<AllowInDimension>,
     isAnimationActive: Boolean,
-    transition: { type: Object as PropType<AnimationOptions>, default: undefined },
+    transition: { type: Object as PropType<ChartTransition>, default: undefined },
     active: Boolean,
     coordinate: Object as PropType<ChartCoordinate>,
     hasPayload: Boolean,
@@ -291,7 +292,7 @@ const TooltipBoundingBox = defineComponent({
     const tooltipSize = ref({ width: 0, height: 0 })
     let preTransform: CSSProperties | undefined
     const reducedMotion = useReducedMotion()
-    const spring = computed(() => ({ type: 'spring' as const, stiffness: 500, damping: 40, mass: 1, ...props.transition }))
+    const spring = computed(() => ({ ...motionTokens.follow, ...props.transition }))
     const x = useSpring(0, spring)
     const y = useSpring(0, spring)
     const writePosition = () => {
@@ -340,7 +341,7 @@ const TooltipBoundingBox = defineComponent({
       fade = animate(element, {
         opacity: show ? [0, 1] : 0,
         ...(reduced ? {} : { scale: show ? [0.96, 1] : 1 }),
-      }, { duration: show ? 0.12 : 0.1, onComplete: () => {
+      }, { duration: motionTokens.feedback.duration, ease: motionTokens.feedback.ease, onComplete: () => {
         if (!show) {
           present.value = false
           placed = false
@@ -583,7 +584,7 @@ const TooltipVueProps = {
     type: Boolean,
     default: true,
   },
-  transition: { type: Object as PropType<AnimationOptions>, default: undefined },
+  transition: { type: Object as PropType<ChartTransition>, default: undefined },
   offset: {
     type: Number,
     default: 10,

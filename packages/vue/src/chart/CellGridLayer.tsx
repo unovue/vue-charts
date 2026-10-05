@@ -5,9 +5,9 @@ import { get } from 'es-toolkit/compat'
 import { useChartTooltip } from '@/state/chartContext'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
-import type { ChartTransition } from '@/animation/motion'
+import { type ChartTransition, cascadeReveal, motionTokens } from '@/animation/motion'
 import type { VueClassValue } from '@/types/common'
-import { type Move, type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
+import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { GridCell } from './cellGridUtils'
 
@@ -132,31 +132,6 @@ export const cellGridSharedProps = {
 type Rect = Pick<GridCell, 'x' | 'y' | 'width' | 'height'>
 /** A cell as drawn: `opacity` is the entrance's fade. */
 type ShownCell = GridCell & { opacity?: number }
-
-/**
- * The first appearance, as a wave from the top-left corner: each cell fades in on its turn.
- * `cascade` settles each cell from 92 % of its size; `slide` moves it in from the left, which
- * suits a timeline.
- */
-function revealOf(style: 'cascade' | 'slide', cells: readonly GridCell[]): Reveal<ShownCell> | undefined {
-  if (!cells.length)
-    return undefined
-  let left = Infinity
-  let top = Infinity
-  let right = -Infinity
-  let bottom = -Infinity
-  for (const cell of cells) {
-    left = Math.min(left, cell.x)
-    top = Math.min(top, cell.y)
-    right = Math.max(right, cell.x + cell.width)
-    bottom = Math.max(bottom, cell.y + cell.height)
-  }
-  const span = right - left + bottom - top || 1
-  const order = (cell: GridCell) => Math.min(1, Math.max(0, (cell.x - left + cell.y - top) / span))
-  return style === 'slide'
-    ? { from: cell => ({ ...cell, x: cell.x - 8, opacity: 0 }), order }
-    : { from: cell => ({ ...cell, x: cell.x + cell.width * 0.04, y: cell.y + cell.height * 0.04, width: cell.width * 0.92, height: cell.height * 0.92, opacity: 0 }), order }
-}
 
 /**
  * Draws a set of keyed cells with the behavior every cell chart shares: cells keep their DOM
@@ -290,7 +265,7 @@ export const CellGridLayer = defineComponent({
       },
       // One clock for entering, staying and leaving cells keeps the belt gap-free.
       connected: true,
-      reveal: () => revealOf(props.entrance, props.cells),
+      reveal: () => cascadeReveal(props.cells, props.entrance),
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onStart: callbacks.onStart,
@@ -448,7 +423,10 @@ export const CellGridLayer = defineComponent({
     const radiusOf = (rect: Rect) => Math.max(0, Math.min(props.radius, rect.width / 2, rect.height / 2))
 
     return () => {
-      const fillTransition = reducedMotion.value === 'reduce' ? undefined : 'fill 300ms ease-out, opacity 150ms ease-out'
+      const fillTransition = reducedMotion.value === 'reduce'
+        ? undefined
+        : `fill ${motionTokens.color.duration}s ${motionTokens.color.cssEase}, `
+          + `opacity ${motionTokens.feedback.duration}s ${motionTokens.feedback.cssEase}`
       const half = props.gap / 2
       const active = activeKey.value
       const activeCell = active === undefined ? undefined : items.value.find(item => item.value.key === active && item.phase !== 'exit')?.value

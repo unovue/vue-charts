@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { BarList, CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { motionTokens } from '@/animation/motion'
 import { levelOf, toDayNumber } from '../cellGridUtils'
 
 const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean }> }))
@@ -128,6 +129,27 @@ describe('<Tracker />', () => {
 })
 
 describe('<CalendarHeatmap />', () => {
+  // Position-based keys remounted months on every window shift.
+  it('keeps each month label mounted while the window moves one week', async () => {
+    const start = ref('2026-01-01')
+    const end = ref('2026-06-30')
+    const { container } = render(() => (
+      <CalendarHeatmap width={600} height={140} start={start.value} end={end.value} data={[]} />
+    ))
+    await frame()
+    const before = Array.from(container.querySelectorAll('.v-charts-calendar-months text'))
+    expect(before.map(node => node.textContent)).toEqual(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'])
+    start.value = '2026-01-08'
+    end.value = '2026-07-07'
+    await nextTick()
+    await frame(0.25)
+    for (const node of before)
+      expect(Array.from(container.querySelectorAll('.v-charts-calendar-months text'))).toContain(node)
+    await frame()
+    for (const node of before)
+      expect(Array.from(container.querySelectorAll('.v-charts-calendar-months text'))).toContain(node)
+  })
+
   it('ends at the latest valid date even when its value is missing', () => {
     const { container } = render(() => (
       <CalendarHeatmap
@@ -235,6 +257,35 @@ describe('<CalendarHeatmap />', () => {
 })
 
 describe('<Heatmap />', () => {
+  // A staying row label used to snap ahead of its moving cells.
+  it('moves the next row label with its cells when a row is dropped', async () => {
+    const data = ref([
+      { x: 'X', y: 'A', value: 1 },
+      { x: 'X', y: 'B', value: 2 },
+      { x: 'X', y: 'C', value: 3 },
+    ])
+    const { container } = render(() => (
+      <Heatmap
+        width={300}
+        height={318}
+        gap={0}
+        data={data.value}
+        transition={{ duration: motionTokens.update.duration, ease: 'linear' }}
+      />
+    ))
+    await frame()
+    const label = Array.from(container.querySelectorAll('.v-charts-heatmap-y-labels text'))
+      .find(node => node.textContent === 'C')!
+    expect(Number(label.getAttribute('y'))).toBe(250)
+    data.value = data.value.slice(1)
+    await nextTick()
+    await frame(0.5)
+    expect(Number(label.getAttribute('y'))).toBeGreaterThan(225)
+    expect(Number(label.getAttribute('y'))).toBeLessThan(250)
+    await frame()
+    expect(Number(label.getAttribute('y'))).toBe(225)
+  })
+
   const cellsOf = (container: Element) => Array.from(container.querySelectorAll<SVGGElement>('.v-charts-cell'), cell => [cell.getAttribute('aria-label'), cell.querySelector('rect')!.style.fill])
 
   it('orders rows and columns by domain, sums duplicates and mixes colors by value', () => {

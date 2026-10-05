@@ -1,3 +1,4 @@
+import { motionTokens } from '@/animation/motion'
 import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -360,7 +361,7 @@ const JourneySankeyInner = defineComponent({
       const node = focused.value ? nodeById.value.get(focused.value) : undefined
       return node ? `${node.name}, step ${node.step + 1}: ${subtitleOf(node)}` : summary.value
     })
-    const fade = computed(() => reducedMotion.value === 'reduce' ? undefined : 'opacity 150ms ease-out')
+    const fade = computed(() => reducedMotion.value === 'reduce' ? undefined : `opacity ${motionTokens.feedback.duration}s ${motionTokens.feedback.cssEase}`)
     const halo = { paintOrder: 'stroke', stroke: 'var(--v-charts-background, #fff)', strokeWidth: '4px', strokeLinejoin: 'round' } as const
 
     return () => {
