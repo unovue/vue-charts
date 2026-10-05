@@ -202,7 +202,7 @@ export const CellGridLayer = defineComponent({
       y: from.y + (to.y - from.y) * t,
       width: from.width + (to.width - from.width) * t,
       height: from.height + (to.height - from.height) * t,
-      opacity: (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t,
+      opacity: Math.min(1, Math.max(0, (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t)),
     })
 
     // Identity on screen. Usually the cell's own key, with two exceptions decided per change:

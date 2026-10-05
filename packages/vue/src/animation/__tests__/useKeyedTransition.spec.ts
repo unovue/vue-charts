@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { effectScope, nextTick, shallowRef } from 'vue'
+import { effectScope, h, nextTick, shallowRef } from 'vue'
 import { cascadeTiming, motionTokens } from '../motion'
+import type { KeyedTransitionOptions } from '../useKeyedTransition'
 import { useKeyedTransition } from '../useKeyedTransition'
 
 // A controllable clock in place of motion-v's frame loop, which does not run in JSDOM.
@@ -31,7 +32,7 @@ function finish() {
 
 interface BarItem { name: string, height: number }
 
-function setup(initial: BarItem[], options: { active?: boolean, reveal?: Parameters<typeof useKeyedTransition<BarItem>>[1]['reveal'] } = {}) {
+function setup(initial: BarItem[], options: { active?: boolean } & Partial<KeyedTransitionOptions<BarItem>> = {}) {
   const data = shallowRef<BarItem[]>(initial)
   const scope = effectScope()
   const result = scope.run(() => useKeyedTransition(() => data.value, {
@@ -40,7 +41,7 @@ function setup(initial: BarItem[], options: { active?: boolean, reveal?: Paramet
     enterFrom: to => ({ ...to, height: 0 }),
     exitTo: from => ({ ...from, height: 0 }),
     isActive: () => options.active ?? true,
-    reveal: options.reveal,
+    ...options,
   }))!
   const view = () => result.items.value.map(i => `${String(i.key)}:${i.phase}:${Math.round(i.value.height)}`)
   return { data, view, result, scope }
@@ -51,6 +52,89 @@ afterEach(() => {
 })
 
 describe('useKeyedTransition', () => {
+  // An equal refresh must not replay motion or emit a phantom lifecycle.
+  it('does not animate an equal copy, including during entrance', async () => {
+    const onStart = vi.fn()
+    const onEnd = vi.fn()
+    const { data } = setup([{ name: 'A', height: 100 }], { onStart, onEnd })
+    at(0.3)
+    onStart.mockClear()
+    data.value = [{ name: 'A', height: 100 }]
+    await nextTick()
+    expect(clock.runs).toHaveLength(1)
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onEnd).not.toHaveBeenCalled()
+    finish()
+    onEnd.mockClear()
+    data.value = [{ name: 'A', height: 100 }]
+    await nextTick()
+    expect(clock.runs).toHaveLength(1)
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onEnd).not.toHaveBeenCalled()
+  })
+
+  it('keeps an unstarted cascade item waiting after a change', async () => {
+    const { data, result } = setup([{ name: 'A', height: 100 }, { name: 'B', height: 100 }], {
+      reveal: () => ({ order: to => to.name === 'A' ? 0 : 1 }),
+    })
+    at(0.3)
+    data.value = [{ name: 'A', height: 200 }, { name: 'B', height: 200 }]
+    await nextTick()
+    at(0.1)
+    expect(result.items.value[1].progress).toBe(0)
+    expect(result.items.value[1].value.height).toBe(0)
+  })
+
+  it('lets a user spring interpolate beyond its target', () => {
+    const { result } = setup([{ name: 'A', height: 100 }], { transition: () => ({ type: 'spring' }) })
+    clock.runs.at(-1)!.onUpdate(1.1)
+    expect(result.items.value[0].value.height).toBeCloseTo(110)
+    expect(result.items.value[0].progress).toBe(1)
+    expect(result.isAnimating.value).toBe(true)
+    finish()
+    expect(result.items.value[0].value.height).toBe(100)
+  })
+
+  it('does not emit animation callbacks when snapping', async () => {
+    const onStart = vi.fn()
+    const onEnd = vi.fn()
+    const { data } = setup([{ name: 'A', height: 100 }], { active: false, onStart, onEnd })
+    data.value = [{ name: 'A', height: 200 }]
+    await nextTick()
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onEnd).not.toHaveBeenCalled()
+    const { render } = await import('@testing-library/vue')
+    const { Heatmap } = await import('@/index')
+    const width = shallowRef(300)
+    render(() => h(Heatmap, {
+      'width': width.value,
+      'height': 100,
+      'data': [{ x: 'A', y: 'B', value: 100 }],
+      'onAnimation-start': onStart,
+      'onAnimation-end': onEnd,
+    }))
+    await nextTick()
+    finish()
+    await nextTick()
+    onStart.mockClear()
+    onEnd.mockClear()
+    width.value = 400
+    await nextTick()
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onEnd).not.toHaveBeenCalled()
+  })
+
+  it('continues entrance when the wall clock jumps ahead', async () => {
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    const { data } = setup([{ name: 'A', height: 100 }])
+    at(0.3)
+    now.mockReturnValue(10_000)
+    data.value = [{ name: 'A', height: 200 }]
+    await nextTick()
+    expect(clock.runs.at(-1)!.to).toBeCloseTo(0.7)
+    now.mockRestore()
+  })
+
   // A cascade that played every item at once, or restarted it on the next change, would look
   // like the plain grow it replaces.
   it('plays a cascade entrance one item after another, then updates together', async () => {

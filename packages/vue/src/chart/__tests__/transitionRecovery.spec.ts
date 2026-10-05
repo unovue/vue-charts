@@ -23,7 +23,7 @@ it('reports only the original getter error and recovers without swallowing user 
         interpolate: (_from, to) => to,
         enterFrom: to => to,
         exitTo: from => from,
-        isActive: () => false,
+        isActive: () => failCallback.value,
         onStart: () => {
           if (failCallback.value)
             throw callbackError

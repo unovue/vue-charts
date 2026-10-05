@@ -98,12 +98,12 @@ const BarListInner = defineComponent({
         // whole on the way.
         value: Number.isInteger(to.value) ? Math.round(from.value + (to.value - from.value) * t) : from.value + (to.value - from.value) * t,
         y: from.y + (to.y - from.y) * t,
-        presence: from.presence + (to.presence - from.presence) * t,
+        presence: Math.min(1, Math.max(0, from.presence + (to.presence - from.presence) * t)),
         // Rows changing rank cross each other: the ones moving up pass over at full strength while
         // the ones moving down dim underneath, so one label always reads clearly.
         ...crossing(from, to, t),
         ratio: from.ratio + (to.ratio - from.ratio) * t,
-        opacity: (from.opacity + (to.opacity - from.opacity) * t) * (to.y - from.y > props.rowHeight ? 1 - 0.7 * Math.sin(Math.PI * t) : 1),
+        opacity: Math.min(1, Math.max(0, (from.opacity + (to.opacity - from.opacity) * t) * (to.y - from.y > props.rowHeight ? 1 - 0.7 * Math.sin(Math.PI * t) : 1))),
       }),
       enterFrom: to => ({ ...to, value: 0, ratio: 0, opacity: 0, presence: 0 }),
       exitTo: from => ({ ...from, ratio: 0, opacity: 0, presence: 0 }),

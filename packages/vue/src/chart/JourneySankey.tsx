@@ -142,7 +142,7 @@ const JourneySankeyInner = defineComponent({
       key: shape => shape.kind === 'node' ? `n:${shape.node.id}` : `l:${shape.link.id}`,
       interpolate: (from, to, t) => {
         const shape = interpolateShape(from, to, t)
-        return from.fade === undefined ? shape : { ...shape, fade: mix(from.fade, to.fade ?? 1, t) }
+        return from.fade === undefined ? shape : { ...shape, fade: Math.min(1, Math.max(0, mix(from.fade, to.fade ?? 1, t))) }
       },
       enterFrom: shape => shape.kind === 'node'
         ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }

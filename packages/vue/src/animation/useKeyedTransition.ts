@@ -1,5 +1,6 @@
 import type { AnimationPlaybackControls } from 'motion-dom'
 import { animate } from 'motion-v'
+import { isEqual } from 'es-toolkit'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import type { ShallowRef } from 'vue'
 import { getCurrentInstance, nextTick, onMounted, onScopeDispose, shallowRef, watch } from 'vue'
@@ -20,7 +21,7 @@ export interface DisplayItem<T> {
 export interface KeyedTransitionOptions<T> {
   /** Stable identity across data changes (category, name). Never geometry. */
   key: (item: T, index: number) => PropertyKey
-  /** The value between two states; `t` is eased progress in [0, 1]. */
+  /** The value between two states; `t` is eased progress; user springs may overshoot. */
   interpolate: (from: T, to: T, t: number) => T
   /**
    * Where an entering item starts, e.g. a bar with zero height on its baseline. `neighbors`
@@ -103,7 +104,7 @@ const clamp01 = (t: number) => t < 0 ? 0 : t > 1 ? 1 : t
  * - A change during a transition starts from what is on screen now.
  * - Exiting items stay in `items` (phase 'exit') until they have left.
  * - Reduced motion, `isActive() === false`, server render and hydration show the target
- *   at once; start/end callbacks still fire.
+ *   at once without start/end callbacks.
  */
 export function useKeyedTransition<T>(
   target: () => readonly T[] | undefined,
@@ -126,7 +127,9 @@ export function useKeyedTransition<T>(
   let resizing = false
   // The first appearance is animating, on this clock (ms) and timing.
   let entering = false
-  let entranceClock: { start: number, timing: PhaseTiming } | undefined
+  let entranceClock: { elapsed: number, timing: PhaseTiming } | undefined
+  let turns = new Map<PropertyKey, number>()
+  let lastTarget: readonly T[] | undefined
   if (!options.followsSeries)
     useSeriesMotion().register(options.isActive)
   let controls: AnimationPlaybackControls | undefined
@@ -156,10 +159,8 @@ export function useKeyedTransition<T>(
   function snap(next: readonly T[]) {
     stop()
     entering = false
-    options.onStart?.()
     items.value = keyed(next).map(({ key, value }) => ({ key, value, phase: 'update' as const }))
     isAnimating.value = false
-    options.onEnd?.()
   }
 
   function plan(next: readonly T[], reveal?: Reveal<T>): PlanItem<T>[] {
@@ -332,19 +333,32 @@ export function useKeyedTransition<T>(
 
     // The very first appearance uses the enter timing for every item, or a cascade.
     const first = !hasEntered
+    if (!first && isEqual(nextItems, lastTarget))
+      return
+    lastTarget = nextItems
     const reveal = first ? options.reveal?.() : undefined
     const steps = plan(nextItems, reveal)
-    const cascade = reveal?.order && !options.entrance
-    const turn = new Map(cascade ? steps.map(step => [step.key, clamp01(reveal.order!(step.to)) * cascadeTiming.spread * cascadeTiming.duration]) : [])
+    if (!first && steps.every(step => step.phase === 'update' && isEqual(step.from, step.to))) {
+      stop()
+      entering = false
+      isAnimating.value = false
+      settle(steps)
+      return
+    }
+    const cascade = first ? reveal?.order && !options.entrance : entering && turns.size > 0
+    if (first) {
+      turns = new Map(cascade
+        ? steps.map(step => [step.key, clamp01(reveal!.order!(step.to)) * cascadeTiming.spread * cascadeTiming.duration])
+        : [])
+    }
+    const elapsedBefore = entering ? entranceClock?.elapsed ?? 0 : 0
     let entrance = first ? options.entrance?.() ?? (cascade ? cascadeTiming : motionTokens.enter) : undefined
     if (first) {
-      entranceClock = { start: performance.now(), timing: entrance! }
+      entranceClock = { elapsed: 0, timing: entrance! }
     }
     else if (entering && entranceClock) {
-      // A change during the entrance continues it on the same clock and curve: no restart, no
-      // change of pace. Near its end too little time is left for a real change, which would
-      // snap; it then gets its own update timing instead.
-      const rest = continueTiming(entranceClock.timing, (performance.now() - entranceClock.start) / 1000)
+      // Continue from the animation's own clock, even if the wall clock jumps.
+      const rest = continueTiming(entranceClock.timing, elapsedBefore)
       if (rest.duration >= motionTokens.update.duration)
         entrance = rest
     }
@@ -360,7 +374,7 @@ export function useKeyedTransition<T>(
       items.value = steps.map((step) => {
         const { key, from, to, phase } = step
         const t = progressOf(step)
-        return { key, phase, progress: t, value: t >= 1 ? to : options.interpolate(from, to, t) }
+        return { key, phase, progress: clamp01(t), value: options.interpolate(from, to, t) }
       })
     }
     const finish = () => {
@@ -388,10 +402,15 @@ export function useKeyedTransition<T>(
       duration: total,
       ease: 'linear',
       onUpdate: (elapsed) => {
+        if (entering && entranceClock)
+          entranceClock.elapsed = elapsedBefore + elapsed
         render((step) => {
-          const delay = turn.get(step.key)
-          if (delay !== undefined)
-            return cascadeTiming.ease(clamp01((elapsed - delay) / cascadeItem))
+          const delay = entrance && cascade ? turns.get(step.key) : undefined
+          if (delay !== undefined) {
+            const start = cascadeTiming.ease(clamp01((elapsedBefore - delay) / cascadeItem))
+            const current = cascadeTiming.ease(clamp01((elapsedBefore + elapsed - delay) / cascadeItem))
+            return start >= 1 ? 1 : (current - start) / (1 - start)
+          }
           const { duration, ease } = timing(step.phase)
           return ease(clamp01(elapsed / duration))
         })
