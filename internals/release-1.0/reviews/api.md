@@ -3,6 +3,9 @@
 Branch `feat/cell-grid-main` @ `72c8765`, clean tree. Method: `design-apis` review rubric
 (consumer task first, evidence per finding, P0–P3 by consumer impact).
 
+Recommendations and examples amended on 2026-10-05 to match DECISIONS.md. The measurements
+below remain historical evidence from the named commit, not results of the amended plan.
+
 Evidence gathered:
 - Export list: TypeScript compiler API over `packages/vue/src/index.ts` (227 names).
 - Runtime contract: `pnpm --filter vccs build` (exit 0, 4m20s), then imported `dist/es/index.mjs`
@@ -260,10 +263,10 @@ Note: the project `CLAUDE.md` says `TooltipIndex`/active index is `string | null
 ### P2: material usability
 
 1. **Active state has four contracts** (2c). *Proposed API:* `v-model:active-index` (`number | null`) on Tooltip, Sparkline, Pie, Bar and the four cell charts (they already emit it internally, `CellGridLayer.tsx:182`). Remove `Pie.activeIndex=-1` and the one-way `activeIndex` on Bar/Line/Area. Make `Tooltip.defaultIndex` `number`.
-2. **Brush uses two models.** One drag emits two separate updates. *Proposed:* `v-model:range` with `{ startIndex, endIndex }` (the `BrushStartEndIndex` type already exists, and the `change` event already carries it). Keep `start-index`/`end-index` as plain initial props, or drop them.
-3. **Accessible-name props are split.** Categorical charts use `title`/`desc`; standalone charts use `ariaLabel` (undefined on BarList/JourneySankey). The default is "BarChart chart". *Proposed:* every chart takes `title` (accessible name) and `desc` (description). Defaults are human words ("Bar chart", "Status history"). Remove `ariaLabel` (or alias it for one release).
+2. **Brush uses two models.** One drag emits two separate updates. *Proposed:* `v-model:range` of `BrushStartEndIndex | null`; remove the two old models. D-16 defines null/empty data, normalization, controlled rejection and valid slider bounds.
+3. **Accessible-name props are split.** Categorical charts use `title`/`desc`; standalone charts use `ariaLabel` (undefined on BarList/JourneySankey). The default is "BarChart chart". *Proposed:* every chart takes `title` (accessible name) and `desc` (description). Defaults are human words ("Bar chart", "Status history"). Remove `ariaLabel` without an alias, per D-3/D-15; native `aria-*` attribute forwarding remains supported.
 4. **One series color for every series.** *Proposed:* `--v-charts-series-1…8` assigned by item registration order; `fill`/`stroke` default to `var(--v-charts-series-N, var(--v-charts-series, <one fallback>))`. Bar and Scatter get a default. Treemap tiles read the same tokens. Rename `colorPanel` → `colors`. Unify all fallbacks to one hex.
-5. **Standalone charts are not generic.** All keys are `string`, payloads are `unknown`/`Record<string, any>`, and `defineChartComponents` excludes them. Here `data` and keys sit on the same component, so `<script setup generic>`-style typing is possible. *Proposed:* make each standalone chart generic in `Row` (a `typeof X & (new <Row>() => …)` cast, the same technique as `typed.ts`). Key props become `RowKey<Row> | ((row: Row) => …)`. `cell-click`/`#cell` payloads become `Row`.
+5. **Standalone charts are not generic.** All keys are `string`, payloads are `unknown`/`Record<string, any>`, and `defineChartComponents` excludes them. Infer `Row` from data and preserve supported nested/accessor keys. Direct-row payloads carry `Row`; Heatmap uses `HeatmapCell<Row>` with contributing rows, calendar days may have no rows, cohorts include source row/period, and journey events carry derived nodes/links with provenance. Type the actual runtime object; do not cast aggregates to one row (D-18).
 6. **Missing prop types** (section 1). *Proposed:* export `XxxProps` for every component in `componentNames`. Stop exporting `*VueProps` runtime objects (they make defaults part of the contract). Export `TooltipPayloadEntry`. Fix the TypeScript guide's claim.
 7. **Dead props on every categorical chart:** `throttleDelay` and `to` are declared and never read (`generateCategoricalChart.tsx:115,121`). Every categorical chart also accepts the polar props (`cx, cy, innerRadius, outerRadius, startAngle, endAngle`) and the bar props (`barSize, barGap, barCategoryGap, maxBarSize`), whether or not they apply. *Proposed:* remove `to`; either wire `throttleDelay` or remove it; give polar charts and cartesian charts separate prop sets.
 8. **Tooltip has three content paths** (`content` prop typed `any`, `#content` slot, `default` slot). *Proposed:* `#content` only.
@@ -292,8 +295,8 @@ Note: the project `CLAUDE.md` says `TooltipIndex`/active index is `string | null
 | Remove internal exports (Line context, ErrorBar registry, payload searchers, `getUniqPayload`, `Global`, `getPath`, `rectanglePath`, `*VueProps`) | "These were internal. Use `XxxProps` types; for paths use the shape components. File an issue if you used one." |
 | Remove internal props from Line/Area/Bar/Legend/Label | "Remove `points`, `layout`, `animation-id`, `need-clip` … from your templates. They were set by the chart." |
 | `Pie`/`Bar` `active-index` → `v-model:active-index`; `-1` → `null` | "Replace `:active-index="-1"` with nothing, and `:active-index="i"` with `v-model:active-index`." |
-| Brush `v-model:start-index` + `v-model:end-index` → `v-model:range` | "`v-model:range="{ startIndex, endIndex }"`. `@change` is unchanged." |
-| `ariaLabel` → `title`/`desc` on standalone charts | "Rename `aria-label` props to `title`." (can alias for one minor) |
+| Brush `v-model:start-index` + `v-model:end-index` → `v-model:range` | Bind a writable `range` ref of `BrushStartEndIndex \| null`. Empty data uses `null`; update handlers must handle that value. |
+| `ariaLabel` → `title`/`desc` on standalone charts | Rename the component's accessible-name prop to `title`; preserve native `aria-*` attributes. No alias (D-3). |
 | Tooltip `content` prop removed | "Use `<template #content>`." |
 | Series colors default to `--v-charts-series-N` | "Multi-series charts without explicit colors now differ per series. Set `--v-charts-series-1..N`, or pass `fill`/`stroke` to keep one color." |
 | Treemap `colorPanel` → `colors`, `aspectRatio` → `tileAspectRatio`; Tracker `colors`/`labels` → `statusColors`/`statusLabels` | Rename the prop. |
@@ -304,7 +307,10 @@ Note: the project `CLAUDE.md` says `TooltipIndex`/active index is `string | null
 | `data-recharts-*` → `data-v-charts-*` (and add `data-slot`) | "Update selectors." |
 | Deprecate `Customized`, `ResponsiveContainer` (docs + dev warning; remove in 2.0) | "Use the chart's default slot with `usePlotArea()` etc. Size the chart directly." |
 
-Dependents: the package is published as 0.6.0 and has an upstream (`unovue/vue-charts`). The migration page already plans one breaking 1.0, so make these changes in that same release. No compatibility layer is needed beyond the optional one-release `ariaLabel` alias.
+Dependents: local docs, playgrounds and stories are known consumers. The published package and
+upstream mean external use cannot be ruled out from this checkout. D-3 chooses one breaking
+release without rename aliases; migrate known consumers together and document every observable
+change, including changes outside phase 3. Do not infer absence of consumers from a version number.
 
 ---
 
@@ -312,40 +318,50 @@ Dependents: the package is published as 0.6.0 and has an upstream (`unovue/vue-c
 
 ### Cartesian (BarChart)
 
+Proposed 1.0 examples: validate these exact SFCs against packed declarations in PLAN 3.9.
+Child row types come from the selected-component helper, not inference through the parent slot.
+
 ```vue
 <script setup lang="ts">
-import { Bar, BarChart, Brush, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, Brush, CartesianGrid, Legend, Tooltip, XAxis, YAxis, defineChartComponents } from 'vccs'
+import { ref } from 'vue'
 
 interface Visit { date: string, desktop: number, mobile: number }
-const rows = reactive<Visit[]>(await fetchVisits())
+const Chart = defineChartComponents<Visit>()({ Bar, BarChart, Brush, Legend, Tooltip, XAxis, YAxis })
+const rows = ref<Visit[]>([
+  { date: '2026-10-01', desktop: 24, mobile: 18 },
+  { date: '2026-10-02', desktop: 31, mobile: 22 },
+])
 
 const active = ref<number | null>(null)          // shared with a table
 const hidden = ref<Array<keyof Visit>>([])
-const range = ref({ startIndex: 0, endIndex: 29 })
+const range = ref<{ startIndex: number; endIndex: number } | null>({ startIndex: 0, endIndex: 1 })
+const selectedDate = ref('')
 </script>
 
 <template>
-  <!-- responsive by default; generic: Row is inferred from :data -->
-  <BarChart :data="rows" :height="300" title="Visits per day" :transition="{ duration: 0.4 }">
+  <!-- responsive by default; child contracts are typed through Chart -->
+  <Chart.BarChart :data="rows" :height="300" title="Visits per day" :transition="{ duration: 0.4 }">
     <CartesianGrid :vertical="false" />
-    <XAxis data-key="date" orientation="bottom" :tick-formatter="d => d.slice(5)" />
-    <YAxis />
+    <Chart.XAxis data-key="date" orientation="bottom" :tick-formatter="d => String(d).slice(5)" />
+    <Chart.YAxis />
     <!-- data-key autocompletes 'desktop' | 'mobile'; color from --v-charts-series-1/2 -->
-    <Bar data-key="desktop" stack-id="a" @click="(entry) => open(entry.payload.date)">
-      <template #shape="{ x, y, width, height, payload, active }">
-        <rect :x :y :width :height :rx="4" :class="{ 'opacity-60': !active }" />
+    <Chart.Bar data-key="desktop" stack-id="a" @click="entry => selectedDate = entry.payload.date">
+      <template #shape="{ x, y, width, height, fill }">
+        <rect :x :y :width :height :fill :rx="4" />
       </template>
-    </Bar>
-    <Bar data-key="mobile" stack-id="a" />
-    <Tooltip v-model:active-index="active">
-      <template #content="{ label, payload }">
+    </Chart.Bar>
+    <Chart.Bar data-key="mobile" stack-id="a" />
+    <Chart.Tooltip v-model:active-index="active" :cursor="false">
+      <template #content="{ active: shown, label, payload }">
         <!-- payload[0].payload is Visit -->
-        <MyTooltip :label :rows="payload" />
+        <div v-if="shown">{{ label }}: {{ payload[0]?.payload.desktop }}</div>
       </template>
-    </Tooltip>
-    <Legend v-model:hidden="hidden" />
-    <Brush v-model:range="range" />
-  </BarChart>
+    </Chart.Tooltip>
+    <Chart.Legend v-model:hidden="hidden" />
+    <Chart.Brush v-model:range="range" />
+  </Chart.BarChart>
+  <p>Selected day: {{ selectedDate }}</p>
 </template>
 ```
 
@@ -354,10 +370,19 @@ const range = ref({ startIndex: 0, endIndex: 29 })
 ```vue
 <script setup lang="ts">
 import { Heatmap, Tooltip } from 'vccs'
+import type { HeatmapCell } from 'vccs'
+import { ref } from 'vue'
 
 interface Hit { weekday: string, hour: number, visits: number }
-const hits = ref<Hit[]>([])
+const hits = ref<Hit[]>([
+  { weekday: 'Mon', hour: 9, visits: 12 },
+  { weekday: 'Mon', hour: 9, visits: 8 },
+])
 const active = ref<number | null>(null)
+const selectedRows = ref<readonly Hit[]>([])
+function selectCell(cell: HeatmapCell<Hit>) {
+  selectedRows.value = cell.rows
+}
 </script>
 
 <template>
@@ -372,17 +397,24 @@ const active = ref<number | null>(null)
     title="Visits by hour and weekday"
     :aspect="3"
     v-model:active-index="active"
-    @cell-click="(hit, index) => drill(hit.weekday, hit.hour)"
+    @cell-click="selectCell"
   >
-    <template #cell="{ x, y, width, height, fill, active, cell }">
+    <template #cell="{ x, y, width, height, fill, active }">
       <rect :x :y :width :height :fill rx="2" :stroke="active ? 'currentColor' : 'none'" />
     </template>
-    <Tooltip />
+    <Tooltip :cursor="false" />
   </Heatmap>
+  <p>{{ selectedRows.length }} source rows in the selected cell</p>
 </template>
 ```
 
-Shared rules the sketches show: `title` names every chart; `*-key` accepts `keyof Row | (row) => value`;
+Shared rules the sketches show: `title` names every chart; key props retain typed keys/accessors
+and supported nested paths;
 `*-formatter` for every text function; `v-model:active-index` for every active state; item events
-are `(row-or-entry, index, event)` typed by `Row`; colors come from tokens unless a prop sets them;
+are `(row-or-derived-entry, index, event)` with truthful `Row` provenance; colors come from tokens unless a prop sets them;
 `transition`/`is-animation-active` can be set once on the chart.
+
+Selection follows D-8/D-13: an omitted model is local; a supplied value is authoritative and
+events request changes. Chart-level control takes precedence, internal targets keep series/node
+identity, and public indexes have a documented scope. Test parent rejection, removal, reorder,
+two item series and multiple Tooltip renderers; a model round trip alone is insufficient.

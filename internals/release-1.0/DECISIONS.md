@@ -1,6 +1,9 @@
 # Decisions for vccs 1.0
 
 Binding for the whole run. Each decision says what to do and, where it is not obvious, why.
+If a consumer test disproves an implementation choice, record the reproduction and amend that
+choice here before proceeding. Preserve the intended public behavior and verification strength;
+this is not permission to weaken a check or change taste without evidence.
 "Review" references point to [reviews/](reviews/).
 
 ## Product
@@ -8,13 +11,15 @@ Binding for the whole run. Each decision says what to do and, where it is not ob
 **D-1 Server rendering sends the entrance start.** The server sends each chart in the state its
 entrance starts from (collapsed bars, undrawn lines, transparent cells). The entrance plays after
 hydration when the chart is on screen. This keeps the entrances; a chart that must be complete
-without JavaScript sets `:is-animation-active="false"`, and then the server sends the final chart.
+without JavaScript uses fixed width and height with `:is-animation-active="false"`, and then the
+server sends the final chart. Disabling animation alone does not reveal an unmeasured chart.
 Responsive charts keep reserving their box on the server and stay hidden until measured: the
 audit measured 0 px box shift, and showing them before measurement would draw them at a wrong
-width and then snap. The docs must say exactly this (PLAN 1.12). Review: ssr-a11y.md, P1 row 4.
+width and then snap. The docs must say exactly this (PLAN 1.14). Review: ssr-a11y.md, P1 row 4.
 
 **D-2 Order of work.** Release blockers first (phase 1), then the core model (phase 2), then the
-1.0 API batch (phase 3), then tests, performance, size and docs (phase 4). The API changes touch
+1.0 API batch (phase 3), then remaining test cleanup, performance, size and docs (phase 4).
+Strict typing and critical behavior regressions land in 2.0, before the core rewrite. The API changes touch
 the same files as the registries, so they land on the new model.
 
 **D-3 One breaking release.** All breaking changes go into 1.0. No compatibility aliases, no
@@ -22,10 +27,13 @@ deprecation period for renamed props. Every change gets a row in the migration p
 (`docs/content/1.getting-started/3.migration.md`). Exceptions with a deprecation warning instead
 of removal: `ResponsiveContainer` and `Customized` (D-21).
 
-**D-4 Budgets.** Size budgets are set from measurements in this run (PLAN 4.6): each limit is the
-final measured size plus 5 %, rounded up to 0.1 kB. Performance is guarded A/B against the 0.6.0
+**D-4 Budgets.** Compare every final bundle with the starting build from 0.2 and explain any
+increase against the feature that requires it. Future size budgets (PLAN 4.3) use the final
+measured size plus 5 %, rounded up to 0.1 kB; passing them alone does not prove no regression.
+Performance is guarded A/B against the 0.6.0
 baseline built in this run (PLAN 0.2): no case may be slower than the baseline by more than 10 %
-(median of interleaved runs).
+(median of interleaved runs). An unstable A/A baseline is inconclusive; do not increase the
+regression threshold to make it pass.
 
 ## Architecture
 
@@ -43,7 +51,9 @@ these names and places:
 | Synchronisation | one module | `src/events/sync.ts` (merge `synchronisation/` into it) |
 
 `src/state/` and `reselect` are deleted at the end of phase 2. `src/core/**` must not import
-`vue` (enforce with an eslint `no-restricted-imports` rule for that folder).
+`vue`, model/state modules, components or browser APIs. Enforce import direction in lint.
+Axis models are shared per chart, axis type and ID; reactive IDs use a computed lookup, not a
+setup-time snapshot. A model outlives the first child that requests it and stops with its chart.
 
 **D-6 Chart inputs are read, not copied.** Chart props reach the model as getters. No `watch`
 that copies a prop into state. Children register `computed` settings into registries; a
@@ -52,18 +62,23 @@ and stacking read (dataKey, data, stackId, hide, axis ids, type, barSize, minPoi
 errorBars, and the equivalents per series type), so changing `fill` or `stroke` recomputes no
 domain.
 
-**D-7 Data reactivity contract.** The owner of `data` (the chart, or a series with its own
-`data`) tracks it once with `watch(..., { deep: 2 })` semantics: replacing the array, pushing to a
-reactive array and changing a field of a row all update the chart; objects nested inside a row
-are compared by identity. Nobody else deep-watches data. No copies besides one `toRaw` per
-change. Document the contract in the data guide.
+**D-7 Data reactivity contract.** Preserve current behavior: array replacement, push/splice,
+row-field edits, nested path/function accessor values, array-valued rows and hierarchy edits
+update the chart. Do not replace this contract with a fixed traversal-depth limit.
+The chart or series that owns `data` supplies one tracking boundary; remove duplicate deep
+traversals. Prefer reactive reads of the values calculations consume; retain one deep watcher
+where needed to preserve behavior. Use `toRaw` only at a boundary that requires raw objects,
+after collecting dependencies. It does not copy data or invalidate same-identity refs: a raw
+calculation path needs an explicit tracked revision or equivalent notification. Never mutate or
+freeze caller data, and keep animation snapshots independent of later caller mutations.
+Document the observable contract, not a required watcher implementation.
 
-**D-8 TooltipSource.** One contract for every chart that shows a tooltip:
+**D-8 TooltipSource.** One internal read-only view for every chart that shows a tooltip:
 
 ```ts
 interface TooltipSource {
   active: ComputedRef<boolean>
-  index: Ref<number | null>          // public active index, also bound by v-model
+  index: ComputedRef<number | null>  // derived from the selection controller
   label: ComputedRef<string | undefined>
   payload: ComputedRef<readonly TooltipPayloadEntry[]>
   coordinate: ComputedRef<Coordinate | undefined>
@@ -71,14 +86,19 @@ interface TooltipSource {
 ```
 
 `<Tooltip>` renders any `TooltipSource` from one injection key. Standalone charts provide a
-`TooltipSource` and do not create the cartesian model. The active index is a `number | null`
-everywhere. For Treemap, Sankey and Sunburst the index is the position in the keyboard order of
-D-14. String path indexes are removed.
+`TooltipSource` and do not create the cartesian model. Keep this interface private; public
+composables expose consumer concepts. Pointer, keyboard and sync handlers request selection
+through one controller; renderers do not mutate the view.
+Public indexes are `number | null`. Internally retain the series identity and item/node
+identity needed to distinguish targets; do not replace hierarchical identity with a keyboard
+position. For Treemap, Sankey and Sunburst the public index maps to the D-14 keyboard order.
 
-**D-9 One injection key per chart.** Render phase, series motion, gesture, in-view, clip-path id,
-portals and layer refs become fields of `Chart` (or of one `ChartRuntime` beside it). Remove the
-other chart-scoped keys and the three `createContext` helpers; use plain `InjectionKey` +
-`provide`/`inject`. Do not use motion-v for dependency injection.
+**D-9 Clear context ownership.** Render phase, series motion, gesture, in-view, clip-path id,
+portals and layer refs belong to a lightweight `ChartRuntime`; model and tooltip capabilities
+may have separate injection keys. Consolidate duplicate ownership, not unrelated capabilities.
+Standalone charts must not construct or import cartesian models merely to share a runtime or
+tooltip. Replace the three `createContext` helpers with typed `InjectionKey` + `provide`/`inject`;
+do not use motion-v for dependency injection. Key count is not an acceptance criterion.
 
 **D-10 SSR detection** is one helper `isServer` in `src/utils/env.ts`
 (`typeof document === 'undefined'`). `Global` is removed (also from the public API, D-17).
@@ -98,7 +118,7 @@ mismatch (ssr-a11y.md P1 row 1).
   `eslint-disable-next-line ts/no-explicit-any -- <reason>` lines, each at an untyped external
   boundary.
 - 0 `@ts-ignore`; every `@ts-expect-error` has a reason in the same comment.
-- `strict: true` in `packages/vue/tsconfig.json` (from PLAN 3.1).
+- `strict: true` in `packages/vue/tsconfig.json` (from PLAN 2.0; rechecked in 3.1).
 
 ## Public API (1.0)
 
@@ -113,13 +133,32 @@ Removed: `LineContextKey`, `provideLineContext`, `useLineContext`, `useLine`, `L
 `UniqueOption`, `ContentType`, `Global`, `GlobalConfig`, `GlobalConfigKeys`, `getPath`,
 `rectanglePath`, all 14 `*VueProps` objects, `NormalizedStackId`, `CurvePropsWithOutSVG`,
 `FunnelComposedData`, `FormattedGraphicalItem`, `useOffset`. Added: an `XxxProps` type for every
-component in `componentNames.ts`, `TooltipPayloadEntry`, `TooltipPayload`, `TooltipSource`.
+component in `componentNames.ts`, `TooltipPayloadEntry`, `TooltipPayload`, and the generic
+derived payload types in D-18. `TooltipSource` stays internal.
 
 **D-13 Active state.** Every chart or item with an active element supports
 `v-model:active-index` (`number | null`, `null` = none) and works uncontrolled when not bound:
 Tooltip, Sparkline, Pie, Bar, Tracker, Heatmap, CohortChart, CalendarHeatmap. Removed: the `-1`
 sentinel and the one-way `activeIndex` props on Bar, Pie, Line and Area. `Tooltip.defaultIndex`
 is `number`.
+
+- An omitted model uses local state; a supplied value, including `null`, is authoritative.
+  Pointer, keyboard and sync emit a request. If the parent declines it, the controlled display
+  stays unchanged. Do not echo unchanged values or emit repeatedly on render.
+- Tooltip indexes address axis data positions in axis mode, or the flattened D-14 item order
+  in item mode. Bar/Pie indexes address that series' data; standalone indexes address their
+  rendered item order. Convert through the internal target identity in D-8.
+- A controlled chart-level Tooltip (or standalone root) takes precedence over per-series
+  controls for that chart selection. Without it, controlled series determine their own active
+  item; other series remain uncontrolled. Document this precedence in the model guide.
+- Multiple Tooltip renderers observe the same selection and receive update requests. The first
+  registered Tooltip owns shared interaction settings; later Tooltips customize presentation.
+  At most one Tooltip may supply a controlled index; document this constraint rather than
+  allowing mount order to silently choose between conflicting controlled values.
+- Uncontrolled selection follows stable item identity across reorder/resize and clears when
+  that item is removed or hidden. Controlled indexes remain positional: resolve them against
+  the current order. An invalid index renders no active target and requests `null` once per
+  distinct invalid input/data state, without mutating the supplied value.
 
 **D-14 Keyboard model.**
 - Axis charts (Bar, Line, Area, Composed, Radar, RadialBar): unchanged.
@@ -133,6 +172,9 @@ is `number`.
   bottom; Sunburst sectors in depth-first pre-order. Enter emits the same event as a click on the
   node. Focus ring: the same 2 px `--v-charts-focus` outline as the axis charts.
 - Funnel arrow keys must never throw (ssr-a11y.md P1 row 2).
+- BarList remains a semantic list. Links retain native link behavior; actionable rows use
+  native button/link activation, including the keyboard. Do not add a tooltip or an application
+  role merely to satisfy a chart-wide test.
 
 **D-15 Accessible names.** Every chart takes `title` (accessible name) and `desc` (description).
 `ariaLabel` props are removed. Defaults:
@@ -159,12 +201,19 @@ is `number`.
 | JourneySankey | keeps its computed name ("Journeys of N sessions over M steps") |
 | Sparkline | keeps its computed name ("Trend: …") |
 
-**D-16 Brush.** One model: `v-model:range` with `{ startIndex, endIndex }` (`BrushStartEndIndex`).
-`start-index`/`end-index` models are removed. When data changes, the effective range is clamped
-to the data (`endIndex ≤ length − 1`, `startIndex ≤ endIndex`); when clamping changes the range,
-`update:range` is emitted with the clamped value. Accessibility: each traveller has
-`aria-label` "Range start" / "Range end", `aria-valuemin` 0, `aria-valuemax` data length − 1,
-`aria-valuenow` the index, `aria-valuetext` the category label at that index.
+**D-16 Brush.** One model: `v-model:range` of `BrushStartEndIndex | null`, where the non-null
+value is `{ startIndex, endIndex }`. `start-index`/`end-index` models are removed. `null` means
+no selected window (show all available rows); empty data always has effective range `null`.
+An uncontrolled Brush initially selects the full range when data exists and restores that
+default when empty data becomes populated. A controlled `null` remains null until the parent
+changes it; repopulation must not overwrite that explicit choice.
+For nonempty data, floor finite indexes, clamp them to `[0, length - 1]`, then order start/end.
+Non-finite indexes normalize to `null`. Emit `update:range` once per distinct input/data state
+that needs normalization, including shrink-to-empty. Derive the safe effective range without
+mutating a controlled prop; a rejected user drag keeps the parent's effective range.
+Hide travellers for a null range. Otherwise each traveller has `aria-label` "Range start" /
+"Range end", `aria-valuemin` 0, `aria-valuemax` data length − 1, `aria-valuenow` the index,
+and `aria-valuetext` the category label. Never render a slider with a negative maximum.
 
 **D-17 Removed or renamed props** (all without aliases):
 
@@ -198,10 +247,17 @@ to the data (`endIndex ≤ length − 1`, `startIndex ≤ endIndex`); when clamp
 **D-18 Typed rows.**
 - Standalone charts (Tracker, Heatmap, CohortChart, CalendarHeatmap, BarList, Sparkline,
   JourneySankey) are generic in `Row`, inferred from `data`. Key props accept
-  `keyof Row | ((row: Row) => value)`. Event and slot payloads are `Row`, not `unknown` or
-  `Record<string, any>`.
+  typed row keys or accessors without dropping supported nested-key behavior. Preserve the
+  domain object actually emitted: direct-row charts carry `Row`; aggregate charts carry a
+  derived payload with typed provenance, not a cast to `Row`.
+- Heatmap uses `HeatmapCell<Row>` with `{ x, y, value, rows: readonly Row[] }`; a missing cell
+  has zero rows. Calendar days carry their date/value/level and contributing rows (possibly
+  none). Cohort cells carry the source row and period. Journey nodes/links retain their
+  derived layout fields and typed contributing rows. Runtime events, slots and formatters
+  expose the same domain object.
 - `defineChartComponents` becomes curried and tree-shakeable:
-  `const { BarChart, Bar, Tooltip } = defineChartComponents<Row>()({ BarChart, Bar, Tooltip })`.
+  import `BarChart`, `Bar`, `Tooltip`, then use
+  `const Chart = defineChartComponents<Row>()({ BarChart, Bar, Tooltip })` and `<Chart.Bar>`.
   At runtime it returns its argument; only the passed components are bundled. It covers every
   component that takes a `dataKey`, plus the standalone charts.
 - Item payload types (`BarRectangleItem`, `LinePointItem`, … ) carry `payload: Row` through the
@@ -226,10 +282,13 @@ to the data (`endIndex ≤ length − 1`, `startIndex ≤ endIndex`); when clamp
 **D-20 Text contrast** (ssr-a11y.md contrast table).
 - Tooltip item text uses `--v-charts-tooltip-foreground`. The series color appears only as an
   8 × 8 px swatch (2 px radius) before the item name.
-- Text drawn on a filled shape (cell values, Treemap labels) picks `#ffffff` or `#0a0a0a`,
-  whichever has the higher WCAG contrast against the fill. Parse the fill with `d3-color`
-  (already a dependency, with `@types/d3-color`). For `var(--x, <color>)`
-  use the fallback color. When the fill cannot be parsed, keep today's behavior.
+- For known opaque fills, text on shapes picks `#ffffff` or `#0a0a0a`, whichever has higher
+  contrast; parse supported colors with `d3-color`. A CSS variable's fallback is not evidence
+  of its resolved color. Support `--v-charts-label-foreground` as an explicit override for
+  arbitrary fills, including variables and transparency; keep server/client markup consistent.
+  Test resolved colors and composited backgrounds for supported default light/dark themes,
+  overridden and nested variables, and translucent fills. Do not claim automatic contrast
+  for arbitrary user themes or use the nearest rectangle as a universal background estimate.
 - BarList: label and value text inherit `currentColor`; the bar tint uses at most 20 % opacity
   of its color, so text on the tint reaches 4.5:1 on the docs' light and dark themes.
 - Legend: each item is an `li` that contains a `button` with `aria-pressed` = the series is
@@ -275,8 +334,9 @@ nodes through each other. Any other flag fails the gate.
 fails a transition with more than 2 slow frames measured on the real clock (`timing['1x'].slow`).
 That number depends on machine load, so a cloud machine cannot gate on it reliably. From step
 1.13: `--check` gates on the frame-exact flags (fake clock) and page errors; the slow-frame count
-stays in the report and gates only with `--strict-timing`. This is not a weaker check: the
-frame-exact flags are unchanged, and the timing gate stays available on a quiet machine.
+stays in the report and gates only with `--strict-timing`. This reduces default timing coverage;
+the frame-exact checks remain unchanged. Keep the separate real-clock benchmark and report
+inconclusive timing evidence explicitly; deterministic geometry does not prove runtime speed.
 
 **D-26 Motion fixes** (reviews/motion.md):
 - A data change that changes nothing on screen (equal content) runs no animation, renders no

@@ -9,10 +9,14 @@ Five phases, 52 steps. Do them in order. Each step lists:
 Paths are relative to the repository root; `src/` means `packages/vue/src/`. Review files are in
 [reviews/](reviews/). Decisions (`D-n`) are in [DECISIONS.md](DECISIONS.md).
 
-**Dependencies.** Phase 0 → all. Phase 2 slices (2.2–2.12) are strictly sequential: if one is
-deferred, skip the rest of phase 2 up to 2.13, then continue with phase 3 on the existing
-structure (skip 3.9's model-specific parts if 2.7 is missing) and phase 4. Other steps depend
-only on phase 0 unless noted.
+**Dependencies.** Phase 0 → all later steps. Run in listed order, except migrate standalone
+charts (2.11) before deleting the last state facade (2.10). Step 2.0 precedes every model slice;
+2.2–2.9 are sequential, then 2.11 → 2.10 → 2.12 → 2.13 → 2.14. Phase 3 requires the completed
+phase 2 model. Record additional dependencies in PROGRESS.md; a deferred prerequisite also
+defers its dependents, rather than silently running them against a different architecture.
+Independent fixes, documentation and measurements can continue. Record an unavailable phase
+gate as deferred with its missing prerequisites, never as passed. README.md's deferral and
+final-acceptance rules remain unchanged.
 
 ---
 
@@ -20,6 +24,13 @@ only on phase 0 unless noted.
 
 ### 0.1 Environment and baseline verdict
 **Change:** environment setup from README.md. Run `pnpm verify` on the untouched branch.
+Then make packed-consumer setup reproducible: save locked Vite/Nuxt consumer fixtures, prefetch
+their dependency graphs during network-enabled setup, and make the runner install them with
+`--offline --frozen-lockfile`. Use a stable local tarball path for the library under test so
+repacking does not trigger unrelated dependency resolution. Document and validate that update
+mechanism; do not hand-edit integrity hashes. Until this exists, keep network access available
+for the consumer checks. Verify a fresh consumer install/build with network disabled and record
+the command, source commit, lockfile hashes and result in PROGRESS.md.
 **Done when:** the verdict table and the test count are recorded in PROGRESS.md as the baseline.
 Expected: every check passes except the motion lab, which fails on the D-25 journey flags (and
 may fail on real-clock slow frames under load, D-25a) until step 1.13. Record environment-limited
@@ -51,10 +62,11 @@ browser engines, if any.
 **Done when:**
 - `pnpm bench --compare=.evidence/baseline/dist` against the unchanged build exits 0 (A/A: noise
   below 10 %). If it does not, raise `--rounds` until it does (at most 21) and make that the
-  default. If A/A still exceeds 10 % at 21 rounds, set the regression threshold to twice the
-  largest A/A deviation measured, record it in PROGRESS.md, and use it for every later compare.
+  default. Warm up both builds equally. If A/A still exceeds 10 % at 21 rounds, report
+  inconclusive and diagnose the environment; do not enlarge the threshold or record a pass.
 - `pnpm bench --compare=.evidence/baseline/dist --self-test` exits 1.
-- `pnpm check:bundle` prints sizes; record them and the bench medians in PROGRESS.md.
+- `pnpm check:bundle` prints sizes; record them and the bench medians in PROGRESS.md, tied to
+  the baseline commit and tool versions. Preserve a compact size table for final comparison.
 - `pnpm check:bundle --assert-standalone` fails today (record the offending modules). It must
   pass after 2.11.
 
@@ -146,14 +158,17 @@ Enter emits `node-click` with that node.
   Tooltip, Legend and Brush in a fixture page (light and dark theme with the docs' token values),
   server-renders and hydrates them, and checks:
   1. axe: 0 violations of impact `serious` or `critical`;
-  2. every SVG and HTML text node: contrast ≥ 4.5:1 against what is behind it (≥ 3:1 for text
-     ≥ 24 px, or ≥ 18.66 px bold), computed like `reviews/ssr-a11y/contrast-cells.mjs`;
-  3. keyboard: each chart's root is reachable with Tab, the D-14 keys show a tooltip, Escape
-     hides it;
+  2. text in supported theme fixtures: contrast ≥ 4.5:1 (≥ 3:1 for text ≥ 24 px, or ≥ 18.66 px
+     bold), using resolved colors and the known composited background. Reuse the audit's cases,
+     not its alpha-discarding/nearest-rectangle heuristic. Include overridden/nested CSS
+     variables and translucent fills with an explicit D-20 foreground;
+  3. keyboard: chart-navigation widgets follow their family's D-14 behavior; existing cell and
+     journey interactions remain accessible. BarList stays a list with native actionable rows,
+     with keyboard activation equivalent to `row-click`; it does not need a tooltip;
   4. 0 Vue hydration warnings, with and without `prefers-reduced-motion: reduce`;
   5. no server render throws.
 **Test:** unit tests for the text-color rule through rendered output (Heatmap cell text fill for
-a light and a dark fill; Treemap label on a `var(--x, #f97316)` fill); Legend `aria-pressed`
+a light and a dark fill; custom Treemap fill with the D-20 foreground override); Legend `aria-pressed`
 toggles on click.
 **Done when:** `pnpm check:a11y` passes. Prove it can fail: revert the tooltip text-color change
 locally and see check 2 fail.
@@ -222,17 +237,28 @@ Record the verdict table in PROGRESS.md.
 ## Phase 2: one Vue chart model
 
 Background: [reviews/architecture.md](reviews/architecture.md) §1–3 (read fully before 2.0).
-Target names and places: D-5 to D-10. Rule for every slice: a temporary adapter may exist only
-inside one slice; none crosses a slice boundary.
+Target names and places: D-5 to D-10. A single temporary adapter may bridge old readers to the
+new canonical model while slices migrate. Track its introduction date, remaining dependents,
+removal condition and issue when available in `internals/migrations.md`. It must not mirror
+state or create another owner. Remove it and its migration entry together in 2.10.
 
-### 2.0 Tests that survive the refactor
+### 2.0 Strict typing and tests that survive the refactor
+**Change first:** enable `strict: true` in `packages/vue/tsconfig.json` and repair errors by
+narrowing real types. Add the packed nullability probe described in 3.1 before the model rewrite.
 **Finding:** tests.md §2 (class B) and action 3. **Change:** rewrite the state-coupled tests
 through rendered output, exactly as tests.md §2's table says (fineGrainedHover as a render-count
-probe on public `#shape`/`#dot` slots during 5 hovers; synchronizationLifecycle tail;
+probe on public `#shape`/`#dot` slots during 5 hovers, retaining a separate narrow pure-combiner
+execution guard so unchanged output cannot hide repeated geometry work; synchronizationLifecycle tail;
 AreaChart `:180`; axisRegistration 2; chartContext 2; chartContextSsr 1; chartFinalDomains 3;
 chartTooltip 2; pieSelectors as one PieChart table).
-**Done when:** the rewritten tests pass on the current code. List in PROGRESS.md the test files
-that still import `@/state` (they are deleted in 2.10).
+Add the critical existing-behavior gap cases from 4.1 now: Brush slide/touch/keyboard and sync,
+tooltip sync with mismatched data, resize, dynamic axis IDs, removal of the first axis consumer
+while another survives, registration disposal and repeated mount/unmount. Preserve existing
+nested-data and hierarchy mutation tests. Reproduce the in-place margin defect, fix its current
+reporting path, and keep the public regression through 2.2; do not carry a deliberately red suite.
+Controlled rejection and empty ranges get their new-contract cases in 2.7/3.6.
+**Done when:** strict typecheck, packed nullability probe and the regression suite pass before
+2.1 starts. List remaining `@/state` test imports for migration/deletion in 2.10.
 
 ### 2.1 Slice 0: delete dead paths
 **Finding:** architecture.md P1-2, P2-10. **Change:** slice 0 of architecture.md §3 (Tooltip
@@ -245,10 +271,13 @@ that still import `@/state` (they are deleted in 2.10).
 **Change:** slice 1 of architecture.md §3. Create `src/model/` with `createChart(inputs)` and
 `useChart()` (D-5). Delete `ReportMainChartProps`, `ReportChartProps`, `ReportPolarOptions`,
 `ChartDataContextProvider`. Root defaults in one place. Data tracking per D-7 (replace
-`useTrackedData`'s deep watch and its 13 callers).
+`useTrackedData`'s duplicate tracking across its callers without narrowing behavior).
 **Test:** `barGap="20%"` renders without a Vue warning. Data contract table (D-7): replacing the
-array, `push` on a reactive array and changing a row field each update the bars.
-**Done when:** `grep -rn "Report[A-Z][a-zA-Z]*Props\|ChartDataContextProvider\|deep: true" packages/vue/src --include=*.ts --include=*.tsx | grep -v __tests__` → 0.
+array, push/splice, nested path/function accessor edits, array-valued rows and hierarchy edits
+update their charts. In-place `margin.left` changes move the bars without replacing the object.
+**Done when:** obsolete prop reporters/providers are gone, except for the explicitly tracked
+adapter; each data owner has one tracking boundary. Deep watchers are allowed when D-7 needs
+them. Prove raw same-identity updates still invalidate calculations.
 
 ### 2.3 Slice 2: registries
 **Change:** slice 2 of architecture.md §3: `createRegistry` for graphical items (cartesian and
@@ -258,6 +287,8 @@ replace functions and the five shallow-equal copies. Register only domain fields
 YAxis auto-width oscillation guard.
 **Test:** changing a Bar's `fill` re-renders no axis tick (count calls of an XAxis `#tick` slot:
 0 extra) and keeps every bar's DOM node.
+Also cover conditional registration, keyed series reorder, unmount disposal and stable series
+colors in registration order. DOM reorder must not silently change an existing series' identity.
 **Done when:** the files above are gone; the motion lab passes (`pnpm motion:report --prod --check`).
 
 ### 2.4 Slice 3a: layout math
@@ -269,17 +300,21 @@ YAxis auto-width oscillation guard.
 data with indexes, domain (reference elements, error bars, stack groups). Math moves to
 `src/core/axis/` as `combine*` functions.
 **Done when:** chart specs with domain edge cases pass (`dataMin - 10`, `allowDataOverflow`,
-`allowDuplicatedCategory`, reference lines that extend the domain).
+`allowDuplicatedCategory`, reference lines that extend the domain). Switching a live series'
+axis ID selects the new scale; removing its first consumer leaves other consumers working.
+Sibling series reuse shared domain/axis calculations, and chart teardown disposes their effects.
 
 ### 2.6 Slice 3c: axis model part 2
 **Change:** scale, nice ticks, ticks, band size, polar axes. `axisSelectors.ts` is gone afterwards.
 
 ### 2.7 Slice 3d: tooltip model
-**Change:** `chart.tooltip` implements `TooltipSource` (D-8): interaction state as refs, payload,
-label and coordinate as `computed`. Numeric index internally; remove the single listener slot
-(architecture.md P3-3) and the `Number(index)` conversions.
+**Change:** `chart.tooltip` implements the private read-only `TooltipSource` (D-8). One controller
+owns interaction state; payload, label, coordinate and public numeric index are computed from
+its internal target identity. Implement D-13 ownership and order mappings; remove the single
+listener slot (architecture.md P3-3) and unvalidated `Number(index)` conversions.
 **Test:** two `<Tooltip>`s in one chart both receive `update:activeIndex`; Treemap active index is
-a number.
+a number. Cover two item series, controlled parent rejection, chart/series precedence, target
+removal/hiding, reorder/resize, keyboard selection, and multiple Tooltip presentation settings.
 
 ### 2.8 Slice 3e: cartesian series
 **Change:** Bar, Line, Area, Scatter, Funnel, ErrorBar geometry as `computed` in their item
@@ -290,10 +325,11 @@ composables, reading the axis models. Math in `src/core/`.
 (architecture.md god-file table).
 
 ### 2.10 Slice 4: delete the store shell
+**Prerequisite:** 2.11 is complete; standalone charts no longer read the old facade.
 **Change:** delete `reselect`, `state/createSelector.ts`, `RechartsRootState`, `chartState.ts`,
 the view facade, `useAppSelector`, `state/hooks.ts`, the slice files and `src/state/`. Delete the
-store-internal tests from tests.md action 4. Add the eslint rule: `src/core/**` must not import
-`vue`.
+store-internal tests from tests.md action 4, only after their meaningful behavior is covered.
+Remove the tracked adapter and its migration entry. Add D-5's core import-direction rules.
 **Done when:**
 ```bash
 test ! -d packages/vue/src/state
@@ -302,6 +338,7 @@ grep -rn "reselect\|useAppSelector\|RechartsRootState\|createSelector" packages/
 and `pnpm check:bundle` shows 0 bytes of reselect.
 
 ### 2.11 Slice 5: standalone charts on TooltipSource and ChartShell
+**Run after 2.9 and before 2.10**, while the tracked adapter still supports any remaining readers.
 **Change:** Tracker, Heatmap, CohortChart, CalendarHeatmap, Sparkline, JourneySankey, Treemap,
 Sankey, SunburstChart provide a `TooltipSource` (D-8) and render through `ChartShell` (D-5). They do
 not create the cartesian model. Remove the Inner/Outer event-forwarding split in Treemap and
@@ -309,12 +346,13 @@ Sankey. The copy-pasted size block and emit forwarders go (architecture.md P2-7)
 **Done when:** `pnpm check:bundle --assert-standalone` passes; record each standalone chart's new
 gzip size.
 
-### 2.12 Slice 6: one injection key
+### 2.12 Slice 6: context ownership
 **Change:** D-9. `motion-dom` types come from `motion-v`; remove `motion-dom` from dependencies if
 nothing imports it at runtime.
 **Done when:** `grep -rn "createContext" packages/vue/src | grep -v __tests__` → 0;
 `grep -rn "from 'motion-dom'" packages/vue/src` → 0 or type-only with `motion-dom` as a dev
-dependency.
+dependency. Runtime and tooltip capabilities stay lightweight; no standalone chart imports a
+cartesian model solely for context reuse. Separate typed keys are allowed under D-9.
 
 ### 2.13 Remaining architecture findings
 **Findings:** architecture.md P2-9, P2-12 (rest), P2-13, P3-1, P3-4, P3-5, P3-6, god-file table.
@@ -332,7 +370,7 @@ dependency.
   `utils/chart.ts` by topic into `src/core/`.
 
 ### 2.14 Code health gates
-**Change:** D-12 (all bullets except `strict`, which is 3.1): `madge` and `knip` (already root dev
+**Change:** D-12 (`strict` is already enforced from 2.0): `madge` and `knip` (already root dev
 dependencies; `knip.json`: entries `src/index.ts`, `src/nuxt.ts`, `src/resolver.ts`; ignore tests, stories,
 storybook, fixtures); `scripts/check-code.mjs` (root script `check:code`, add it to
 `scripts/verify.mjs`) runs: madge cycles = 0, knip unused files and exports = 0, longest
@@ -341,6 +379,8 @@ production file ≤ 600 lines, `ts/no-explicit-any` disables ≤ 40, `@ts-ignore
 (not tests or stories) and fix the occurrences.
 **Done when:** `pnpm check:code` passes. Prove it can fail: add a temporary cycle, see it fail,
 remove it.
+Add `check:code` and `check:bundle --assert-standalone` to the PR workflow when their gates pass;
+preserve existing checks and upload compact failure evidence.
 
 **Phase 2 gate:**
 ```bash
@@ -355,13 +395,13 @@ Record in PROGRESS.md the verdict table and these numbers before/after: producti
 
 ## Phase 3: the 1.0 API
 
-Every step adds its rows to `docs/content/1.getting-started/3.migration.md` (D-3) and updates
+Every observable breaking change, in any phase, adds its row to
+`docs/content/1.getting-started/3.migration.md` (D-3). Each API step updates
 docs demos, playground pages and stories that use a changed API, in the same step.
 
-### 3.1 Strict TypeScript
-**Finding:** api.md P1-1. **Change:** `strict: true` in `packages/vue/tsconfig.json`; fix every
-error (narrow from evidence; no casts to silence). Extend `scripts/check-consumers.mjs`' strict
-consumer with a type probe: `useActiveTooltipCoordinate().value.x` must be a type error
+### 3.1 Recheck strict public declarations
+**Finding:** api.md P1-1. **Change:** strict typing and this probe land in 2.0. Recheck them after
+the model migration using packed declarations: `useActiveTooltipCoordinate().value.x` must be a type error
 (`// @ts-expect-error` in the probe) and `?.x` must compile.
 **Done when:** typecheck, build and `node scripts/check-consumers.mjs` pass.
 
@@ -395,6 +435,9 @@ first frame; an item's own `is-animation-active` overrides the chart's.
 CalendarHeatmap: `v-model:active-index` set from outside activates the element; a hover emits the
 new index; `null` clears. Brush: `v-model:range` round trip; data shrinking from 5 rows to 1 with
 range `[3,4]` renders one bar and emits `{ startIndex: 0, endIndex: 0 }`.
+Extend the table with parent rejection, negative/fractional/reversed/non-finite/out-of-bounds
+ranges, and empty → populated → empty. Check D-16's normalized value, one update request per
+distinct invalid state, and absence of invalid slider attributes or repeated emit loops.
 
 ### 3.7 Accessible names and the markup contract
 **Finding:** api.md P2-3, P3-7. **Change:** D-15 for all charts (removes `ariaLabel`), D-22.
@@ -411,9 +454,12 @@ guide (token table with the palette).
 ### 3.9 Typed rows
 **Finding:** api.md P2-5, §4; package.md P2 rows 2–3. **Change:** D-18.
 **Test:** `vue-tsc` type probes in `src/test/types/`: `<Heatmap :data="hits" x-key="nope">` is
-an error; `@cell-click="(hit) => hit.hour"` compiles with `hit: Hit`; the typed helper narrows
-`data-key` to `keyof Row`. Bundle: a consumer using
-`defineChartComponents<Row>()({ LineChart, Line })` bundles no Treemap/Sankey/Sunburst code
+an error; `@cell-click="cell => cell.rows[0]?.hour"` compiles with `cell: HeatmapCell<Hit>` and
+`cell.hour` is rejected. Runtime aggregation/missing-cell tests must match those declarations.
+Add equivalent derived-payload probes for calendar, cohort and journey charts; preserve nested
+accessor support. Compile the exact SFC examples in reviews/api.md against packed declarations,
+including the typed-helper namespace and invalid-key/payload probes. Bundle: a consumer using
+`const Chart = defineChartComponents<Row>()({ LineChart, Line })` bundles no Treemap/Sankey/Sunburst code
 (`scripts/check-consumers.mjs` or `check:bundle`).
 
 ### 3.10 Renames, slots, events, deprecations
@@ -447,10 +493,10 @@ grep -rnE "colorPanel|aspectRatio=|valueFormat=|xLabelFormat|yLabelFormat|period
   hooks; legend/tooltip duplicates; class-name tests into `cssClasses.spec.tsx`;
   ResponsiveContainer id/class → one table; existence-only smoke tests that `fuzz.spec.tsx`
   covers).
-- Action 6: add the gap tests (Brush slide drag, touch drag, keyboard; Brush sync between
-  charts; tooltip sync with mismatched data; re-layout after resize; reduced motion for Bar, cell
+- Action 6: the critical Brush, sync and resize gaps were covered in 2.0; retain those tests.
+  Add remaining cases: reduced motion for Bar, cell
   charts, JourneySankey, axes; one edge-data table per chart family: single point, all null,
-  mixed-sign stack, 1e9 values with literal ticks, duplicate categories).
+  mixed-sign stack, 1e9 values with literal ticks, duplicate categories.
 - Action 7: one `src/test/motionClock.ts` used by every motion spec; no `vi.mock` inside exported
   functions; remove redundant teardown and manual `.mockRestore()`; resolve the docs path from
   `__dirname`.
@@ -458,7 +504,8 @@ grep -rnE "colorPanel|aspectRatio=|valueFormat=|xLabelFormat|yLabelFormat|period
   the typecheck step.
 - Action 9: `ChartUtils.spec.ts` (or its successor in `core/`) as tables.
 **Done when:** the suite passes; coverage lines ≥ baseline − 1 percentage point and branches ≥
-baseline; suite wall time ≤ baseline; record test count and times.
+baseline; record test count and repeated same-environment suite timings, investigating regressions
+without treating a single machine-load fluctuation as a behavior failure.
 
 ### 4.2 Performance fixes
 **Finding:** performance.md §4. **Change:** cache `Intl.DateTimeFormat` per locale and options
@@ -474,7 +521,9 @@ medians in PROGRESS.md.
 **Finding:** performance.md §5; D-4. **Change:** `size-limit` in `packages/vue/package.json`: one
 entry per chart (import only the chart) for all 19 charts, plus the existing three presets. Set
 each limit to the final measured size + 5 %, rounded up to 0.1 kB.
-**Done when:** `pnpm --filter vccs size` passes.
+**Done when:** `pnpm --filter vccs size` passes and a per-chart table compares final gzip bytes
+with 0.2's baseline. Explain every increase and its requirement; setting a new limit is not
+evidence that size improved.
 
 ### 4.4 READMEs
 **Finding:** package.md P2 row 1, P3 rows 2–3. **Change:** `packages/vue/README.md` and the root
@@ -489,6 +538,12 @@ between the release commits (use tags if they exist).
 ### 4.6 Release mechanics
 **Change:** `.github/workflows/release.yaml` Node 18 → 22; `packages/vue/package.json`
 `"prepublishOnly": "pnpm run build"`. No publish job, no version change.
+Wire the new stable code-health, standalone-bundle and accessibility fixtures into PR CI as
+they become available (1.9/2.14); retain current consumer/SSR/motion checks. Put the full motion
+lab and browser sweeps in an explicit release-check workflow, with downloadable failure
+artifacts. `check:motion` and `motion:report` exercise different checks; one does not replace the
+other. Document the real-clock benchmark as a separate same-environment release check and keep
+inconclusive results distinct from passes.
 
 ### 4.7 Agent and maintainer docs
 **Change:**
@@ -506,13 +561,15 @@ size, package exports and types (`check:package`), packed consumers (`check-cons
 health (`check:code`), standalone bundles (`check:bundle --assert-standalone`), Nuxt SSR fixture
 (`test:nuxt`), accessibility (`check:a11y`), motion lab (`motion:report --prod --check`),
 playground (`check:play`), docs (`check:docs`), visitor-seen (`check:seen`). `--quick` skips the
-browser checks.
-**Done when:** `pnpm verify` passes every check.
+browser checks. Reconfirm the prepared consumer fixtures work offline as specified in 0.1.
+**Done when:** `pnpm verify` passes every check, and the separate baseline benchmark result is
+recorded. Perform and record a visual/keyboard pass and a representative screen-reader pass;
+where the environment cannot provide one, state that verification limit instead of claiming it.
 
 ### 4.9 Final report
 **Change:** `internals/release-1.0/REPORT.md` with:
 1. One paragraph: what 1.0 is now, and anything deferred.
-2. Steps table: id, status, commits.
+2. Steps table: id, status, commits, dependencies, release impact and verification evidence.
 3. Findings map: every P1 and P2 of every review file → commit or decision.
 4. Final `pnpm verify` table.
 5. Before/after numbers: tests, coverage, gzip per chart, bench medians, production lines, files,

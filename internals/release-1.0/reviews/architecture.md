@@ -131,12 +131,13 @@ cached by key for parameterized ones (`chart.axis('xAxis', 0)`). The ported Rech
 as pure `combine*` functions; each `createSelector([a, b], combine)` becomes
 `computed(() => combine(a.value, b.value))`. Item geometry (`bar rectangles`, `line points`) is
 a `computed` in the item composable that reads shared axis models. Interaction state (tooltip,
-brush range, legend hidden) is plain `ref`s that `v-model` can bind to. Standalone charts use a
-small `TooltipSource` contract instead of the whole cartesian model.
+brush range, legend hidden) has explicit local/controlled ownership and request operations;
+`v-model` does not grant renderers write access to the owner. Standalone charts use a private
+read-only `TooltipSource` contract instead of the whole cartesian model.
 
 ```ts
 // state/chart.ts
-import type { ComputedRef, EffectScope, InjectionKey, Ref, ShallowRef } from 'vue'
+import type { ComputedRef, EffectScope, InjectionKey, Ref } from 'vue'
 
 export interface ChartInputs {
   name: string
@@ -168,9 +169,9 @@ export interface Chart {
   readonly items: Registry<GraphicalItemSettings>
   readonly axes: Registry<AxisSettings>
   readonly references: Registry<ReferenceSettings>
-  readonly legend: { entries: Registry<LegendPayload>, settings: ShallowRef<LegendSettings | undefined>, hidden: Ref<LegendHidden> }
-  readonly brush: { range: Ref<BrushStartEndIndex>, settings: ShallowRef<BrushSettings | undefined> }
-  readonly tooltip: TooltipModel // interaction refs + computed active payload/label/coordinate
+  readonly legend: { entries: Registry<LegendPayload>, settings: ComputedRef<LegendSettings | undefined>, hidden: ComputedRef<LegendHidden>, requestHidden: (hidden: LegendHidden) => void }
+  readonly brush: { range: ComputedRef<BrushStartEndIndex | null>, settings: ComputedRef<BrushSettings | undefined>, requestRange: (range: BrushStartEndIndex | null) => void }
+  readonly tooltip: TooltipSource // readonly view; selection requests go through the controller
   readonly offset: ComputedRef<ChartOffset>
   readonly viewBox: ComputedRef<CartesianViewBox>
   axis: (type: AxisType, id: AxisId) => AxisModel
@@ -213,21 +214,27 @@ function keyed<V>(scope: EffectScope, build: (key: string) => V) {
 const chart = useChart()
 const settings = computed(() => pickBarSettings(props)) // only domain-relevant fields
 chart.items.register(settings)
-const x = chart.axis('xAxis', props.xAxisId)
-const rects = computed(() => combineBarRectangles(x.scale.value, y.scale.value, stacks.value, settings.value, chart.offset.value))
+const x = computed(() => chart.axis('xAxis', props.xAxisId))
+const y = computed(() => chart.axis('yAxis', props.yAxisId))
+const rects = computed(() => combineBarRectangles(x.value.scale.value, y.value.scale.value, stacks.value, settings.value, chart.offset.value))
 ```
 
-Why this is better: one injection key instead of ~15 chart-scoped ones; no root-state type;
+Why this is better: clear ownership for model, runtime and tooltip capabilities; no root-state type;
 no `@ts-ignore` for reselect overloads; a child's prop change reaches geometry through one
 `computed` chain instead of watch -> setter -> snapshot -> selector; and `registry` keeps the
 registration order stable (a `Set` keeps insertion order, and an entry's position does not
-change when its settings change).
+change when its settings change). A keyed DOM reorder does not change Set insertion order:
+document registration-order color assignment and preserve each existing series' identity.
+Separate typed injection keys are allowed; standalone charts must not import the cartesian
+model merely to reuse runtime or tooltip behavior. DECISIONS D-9 owns this boundary.
 
 Two constraints to keep:
 
 1. **Scope ownership.** Keyed models must be created in the chart's `EffectScope`
    (`getCurrentScope()` captured in the chart's setup), not in the scope of the first child that
-   asks. Otherwise an unmounting child can stop a model that others still use.
+   asks. Otherwise an unmounting child can stop a model that others still use. Resolve reactive
+   axis IDs inside a computed/getter, as above. Test axis switching, first-consumer unmount and
+   chart teardown rather than relying on scope structure alone.
 2. **SSR order.** Children still register during setup, and geometry still renders through
    `useDeferredView` (`hooks/deferredView.ts:14-21`). The registry design does not change that
    contract; it removes the `flush: 'sync'` watch workaround (`state/SetGraphicalItem.ts:16-30`).
@@ -238,11 +245,17 @@ Yes. The `combine*` functions (22 in `axisSelectors.ts`, 6 in `selectors/combine
 are pure and independent of state shape. Keep them as plain functions in a `core/` folder with no
 Vue import. The mechanical work per selector: name the inline result function `combineX`, delete
 the `createSelector` wrapper, and wire the inputs as `computed`s. Delete `RechartsRootState` from
-their signatures. Vue `computed` already memoizes on dependencies and, since Vue 3.4, does not
-notify dependents when the new value is `Object.is` equal, which matches the reselect behavior
-used today.
+their signatures. Vue `computed` memoizes each instance and suppresses notifications for an
+`Object.is`-equal result; fresh object results still differ. Existing module-level selectors
+share parameterized results across consumers. Preserve that sharing through one axis model per
+chart/type/ID rather than making every consumer recalculate the same domain. Verify both
+calculation counts and rendered behavior; removing `reselect` alone does not prove improvement.
 
-### Ordered slices (each ≤ 1 day, each lands and is verified on its own)
+### Ordered slices (each lands and is verified on its own)
+
+This is the architectural breakdown; PLAN.md owns execution order and gates. Strict typing and
+critical regressions land in 2.0. Standalone migration (slice 5 / step 2.11) runs before deleting
+the last state facade (slice 4 / step 2.10).
 
 Before slice 1, make the recompute guard independent of selector names: change
 `state/__tests__/fineGrainedHover.spec.tsx` to spy on the pure combiners (`combineBarRectangles`,
@@ -256,17 +269,20 @@ line points, ticks) instead of `selectBarRectangles` etc. Then the same test gua
 | 3a | **Layout math.** container, offset (`selectChartOffsetInternal`), viewBox, legend area, brush dimensions -> `chart.offset`, `chart.viewBox`. Public `useOffset`, `usePlotArea`, `useChartWidth` read them. | chart-level `computed` | Low | `chartLayout.spec`, public hooks specs. |
 | 3b | **Axis model, part 1:** settings, data-with-indexes, domain (incl. reference elements and error bars, stack groups). `chart.axis(type, id)` keyed model. | keyed `computed` in chart scope | High: biggest file, most Recharts edge cases (domains, `dataMin - n`, `allowDataOverflow`). | `axisSelectors`-dependent chart specs, `chartFinalDomains.spec`, docs prerender snapshots. |
 | 3c | **Axis model, part 2:** scale, nice ticks, ticks, band size, polar axes. | same | High | Axis/tick specs, `CartesianAxis` / `PolarAngleAxis` specs, fineGrainedHover. |
-| 3d | **Tooltip model.** Active index, payload, label, coordinate as `computed` on `chart.tooltip`; interaction state as refs; `v-model:active-index` binds a ref (remove the single listener slot, P3-3). | refs + `computed` | Medium: keyboard, sync, controlled index, `defaultIndex` (3 ticks). | `tooltipSelectors.spec`, Tooltip specs, `synchronizationLifecycle.spec`, `events-contract`. |
+| 3d | **Tooltip model.** One controller owns target identity and accepts requests; a private readonly TooltipSource derives payload, label, coordinate and public index. Apply D-8/D-13 ownership; remove the single listener slot. | controller + `computed` | Medium: keyboard, sync, parent rejection, multiple series/renderers. | Tooltip, lifecycle and events specs; controlled precedence and identity/order cases. |
 | 3e | **Cartesian series:** bar, line, area, scatter, funnel, error bar -> item-level `computed` in `useBar` etc. | item `computed` | Medium | Each item spec, fineGrainedHover, motion lab. |
 | 3f | **Polar series:** pie, radar, radial bar. | item `computed` | Medium | `pieSelectors.spec`, polar specs. |
 | 4 | **Delete the shell:** `reselect`, `state/createSelector.ts`, `RechartsRootState`, `chartState.ts`, the `view` facade, `useAppSelector`, `state/hooks.ts`, the 12 slice files. Move pure math to `core/`. Measure bundle size and recompute counts before/after (vision Phase 2 asks for it). | — | Low once 1-3 landed | `pnpm verify` (typecheck, build, size budgets, packed consumers, SSR fixture). |
 | 5 | **Standalone charts:** replace `provideChartContext(cellChartOptions(...))` with a `TooltipSource` (`{ active, index, label, payload, coordinate }`) that `CellGridLayer`, Treemap, Sankey, Sunburst, Sparkline, Journey provide; `Tooltip` renders any `TooltipSource`. Extract the shared shell (P2-7). | small composable | Medium: Tooltip currently reads selectors that assume the cartesian model. | Cell chart specs, motion lab cell-chart scenarios. |
-| 6 | **One chart-scoped key.** Fold render phase, series motion, gesture, in-view, clip-path id, portals and layer refs into `Chart` (or one `ChartRuntime` beside it). | fields on `Chart` | Low | Animation specs, `check:seen`. |
+| 6 | **Context ownership.** A lightweight ChartRuntime owns render phase, motion, gesture, in-view, clip IDs and layers; model and tooltip may use separate typed keys (D-9). | scoped capabilities | Low | Animation specs, `check:seen`, standalone bundle assertions. |
 
 Order rationale: 0-2 remove the copies and give every later slice a stable model to build on;
 3a-3f follow the dependency graph bottom-up (offset -> axis -> tooltip -> series), so each slice
 only replaces selectors whose inputs are already `computed`s. Keep a temporary adapter
-`selectX(state, ...)` only inside one slice, never across slices.
+`selectX(state, ...)` through one tracked adapter while dependents migrate. Record its remaining
+callers and exact removal condition in `internals/migrations.md`; delete it with that entry in
+2.10. It reads the canonical model and must not mirror state. Keep existing nested accessor and
+hierarchical reactivity (D-7); a fixed depth limit is not an equivalent replacement.
 
 ---
 
@@ -318,9 +334,9 @@ None found. Nothing blocks a release that the tests do not already cover.
    `{ deep: true }` and copies the array; it runs for the chart root and for each of 12 other
    callers (Pie, Funnel, every standalone chart, every series via `useSetupGraphicalItem.ts:27`).
    Cost is O(rows × fields) per change per subscriber. The vision lists "decide and implement
-   reactive data" as open. Fix: decide once. Recommendation: track mutation at one place (the
-   chart root, or the item that owns `data`), and document that row objects are compared by
-   identity.
+   reactive data" as open. Fix: track mutation at one boundary (the chart root or item that
+   owns `data`) while preserving current nested accessor and hierarchy updates (D-7).
+   Do not replace existing mutation support with row-identity or fixed-depth semantics.
 4. **Five copies of the same shallow-equal check.** `chartGraphicalItems.ts:142-145,166-169`,
    `chartCartesianAxis.ts:101-104,119-122,137-140`. Fix: removed by registries (slice 2).
 5. **Root option defaults in three places that disagree.** `generateCategoricalChart.tsx:33-40`
@@ -434,7 +450,7 @@ None found. Nothing blocks a release that the tests do not already cover.
 |---|---|---|
 | SSR safety | Chart state is created per chart in `setup` (`provideChartContext`), IDs use `useId()` (`hooks/useChartId.ts`), geometry is deferred so all siblings register first (`hooks/deferredView.ts`). Module-level state is limited to caches (`utils/attrs.ts:9` text size, bounded at 20,000; `shape/Symbols.tsx:79` path cache) and the sync channel (`utils/events.ts:37`), which only fires from client handlers. | Good. Keep the `useDeferredView` contract when introducing registries. The registry design removes the comment-level workaround "Sync watches stay active during SSR" (`SetGraphicalItem.ts:16-17`). |
 | Effect scopes | Watchers and computeds live in component scopes. | Keyed chart models (slice 3b) must be created with the chart's `EffectScope` (`scope.run`), not the first child's. Use `onScopeDispose` in `register` instead of `onUnmounted` (`SetLegendPayload.ts:22`, `SetGraphicalItem.ts:31`) so composables also work outside components. |
-| provide/inject typing | `InjectionKey` used everywhere (`chartContext.ts:34`, `renderPhase.ts:5-9`, `createContext.ts:15`). | ~15 chart-scoped keys; fold into one `Chart` (slice 6). `useChartContext` throws a clear error; keep that. |
+| provide/inject typing | `InjectionKey` used everywhere (`chartContext.ts:34`, `renderPhase.ts:5-9`, `createContext.ts:15`). | Consolidate duplicate ownership; keep runtime, model and tooltip capabilities separate where useful (D-9). `useChartContext` throws a clear error; keep that. |
 | `defineComponent` + TSX | 189 `defineComponent`s; runtime props objects plus `VuePropsToType`; slot typing via `SlotsType` (25 files) and the `$slots` cast (30 files). | Consistent with `CLAUDE.md`. Gap: render-null components used as effects (`ReportMainChartProps`, `ReportChartProps`, `ReportPolarOptions`, `ChartDataContextProvider`) are React idioms; in Vue these are composable calls in `setup` (slice 1). |
 | Watch vs computed | 63 watchers in production code. Many copy props into state (P2-1). | After slices 1-2 most remaining watchers should be DOM/animation side effects only. |
 | Deep reactivity | `useTrackedData` deep watch (P2-3); `Legend.tsx:186` deep watch on `hidden`. | Decide the data-mutation contract once. `hidden` is an array of keys; a shallow watch plus `v-model` replacement semantics is enough. |
