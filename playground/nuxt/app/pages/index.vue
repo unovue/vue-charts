@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, GitBranch, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon, Sun } from 'lucide-vue-next'
+import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, GitBranch, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon, Sparkles, Sun } from 'lucide-vue-next'
 
 const routes = [
   {
@@ -99,6 +99,13 @@ const routes = [
     description: 'Uptime tracker and contribution calendar.',
     icon: LayoutGrid,
     count: 4,
+  },
+  {
+    path: '/motion',
+    name: 'Motion',
+    description: 'Treemap entrance styles side by side, and every transition of the new charts.',
+    icon: Sparkles,
+    count: 17,
   },
   {
     path: '/sunburst-charts',

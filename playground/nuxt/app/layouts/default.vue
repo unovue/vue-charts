@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AreaChart as AreaChartIcon, BarChart3, CircleDot, LineChart as LineChartIcon, MessageSquare, Moon, PieChart as PieChartIcon, Radar as RadarIcon, Sun } from 'lucide-vue-next'
+import { AreaChart as AreaChartIcon, BarChart3, CircleDot, LineChart as LineChartIcon, MessageSquare, Moon, PieChart as PieChartIcon, Radar as RadarIcon, Sparkles, Sun } from 'lucide-vue-next'
 
 const colorMode = useColorMode()
 const route = useRoute()
@@ -23,6 +23,7 @@ const navLinks = [
   { path: '/radar-charts', name: 'Radar Charts', icon: RadarIcon },
   { path: '/radial-charts', name: 'Radial Charts', icon: CircleDot },
   { path: '/tooltip-charts', name: 'Tooltips', icon: MessageSquare },
+  { path: '/motion', name: 'Motion', icon: Sparkles },
 ]
 </script>
 
