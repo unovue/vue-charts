@@ -673,7 +673,7 @@ const _Tooltip = defineComponent({
     // Context hooks
     const viewBox = useViewBox()
     const accessibilityLayer = useAccessibilityLayer()
-    const tooltipEventType = useTooltipEventType(props.shared)
+    const tooltipEventType = useTooltipEventType(() => props.shared)
 
     // Selectors
     const tooltipState = useAppSelector(state =>

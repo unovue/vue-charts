@@ -31,6 +31,6 @@ export function selectTooltipEventType(state: RechartsRootState, shared: SharedT
   return combineTooltipEventType(shared, defaultTooltipEventType, validateTooltipEventTypes)
 }
 
-export function useTooltipEventType(shared: SharedTooltipSettings) {
-  return useAppSelector(state => selectTooltipEventType(state, shared))
+export function useTooltipEventType(shared: () => SharedTooltipSettings) {
+  return useAppSelector(state => selectTooltipEventType(state, shared()))
 }

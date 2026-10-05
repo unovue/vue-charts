@@ -157,6 +157,34 @@ describe('tooltip', () => {
   })
 
   describe('mouse interaction', () => {
+    it('switches a live shared tooltip from axis entries to one hovered item', async () => {
+      const shared = ref(true)
+      const { container } = render(() => (
+        <BarChart width={500} height={300} data={[{ name: 'A', a: 10, b: 20 }]}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Bar dataKey="a" isAnimationActive={false} />
+          <Bar dataKey="b" isAnimationActive={false} />
+          <Tooltip shared={shared.value} isAnimationActive={false}>
+            {{ content: ({ payload }) => <div data-testid="shared-tooltip">{payload.map(item => item.value).join(',')}</div> }}
+          </Tooltip>
+        </BarChart>
+      ))
+      const wrapper = container.querySelector('.v-charts-wrapper')!
+      await fireEvent.mouseMove(wrapper, { clientX: 280, clientY: 100 })
+      await nextTick()
+      await nextTick()
+      expect(container.querySelector('[data-testid="shared-tooltip"]')?.textContent).toBe('10,20')
+      expect(container.querySelector<HTMLElement>('[role="tooltip"]')?.style.visibility).toBe('visible')
+      shared.value = false
+      await nextTick()
+      await fireEvent.mouseEnter(container.querySelector('.v-charts-bar-rectangle')!)
+      await nextTick()
+      await nextTick()
+      expect(container.querySelector('[data-testid="shared-tooltip"]')?.textContent).toBe('10')
+      expect(container.querySelector<HTMLElement>('[role="tooltip"]')?.style.visibility).toBe('visible')
+    })
+
     it('shows tooltip on mouse over chart area', async () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
