@@ -128,6 +128,24 @@ describe('<Tracker />', () => {
 })
 
 describe('<CalendarHeatmap />', () => {
+  it('ends at the latest valid date even when its value is missing', () => {
+    const { container } = render(() => (
+      <CalendarHeatmap
+        width={400}
+        height={150}
+        data={[
+          { date: '2026-01-01', value: 5 },
+          { date: '2026-01-02', value: undefined },
+          { date: '2026-02-30', value: 10 },
+        ]}
+        isAnimationActive={false}
+      />
+    ))
+    const labels = Array.from(container.querySelectorAll('.v-charts-cell'), cell => cell.getAttribute('aria-label'))
+    expect(labels.at(-1)).toBe('Fri, Jan 2, 2026')
+    expect(labels.at(-2)).toBe('Thu, Jan 1, 2026: 5')
+  })
+
   const cellsOf = (container: Element) => Array.from(container.querySelectorAll<SVGGElement>('.v-charts-cell'), cell => ({
     label: cell.getAttribute('aria-label'),
     x: Number(cell.querySelector('rect')!.getAttribute('x')),

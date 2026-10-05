@@ -80,8 +80,11 @@ const _CalendarHeatmap = defineComponent({
 
     const range = computed(() => {
       let latest: number | undefined
-      for (const day of valuesByDay.value.keys())
-        latest = latest === undefined || day > latest ? day : latest
+      for (const row of rows.value ?? []) {
+        const day = toDayNumber(row?.[props.dateKey])
+        if (day !== undefined && (latest === undefined || day > latest))
+          latest = day
+      }
       const end = toDayNumber(props.end) ?? latest
       if (end === undefined)
         return undefined
