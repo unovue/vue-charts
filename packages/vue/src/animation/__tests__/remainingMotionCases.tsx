@@ -67,6 +67,36 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
     return { rows, container, nodes, geometry, start, end }
   }
   describe(`${kind} public keyed transitions`, () => {
+    if (kind === 'sankey') {
+      // At the last clock frame, floating interpolation must not make a collapsed rect negative.
+      it('lands exiting nodes on exact zero height before completion', async () => {
+        const rows = ref([
+          { name: 'Jan', value: 60 },
+          { name: 'Feb', value: 81 },
+          { name: 'Mar', value: 98 },
+          { name: 'Apr', value: 54 },
+          { name: 'May', value: 19 },
+          { name: 'Jun', value: 47 },
+        ])
+        const { container } = render(() => (
+          <Sankey
+            width={720}
+            height={360}
+            data={{
+              nodes: [{ name: 'Total' }, ...rows.value],
+              links: rows.value.map((row, index) => ({ source: 0, target: index + 1, value: row.value })),
+            }}
+          />
+        ))
+        await frame()
+        rows.value = []
+        await nextTick()
+        await frame(motionTokens.update.duration)
+        const rects = container.querySelectorAll('.v-charts-sankey-node rect')
+        expect(rects.length).toBeGreaterThan(0)
+        expect(Array.from(rects, rect => Number(rect.getAttribute('height')))).toEqual([0, 0, 0, 0, 0, 0, 0])
+      })
+    }
     it('keeps DOM identity and screen geometry on prepend and reorder', async () => {
       const view = setup()
       await frame()

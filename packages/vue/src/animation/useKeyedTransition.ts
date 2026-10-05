@@ -125,7 +125,7 @@ export function useKeyedTransition<T>(
   const inView = useChartInView()
   let lastSize: string | null | undefined
   let resizing = false
-  // The first appearance is animating, on this clock (ms) and timing.
+  // The entrance keeps its elapsed seconds and timing across interruptions.
   let entering = false
   let entranceClock: { elapsed: number, timing: PhaseTiming } | undefined
   let turns = new Map<PropertyKey, number>()
@@ -375,7 +375,7 @@ export function useKeyedTransition<T>(
       items.value = steps.map((step) => {
         const { key, from, to, phase } = step
         const t = progressOf(step)
-        return { key, phase, progress: clamp01(t), value: options.interpolate(from, to, t) }
+        return { key, phase, progress: clamp01(t), value: t === 1 ? to : options.interpolate(from, to, t) }
       })
     }
     const finish = () => {
