@@ -60,6 +60,8 @@ const _CohortChart = defineComponent({
         sizes.set(name, size)
         periods = Math.max(periods, values.length)
         values.forEach((raw: unknown, period: number) => {
+          if (raw == null)
+            return
           const count = Number(raw)
           if (!Number.isFinite(count))
             return

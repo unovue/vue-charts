@@ -331,6 +331,23 @@ describe('first appearance', () => {
 })
 
 describe('<CohortChart />', () => {
+  it.each([
+    [null, ['Jan · 100, 0: 100%', 'Jan · 100, 2: 25%']],
+    [undefined, ['Jan · 100, 0: 100%', 'Jan · 100, 2: 25%']],
+    [0, ['Jan · 100, 0: 100%', 'Jan · 100, 1: 0%', 'Jan · 100, 2: 25%']],
+  ])('leaves missing period %s blank and preserves measured zero', (value, expected) => {
+    const { container } = render(() => (
+      <CohortChart
+        width={400}
+        height={150}
+        data={[{ cohort: 'Jan', values: [100, value, 25] }]}
+        isAnimationActive={false}
+      />
+    ))
+    const labels = Array.from(container.querySelectorAll('.v-charts-cell'), cell => cell.getAttribute('aria-label'))
+    expect(labels).toEqual(expected)
+  })
+
   it('shows each period as a share of the cohort size and leaves immature periods blank', () => {
     const { container } = render(() => (
       <CohortChart
