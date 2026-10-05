@@ -16,7 +16,7 @@ test('a bar that skips 40px in one frame is flagged', () => {
   assert.ok(flags(curves(frames), frames).issues.includes('jump rect.#bar0/Apr@1 @48ms +40% (40px)'))
 })
 
-test('a cell that moves while folded to nothing is not a jump', () => {
+test('a shape that moves while folded or faded out is not a jump', () => {
   // Fold away at x=0, move to x=78 while under 2 px, unfold there.
   const frames = [[0, 12], [0, 6], [0, 1], [78, 1], [78, 6], [78, 12], [78, 12]].map(([x, size], i) => ({
     t: i * 16,
@@ -24,6 +24,13 @@ test('a cell that moves while folded to nothing is not a jump', () => {
     overlap: 0,
   }))
   assert.deepEqual(flags(curves(frames), frames).issues.filter(issue => issue.startsWith('jump')), [])
+  // A full-size node crossfading to its new rank: faint on both sides of the move.
+  const faded = [[0, ''], [0, ''], [0, '|~faint'], [84, '|~faint'], [84, ''], [84, ''], [84, '']].map(([y, mark], i) => ({
+    t: i * 16,
+    shapes: { 'rect.v-charts-journey-node-continue#n:1/pricing@1': `|0|${y}|8|28|||||${mark}` },
+    overlap: 0,
+  }))
+  assert.deepEqual(flags(curves(faded), faded).issues.filter(issue => issue.startsWith('jump')), [])
 })
 
 // Catch sampling two rAF callbacks as one frame after earlier steps change the clock phase.

@@ -48,6 +48,15 @@ const browser = await launchBrowser()
 
 // In-page per-frame sampler: SVG attributes and HTML widths resolved against layout.
 function SAMPLER() {
+  // Effective opacity: a shape fading through under 35 % is on its way in or out, and a fully
+  // transparent hit area is never seen; neither counts as a visible jump or overlap.
+  const inkOf = (el) => {
+    let ink = 1
+    for (let n = el; n && n.tagName !== 'svg'; n = n.parentElement)
+      ink *= Number(getComputedStyle(n).opacity)
+    return ink
+  }
+  const faint = el => inkOf(el) < 0.35 ? '|~faint' : ''
   window.__snapshot = () => {
     const keyOf = (el) => {
       const parts = []
@@ -71,12 +80,14 @@ function SAMPLER() {
     for (const el of svgs.flatMap(svg => [...svg.querySelectorAll('rect,path,circle,polygon')])) {
       if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper, .v-charts-tooltip-cursor'))
         continue
+      if (el.getAttribute('fill') === 'transparent')
+        continue
       const cls = (el.getAttribute('class') || '').split(' ')[0]
       const surface = svgs.indexOf(el.ownerSVGElement)
       const prefix = surface > 0 ? `svg${surface}/` : ''
       const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
       counts[base] = (counts[base] ?? 0) + 1
-      shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|')
+      shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|') + faint(el)
     }
     for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
       shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
@@ -90,7 +101,7 @@ function SAMPLER() {
     const elements = [...document.querySelectorAll('svg.v-charts-surface .v-charts-bar-rectangle :is(path, rect), svg.v-charts-surface .v-charts-cell-rect, svg.v-charts-surface .v-charts-journey-node-continue, svg.v-charts-surface .v-charts-journey-node-exit')]
     let worst = 0
     for (const svg of document.querySelectorAll('svg.v-charts-surface')) {
-      const boxes = elements.filter(el => el.ownerSVGElement === svg)
+      const boxes = elements.filter(el => el.ownerSVGElement === svg && inkOf(el) >= 0.35)
         .map(el => ['x', 'y', 'width', 'height'].map(a => Number(el.getAttribute(a))))
         .filter(([x, y, w, h]) => [x, y, w, h].every(Number.isFinite) && Math.abs(w) > 0.5 && Math.abs(h) > 0.5)
         .map(([x, y, w, h]) => [Math.min(x, x + w), Math.min(y, y + h), Math.max(x, x + w), Math.max(y, y + h)])
@@ -137,12 +148,14 @@ function SAMPLER() {
       for (const el of svgs.flatMap(svg => [...svg.querySelectorAll('rect,path,circle,polygon')])) {
         if (el.closest('defs, clipPath, .v-charts-cartesian-axis, .v-charts-cartesian-grid, .v-charts-polar-grid, .v-charts-polar-angle-axis, .v-charts-polar-radius-axis, .v-charts-legend-wrapper'))
           continue
+        if (el.getAttribute('fill') === 'transparent')
+          continue
         const cls = (el.getAttribute('class') || '').split(' ')[0]
         const surface = svgs.indexOf(el.ownerSVGElement)
         const prefix = surface > 0 ? `svg${surface}/` : ''
         const base = `${prefix}${el.tagName}.${cls}#${keyOf(el)}`
         counts[base] = (counts[base] ?? 0) + 1
-        shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|')
+        shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|') + faint(el)
       }
       for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
         shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')

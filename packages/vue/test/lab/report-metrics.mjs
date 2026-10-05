@@ -39,11 +39,13 @@ export function curves(frames) {
 }
 
 // A rect folded to under 2 px (width or height) is not visible, so moving it is not a visible jump:
-// cells that fold away and unfold one column over (a calendar's first weekday) do exactly that.
-function folded(frames, id, t) {
-  const parts = String(frames.find(f => f.t === t)?.shapes[id] ?? '').split('|')
+// cells that fold away and unfold one column over (a calendar's first weekday) do exactly that. The
+// sampler marks shapes fading through under 35 % opacity as `~faint`; those are not seen either.
+function hidden(frames, id, t) {
+  const shape = String(frames.find(f => f.t === t)?.shapes[id] ?? '')
+  const parts = shape.split('|')
   const [width, height] = [Number(parts[3]), Number(parts[4])]
-  return parts[3] !== '' && parts[4] !== '' && (Math.abs(width) < 2 || Math.abs(height) < 2)
+  return shape.endsWith('|~faint') || (parts[3] !== '' && parts[4] !== '' && (Math.abs(width) < 2 || Math.abs(height) < 2))
 }
 
 export function flags(curveList, frames) {
@@ -54,7 +56,7 @@ export function flags(curveList, frames) {
       const [tPrev, prev] = c.pts[i - 1]
       if (c.id !== 'tooltip' && p - prev < -0.04 && prev < 1.02)
         issues.push(`backwards ${c.id} @${Math.round(t)}ms ${prev.toFixed(2)}→${p.toFixed(2)}`)
-      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6 && !(folded(frames, c.id, tPrev) && folded(frames, c.id, t)))
+      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6 && !(hidden(frames, c.id, tPrev) && hidden(frames, c.id, t)))
         issues.push(`jump ${c.id} @${Math.round(t)}ms +${((p - prev) * 100).toFixed(0)}% (${(c.span * (p - prev)).toFixed(0)}px)`)
     }
     // A stall: progress stuck mid-way for 3+ frames.
