@@ -733,6 +733,7 @@ const _Tooltip = defineComponent({
         ? tooltip.state.value.settings.activeIndex
         : tooltip.state.value.keyboardInteraction.index,
       () => tooltip.state.value.keyboardInteraction.index,
+      () => tooltip.state.value.keyboardInteraction.configuration,
     ], ([active, index], _, cleanup) => {
       if (!accessibilityLayer.value || !active || index == null)
         return

@@ -115,6 +115,8 @@ export type TooltipSettingsState = {
  * and then the selectors and Tooltip will decide which of the interaction states to use.
  */
 export type TooltipInteractionState = {
+  configuration?: TooltipPayloadConfiguration
+
   /**
    * If user interaction is in progress or not.
    * Why is this its own property? Why is this not computed from the index?
@@ -214,6 +216,8 @@ export type TooltipState = {
 }
 
 export type TooltipActionPayload = {
+  configuration?: TooltipPayloadConfiguration
+
   activeIndex: TooltipIndex
   activeDataKey: DataKey<any> | undefined
   activeCoordinate?: ChartCoordinate | undefined
@@ -267,7 +271,7 @@ export function createChartTooltip() {
   }
 
   function sameInteraction(a: TooltipInteractionState, b: TooltipInteractionState) {
-    return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate
+    return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate && a.configuration === b.configuration
   }
 
   function addTooltipEntrySettings(settings: TooltipPayloadConfiguration) {
@@ -353,6 +357,7 @@ export function createChartTooltip() {
   function setKeyboardInteraction(payload: TooltipActionPayload & { active: boolean }) {
     proposeIndex(payload.active ? payload.activeIndex : null)
     const interaction: TooltipInteractionState = {
+      configuration: payload.configuration,
       active: payload.active,
       index: payload.activeIndex,
       dataKey: payload.activeDataKey,

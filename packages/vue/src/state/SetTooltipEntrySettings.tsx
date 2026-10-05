@@ -12,7 +12,8 @@ type SetTooltipEntrySettingsProps<T> = {
 export function SetTooltipEntrySettings<T>({ fn, args }: SetTooltipEntrySettingsProps<T>) {
   const tooltip = useChartTooltip()
   const isPanorama = useIsPanorama()
-  watch(computed(() => isPanorama ? undefined : fn(args.value)), (tooltipEntrySettings, _previous, onCleanup) => {
+  const configuration = computed(() => isPanorama ? undefined : fn(args.value))
+  watch(configuration, (tooltipEntrySettings, _previous, onCleanup) => {
     if (!tooltipEntrySettings) {
       return
     }
@@ -21,4 +22,5 @@ export function SetTooltipEntrySettings<T>({ fn, args }: SetTooltipEntrySettings
       tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
     })
   }, { immediate: true })
+  return configuration
 }

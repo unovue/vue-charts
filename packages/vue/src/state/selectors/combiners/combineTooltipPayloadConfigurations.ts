@@ -17,6 +17,8 @@ export function combineTooltipPayloadConfigurations(tooltipState: TooltipState, 
   if (tooltipState.settings.activeIndex !== undefined) {
     return tooltipState.settings.activeIndex === null ? [] : [tooltipState.tooltipItemPayloads[0]]
   }
+  if (tooltipState.keyboardInteraction.active && tooltipState.keyboardInteraction.configuration)
+    return [tooltipState.keyboardInteraction.configuration]
   let filterByDataKey: DataKey<any> | undefined
   if (trigger === 'hover') {
     filterByDataKey = tooltipState.itemInteraction.hover.dataKey

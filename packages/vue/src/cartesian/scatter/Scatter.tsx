@@ -91,11 +91,11 @@ const ScatterView = defineComponent({
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
     // arrayTooltipSearcher returns the tooltipPayload array for the active index,
     // which combineTooltipPayload processes into per-axis tooltip entries.
-    SetTooltipEntrySettings({
+    const tooltipConfiguration = SetTooltipEntrySettings({
       fn: input => ({
         // This owned array contains payloads that reference caller-owned rows.
         dataDefinedOnItem: input.points && input.points.map(p => p.tooltipPayload),
-        positions: undefined,
+        positions: input.points?.map(point => ({ x: point.cx, y: point.cy })),
         settings: {
           stroke: input.stroke,
           strokeWidth: input.strokeWidth,
@@ -170,7 +170,10 @@ const ScatterView = defineComponent({
         if (point.cx == null || point.cy == null) {
           return null
         }
-        const isActive = currentActiveIndex === String(i) && currentActiveDataKey === props.dataKey
+        const keyboard = tooltip.state.value.keyboardInteraction
+        const isActive = keyboard.active
+          ? keyboard.configuration === tooltipConfiguration.value && keyboard.index === String(i)
+          : currentActiveIndex === String(i) && currentActiveDataKey === props.dataKey
         const symbolProps: SymbolsProps = {
           ...svgAttrs,
           ...(props.fill != null ? { fill: props.fill } : {}),

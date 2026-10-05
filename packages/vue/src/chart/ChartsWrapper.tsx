@@ -118,6 +118,8 @@ export const ChartsWrapper = defineComponent({
         return
       pointerFocus = false
       focusVisible.value = true
+      if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End', 'Escape', 'Enter'].includes(e.key))
+        e.preventDefault()
       interactions.keyDown(e.key)
     }
 

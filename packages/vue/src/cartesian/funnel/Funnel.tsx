@@ -71,7 +71,7 @@ const FunnelView = defineComponent({
       onEnd: () => emit('animation-end'),
     })
 
-    SetTooltipEntrySettings({
+    const tooltipConfiguration = SetTooltipEntrySettings({
       fn: v => v,
       args: computed(() => ({
         dataDefinedOnItem: data.value ?? [],
@@ -153,6 +153,9 @@ const FunnelView = defineComponent({
 
             const trapezoidProps = {
               ...trap,
+              isActive: tooltip.state.value.keyboardInteraction.active
+                && tooltip.state.value.keyboardInteraction.configuration === tooltipConfiguration.value
+                && tooltip.state.value.keyboardInteraction.index === String(trap.index),
               fill: trapFill,
               stroke: trapStroke,
               animationProgress: isAnimating.value ? 0 : 1,
@@ -169,7 +172,8 @@ const FunnelView = defineComponent({
                     lowerWidth={trapezoidProps.lowerWidth}
                     height={trapezoidProps.height}
                     fill={trapFill}
-                    stroke={trapStroke}
+                    stroke={trapezoidProps.isActive ? 'var(--v-charts-focus, Highlight)' : trapStroke}
+                    stroke-width={trapezoidProps.isActive ? 2 : undefined}
                   />
                 )
 

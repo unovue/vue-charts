@@ -48,10 +48,55 @@ export function useChartInteractions() {
     }
   }
 
+  function itemKeyDown(key: KeyboardEvent['key']) {
+    const state = chartState.value
+    const targets = state.tooltip.tooltipItemPayloads.flatMap((configuration) => {
+      if (configuration.settings.hide || !Array.isArray(configuration.dataDefinedOnItem))
+        return []
+      return configuration.dataDefinedOnItem.map((_, index) => ({
+        configuration,
+        index: String(index),
+        coordinate: configuration.positions?.[index],
+      }))
+    })
+    const current = state.tooltip.keyboardInteraction
+    if (key === 'Escape') {
+      tooltip.setKeyboardInteraction({ active: false, activeIndex: null, activeDataKey: undefined })
+      return
+    }
+    const position = targets.findIndex(target => target.configuration === current.configuration
+      && target.index === current.index)
+    let next: number
+    if (key === 'Home')
+      next = 0
+    else if (key === 'End')
+      next = targets.length - 1
+    else if (key === 'ArrowRight' || key === 'ArrowDown')
+      next = Math.min(position + 1, targets.length - 1)
+    else if (key === 'ArrowLeft' || key === 'ArrowUp')
+      next = Math.max(position - 1, 0)
+    else
+      return
+    const target = targets[next]
+    if (!target)
+      return
+    tooltip.setKeyboardInteraction({
+      active: true,
+      activeIndex: target.index,
+      activeDataKey: target.configuration.settings.dataKey,
+      activeCoordinate: target.coordinate,
+      configuration: target.configuration,
+    })
+  }
+
   function keyDown(key: KeyboardEvent['key']) {
     const state = chartState.value
     const accessibilityLayerIsActive = state.rootProps.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
+      return
+    }
+    if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item') {
+      itemKeyDown(key)
       return
     }
     const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
@@ -101,6 +146,8 @@ export function useChartInteractions() {
     if (!accessibilityLayerIsActive) {
       return
     }
+    if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item')
+      return
     const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
       ? { ...state.tooltip.keyboardInteraction, index: state.tooltip.settings.activeIndex === null ? null : String(state.tooltip.settings.activeIndex), active: state.tooltip.settings.activeIndex !== null }
       : state.tooltip.keyboardInteraction

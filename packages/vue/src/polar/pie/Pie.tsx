@@ -97,7 +97,7 @@ const PieView = defineComponent({
       },
     })
 
-    SetTooltipEntrySettings({
+    const tooltipConfiguration = SetTooltipEntrySettings({
       fn: v => v,
       args: computed(() => ({
         dataDefinedOnItem: displayedData.value ?? [],
@@ -198,7 +198,10 @@ const PieView = defineComponent({
           {sectorList.map(({ key, value: sector }) => {
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
-            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === sector.index }
+            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: tooltip.state.value.keyboardInteraction.active
+              ? tooltip.state.value.keyboardInteraction.configuration === tooltipConfiguration.value
+              && tooltip.state.value.keyboardInteraction.index === String(sector.index)
+              : activeIndex.value === sector.index }
             const shapeSlot = shapeProps.isActive && slots.activeShape ? slots.activeShape : slots.shape
             const content = shapeSlot
               ? shapeSlot(shapeProps)
