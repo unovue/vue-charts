@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from '@/index'
+import { BarList, CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { levelOf, toDayNumber } from '../cellGridUtils'
 
@@ -405,4 +405,62 @@ it.each([
     />
   ))
   expect(container.querySelector<SVGElement>('.v-charts-cell text')!.style.fill).toBe(expected)
+})
+
+// Catches page content jumping while removed rows are still drawn above it.
+it('moves BarList height with entering and leaving row presence', async () => {
+  const rows = ref([
+    { name: 'A', value: 6 },
+    { name: 'B', value: 5 },
+    { name: 'C', value: 4 },
+    { name: 'D', value: 3 },
+    { name: 'E', value: 2 },
+    { name: 'F', value: 1 },
+  ])
+  const click = vi.fn()
+  const { container } = render(() => (
+    <BarList
+      data={rows.value}
+      sort="none"
+      transition={{ duration: 1, ease: 'linear' }}
+      {...{ 'onRow-click': click }}
+    />
+  ))
+  await frame()
+  const list = container.querySelector<HTMLElement>('.v-charts-bar-list')!
+  expect(list.style.height).toBe('212px')
+  rows.value = rows.value.slice(0, 5)
+  await nextTick()
+  await frame(0.5)
+  expect(Number.parseFloat(list.style.height)).toBeGreaterThan(176)
+  expect(Number.parseFloat(list.style.height)).toBeLessThan(212)
+  expect(list.style.height).toBe('194px')
+  await fireEvent.click(container.querySelector('[aria-hidden="true"]')!)
+  expect(click).not.toHaveBeenCalled()
+  rows.value = [...rows.value, { name: 'F', value: 1 }]
+  await nextTick()
+  expect(list.style.height).toBe('194px')
+  await frame(0.5)
+  expect(list.style.height).toBe('203px')
+  await frame()
+  expect(list.style.height).toBe('212px')
+
+  rows.value = rows.value.slice(0, 5)
+  await nextTick()
+  await frame()
+  expect(list.style.height).toBe('176px')
+
+  rows.value = []
+  await nextTick()
+  await frame(0.5)
+  expect(list.style.height).toBe('86px')
+  await frame()
+  expect(list.style.height).toBe('0px')
+
+  rows.value = [{ name: 'A', value: 2 }, { name: 'B', value: 1 }]
+  await nextTick()
+  await frame(0.5)
+  expect(list.style.height).toBe('32px')
+  await frame()
+  expect(list.style.height).toBe('68px')
 })

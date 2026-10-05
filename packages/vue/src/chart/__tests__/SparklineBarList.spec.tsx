@@ -144,6 +144,31 @@ describe('<BarList />', () => {
     expect(click).toHaveBeenCalledWith({ name: 'A', value: 10 }, 0, expect.any(MouseEvent))
   })
 
+  // Catches duplicate labels collapsing slot and click indexes to the first occurrence.
+  it('keeps the second duplicate row index in clicks and the name slot', async () => {
+    const click = vi.fn()
+    const { container } = render(() => (
+      <BarList
+        data={[{ name: 'A', value: 10 }, { name: 'A', value: 5 }]}
+        sort="none"
+        isAnimationActive={false}
+        {...{ 'onRow-click': click }}
+      >
+        {{ name: ({ name, index }) => (
+          <button>
+            {name}
+            :
+            {index}
+          </button>
+        ) }}
+      </BarList>
+    ))
+    const buttons = container.querySelectorAll('li button')
+    expect([...buttons].map(button => button.textContent)).toEqual(['A:0', 'A:1'])
+    await fireEvent.click(buttons[1])
+    expect(click).toHaveBeenCalledWith({ name: 'A', value: 5 }, 1, expect.any(MouseEvent))
+  })
+
   it('ranks rows by value with bars relative to the largest and formatted values', () => {
     const { container } = render(() => <BarList data={data} href-key="url" isAnimationActive={false} valueFormat={v => `${v} visits`} />)
     expect(rows(container).sort((a, b) => a.y.localeCompare(b.y, undefined, { numeric: true }))).toEqual([

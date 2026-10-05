@@ -23,12 +23,15 @@ export interface BarListSlots {
 }
 
 interface RowState {
+  index: number
   row: BarListRow
   name: string
   value: number
   y: number
   ratio: number
   opacity: number
+  /** Displayed presence preserves height when a transition is interrupted. */
+  presence: number
   /** Moving up past another row during a change: drawn above the rows it passes. */
   rising?: boolean
 }
@@ -77,9 +80,11 @@ const BarListInner = defineComponent({
       const max = Math.max(0, ...list.map(item => item.value))
       return list.map((item, index) => ({
         ...item,
+        index,
         y: index * (props.rowHeight + props.gap),
         ratio: max > 0 ? Math.max(0, item.value) / max : 0,
         opacity: 1,
+        presence: 1,
       }))
     })
 
@@ -93,21 +98,26 @@ const BarListInner = defineComponent({
         // whole on the way.
         value: Number.isInteger(to.value) ? Math.round(from.value + (to.value - from.value) * t) : from.value + (to.value - from.value) * t,
         y: from.y + (to.y - from.y) * t,
+        presence: from.presence + (to.presence - from.presence) * t,
         // Rows changing rank cross each other: the ones moving up pass over at full strength while
         // the ones moving down dim underneath, so one label always reads clearly.
         ...crossing(from, to, t),
         ratio: from.ratio + (to.ratio - from.ratio) * t,
         opacity: (from.opacity + (to.opacity - from.opacity) * t) * (to.y - from.y > props.rowHeight ? 1 - 0.7 * Math.sin(Math.PI * t) : 1),
       }),
-      enterFrom: to => ({ ...to, value: 0, ratio: 0, opacity: 0 }),
-      exitTo: from => ({ ...from, ratio: 0, opacity: 0 }),
+      enterFrom: to => ({ ...to, value: 0, ratio: 0, opacity: 0, presence: 0 }),
+      exitTo: from => ({ ...from, ratio: 0, opacity: 0, presence: 0 }),
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onStart: callbacks.onStart,
       onEnd: callbacks.onEnd,
     })
 
-    const height = computed(() => Math.max(0, target.value.length * (props.rowHeight + props.gap) - props.gap))
+    const height = computed(() => {
+      const count = items.value.reduce((sum, item) =>
+        sum + Math.max(0, Math.min(1, item.value.presence)), 0)
+      return Math.max(0, count * (props.rowHeight + props.gap) - props.gap)
+    })
     const format = (state: RowState) => props.valueFormat ? props.valueFormat(state.value, state.row) : numbers.value.format(state.value)
 
     function renderName(slotProps: BarListSlotProps, href: string | undefined, exiting: boolean) {
@@ -149,7 +159,7 @@ const BarListInner = defineComponent({
         style={{ position: 'relative', height: `${height.value}px`, margin: 0, padding: 0, listStyle: 'none' }}
       >
         {items.value.map(({ key, value: state, phase }) => {
-          const index = target.value.findIndex(item => item.name === state.name)
+          const index = state.index
           const slotProps: BarListSlotProps = { row: state.row, index, name: state.name, value: state.value, ratio: state.ratio, formatted: format(state) }
           const href = props.hrefKey ? state.row[props.hrefKey] : undefined
           return (
@@ -171,7 +181,7 @@ const BarListInner = defineComponent({
                 gap: '12px',
                 pointerEvents: phase === 'exit' ? 'none' : undefined,
               }}
-              onClick={(event: MouseEvent) => index >= 0 && emit('row-click', state.row, index, event)}
+              onClick={(event: MouseEvent) => phase !== 'exit' && emit('row-click', state.row, index, event)}
             >
               <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
                 <div class="v-charts-bar-list-bar" style={{ position: 'absolute', inset: '0 auto 0 0', width: `${state.ratio * 100}%`, borderRadius: '4px', background: props.color, opacity: 0.18 }} />
