@@ -194,16 +194,29 @@ const TreemapInner = defineComponent({
       return paths
     })
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
-    const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => getValueByDataKey(item, props.nameKey) === node.name) ?? {})) ?? node.name })), {
+    const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => getValueByDataKey(item, props.nameKey) === node.name) ?? {})) ?? node.name, opacity: 1 })), {
       key: (node, index) => node.path || index,
-      interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, width: from.width + (to.width - from.width) * t, height: from.height + (to.height - from.height) * t }),
+      interpolate: (from, to, t) => ({ ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t, width: from.width + (to.width - from.width) * t, height: from.height + (to.height - from.height) * t, opacity: (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t }),
       enterFrom: to => ({ ...to, x: to.x + to.width / 2, y: to.y + to.height / 2, width: 0, height: 0 }),
       exitTo: from => ({ ...from, x: from.x + from.width / 2, y: from.y + from.height / 2, width: 0, height: 0 }),
+      // First appearance: a diagonal cascade from the top-left corner, each cell fading in while
+      // it settles from 92 % of its size, so the chart builds up the way it reads.
+      reveal: () => {
+        const all = nodes.value
+        if (!all.length)
+          return undefined
+        const left = Math.min(...all.map(node => node.x))
+        const top = Math.min(...all.map(node => node.y))
+        const span = Math.max(...all.map(node => node.x + node.width)) - left + Math.max(...all.map(node => node.y + node.height)) - top
+        return {
+          from: to => ({ ...to, x: to.x + to.width * 0.04, y: to.y + to.height * 0.04, width: to.width * 0.92, height: to.height * 0.92, opacity: 0 }),
+          order: to => span > 0 ? (to.x - left + to.y - top) / span : 0,
+        }
+      },
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onEnd: callbacks.onEnd,
       onStart: callbacks.onStart,
-
     })
 
     // Build node tree for tooltip payload lookup
@@ -324,8 +337,10 @@ const TreemapInner = defineComponent({
       }
     }
 
-    function renderNode(node: TreemapLayoutNode, index: number, key: PropertyKey, labelFade?: number) {
+    // `opacity` is the entrance's fade, not part of the layout a custom content slot receives.
+    function renderNode({ opacity, ...node }: TreemapLayoutNode & { opacity?: number }, index: number, key: PropertyKey, labelFade?: number) {
       const nodeFill = getNodeFill(node)
+      const fade = opacity != null && opacity < 1 ? opacity : undefined
 
       const nodeProps: TreemapContentSlotProps = {
         ...node,
@@ -340,6 +355,7 @@ const TreemapInner = defineComponent({
             key={key}
             class="v-charts-treemap-node"
             style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+            opacity={fade}
             onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
             onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
             onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
@@ -389,6 +405,7 @@ const TreemapInner = defineComponent({
           key={key}
           class="v-charts-treemap-node"
           style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+          opacity={fade}
           onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
           onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
           onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}

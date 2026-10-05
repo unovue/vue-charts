@@ -29,6 +29,12 @@ export const motionTokens = {
   exit: { duration: 0.3, ease: easeOutQuint },
 } satisfies Record<string, PhaseTiming>
 
+/**
+ * A cascade entrance: items start one after another over the first `spread` of `duration` and
+ * each takes the rest on the entrance curve, so the wave reads as one gesture, not many.
+ */
+export const cascadeTiming = { duration: 1.2, spread: 0.4, ease: easeOutCubic }
+
 const drawEase = cubicBezier(0.4, 0, 0.2, 1)
 
 /**

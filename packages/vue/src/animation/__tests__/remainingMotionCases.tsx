@@ -99,12 +99,16 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       else if (kind === 'radial') {
         expect(view.nodes()).toHaveLength(0)
       }
-      else {
+      else if (kind === 'treemap') {
+        // A diagonal cascade: every cell starts transparent, at 92 % of its size.
         for (const node of view.nodes()) {
-          expect(node.querySelector('rect')!.getAttribute('height')).toBe('0')
-          if (kind === 'treemap')
-            expect(node.querySelector('rect')!.getAttribute('width')).toBe('0')
+          expect(node.getAttribute('opacity')).toBe('0')
+          expect(Number(node.querySelector('rect')!.getAttribute('width'))).toBeGreaterThan(0)
         }
+      }
+      else {
+        for (const node of view.nodes())
+          expect(node.querySelector('rect')!.getAttribute('height')).toBe('0')
       }
       await frame()
       expect(view.nodes().map(view.geometry)).not.toEqual(entrance)

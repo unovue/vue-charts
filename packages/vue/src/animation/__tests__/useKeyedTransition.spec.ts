@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, nextTick, shallowRef } from 'vue'
-import { motionTokens } from '../motion'
+import { cascadeTiming, motionTokens } from '../motion'
 import { useKeyedTransition } from '../useKeyedTransition'
 
 // A controllable clock in place of motion-v's frame loop, which does not run in JSDOM.
@@ -31,7 +31,7 @@ function finish() {
 
 interface BarItem { name: string, height: number }
 
-function setup(initial: BarItem[], options: { active?: boolean } = {}) {
+function setup(initial: BarItem[], options: { active?: boolean, reveal?: Parameters<typeof useKeyedTransition<BarItem>>[1]['reveal'] } = {}) {
   const data = shallowRef<BarItem[]>(initial)
   const scope = effectScope()
   const result = scope.run(() => useKeyedTransition(() => data.value, {
@@ -40,6 +40,7 @@ function setup(initial: BarItem[], options: { active?: boolean } = {}) {
     enterFrom: to => ({ ...to, height: 0 }),
     exitTo: from => ({ ...from, height: 0 }),
     isActive: () => options.active ?? true,
+    reveal: options.reveal,
   }))!
   const view = () => result.items.value.map(i => `${String(i.key)}:${i.phase}:${Math.round(i.value.height)}`)
   return { data, view, result, scope }
@@ -50,6 +51,26 @@ afterEach(() => {
 })
 
 describe('useKeyedTransition', () => {
+  // A cascade that played every item at once, or restarted it on the next change, would look
+  // like the plain grow it replaces.
+  it('plays a cascade entrance one item after another, then updates together', async () => {
+    const { data, view } = setup([{ name: 'A', height: 100 }, { name: 'B', height: 100 }], {
+      reveal: () => ({ from: to => ({ ...to, height: 50 }), order: to => to.name === 'A' ? 0 : 1 }),
+    })
+    expect(view()).toEqual(['A:enter:50', 'B:enter:50'])
+    // B waits for its turn at spread × duration while A is under way.
+    at(cascadeTiming.spread * cascadeTiming.duration)
+    expect(view()[0]).not.toBe('A:enter:50')
+    expect(view()[1]).toBe('B:enter:50')
+    at(cascadeTiming.duration)
+    expect(view()).toEqual(['A:enter:100', 'B:enter:100'])
+    finish()
+    data.value = [{ name: 'A', height: 20 }, { name: 'B', height: 20 }]
+    await nextTick()
+    at(motionTokens.update.duration)
+    expect(view()).toEqual(['A:update:20', 'B:update:20'])
+  })
+
   it('enters from the start state and lands on the target', () => {
     const { view } = setup([{ name: 'A', height: 100 }])
     expect(view()).toEqual(['A:enter:0'])

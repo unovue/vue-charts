@@ -4,7 +4,7 @@ import { usePreferredReducedMotion } from '@vueuse/core'
 import type { ShallowRef } from 'vue'
 import { nextTick, onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
-import { motionTokens } from './motion'
+import { cascadeTiming, motionTokens } from './motion'
 import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from './renderPhase'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
@@ -55,8 +55,19 @@ export interface KeyedTransitionOptions<T> {
    * hydration matches it. On by default for series; axes and grids follow them.
    */
   entranceAfterHydration?: boolean
+  /**
+   * The first appearance, when it differs from a later enter: where each item starts (`from`)
+   * and, for a cascade, its turn (`order`, 0 first to 1 last). Items with an order start one
+   * after another on the cascade timing; later changes are unaffected.
+   */
+  reveal?: () => Reveal<T> | undefined
   onStart?: () => void
   onEnd?: () => void
+}
+
+export interface Reveal<T> {
+  from?: (to: T) => T
+  order?: (to: T) => number
 }
 
 export interface Neighbors<T> {
@@ -149,7 +160,7 @@ export function useKeyedTransition<T>(
     options.onEnd?.()
   }
 
-  function plan(next: readonly T[]): PlanItem<T>[] {
+  function plan(next: readonly T[], reveal?: Reveal<T>): PlanItem<T>[] {
     // Everything drawn now, including items still leaving after an interrupted change.
     const drawn = items.value
     const onScreen = new Map(drawn.map(item => [item.key, item.value]))
@@ -187,7 +198,7 @@ export function useKeyedTransition<T>(
     const staying: PlanItem<T>[] = nextItems.map(({ key, value: to }, index) => {
       const from = onScreen.get(key)
       return from === undefined
-        ? { key, from: options.enterFrom(to, neighborsInNext(index)), to, phase: 'enter' }
+        ? { key, from: reveal?.from?.(to) ?? options.enterFrom(to, neighborsInNext(index)), to, phase: 'enter' }
         : { key, from, to, phase: 'update' }
     })
 
@@ -232,7 +243,7 @@ export function useKeyedTransition<T>(
     const nextItems = next ?? []
     let skip = skipEntrance && !hasEntered
     if (skip && (options.entranceAfterHydration ?? !options.followsSeries) && active && nextItems.length) {
-      const start = plan(nextItems).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
+      const start = plan(nextItems, options.reveal?.()).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
       if (onServer) {
         // The server sends the entrance's start; the client plays it after hydration.
         items.value = start
@@ -296,10 +307,13 @@ export function useKeyedTransition<T>(
       return
     }
 
-    const steps = plan(nextItems)
-    // The very first appearance uses the enter timing for every item.
+    // The very first appearance uses the enter timing for every item, or a cascade.
     const first = !hasEntered
-    let entrance = first ? options.entrance?.() ?? motionTokens.enter : undefined
+    const reveal = first ? options.reveal?.() : undefined
+    const steps = plan(nextItems, reveal)
+    const cascade = reveal?.order && !options.entrance
+    const turn = new Map(cascade ? steps.map(step => [step.key, clamp01(reveal.order!(step.to)) * cascadeTiming.spread * cascadeTiming.duration]) : [])
+    let entrance = first ? options.entrance?.() ?? (cascade ? cascadeTiming : motionTokens.enter) : undefined
     if (first) {
       entranceClock = { start: performance.now(), timing: entrance! }
     }
@@ -316,9 +330,10 @@ export function useKeyedTransition<T>(
     isAnimating.value = true
     options.onStart?.()
 
-    const render = (progressOf: (phase: TransitionPhase) => number) => {
-      items.value = steps.map(({ key, from, to, phase }) => {
-        const t = progressOf(phase)
+    const render = (progressOf: (step: PlanItem<T>) => number) => {
+      items.value = steps.map((step) => {
+        const { key, from, to, phase } = step
+        const t = progressOf(step)
         return { key, phase, progress: t, value: t >= 1 ? to : options.interpolate(from, to, t) }
       })
     }
@@ -338,15 +353,20 @@ export function useKeyedTransition<T>(
       return
     }
 
-    // One linear clock in seconds; each phase applies its own duration and curve.
+    // One linear clock in seconds; each phase applies its own duration and curve. In a cascade
+    // each item waits for its turn and then takes the rest of the entrance.
     const total = Math.max(...steps.map(s => timing(s.phase).duration), 0)
+    const cascadeItem = cascadeTiming.duration * (1 - cascadeTiming.spread)
     render(() => 0)
     controls = animate(0, total, {
       duration: total,
       ease: 'linear',
       onUpdate: (elapsed) => {
-        render((phase) => {
-          const { duration, ease } = timing(phase)
+        render((step) => {
+          const delay = turn.get(step.key)
+          if (delay !== undefined)
+            return cascadeTiming.ease(clamp01((elapsed - delay) / cascadeItem))
+          const { duration, ease } = timing(step.phase)
           return ease(clamp01(elapsed / duration))
         })
       },
