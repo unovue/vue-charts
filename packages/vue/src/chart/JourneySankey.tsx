@@ -4,7 +4,7 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
 import { provideRenderPhase } from '@/animation/renderPhase'
-import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -45,7 +45,21 @@ const LABEL_HEIGHT = 34
 const CHAR_WIDTH = 6.6
 const CURVATURE = 0.42
 
+/**
+ * How the journeys first appear. Experimental: the playground's motion page compares these
+ * until the default is chosen.
+ * - `grow`: every page and band grows at once
+ * - `flow`: step by step from the left, each band stretching out from its source page
+ * - `columns`: column by column, pages settling into place, bands arriving with their target
+ * - `diagonal`: a wave from the top-left corner, like the treemap
+ * - `pages`: the pages first, column by column, then the paths between them
+ * - `fade`: everything fades in together
+ */
+export type JourneyEntrance = 'grow' | 'flow' | 'columns' | 'diagonal' | 'pages' | 'fade'
+
 export const JourneySankeyVueProps = {
+  /** How the journeys first appear; see `JourneyEntrance`. Experimental. */
+  entrance: { type: String as PropType<JourneyEntrance>, default: undefined },
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   /** One row per journey: the pages (or events) in order and how many sessions took it. */
@@ -85,7 +99,8 @@ const journeyEmits = {
   'animation-end': () => true,
 }
 
-type Shape = { kind: 'node', node: JourneyNode } | { kind: 'link', link: JourneyLink }
+/** `fade` is the entrance's own opacity; absent outside the first appearance. */
+type Shape = ({ kind: 'node', node: JourneyNode } | { kind: 'link', link: JourneyLink }) & { fade?: number }
 
 const JourneySankeyInner = defineComponent({
   name: 'JourneySankeyInner',
@@ -137,15 +152,8 @@ const JourneySankeyInner = defineComponent({
     ], {
       key: shape => shape.kind === 'node' ? `n:${shape.node.id}` : `l:${shape.link.id}`,
       interpolate: (from, to, t) => {
-        if (from.kind === 'node' && to.kind === 'node') {
-          if (reordered.has(to.node.id))
-            return { kind: 'node', node: t < 0.5 ? fold(from.node, 1 - t * 2) : fold(to.node, t * 2 - 1) }
-          return { kind: 'node', node: { ...to.node, x: mix(from.node.x, to.node.x, t), y: mix(from.node.y, to.node.y, t), continueHeight: mix(from.node.continueHeight, to.node.continueHeight, t), exitHeight: mix(from.node.exitHeight, to.node.exitHeight, t) } }
-        }
-        if (from.kind === 'link' && to.kind === 'link') {
-          return { kind: 'link', link: { ...to.link, x0: mix(from.link.x0, to.link.x0, t), x1: mix(from.link.x1, to.link.x1, t), y0: mix(from.link.y0, to.link.y0, t), y1: mix(from.link.y1, to.link.y1, t), width: mix(from.link.width, to.link.width, t) } }
-        }
-        return to
+        const shape = interpolateShape(from, to, t)
+        return from.fade === undefined ? shape : { ...shape, fade: mix(from.fade, to.fade ?? 1, t) }
       },
       enterFrom: shape => shape.kind === 'node'
         ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }
@@ -153,12 +161,58 @@ const JourneySankeyInner = defineComponent({
       exitTo: shape => shape.kind === 'node'
         ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }
         : { kind: 'link', link: { ...shape.link, width: 0 } },
+      reveal: () => revealOf(props.entrance ?? 'grow'),
       connected: true,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onStart: callbacks.onStart,
       onEnd: callbacks.onEnd,
     })
+
+    function interpolateShape(from: Shape, to: Shape, t: number): Shape {
+      if (from.kind === 'node' && to.kind === 'node') {
+        if (reordered.has(to.node.id))
+          return { kind: 'node', node: t < 0.5 ? fold(from.node, 1 - t * 2) : fold(to.node, t * 2 - 1) }
+        return { kind: 'node', node: { ...to.node, x: mix(from.node.x, to.node.x, t), y: mix(from.node.y, to.node.y, t), continueHeight: mix(from.node.continueHeight, to.node.continueHeight, t), exitHeight: mix(from.node.exitHeight, to.node.exitHeight, t) } }
+      }
+      if (from.kind === 'link' && to.kind === 'link') {
+        return { kind: 'link', link: { ...to.link, x0: mix(from.link.x0, to.link.x0, t), x1: mix(from.link.x1, to.link.x1, t), y0: mix(from.link.y0, to.link.y0, t), y1: mix(from.link.y1, to.link.y1, t), width: mix(from.link.width, to.link.width, t) } }
+      }
+      return to
+    }
+
+    // Where each page and band starts, and its turn (0 first, 1 last), per entrance style.
+    function revealOf(style: JourneyEntrance): Reveal<Shape> | undefined {
+      const { steps, nodes } = layout.value
+      if (style === 'grow' || !nodes.length)
+        return undefined
+      const last = Math.max(1, steps.length - 1)
+      const column = (step: number) => Math.min(1, Math.max(0, step / last))
+      const bottom = Math.max(...nodes.map(node => node.y + node.continueHeight + node.exitHeight))
+      const span = props.width + bottom || 1
+      const settle = (shape: Shape, dy: number): Shape => shape.kind === 'node'
+        ? { ...shape, node: { ...shape.node, y: shape.node.y - dy }, fade: 0 }
+        : { ...shape, link: { ...shape.link, y0: shape.link.y0 - dy, y1: shape.link.y1 - dy }, fade: 0 }
+      // A band stretching out from its source page to its target.
+      const stretch = (shape: Shape): Shape => shape.kind === 'link'
+        ? { ...shape, link: { ...shape.link, x1: shape.link.x0, y1: shape.link.y0 }, fade: 0 }
+        : { ...shape, node: { ...shape.node, continueHeight: 0, exitHeight: 0 }, fade: 0 }
+      switch (style) {
+        case 'fade':
+          return { from: shape => ({ ...shape, fade: 0 }) }
+        case 'flow':
+          return { from: stretch, order: shape => shape.kind === 'node' ? column(shape.node.step) : column(shape.link.step + 0.5) }
+        case 'columns':
+          return { from: shape => settle(shape, 8), order: shape => shape.kind === 'node' ? column(shape.node.step) : column(shape.link.step + 1) }
+        case 'diagonal':
+          return {
+            from: shape => settle(shape, 6),
+            order: shape => shape.kind === 'node' ? (shape.node.x + shape.node.y) / span : (shape.link.x0 + shape.link.y0) / span,
+          }
+        case 'pages':
+          return { from: shape => settle(shape, 6), order: shape => shape.kind === 'node' ? column(shape.node.step) * 0.5 : 0.6 + column(shape.link.step) * 0.4 }
+      }
+    }
 
     // --- Highlight: hover (or keyboard focus) shows connected paths, pinning shows one journey.
     const hover = ref<{ kind: 'node' | 'link', id: string }>()
@@ -347,10 +401,10 @@ const JourneySankeyInner = defineComponent({
       // A reordered node is hidden at the midpoint of its fold, and so are its bands.
       const folding = (progress: number | undefined) => progress === undefined ? 1 : Math.abs(1 - progress * 2)
       const links = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'link'
-        ? [{ key, link: value.link, phase, shown: presence(phase, progress) * (reordered.has(value.link.source) || reordered.has(value.link.target) ? folding(progress) : 1), moving: progress !== undefined }]
+        ? [{ key, link: value.link, phase, shown: (value.fade ?? presence(phase, progress)) * (reordered.has(value.link.source) || reordered.has(value.link.target) ? folding(progress) : 1), moving: progress !== undefined }]
         : [])
       const nodes = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'node'
-        ? [{ key, node: value.node, phase, shown: presence(phase, progress) * (phase === 'update' && reordered.has(value.node.id) ? folding(progress) : 1), moving: progress !== undefined }]
+        ? [{ key, node: value.node, phase, shown: (value.fade ?? presence(phase, progress)) * (phase === 'update' && reordered.has(value.node.id) ? folding(progress) : 1), moving: progress !== undefined }]
         : [])
       const labelChars = Math.floor((columnWidth.value - props.nodeWidth - 16) / CHAR_WIDTH)
       return (

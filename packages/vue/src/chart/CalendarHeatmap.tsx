@@ -201,6 +201,7 @@ const _CalendarHeatmap = defineComponent({
               ariaLabel={props.ariaLabel}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
+              entrance={props.entrance}
               {...{
                 'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
                 'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),

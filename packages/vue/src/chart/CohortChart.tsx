@@ -100,6 +100,7 @@ const _CohortChart = defineComponent({
         radius={props.radius}
         isAnimationActive={props.isAnimationActive}
         transition={props.transition}
+        entrance={props.entrance}
         ariaLabel={props.ariaLabel}
         width={props.width}
         height={props.height}

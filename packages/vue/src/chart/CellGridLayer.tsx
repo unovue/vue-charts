@@ -6,7 +6,7 @@ import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import type { ChartTransition } from '@/animation/motion'
 import type { VueClassValue } from '@/types/common'
-import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
+import { type Move, type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { GridCell } from './cellGridUtils'
 
@@ -120,8 +120,26 @@ export const cellGridEmits = {
   'animation-end': () => true,
 }
 
+/**
+ * How the cells first appear. Experimental: the playground's motion page compares these until
+ * each chart's default is chosen.
+ * - `grow`: every cell grows from its center (or bottom edge), all at once
+ * - `fade`: every cell fades in place, all at once
+ * - `cascade`: a diagonal wave from the top-left corner, cells fading in as they settle
+ * - `wave`: a diagonal wave from the top-left corner, cells only fading in, no size change
+ * - `sweep`: column by column from the left, like time running
+ * - `rows`: row by row from the top, each settling down into place
+ * - `rise`: column by column from the left, each cell rising from its bottom edge
+ * - `ripple`: from the middle outwards
+ * - `values`: the largest values first
+ * - `slide`: row by row, each row sliding in from the left
+ */
+export type CellEntrance = 'grow' | 'fade' | 'cascade' | 'wave' | 'sweep' | 'rows' | 'rise' | 'ripple' | 'values' | 'slide'
+
 /** Props every cell chart passes straight through to the layer. */
 export const cellGridSharedProps = {
+  /** How the cells first appear; see `CellEntrance`. Experimental. */
+  entrance: { type: String as PropType<CellEntrance>, default: undefined },
   /** Corner radius of each cell in px; capped at half the cell's shorter side. */
   radius: { type: Number, default: 2 },
   isAnimationActive: { type: Boolean, default: true },
@@ -129,6 +147,61 @@ export const cellGridSharedProps = {
 }
 
 type Rect = Pick<GridCell, 'x' | 'y' | 'width' | 'height'>
+/** A cell as drawn: `opacity` is the entrance's fade. */
+type ShownCell = GridCell & { opacity?: number }
+
+/** Where each cell starts and its turn (0 first, 1 last) for an entrance style. */
+function revealOf(style: CellEntrance, cells: readonly GridCell[]): Reveal<ShownCell> | undefined {
+  if (style === 'grow' || !cells.length)
+    return undefined
+  let left = Infinity
+  let top = Infinity
+  let right = -Infinity
+  let bottom = -Infinity
+  let low = Infinity
+  let high = -Infinity
+  for (const cell of cells) {
+    left = Math.min(left, cell.x)
+    top = Math.min(top, cell.y)
+    right = Math.max(right, cell.x + cell.width)
+    bottom = Math.max(bottom, cell.y + cell.height)
+    if (typeof cell.value === 'number' && Number.isFinite(cell.value)) {
+      low = Math.min(low, cell.value)
+      high = Math.max(high, cell.value)
+    }
+  }
+  const width = right - left || 1
+  const height = bottom - top || 1
+  const share = (v: number, span: number) => Math.min(1, Math.max(0, v / span))
+  // Fading in while settling from 92 % of its size: present, but never a pop.
+  const settle = (cell: ShownCell): ShownCell => ({ ...cell, x: cell.x + cell.width * 0.04, y: cell.y + cell.height * 0.04, width: cell.width * 0.92, height: cell.height * 0.92, opacity: 0 })
+  const centerX = left + width / 2
+  const centerY = top + height / 2
+  const farthest = Math.hypot(width / 2, height / 2) || 1
+  switch (style) {
+    case 'fade':
+      return { from: cell => ({ ...cell, opacity: 0 }) }
+    case 'cascade':
+      return { from: settle, order: cell => share(cell.x - left + cell.y - top, width + height) }
+    case 'wave':
+      return { from: cell => ({ ...cell, opacity: 0 }), order: cell => share(cell.x - left + cell.y - top, width + height) }
+    case 'sweep':
+      return { from: settle, order: cell => share(cell.x - left, width) }
+    case 'rows':
+      return { from: cell => ({ ...cell, y: cell.y - 6, opacity: 0 }), order: cell => share(cell.y - top, height) }
+    case 'rise':
+      return { from: cell => ({ ...cell, y: cell.y + cell.height, height: 0 }), order: cell => share(cell.x - left, width) }
+    case 'ripple':
+      return { from: settle, order: cell => share(Math.hypot(cell.x + cell.width / 2 - centerX, cell.y + cell.height / 2 - centerY), farthest) }
+    case 'values':
+      return {
+        from: settle,
+        order: cell => typeof cell.value === 'number' && Number.isFinite(cell.value) && high > low ? (high - cell.value) / (high - low) : 1,
+      }
+    case 'slide':
+      return { from: cell => ({ ...cell, x: cell.x - 12, opacity: 0 }), order: cell => share(cell.y - top, height) }
+  }
+}
 
 /**
  * Draws a set of keyed cells with the behavior every cell chart shares: cells keep their DOM
@@ -166,12 +239,13 @@ export const CellGridLayer = defineComponent({
       : { ...cell, x: cell.x + cell.width / 2, y: cell.y + cell.height / 2, width: 0, height: 0 }
     const shiftOf = (move?: Move<GridCell>) => move ? { x: move.to.x - move.from.x, y: move.to.y - move.from.y } : undefined
     const isShift = (shift?: { x: number, y: number }): shift is { x: number, y: number } => !!shift && Math.abs(shift.x) + Math.abs(shift.y) > 0.5
-    const lerp = (from: GridCell, to: GridCell, t: number): GridCell => ({
+    const lerp = (from: ShownCell, to: ShownCell, t: number): ShownCell => ({
       ...to,
       x: from.x + (to.x - from.x) * t,
       y: from.y + (to.y - from.y) * t,
       width: from.width + (to.width - from.width) * t,
       height: from.height + (to.height - from.height) * t,
+      opacity: (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t,
     })
 
     // Identity on screen. Usually the cell's own key, with two exceptions decided per change:
@@ -233,7 +307,7 @@ export const CellGridLayer = defineComponent({
     // When the window moves (a new day appended, the oldest dropped), cells travel with their
     // staying neighbours like a conveyor belt and pass the clipped edge, so nothing overlaps.
     // Without a moving neighbour they grow and shrink in place.
-    const { items } = useKeyedTransition<GridCell>(() => props.cells, {
+    const { items } = useKeyedTransition<ShownCell>(() => props.cells, {
       key: cell => screenKeys.get(cell.key) ?? cell.key,
       interpolate: (from, to, t) => {
         if (!jumping.has(to.key))
@@ -259,6 +333,7 @@ export const CellGridLayer = defineComponent({
       },
       // One clock for entering, staying and leaving cells keeps the belt gap-free.
       connected: true,
+      reveal: () => revealOf(props.entrance ?? 'grow', props.cells),
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onStart: callbacks.onStart,
@@ -406,7 +481,9 @@ export const CellGridLayer = defineComponent({
         x1 = Math.max(x1, cell.x + cell.width)
         y1 = Math.max(y1, cell.y + cell.height)
       }
-      return { x: x0 - 2, y: y0 - 2, width: x1 - x0 + 4, height: y1 - y0 + 4 }
+      // Taller than the grid, so an entrance settling a few pixels into place is not cut off;
+      // tight at the sides, where cells ride the sliding window out of view.
+      return { x: x0 - 2, y: y0 - 8, width: x1 - x0 + 4, height: y1 - y0 + 16 }
     })
     const clipId = `${baseId}-clip`
     // By position, so user keys never end up in an element id.
@@ -447,6 +524,8 @@ export const CellGridLayer = defineComponent({
               const dimmed = props.activeStyle === 'dim' && active !== undefined && !isActive
               const radius = radiusOf(cell)
               const interactive = phase !== 'exit' && index >= 0
+              // The entrance's fade; on fill-opacity, so the color cross-fade transition never lags it.
+              const fade = cell.opacity != null && cell.opacity < 1 ? cell.opacity : undefined
               return (
                 <g
                   key={key as string}
@@ -462,7 +541,7 @@ export const CellGridLayer = defineComponent({
                 >
                   {slots.cell
                     ? slots.cell({ cell, index, active: isActive, x: cell.x, y: cell.y, width: cell.width, height: cell.height, fill: cell.fill, radius })
-                    : <rect class="v-charts-cell-rect" x={cell.x} y={cell.y} width={cell.width} height={cell.height} rx={radius} style={{ fill: cell.fill, transition: fillTransition }} />}
+                    : <rect class="v-charts-cell-rect" x={cell.x} y={cell.y} width={cell.width} height={cell.height} rx={radius} fill-opacity={fade} style={{ fill: cell.fill, transition: fillTransition }} />}
                   {cell.text && !slots.cell && cell.width >= cell.text.length * 6.2 + 4 && cell.height >= 13 && (
                     <text
                       class="v-charts-cell-text"
@@ -470,6 +549,7 @@ export const CellGridLayer = defineComponent({
                       y={cell.y + cell.height / 2}
                       text-anchor="middle"
                       dominant-baseline="central"
+                      fill-opacity={fade}
                       style={{ fill: cell.strong ? 'var(--v-charts-background, #fff)' : 'var(--v-charts-text, #666)', fontSize: '11px', fontVariantNumeric: 'tabular-nums', pointerEvents: 'none' }}
                     >
                       {cell.text}
