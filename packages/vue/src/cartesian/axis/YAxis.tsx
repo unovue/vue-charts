@@ -41,8 +41,9 @@ const YAxisImpl = defineComponent({
     const isAutoWidth = () => attrs.width === 'auto'
 
     const measureAxisWidth = (): number | undefined => {
-      const el = cartesianAxisRef.value?.$el as Element | undefined
-      if (!el) {
+      // An axis with no room renders nothing, so its root is a comment node.
+      const el: unknown = cartesianAxisRef.value?.$el
+      if (!(el instanceof Element)) {
         return undefined
       }
       const ticks = el.getElementsByClassName('v-charts-cartesian-axis-tick-value')

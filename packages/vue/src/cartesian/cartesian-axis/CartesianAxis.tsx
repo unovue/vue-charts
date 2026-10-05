@@ -306,11 +306,11 @@ export const CartesianAxis = defineComponent({
         <Layer
           class={['v-charts-cartesian-axis']}
           ref={(ref: ComponentPublicInstance) => {
-            const elm = ref?.$el as HTMLElement
+            const elm: unknown = ref?.$el
             // Reading computed style forces a style recalculation; ticks re-render every frame
             // while they move, so measure once.
-            if (elm && !state.fontSize) {
-              const tick: Element | undefined = elm?.getElementsByClassName('v-charts-cartesian-axis-tick-value')[0]
+            if (elm instanceof Element && !state.fontSize) {
+              const tick: Element | undefined = elm.getElementsByClassName('v-charts-cartesian-axis-tick-value')[0]
               if (tick) {
                 const calculatedFontSize = window.getComputedStyle(tick).fontSize
                 const calculatedLetterSpacing = window.getComputedStyle(tick).letterSpacing

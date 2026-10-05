@@ -382,3 +382,17 @@ describe('yAxis', () => {
     })
   })
 })
+
+it('auto-width YAxis with no room to draw renders without errors', async () => {
+  mockGetBoundingClientRect({ width: 100, height: 20 })
+  const { container } = render(() => (
+    <LineChart width={300} height={20} margin={{ top: 15, bottom: 15 }} data={[{ x: 'a', y: 1 }, { x: 'b', y: 2 }]}>
+      <XAxis dataKey="x" />
+      <YAxis width="auto" />
+      <Line dataKey="y" isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector('.v-charts-surface')).not.toBeNull()
+})
