@@ -7,8 +7,6 @@ import { treemapColors, treemapData } from './treemapData'
 
 const props = defineProps<{
   entrance: Entrance
-  /** Time stretch: 1 is real speed. */
-  slow: number
   /** Changes to replay every card at once. */
   replayAll: number
 }>()
@@ -26,9 +24,10 @@ let frame = 0
 function play() {
   cancelAnimationFrame(frame)
   scene.value = sceneOf([...leaves.values()])
+  // performance.now, not the frame timestamp, so the page's slow motion applies here too.
   const start = performance.now()
-  const tick = (now: number) => {
-    t.value = Math.min(1, (now - start) / (props.entrance.duration * 1000 * props.slow))
+  const tick = () => {
+    t.value = Math.min(1, (performance.now() - start) / (props.entrance.duration * 1000))
     if (t.value < 1)
       frame = requestAnimationFrame(tick)
   }

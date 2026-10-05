@@ -2,11 +2,60 @@
 import { BarList, CalendarHeatmap, CohortChart, Heatmap, JourneySankey, Sparkline, Tracker } from 'vccs'
 import { Button } from '@/components/ui/button'
 import ChartMotionCard from '@/components/motion/ChartMotionCard.vue'
+import EntranceRow, { type EntranceOption } from '@/components/motion/EntranceRow.vue'
 import TreemapEntranceCard from '@/components/motion/TreemapEntranceCard.vue'
 import { treemapEntrances } from '@/components/motion/treemapEntrances'
+import { useSlowMotion } from '@/components/motion/useSlowMotion'
 
-const slow = ref(1)
+const slow = useSlowMotion()
 const replayAll = ref(0)
+
+type CellEntrance = 'grow' | 'fade' | 'cascade' | 'wave' | 'sweep' | 'rows' | 'rise' | 'ripple' | 'values' | 'slide'
+type JourneyEntrance = 'grow' | 'flow' | 'columns' | 'diagonal' | 'pages' | 'fade'
+const cell = (id: CellEntrance, name: string, description: string, current = false): EntranceOption<CellEntrance> => ({ id, name, description, current })
+const trackerEntrances = [
+  cell('grow', 'Grow', 'Every bar grows from its bottom edge at once.', true),
+  cell('sweep', 'Sweep', 'Day by day from the left, each bar fading in as it settles.'),
+  cell('rise', 'Rise', 'Day by day from the left, each bar rising from its bottom edge.'),
+  cell('ripple', 'Ripple', 'From the middle outwards, bars fading in as they settle.'),
+  cell('slide', 'Slide in', 'The whole strip fades in while sliding 12 px from the left.'),
+  cell('fade', 'Fade', 'Every bar fades in place, all at once.'),
+]
+const heatmapEntrances = [
+  cell('grow', 'Grow', 'Every cell grows from its center at once.', true),
+  cell('cascade', 'Diagonal cascade', 'A wave from the top-left corner, like the treemap.'),
+  cell('wave', 'Diagonal fade', 'Only fading, no size change, in a wave from the top-left corner.'),
+  cell('sweep', 'Sweep', 'Hour by hour from the left.'),
+  cell('rows', 'Rows', 'Day by day from the top, each row settling down into place.'),
+  cell('values', 'Hot spots first', 'The highest values appear first, then the quiet hours.'),
+  cell('ripple', 'Ripple', 'From the middle outwards.'),
+]
+const cohortEntrances = [
+  cell('grow', 'Grow', 'Every cell grows from its center at once.', true),
+  cell('cascade', 'Diagonal cascade', 'A wave from the top-left corner, like the treemap.'),
+  cell('wave', 'Diagonal fade', 'Only fading, no size change, in a wave from the top-left corner.'),
+  cell('slide', 'Cohorts slide in', 'Cohort by cohort from the top, each row sliding in from the left.'),
+  cell('sweep', 'Period by period', 'Column by column, the way retention decays.'),
+  cell('values', 'Strongest first', 'The highest retention appears first.'),
+  cell('fade', 'Fade', 'Every cell fades in place, all at once.'),
+]
+const calendarEntrances = [
+  cell('grow', 'Grow', 'Every day grows from its center at once.', true),
+  cell('sweep', 'Through the year', 'Week by week from January, like time running.'),
+  cell('cascade', 'Diagonal cascade', 'A wave from the top-left corner, like the treemap.'),
+  cell('wave', 'Diagonal fade', 'Only fading, no size change, in a wave from the top-left corner.'),
+  cell('rows', 'Weekdays', 'Weekday by weekday from the top, each row settling into place.'),
+  cell('values', 'Busiest first', 'The busiest days appear first.'),
+  cell('ripple', 'Ripple', 'From the middle of the year outwards.'),
+]
+const journeyEntrances: EntranceOption<JourneyEntrance>[] = [
+  { id: 'grow', name: 'Grow', description: 'Pages and bands grow at once and fade in late.', current: true },
+  { id: 'flow', name: 'Flow', description: 'Step by step from the left, each band stretching out from its source page.' },
+  { id: 'columns', name: 'Columns', description: 'Column by column, pages settling in, bands arriving with their target.' },
+  { id: 'diagonal', name: 'Diagonal cascade', description: 'A wave from the top-left corner, like the treemap.' },
+  { id: 'pages', name: 'Pages, then paths', description: 'The pages appear column by column, then the paths between them.' },
+  { id: 'fade', name: 'Fade', description: 'Everything fades in together.' },
+]
 
 // Data and changes follow the motion lab (packages/vue/test/lab), so what you see here is what
 // the motion checks measure. UTC arithmetic keeps the days independent of the time zone.
@@ -79,6 +128,8 @@ const journeysBase = [
 const journeyValues = () => journeysBase.map((row, i) => ({ ...row, count: row.count * (i % 3 + 1) + i % 2 }))
 const journeys = shallowRef(journeysBase)
 const journeySteps = ref(4)
+// Fixed data for the entrance candidates, so a parent re-render never hands them a new array.
+const samples = { tracker: trackerDays(trackerStart), heat: heatCells(), cohort: cohortRows(), calendar: calendarDays() }
 const extraJourney = { path: ['/blog', '/blog/launch', '/pricing', '/signup'], count: 3 }
 </script>
 
@@ -100,7 +151,7 @@ const extraJourney = { path: ['/blog', '/blog/launch', '/pricing', '/signup'], c
             Treemap entrance styles
           </h2>
           <p class="mt-1 text-sm text-muted-foreground text-pretty">
-            The same layout, data and timing (ease-out cubic) in each card; only the entrance differs. Pick one and it becomes the library default.
+            Diagonal cascade is chosen and is now the library's Treemap entrance. The others stay here for comparison.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -126,10 +177,103 @@ const extraJourney = { path: ['/blog', '/blog/launch', '/pricing', '/signup'], c
           v-for="entrance in treemapEntrances"
           :key="entrance.id"
           :entrance="entrance"
-          :slow="slow"
           :replay-all="replayAll"
         />
       </div>
+    </section>
+
+    <section class="space-y-10">
+      <div class="max-w-2xl">
+        <h2 class="text-lg font-semibold">
+          Entrance candidates
+        </h2>
+        <p class="mt-1 text-sm text-muted-foreground text-pretty">
+          The library's real animations, one candidate per card next to today's entrance. Each plays when it scrolls into view; slow motion and "Replay all" above apply here too.
+        </p>
+      </div>
+
+      <EntranceRow
+        v-slot="{ entrance }"
+        title="Tracker"
+        description="30 days of status."
+        :options="trackerEntrances"
+        :replay-all="replayAll"
+      >
+        <Tracker
+          :data="samples.tracker"
+          name-key="date"
+          :height="36"
+          :entrance="entrance"
+        />
+      </EntranceRow>
+
+      <EntranceRow
+        v-slot="{ entrance }"
+        title="Heatmap"
+        description="Visits per weekday and hour."
+        :options="heatmapEntrances"
+        :replay-all="replayAll"
+      >
+        <Heatmap
+          :data="samples.heat"
+          :height="200"
+          :entrance="entrance"
+        />
+      </EntranceRow>
+
+      <EntranceRow
+        v-slot="{ entrance }"
+        title="Cohort retention"
+        description="Six monthly cohorts."
+        :options="cohortEntrances"
+        :replay-all="replayAll"
+      >
+        <CohortChart
+          :data="samples.cohort"
+          :height="220"
+          :entrance="entrance"
+        />
+      </EntranceRow>
+
+      <EntranceRow
+        v-slot="{ entrance }"
+        title="Calendar heatmap"
+        description="A year of daily activity."
+        :options="calendarEntrances"
+        :replay-all="replayAll"
+        columns="lg:grid-cols-2"
+      >
+        <div class="overflow-x-auto">
+          <CalendarHeatmap
+            class="min-w-[560px]"
+            :data="samples.calendar"
+            :start="`${year}-01-01`"
+            :end="`${year}-12-31`"
+            :week-start="1"
+            color="var(--chart-2)"
+            :entrance="entrance"
+          />
+        </div>
+      </EntranceRow>
+
+      <EntranceRow
+        v-slot="{ entrance }"
+        title="Journeys"
+        description="Paths from session start over four steps."
+        :options="journeyEntrances"
+        :replay-all="replayAll"
+        columns="lg:grid-cols-2"
+      >
+        <div class="overflow-x-auto">
+          <JourneySankey
+            class="min-w-[640px]"
+            :data="journeysBase"
+            :steps="4"
+            :height="380"
+            :entrance="entrance"
+          />
+        </div>
+      </EntranceRow>
     </section>
 
     <section class="space-y-4">
