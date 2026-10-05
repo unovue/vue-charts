@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Motion detector positive controls</title>
+<style>body { margin: 0; width: 1500px } svg { display: block } #unsettled { animation: drift .3s infinite alternate linear } #fade-only { animation: fade .6s linear both } @keyframes fade { from { opacity: 0 } to { opacity: 1 } } @keyframes drift { to { transform: translateX(20px) } }</style>
+<div class="v-charts-wrapper">
+<svg class="v-charts-surface" width="400" height="300">
+  <rect id="teleport" x="10" y="10" width="20" height="20" />
+  <rect id="unsettled" x="10" y="50" width="20" height="20" />
+  <g class="v-charts-bar"><g class="v-charts-bar-rectangle"><path d="M100 100h50v50h-50z" /></g></g>
+  <g class="v-charts-bar"><g class="v-charts-bar-rectangle"><path d="M120 120h50v50h-50z" /></g></g>
+  <g class="v-charts-line" id="fade-only"><path class="v-charts-line-curve" d="M10 230L100 230" stroke="black" /></g>
+  <g class="v-charts-line"><path class="v-charts-line-curve" id="static" d="M10 200L100 200" stroke="black" /></g>
+<defs><clipPath id="instant-clip"><rect id="clip-width" width="0" height="280" /></clipPath></defs>
+  <g class="v-charts-line"><path class="v-charts-line-curve" clip-path="url(#instant-clip)" d="M10 260L100 260" stroke="black" /></g>
+</svg>
+<div class="v-charts-tooltip-wrapper" style="visibility: hidden">Deliberately missing tooltip</div>
+<button class="v-charts-legend-item" onclick="if (this.dataset.clicked) document.querySelector('#static').setAttribute('d', 'M20 200L110 200'); this.dataset.clicked = 'yes'">Broken legend</button>
+</div>
+<svg class="v-charts-surface" width="0" height="0"></svg>
+<script>
+setTimeout(() => document.querySelector('#clip-width').setAttribute('width', '110'), 500)
+setTimeout(() => {
+  document.querySelector('#teleport').setAttribute('x', '250')
+  document.querySelector('svg').setAttribute('width', '450')
+  console.warn('Hydration deliberate fixture mismatch')
+  console.error('Deliberate fixture console error')
+  throw new Error('Deliberate fixture page error')
+}, 400)
+</script>
+</html>
