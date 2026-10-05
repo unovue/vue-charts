@@ -491,7 +491,7 @@ export type StackGroup = {
 }
 
 export function combineStackGroups(displayedData: ChartData, items: ReadonlyArray<MaybeStackedGraphicalItem>, stackOffsetType: StackOffsetType): Record<StackId, StackGroup> {
-  const initialItemsGroups: Record<StackId, Array<MaybeStackedGraphicalItem>> = {}
+  const initialItemsGroups: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
   const itemsGroup: Record<StackId, ReadonlyArray<MaybeStackedGraphicalItem>> = items.reduce(
     (acc: Record<StackId, Array<MaybeStackedGraphicalItem>>, item: MaybeStackedGraphicalItem) => {
       if (item.stackId == null) {
@@ -954,7 +954,6 @@ export function combineNiceTicks(axisDomain: NumberDomain | CategoricalDomain | 
 
   return undefined
 }
-// @ts-ignore
 export const selectNiceTicks = createSelector(
   [selectAxisDomain, selectAxisSettings, selectRealScaleType],
   combineNiceTicks,
@@ -1193,7 +1192,6 @@ export const selectAxisRangeWithReverse: (
   isPanorama: boolean,
 ) => AxisRange | undefined = createSelector([selectBaseAxis, selectAxisRange], combineAxisRangeWithReverse)
 
-// @ts-ignore
 export const selectAxisScale = createSelector(
   [selectBaseAxis, selectRealScaleType, selectAxisDomainIncludingNiceTicks, selectAxisRangeWithReverse],
   combineScaleFunction,
@@ -1492,7 +1490,6 @@ export const selectCategoricalDomain = createSelector(
   combineCategoricalDomain,
 )
 
-// @ts-ignore
 export const selectAxisPropsNeededForCartesianGridTicksGenerator = createSelector(
   [
     selectChartLayout,
@@ -1734,7 +1731,6 @@ export const selectAxisWithScale: (
   },
 )
 
-// @ts-ignore
 const selectZAxisScale = createSelector(
   [selectBaseAxis, selectRealScaleType, selectAxisDomain, selectAxisRangeWithReverse],
   combineScaleFunction,
@@ -1742,7 +1738,6 @@ const selectZAxisScale = createSelector(
 
 export type ZAxisWithScale = ZAxisSettings & { scale: RechartsScale }
 
-// @ts-ignore
 export const selectZAxisWithScale = createSelector(
   (state: RechartsRootState, _axisType: 'zAxis', axisId: AxisId) => selectZAxisSettings(state, axisId),
   selectZAxisScale,

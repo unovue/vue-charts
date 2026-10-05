@@ -173,6 +173,21 @@ describe('barChart', () => {
   })
 
   describe('stacked bars', () => {
+    it.each(['constructor', '__proto__', 'toString', 'a'])(
+      'stacks stackId "%s" without prototype collisions',
+      (stackId) => {
+        const { container } = render(() => (
+          <BarChart width={500} height={340} data={[{ name: 'A', a: 10, b: 20 }]}>
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 30]} />
+            <Bar dataKey="a" stackId={stackId} isAnimationActive={false} />
+            <Bar dataKey="b" stackId={stackId} isAnimationActive={false} />
+          </BarChart>
+        ))
+        expect(getBarRects(container).map(rect => rect.getAttribute('height'))).toEqual(['100', '200'])
+      },
+    )
+
     it('renders stacked bars with stackId', () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>

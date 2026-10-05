@@ -124,7 +124,7 @@ export interface MaybeStackedGraphicalItem {
 }
 
 export function combineBarSizeList(allBars: ReadonlyArray<MaybeStackedGraphicalItem>, globalSize: string | number | undefined, totalSize?: number) {
-  const initialValue: Record<StackId, Array<MaybeStackedGraphicalItem>> = {}
+  const initialValue: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
 
   const stackedBars = allBars.filter(b => b.stackId != null)
   const unstackedBars = allBars.filter(b => b.stackId == null)
