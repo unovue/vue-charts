@@ -27,6 +27,8 @@ provide('chart-config', computed(() => props.config))
       '[--v-charts-cursor:var(--border)] [--v-charts-muted:var(--muted)] [--v-charts-background:var(--background)]',
       '[--v-charts-inactive:var(--muted-foreground)] [--v-charts-focus:var(--ring)]',
       '[&_.v-charts-surface]:outline-hidden [&_.v-charts-layer]:outline-hidden [&_.v-charts-sector]:outline-hidden',
+      // Outer polar labels (radar months, pie labels) may reach past the square plot.
+      '[&_.v-charts-surface]:overflow-visible',
       props.class,
     )"
   >
