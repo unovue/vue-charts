@@ -29,8 +29,8 @@ experience it; additional chart replacements are labeled auto-rotation separatel
 
 - `visibleRatio`: wrapper rectangle intersected with the viewport / wrapper area.
 - `effectiveOpacity`: computed opacity multiplied through all ancestors.
-- `blurred`: any ancestor filter containing blur (including `blur(0px)`), or
-  transform scale differing from 1.
+- `blurred`: any ancestor blur above 0.3 px, or a transform scale more than
+  1 % away from 1. A settled `blur(0px)` does not count.
 - `seenAt`: first sample with ratio ≥ 0.5, opacity ≥ 0.95, and no blur/scale.
   Load versus scroll triggers use the recorded scroll position when the chart
   first becomes half-visible.
@@ -41,13 +41,12 @@ experience it; additional chart replacements are labeled auto-rotation separatel
   null, keeping long recordings smaller. Shape identity survives updates;
   replaced shapes count as missing. Signatures round numbers to 0.001 to avoid
   subpixel serialization noise, following check:play.
-- `motionStart` / `motionEnd`: first / last change from the previous sample.
-- Distance sums attribute differences per shape. Numeric lists are compared
-  pairwise using relative L1 distance (divided by the larger list magnitude,
-  with a minimum denominator of 1); nonnumeric changes and missing shapes
-  contribute 1. `progressAtSeen = 1 - distance(seen, final) /
-  distance(sample before motionStart, final)`. A zero denominator is reported
-  as progress 1; absent seenAt is null. Progress is not clamped.
+- `motionStart` / `motionEnd`: start and end of the entrance, the longest run
+  of changing samples (gaps up to 120 ms). One-frame layout changes at mount,
+  while the chart is off screen or hidden, are not part of it.
+- `progressAtSeen`: share of the entrance's time that had passed at `seenAt`
+  (0–1). `geometryProgressAtSeen` is the same by shape distance, capped at one
+  per shape and taken over the final chart's shapes only; informational.
 - `seenMotionMs`: max(0, motionEnd − seenAt), or 0 without either timestamp.
 
 Flags use fixed thresholds: `unseen-entrance` for progress > 0.15 or seen motion
