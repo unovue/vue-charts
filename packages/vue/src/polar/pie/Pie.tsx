@@ -137,8 +137,8 @@ const PieView = defineComponent({
     // the new value at once and fade with sectors that enter or leave.
     function renderLabel(sector: PieSectorDataItem, index: number, key: PropertyKey, opacity: number | undefined) {
       const midAngle = (sector.startAngle + sector.endAngle) / 2
-      const edgePoint = polarToCartesian(sector.cx, sector.cy, sector.outerRadius, midAngle)
-      const pos = polarToCartesian(sector.cx, sector.cy, sector.outerRadius + LABEL_OFFSET, midAngle)
+      const edgePoint = rounded(polarToCartesian(sector.cx, sector.cy, sector.outerRadius, midAngle))
+      const pos = rounded(polarToCartesian(sector.cx, sector.cy, sector.outerRadius + LABEL_OFFSET, midAngle))
       const anchor = pos.x > sector.cx ? 'start' : pos.x < sector.cx ? 'end' : 'middle'
       return (
         <g key={`label-${String(key)}`} opacity={opacity}>
@@ -224,6 +224,14 @@ const PieView = defineComponent({
     }
   },
 })
+
+/**
+ * Node and browsers can differ in the last digit of sin/cos; rounding to 1/1000 px keeps the
+ * server's label positions identical to the client's, so hydration matches.
+ */
+function rounded({ x, y }: { x: number, y: number }) {
+  return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 }
+}
 
 const _Pie = defineComponent({
   name: 'Pie',

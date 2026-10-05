@@ -1,5 +1,6 @@
 import { computed, defineComponent, h } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
+import { useCanMeasureText } from '@/animation/renderPhase'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
@@ -120,6 +121,9 @@ const CartesianGridView = defineComponent({
     const offset = useOffset()
 
     const isPanorama = useIsPanorama()
+    // Like the axes, the grid measures tick labels only after hydration, so the client's first
+    // render reproduces the server's lines.
+    const canMeasureText = useCanMeasureText()
     const xAxis = useAppSelector(state =>
       selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'xAxis', props.xAxisId!, isPanorama),
     )
@@ -138,7 +142,7 @@ const CartesianGridView = defineComponent({
         ...axis.value,
         ticks: getTicksOfAxis(axis.value, true)!,
         viewBox: { x: 0, y: 0, width: chartWidth.value, height: chartHeight.value },
-      }) as ReadonlyArray<{ value?: unknown, coordinate: number }>
+      }, undefined, undefined, canMeasureText.value) as ReadonlyArray<{ value?: unknown, coordinate: number }>
       const items = ticks.map(tick => ({ value: tick.value, coordinate: tick.coordinate }))
       if (!sync) {
         if (!items.some(item => item.coordinate === start))
