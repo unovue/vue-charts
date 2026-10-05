@@ -11,21 +11,21 @@ result and compact evidence reference; an unrun or inconclusive check is not a p
 
 | Measure | Value |
 | --- | --- |
-| `pnpm verify` verdict | Running on unchanged library source at `83dc1b0`; full verdict pending. Initial tests: 2 load-sensitive failures; both single-file reruns pass. Lint: exit 0 (39 existing warnings); build/package: pass. |
+| `pnpm verify` verdict | FAIL on unchanged library source at `83dc1b0`; full table below. Initial tests: 2 load-sensitive failures; both permitted single-file reruns pass. Lint: exit 0 (39 existing warnings); build/package: pass. Additional browser/checker/build failures are retained, not treated as passes. |
 | Tests (files / tests) | 126 / 1,240 (initial full run: 1,238 pass, 2 fail; isolated reruns: 64/64 slots and 16/16 motion engine pass). Step gate rerun with two workers: 126/126 files, 1,240/1,240 tests pass (74.63 s). |
 | Coverage (statements / branches / lines) | |
 | Suite wall time | 174.50 s initial default-worker run; isolated slot rerun 27.44 s, motion-engine rerun 1.09 s. No timing thresholds changed. |
 | Bench medians | see `.evidence/bench/` file: |
 | Gzip per chart (`check:bundle`) | |
 | Consumer offline install/build and lockfile hashes | PASS under macOS `sandbox-exec` denying all network access; denial positive control returns `EPERM`. Source `83dc1b0`. Saved lock SHA-256: Vite `b11206344e3e79657aafa0f63d16e3b7b0a01adc48a76fcd5f7321ceeb44387e`; Nuxt `9e3e170ae41d511eb3526278c8449a0697df015a8c6cb76b5647c8ae2ce6702d`. Runtime archive refresh hashes are logged in `consumers-offline.log`. |
-| Baseline source commit and tool versions | `83dc1b066a71849314dc1a3922a8b367043862a0`; Node 22.23.3, pnpm 9.15.0, Vite 8.3.2, Vitest 4.1.11, Playwright 1.58.2. Packed consumers: Vue 3.5.43, motion-v 2.6.0, TypeScript 6.0.3, Nuxt 4.5.2. |
+| Baseline source commit and tool versions | `83dc1b066a71849314dc1a3922a8b367043862a0`; Node 22.23.3, pnpm 9.15.0, Vite 8.3.2, Vitest 4.1.11, Playwright 1.58.2. Library runtime: Vue 3.5.18, motion-v 2.5.2. Packed consumers: Vue 3.5.43, motion-v 2.6.0, TypeScript 6.0.3, Nuxt 4.5.2. |
 | Environment limits | Firefox 1509 launch times out after macOS sandbox extension denial / SWGL framebuffer failure. Chromium and WebKit launch. Setup docs sweep: 128 visits, four BarList SVG-only checker failures; Firefox not run. These are not reported as passes. |
 
 ## Steps
 
 | Step | Title | Release-blocking | Dependencies | Status | Commits | Verification evidence and notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0.1 | Environment and baseline verdict | yes | — | todo | `c0c4d81` | In progress: frozen workspace install, Node 22 setup, locked consumer fixtures and fresh network-denied consumer typechecks/builds pass. Step gate: typecheck PASS; 126 files / 1,240 tests PASS with two workers; changed-file lint PASS with zero warnings. Baseline verifier still running. |
+| 0.1 | Environment and baseline verdict | yes | — | done | `c0c4d81`, `745da98`, `9e82e9b`, `a25538c` | Frozen install, Node 22 setup, locked/prefetched consumers and fresh network-denied typechecks/builds PASS. Step gate: current-config typecheck PASS; 126 files / 1,240 tests PASS with two workers; changed-file lint PASS with zero warnings. Full untouched-library baseline recorded below, including failed/unavailable checks. No library/model source changes. |
 | 0.2 | Baseline build, benchmark and bundle scripts | yes | 0.1 | todo | | |
 | 0.3 | Coverage that runs | yes | 0.1 | todo | | |
 | 1.1 | License notice | yes | phase 0 | todo | | |
@@ -97,7 +97,23 @@ amendments to DECISIONS.md here too, including the reproduction and preserved co
 
 Steps that could not be finished: what failed, what was tried, the best explanation, dependent steps and unavailable gates.
 
-## Active execution evidence (0.1)
+## Step 0.1 evidence
+
+Untouched-library baseline: `PATH=<task-local Node 22 runtime>:$PATH CI=true pnpm verify`,
+exit 1. Source paths `packages/vue/src`, `docs` and `playground` have no diff from `83dc1b0`.
+The verifier observed documentation-only setup commits while running; these do not change the
+library baseline. This completes the baseline-recording criterion, not a green release gate.
+
+| Baseline check | Original verdict | Time | Evidence / disposition |
+| --- | --- | --- | --- |
+| Unit tests | FAIL | 180 s | 1,238/1,240 initially; both isolated reruns PASS; subsequent complete step suite PASS 1,240/1,240. No threshold changes. |
+| Lint | PASS | 51 s | 39 pre-existing warnings; changed-file lint has zero warnings. |
+| Library build | PASS | 32 s | Node 22 build; preserved baseline dist/archive. |
+| Package exports/types | PASS | 20 s | 583 files, three entry points; strict publint/attw checks. |
+| Motion lab | FAIL | 1,605 s | 283/285 transitions clean; exactly D-25 Journey top8/top15 flags; no additional geometry failure. Repair gate in 1.13. |
+| Playground | FAIL | 660 s | 228 recordings, 22 real page/viewport visits; 679 flags. Baseline checker labels 630 product flags and 49 artifacts. At least 549 teleports are proven zero-alpha artifacts; other eligibility/target defects and opaque geometry/overflow findings remain open. See `play-baseline-diagnosis.md`. |
+| Docs | FAIL / Firefox NOT RUN | 217 s | 128 Chromium/WebKit visits, four BarList SVG-only checker failures; Firefox launch error. Existing generated docs artifact was served: its source provenance is unverified. No claim that this substitutes for a fresh docs build. |
+| Visitor-seen | NOT RUN after build FAIL | 63 s | 0 rows: fresh docs build fails because nuxt-og-image imports `createHeadCore` from the Nuxt-resolved @unhead/vue 3.4.2, which does not export it. Logs: `.evidence/seen/build-docs.log`, `summary.json`. Investigate under docs/integration work (1.14/3.11); the entrance gate is unavailable until the build works. |
 
 - Working checkout: `/Users/matthias/Git/forks/fork_vue-charts-cellgrid-main`, branch `release/1.0`. The requested checkout points to another branch with unrelated changes and is preserved. No pushes, publication, deployments or metadata changes.
 - Evidence directory: `.evidence/release-1.0/`. `install.log`, `baseline-verify-node22.log`, `baseline-typecheck.log`, `consumer-prepare.log`, `consumers-offline.log`, `network-denial-control.log`, `refresh-probe-repacked.log`, `refresh-probe-install.log`, `baseline-slots-rerun.log`, `baseline-motion-engine-rerun.log`, `step-0.1-tests.log`, `step-0.1-lint.log`. Logs and screenshots remain ignored.
