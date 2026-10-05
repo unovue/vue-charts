@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/vue'
 import { nextTick } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { computeTreemapLayout } from '../treemapUtils'
-import { Treemap } from '../Treemap'
+import { Treemap } from '@/index'
 
 const flatData = [
   { name: 'A', value: 100 },
@@ -291,4 +291,24 @@ describe('nest mode', () => {
     const rects = container.querySelectorAll('.v-charts-treemap-node')
     expect(rects.length).toBe(2) // back to 2 groups
   })
+})
+
+// Catches treating a CSS variable fallback as the actual shape color.
+it('uses the explicit label foreground for a custom Treemap fill', async () => {
+  const { container } = render(() => (
+    <Treemap
+      width={400}
+      height={300}
+      data={[{ name: 'Custom', value: 10 }]}
+      dataKey="value"
+      colorPanel={['var(--custom-fill, #ffffff)']}
+      isAnimationActive={false}
+      style={{ '--v-charts-label-foreground': '#ffffff' }}
+    />
+  ))
+  await nextTick()
+  expect(container.querySelector('.v-charts-treemap text')?.getAttribute('fill'))
+    .toBe('var(--v-charts-label-foreground, currentColor)')
+  expect(container.querySelector<HTMLElement>('.v-charts-wrapper')!.style
+    .getPropertyValue('--v-charts-label-foreground')).toBe('#ffffff')
 })

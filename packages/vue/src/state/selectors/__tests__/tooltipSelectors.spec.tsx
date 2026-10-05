@@ -273,12 +273,9 @@ describe('tooltipSelectors integration', () => {
 
       await hoverChart(container)
 
-      // The tooltip item name span should have the color from the Line stroke
-      const nameSpan = container.parentElement!.querySelector('.v-charts-tooltip-item-name')
-      assertNotNull(nameSpan)
-      const color = (nameSpan as HTMLElement).style.color
-      // Color may be in rgb format or hex
-      expect(color).toBeTruthy()
+      const swatch = container.parentElement!.querySelector<HTMLElement>('.v-charts-tooltip-swatch')
+      assertNotNull(swatch)
+      expect(swatch.style.background).toBe('rgb(255, 115, 0)')
     })
 
     it('tooltip content appears when tooltip is active after hover', async () => {

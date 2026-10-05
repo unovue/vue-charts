@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event'
 import { fireEvent, render } from '@testing-library/vue'
 import { renderToString } from 'vue/server-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -123,6 +124,25 @@ describe('<BarList />', () => {
     width: row.querySelector<HTMLElement>('.v-charts-bar-list-bar')!.style.width,
     y: row.style.transform,
   }))
+
+  // Catches clickable rows that cannot be activated by keyboard.
+  it('activates an actionable row with native keyboard behavior', async () => {
+    const click = vi.fn()
+    const user = userEvent.setup()
+    const { container } = render(() => (
+      <BarList
+        data={[{ name: 'A', value: 10 }]}
+        isAnimationActive={false}
+        {...{ 'onRow-click': click }}
+      />
+    ))
+    const button = container.querySelector('li button')!
+    expect(button.textContent).toBe('A')
+    await user.tab()
+    expect(document.activeElement).toBe(button)
+    await user.keyboard('{Enter}')
+    expect(click).toHaveBeenCalledWith({ name: 'A', value: 10 }, 0, expect.any(MouseEvent))
+  })
 
   it('ranks rows by value with bars relative to the largest and formatted values', () => {
     const { container } = render(() => <BarList data={data} href-key="url" isAnimationActive={false} valueFormat={v => `${v} visits`} />)

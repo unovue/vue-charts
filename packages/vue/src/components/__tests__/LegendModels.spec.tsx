@@ -1,4 +1,4 @@
-import { render } from '@testing-library/vue'
+import { fireEvent, render } from '@testing-library/vue'
 import { expect, it } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Area, Bar, ComposedChart, Funnel, FunnelChart, Legend, Line, Pie, PieChart, Radar, RadarChart, RadialBar, RadialBarChart, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
@@ -34,7 +34,7 @@ it.each([
   await nextTick()
   expect(drawn()).toBeNull()
   expect(container.querySelector('.v-charts-legend-item-text')).not.toBeNull()
-  expect(container.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color).toBe('var(--v-charts-inactive, #a3a3a3)')
+  expect(container.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color).toBe('var(--v-charts-text, #666)')
   hidden.value = []
   await nextTick()
   await nextTick()
@@ -42,4 +42,27 @@ it.each([
   hide.value = true
   await nextTick()
   expect(drawn()).toBeNull()
+})
+
+// Catches invalid list markup and a pressed state that does not follow series visibility.
+it('toggles the pressed state through a native legend button', async () => {
+  const hidden = ref<string[]>([])
+  const { container } = render(() => (
+    <ComposedChart width={500} height={300} data={data}>
+      <Line dataKey="value" isAnimationActive={false} />
+      <Legend
+        hidden={hidden.value}
+        {...{
+          'onUpdate:hidden': (value: string[]) => { hidden.value = value },
+        }}
+      />
+    </ComposedChart>
+  ))
+  await nextTick()
+  const button = container.querySelector('ul.v-charts-default-legend > li > button')!
+  expect(button.getAttribute('aria-pressed')).toBe('true')
+  await fireEvent.click(button)
+  expect(button.getAttribute('aria-pressed')).toBe('false')
+  await fireEvent.click(button)
+  expect(button.getAttribute('aria-pressed')).toBe('true')
 })

@@ -172,6 +172,7 @@ const DefaultTooltipContent = defineComponent({
         margin: 0,
         padding: '10px',
         backgroundColor: 'var(--v-charts-tooltip-background, #fff)',
+        color: 'var(--v-charts-tooltip-foreground, #000)',
         border: '1px solid var(--v-charts-tooltip-border, #ccc)',
         whiteSpace: 'nowrap',
         ...contentStyle,
@@ -195,7 +196,7 @@ const DefaultTooltipContent = defineComponent({
                 display: 'block',
                 paddingTop: 4,
                 paddingBottom: 4,
-                color: entry.color || 'var(--v-charts-tooltip-foreground, #000)',
+                color: 'var(--v-charts-tooltip-foreground, #000)',
                 ...itemStyle,
               }
               const finalFormatter = entry.formatter || formatter || defaultFormatter
@@ -216,7 +217,19 @@ const DefaultTooltipContent = defineComponent({
               }
               return (
                 <div key={index} class="v-charts-tooltip-item" style={finalItemStyle}>
-                  <span class="v-charts-tooltip-item-name" style={{ color: entry.color }}>
+                  <span
+                    class="v-charts-tooltip-swatch"
+                    aria-hidden="true"
+                    style={{
+                      display: 'inline-block',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '2px',
+                      marginRight: '4px',
+                      background: entry.color,
+                    }}
+                  />
+                  <span class="v-charts-tooltip-item-name">
                     {printable(entry.name)}
                   </span>
                   <span class="v-charts-tooltip-separator">{props.separator}</span>

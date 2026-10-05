@@ -141,13 +141,13 @@ const _Heatmap = defineComponent({
       const fills = props.colors?.length ? props.colors : levels > 0 ? levelColors(props.color, props.emptyColor, levels) : undefined
       const fillOf = (value: number | null) => {
         if (value === null || !(max! > 0))
-          return { fill: fills?.[0] ?? props.emptyColor, ratio: 0 }
+          return fills?.[0] ?? props.emptyColor
         if (fills) {
           const level = levelOf(value, max!, levels)
-          return { fill: fills[level], ratio: level / levels }
+          return fills[level]
         }
         const ratio = Math.min(1, Math.max(0, value / max!))
-        return { fill: mixColor(props.color, props.emptyColor, ratio), ratio }
+        return mixColor(props.color, props.emptyColor, ratio)
       }
 
       const cells: GridCell<HeatmapCell>[] = []
@@ -157,7 +157,7 @@ const _Heatmap = defineComponent({
           if (!cell && !props.fillMissing)
             return
           const data = cell ?? { x, y, value: null, rows: [] }
-          const { fill, ratio } = fillOf(data.value)
+          const fill = fillOf(data.value)
           const text = data.value === null ? undefined : props.valueFormat ? props.valueFormat(data.value, data) : String(data.value)
           cells.push({
             key: cellKey(x, y),
@@ -171,7 +171,6 @@ const _Heatmap = defineComponent({
             label: `${yText(y)}, ${xText(x)}`,
             value: text ?? null,
             text: props.showValues ? text : undefined,
-            strong: ratio > 0.55,
             payload: data,
           })
         })

@@ -1,4 +1,4 @@
-import { type ComponentPublicInstance, type PropType, type SlotsType, computed, defineComponent, ref } from 'vue'
+import { type ComponentPublicInstance, type PropType, type SlotsType, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/animation/renderPhase'
@@ -43,7 +43,7 @@ export const BarListVueProps = {
   /** Field with a link; the label becomes an anchor. */
   hrefKey: { type: String, default: undefined },
   sort: { type: String as PropType<'descending' | 'ascending' | 'none'>, default: 'descending' },
-  color: { type: String, default: 'color-mix(in oklab, var(--v-charts-series, #2563eb) 18%, transparent)' },
+  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
   valueFormat: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
   /** Locale for the default number format. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
@@ -60,7 +60,7 @@ const barListEmits = {
 
 const BarListInner = defineComponent({
   name: 'BarListInner',
-  props: BarListVueProps,
+  props: { ...BarListVueProps, actionable: Boolean },
   emits: barListEmits,
   slots: Object as SlotsType<BarListSlots>,
   setup(props, { emit, slots }) {
@@ -110,6 +110,38 @@ const BarListInner = defineComponent({
     const height = computed(() => Math.max(0, target.value.length * (props.rowHeight + props.gap) - props.gap))
     const format = (state: RowState) => props.valueFormat ? props.valueFormat(state.value, state.row) : numbers.value.format(state.value)
 
+    function renderName(slotProps: BarListSlotProps, href: string | undefined, exiting: boolean) {
+      if (slots.name)
+        return slots.name(slotProps)
+      if (href) {
+        return (
+          <a
+            href={href}
+            tabindex={exiting ? -1 : undefined}
+            style={{ color: 'inherit' }}
+          >
+            {slotProps.name}
+          </a>
+        )
+      }
+      if (!props.actionable || exiting)
+        return slotProps.name
+      return (
+        <button
+          type="button"
+          style={{
+            font: 'inherit',
+            color: 'inherit',
+            background: 'none',
+            border: 0,
+            padding: 0,
+          }}
+        >
+          {slotProps.name}
+        </button>
+      )
+    }
+
     return () => (
       <ul
         class="v-charts-bar-list"
@@ -142,9 +174,9 @@ const BarListInner = defineComponent({
               onClick={(event: MouseEvent) => index >= 0 && emit('row-click', state.row, index, event)}
             >
               <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
-                <div class="v-charts-bar-list-bar" style={{ position: 'absolute', inset: '0 auto 0 0', width: `${state.ratio * 100}%`, borderRadius: '4px', background: props.color }} />
+                <div class="v-charts-bar-list-bar" style={{ position: 'absolute', inset: '0 auto 0 0', width: `${state.ratio * 100}%`, borderRadius: '4px', background: props.color, opacity: 0.18 }} />
                 <span class="v-charts-bar-list-name" style={{ position: 'relative', padding: '0 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {slots.name ? slots.name(slotProps) : href ? <a href={href} style={{ color: 'inherit' }}>{state.name}</a> : state.name}
+                  {renderName(slotProps, href, phase === 'exit')}
                 </span>
               </div>
               <span class="v-charts-bar-list-value" style={{ flex: 'none', fontVariantNumeric: 'tabular-nums' }}>
@@ -166,6 +198,7 @@ const _BarList = defineComponent({
   setup(props, { emit, slots }) {
     // The render phase and the on-screen state reach children only, so the transition lives one
     // level down.
+    const instance = getCurrentInstance()
     provideRenderPhase()
     const inner = ref<ComponentPublicInstance | null>(null)
     provideChartInView(computed(() => inner.value?.$el))
@@ -173,6 +206,7 @@ const _BarList = defineComponent({
       <BarListInner
         ref={inner}
         {...props}
+        actionable={!!(instance?.vnode.props?.['onRow-click'] || instance?.vnode.props?.onRowClick)}
         {...{
           'onRow-click': (row: BarListRow, index: number, event: MouseEvent) => emit('row-click', row, index, event),
           'onAnimation-start': () => emit('animation-start'),

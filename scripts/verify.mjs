@@ -12,6 +12,7 @@ const checks = [
   ...(quick
     ? []
     : [
+        ['accessibility, contrast and hydration', 'pnpm check:a11y'],
         ['frame-exact motion (lab)', 'pnpm motion:report --prod --check'],
         ['playground pages in a browser', 'pnpm check:play'],
         ['docs pages in Chromium and WebKit', 'pnpm check:docs'],

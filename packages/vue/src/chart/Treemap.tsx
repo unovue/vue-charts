@@ -1,3 +1,4 @@
+import { labelColor } from '@/utils/labelColor'
 import type { Coordinate, DataKey } from '@/types'
 import { getValueByDataKey } from '@/utils/chart'
 import { toFiniteNumber } from '@/utils/validate'
@@ -392,7 +393,7 @@ const TreemapInner = defineComponent({
         ? (
             <polygon
               points={`${node.x + 2},${node.y + node.height / 2} ${node.x + 6},${node.y + node.height / 2 + 3} ${node.x + 2},${node.y + node.height / 2 + 6}`}
-              fill="var(--v-charts-background, #fff)"
+              fill={labelColor(nodeFill)}
             />
           )
         : null
@@ -406,7 +407,7 @@ const TreemapInner = defineComponent({
             <text
               x={node.x + 8}
               y={node.y + node.height / 2 + 7}
-              fill="var(--v-charts-background, #fff)"
+              fill={labelColor(nodeFill)}
               font-size={14}
               opacity={labelFade}
             >
@@ -444,7 +445,7 @@ const TreemapInner = defineComponent({
         return null
 
       return (
-        <div class="v-charts-treemap-breadcrumb">
+        <div class="v-charts-treemap-breadcrumb" style={{ color: 'var(--v-charts-text, #666)' }}>
           <span
             class="v-charts-treemap-breadcrumb-item"
             style={{ cursor: 'pointer' }}

@@ -398,7 +398,7 @@ const JourneySankeyInner = defineComponent({
                     {slots.header
                       ? slots.header({ ...step, width: columnWidth.value })
                       : (
-                          <text y={14} style={{ fontSize: '12px', fill: 'currentColor' }}>
+                          <text y={14} style={{ fontSize: '12px', fill: 'var(--v-charts-text, #666)' }}>
                             <tspan style={{ fontWeight: 500 }}>{`Step ${step.step + 1}`}</tspan>
                             <tspan style={{ fill: 'var(--v-charts-text, #666)' }}>
                               {step.previousTotal == null
@@ -452,8 +452,8 @@ const JourneySankeyInner = defineComponent({
                       : (
                           <g class="v-charts-journey-label">
                             {href
-                              ? <a href={href}><text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'currentColor', ...halo }}>{name}</text></a>
-                              : <text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'currentColor', ...halo }}>{name}</text>}
+                              ? <a href={href}><text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text></a>
+                              : <text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text>}
                             <text x={node.x + props.nodeWidth + 8} y={node.y + 26} style={{ fontSize: '11px', fill: 'var(--v-charts-text, #666)', ...halo }}>{subtitle}</text>
                             {name !== node.name && <title>{node.name}</title>}
                           </g>

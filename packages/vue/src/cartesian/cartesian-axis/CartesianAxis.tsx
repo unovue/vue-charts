@@ -10,7 +10,7 @@ import type { CartesianTickItem } from '@/types/tick'
 import type { ComponentPublicInstance, PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
-import { computed, defineComponent, getCurrentInstance, reactive } from 'vue'
+import { computed, defineComponent, reactive } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
 import { get } from 'es-toolkit/compat'
 import Text from '@/components/Text.vue'
@@ -78,7 +78,6 @@ export const CartesianAxis = defineComponent({
   },
   setup(props, { slots }) {
     const canMeasureText = useCanMeasureText()
-    const instance = getCurrentInstance()!
     const state = reactive({
       fontSize: '',
       letterSpacing: '',
@@ -236,7 +235,7 @@ export const CartesianAxis = defineComponent({
           verticalAnchor,
           ...axisProps,
           stroke: 'none',
-          fill: instance.vnode.props?.stroke === undefined ? 'var(--v-charts-text, #666)' : stroke,
+          fill: 'var(--v-charts-text, #666)',
           ...customTickProps,
           ...tickCoord,
           index: i,

@@ -92,41 +92,46 @@ const LegendView = defineComponent({
                 key={`legend-item-${index}`}
                 class="v-charts-legend-item"
                 style={getItemStyle(layout)}
-                tabindex={0}
-                role="button"
-                aria-label={`Toggle ${formatValue(entry)} series`}
-                onClick={(event: MouseEvent) => activateItem(entry, index, event)}
-                onKeydown={(e: KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    activateItem(entry, index, e)
-                  }
-                }}
                 onMouseenter={(event: MouseEvent) => emit('mouseenter', entry, index, event)}
                 onMouseleave={(event: MouseEvent) => emit('mouseleave', entry, index, event)}
               >
-                <Surface
-                  width={iconSize}
-                  height={iconSize}
-                  viewBox={{
-                    x: 0,
-                    y: 0,
-                    width: SIZE,
-                    height: SIZE,
+                <button
+                  type="button"
+                  aria-label={`Toggle ${formatValue(entry)} series`}
+                  aria-pressed={!entry.inactive}
+                  style={{
+                    padding: 0,
+                    border: 0,
+                    background: 'none',
+                    font: 'inherit',
+                    color: 'var(--v-charts-text, #666)',
+                    cursor: 'pointer',
                   }}
-                  style={getSvgStyle()}
-                  aria-label={`${formatValue(entry)} legend icon`}
+                  onClick={(event: MouseEvent) => activateItem(entry, index, event)}
                 >
-                  <LegendSymbol
-                    type={props.iconType ?? entry.type}
-                    color={entry.inactive ? 'var(--v-charts-inactive, #a3a3a3)' : entry.color}
-                    size={iconSize}
-                    data={entry}
-                  />
-                </Surface>
-                <span class="v-charts-legend-item-text" style={{ color: entry.inactive ? 'var(--v-charts-inactive, #a3a3a3)' : entry.color }}>
-                  {formatValue(entry)}
-                </span>
+                  <Surface
+                    width={iconSize}
+                    height={iconSize}
+                    viewBox={{
+                      x: 0,
+                      y: 0,
+                      width: SIZE,
+                      height: SIZE,
+                    }}
+                    style={getSvgStyle()}
+                    aria-label={`${formatValue(entry)} legend icon`}
+                  >
+                    <LegendSymbol
+                      type={props.iconType ?? entry.type}
+                      color={entry.inactive ? 'var(--v-charts-inactive, #a3a3a3)' : entry.color}
+                      size={iconSize}
+                      data={entry}
+                    />
+                  </Surface>
+                  <span class="v-charts-legend-item-text" style={{ color: 'var(--v-charts-text, #666)' }}>
+                    {formatValue(entry)}
+                  </span>
+                </button>
               </li>
             )
           })}

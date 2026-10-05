@@ -52,7 +52,7 @@ describe('<ComposedChart />', () => {
       expect(root.querySelector(selector), selector).not.toBeNull()
     }
     expect(root.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('var(--v-charts-text, #666)')
-    expect(root.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('#123456')
+    expect(root.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('var(--v-charts-text, #666)')
 
     const colors: string[] = []
     for (const element of root.querySelectorAll('*')) {

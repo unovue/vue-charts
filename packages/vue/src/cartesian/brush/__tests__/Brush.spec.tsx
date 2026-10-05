@@ -28,7 +28,7 @@ describe('<Brush />', () => {
   ]
 
   describe('basic rendering', () => {
-    it('renders Brush from the public API with two travellers', () => {
+    it('announces category indexes and distinct labels for both travellers', () => {
       const { container } = render(() => (
         <BarChart width={400} height={300} data={data}>
           <Brush dataKey="name" />
@@ -37,7 +37,17 @@ describe('<Brush />', () => {
 
       const brush = container.querySelector('.v-charts-brush')
       expect(brush).not.toBeNull()
-      expect(brush!.querySelectorAll('.v-charts-brush-traveller')).toHaveLength(2)
+      const travellers = [...brush!.querySelectorAll('[role="slider"]')]
+      expect(travellers.map(slider => ({
+        label: slider.getAttribute('aria-label'),
+        min: slider.getAttribute('aria-valuemin'),
+        max: slider.getAttribute('aria-valuemax'),
+        value: slider.getAttribute('aria-valuenow'),
+        text: slider.getAttribute('aria-valuetext'),
+      }))).toEqual([
+        { label: 'Range start', min: '0', max: '13', value: '0', text: 'A' },
+        { label: 'Range end', min: '0', max: '13', value: '13', text: 'N' },
+      ])
     })
 
     it('renders 2 travellers and 1 slide in simple Brush', () => {
@@ -215,15 +225,15 @@ it.each([true, false])('keeps brush ownership when controlled=%s', async (contro
   expect(updateEnd.mock.calls).toEqual([])
   expect(change.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
   await nextTick()
-  expect(travellers[0].getAttribute('aria-valuenow')).toBe(controlled ? '0' : '47.5')
+  expect(travellers[0].getAttribute('aria-valuenow')).toBe(controlled ? '0' : '1')
   expect(bars()).toBe(controlled ? 3 : 2)
   if (controlled) {
     from.value = 1
     to.value = 1
     await nextTick()
     expect(bars()).toBe(1)
-    expect(travellers[0].getAttribute('aria-valuenow')).toBe('47.5')
-    expect(travellers[1].getAttribute('aria-valuenow')).toBe('47.5')
+    expect(travellers[0].getAttribute('aria-valuenow')).toBe('1')
+    expect(travellers[1].getAttribute('aria-valuenow')).toBe('1')
     to.value = 2
     await nextTick()
     await fireEvent.mouseDown(travellers[0], { clientX: 47.5 })
@@ -231,7 +241,7 @@ it.each([true, false])('keeps brush ownership when controlled=%s', async (contro
     await fireEvent.mouseUp(window)
     await nextTick()
     expect(updateStart.mock.calls).toEqual([[1], [0]])
-    expect(travellers[0].getAttribute('aria-valuenow')).toBe('47.5')
+    expect(travellers[0].getAttribute('aria-valuenow')).toBe('1')
     expect(bars()).toBe(2)
   }
 })
@@ -250,5 +260,5 @@ it('treats start/end indexes without v-model as where the brush starts, like def
   await fireEvent.keyDown(traveller, { key: 'ArrowRight' })
   await nextTick()
   expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(2)
-  expect(traveller.getAttribute('aria-valuenow')).toBe('47.5')
+  expect(traveller.getAttribute('aria-valuenow')).toBe('1')
 })

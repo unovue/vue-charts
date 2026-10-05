@@ -1,3 +1,4 @@
+import { labelColor } from '@/utils/labelColor'
 import { type PropType, type SlotsType, type StyleValue, computed, defineComponent, ref, useId, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { get } from 'es-toolkit/compat'
@@ -506,7 +507,7 @@ export const CellGridLayer = defineComponent({
                       text-anchor="middle"
                       dominant-baseline="central"
                       fill-opacity={fade}
-                      style={{ fill: cell.strong ? 'var(--v-charts-background, #fff)' : 'var(--v-charts-text, #666)', fontSize: '11px', fontVariantNumeric: 'tabular-nums', pointerEvents: 'none' }}
+                      style={{ fill: labelColor(cell.fill), fontSize: '11px', fontVariantNumeric: 'tabular-nums', pointerEvents: 'none' }}
                     >
                       {cell.text}
                     </text>

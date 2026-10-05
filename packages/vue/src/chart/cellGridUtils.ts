@@ -16,8 +16,6 @@ export interface GridCell<P = unknown> {
   value: string | number | null
   /** Text drawn centered on the cell, e.g. "42%"; hidden when it does not fit. */
   text?: string
-  /** Strong fill: the text is drawn light on it. */
-  strong?: boolean
   payload: P
 }
 

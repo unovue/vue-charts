@@ -211,7 +211,7 @@ describe('legend', () => {
 })
 
 // Catches DOM fallthrough and missing event arguments on legend items.
-it('emits legend entry, index, and the original mouse or keyboard event once', async () => {
+it('emits legend entry, index, and the original click event once', async () => {
   const click = vi.fn()
   const enter = vi.fn()
   const leave = vi.fn()
@@ -223,13 +223,13 @@ it('emits legend entry, index, and the original mouse or keyboard event once', a
     </BarChart>
   ))
   await nextTick()
-  const item = container.querySelector('.v-charts-legend-item')!
+  const item = container.querySelector('.v-charts-legend-item button')!
   for (const [name, listener] of [['click', click], ['mouseenter', enter], ['mouseleave', leave]] as const) {
     const event = new MouseEvent(name, { bubbles: true })
-    await fireEvent(item, event)
+    await fireEvent(name === 'click' ? item : item.parentElement!, event)
     expect(listener.mock.calls).toEqual([[expect.objectContaining({ value: 'Value', dataKey: 'value' }), 0, event]])
   }
-  const key = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+  const key = new MouseEvent('click', { bubbles: true })
   await fireEvent(item, key)
   expect(click.mock.calls[1]).toEqual([expect.objectContaining({ value: 'Value' }), 0, key])
   expect(click).toHaveBeenCalledTimes(2)
@@ -256,26 +256,26 @@ it.each([true, false])('keeps legend ownership when controlled=%s', async (contr
   const charts = container.querySelectorAll('.v-charts-wrapper')
   const bars = () => charts[0].querySelectorAll('.v-charts-bar-rectangle').length
   const item = [...charts[0].querySelectorAll('.v-charts-legend-item')].find(item => item.textContent === 'uv')!
-  const inactive = () => item.querySelector<HTMLElement>('.v-charts-legend-item-text')!.style.color
+  const inactive = () => item.querySelector('button')!.getAttribute('aria-pressed')
   expect(bars()).toBe(controlled ? 0 : 1)
   expect(charts[1].querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(1)
   if (controlled)
-    expect(inactive()).toBe('var(--v-charts-inactive, #a3a3a3)')
-  await fireEvent.click(item)
+    expect(inactive()).toBe('false')
+  await fireEvent.click(item.querySelector('button') ?? item)
   expect(update.mock.calls).toEqual(controlled ? [[[]]] : [])
   expect(bars()).toBe(controlled ? 0 : 1)
   if (controlled) {
     hidden.value = []
     await nextTick()
     expect(bars()).toBe(1)
-    expect(inactive()).not.toBe('var(--v-charts-inactive, #a3a3a3)')
-    await fireEvent.keyDown(item, { key: 'Enter' })
+    expect(inactive()).toBe('true')
+    await fireEvent.click(item.querySelector('button') ?? item)
     expect(update.mock.calls.at(-1)).toEqual([['uv']])
     expect(bars()).toBe(1)
     hidden.value.push('uv')
     await nextTick()
     expect(bars()).toBe(0)
-    expect(inactive()).toBe('var(--v-charts-inactive, #a3a3a3)')
+    expect(inactive()).toBe('false')
     hidden.value = undefined
     await nextTick()
     expect(bars()).toBe(1)

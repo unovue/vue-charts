@@ -27,7 +27,7 @@ export const BrushText = defineComponent({
     return () => {
       const attrs = {
         pointerEvents: 'none' as const,
-        fill: props.stroke,
+        fill: 'var(--v-charts-text, #666)',
       }
 
       return (

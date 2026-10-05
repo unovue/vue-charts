@@ -388,3 +388,21 @@ describe('cell grid utils', () => {
     expect(levelOf(value, max, levels)).toBe(expected)
   })
 })
+
+// Catches text choosing the theme background rather than contrast against its opaque cell.
+it.each([
+  ['#ffffff', 'var(--v-charts-label-foreground, #0a0a0a)'],
+  ['#0a0a0a', 'var(--v-charts-label-foreground, #ffffff)'],
+])('uses contrasting text on a %s Heatmap cell', (fill, expected) => {
+  const { container } = render(() => (
+    <Heatmap
+      width={400}
+      height={300}
+      showValues
+      colors={[fill]}
+      data={[{ x: 'A', y: 'B', value: 10 }]}
+      isAnimationActive={false}
+    />
+  ))
+  expect(container.querySelector<SVGElement>('.v-charts-cell text')!.style.fill).toBe(expected)
+})

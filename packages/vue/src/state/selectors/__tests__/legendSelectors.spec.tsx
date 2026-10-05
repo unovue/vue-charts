@@ -102,11 +102,10 @@ describe('legendSelectors', () => {
       const items = container.querySelectorAll('.v-charts-legend-item')
       expect(items.length).toBe(2)
 
-      const texts = container.querySelectorAll('.v-charts-legend-item-text')
-      const colors = Array.from(texts).map(t => (t as HTMLElement).style.color)
+      const texts = container.querySelectorAll('.v-charts-legend-item svg path')
+      const colors = Array.from(texts).map(t => t.getAttribute(t.getAttribute('fill') === 'none' ? 'stroke' : 'fill'))
       expect(colors).toHaveLength(2)
-      colors.forEach(c => expect(c).toBeTruthy())
-      expect(colors[0]).not.toBe(colors[1])
+      expect(colors).toEqual(['#8884d8', '#82ca9d'])
     })
 
     it('shows correct colors for each legend entry in LineChart', async () => {
@@ -124,11 +123,10 @@ describe('legendSelectors', () => {
       const items = container.querySelectorAll('.v-charts-legend-item')
       expect(items.length).toBe(2)
 
-      const texts = container.querySelectorAll('.v-charts-legend-item-text')
-      const colors = Array.from(texts).map(t => (t as HTMLElement).style.color)
+      const texts = container.querySelectorAll('.v-charts-legend-item svg path')
+      const colors = Array.from(texts).map(t => t.getAttribute(t.getAttribute('fill') === 'none' ? 'stroke' : 'fill'))
       expect(colors).toHaveLength(2)
-      colors.forEach(c => expect(c).toBeTruthy())
-      expect(colors[0]).not.toBe(colors[1])
+      expect(colors).toEqual(['#8884d8', '#82ca9d'])
     })
   })
 
