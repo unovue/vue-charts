@@ -50,10 +50,11 @@ experience it; additional chart replacements are labeled auto-rotation separatel
 - `seenMotionMs`: max(0, motionEnd − seenAt), or 0 without either timestamp.
 
 Flags use fixed thresholds: `unseen-entrance` for progress > 0.15 or seen motion
-< 400 ms (also if never fully seen); `no-entrance` for no geometry changes;
+< 400 ms (also if never fully seen), only for animated charts that move; `no-entrance` for no geometry changes;
 `late-start` for start − seen > 250 ms; `stray-hover` for a painted active dot
-or visible tooltip while the pointer is outside the wrapper. Explicitly disabled
-Vue series are exempt from `no-entrance` only, using the production VNode traversal
+or visible tooltip while the pointer is outside the wrapper that is gone again by the
+end (a tooltip kept on screen with defaultIndex is intended). Explicitly disabled
+Vue series are exempt from `no-entrance` and `unseen-entrance`, using the production VNode traversal
 pattern from check:play. Static axes do not cancel that exemption.
 
 Every recording reports its largest sample gap. A gap > 50 ms intersecting

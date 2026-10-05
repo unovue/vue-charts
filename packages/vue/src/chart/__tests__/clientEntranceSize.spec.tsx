@@ -73,10 +73,10 @@ it('starts the entrance when the chart scrolls into view', async () => {
   // Not on screen yet: no entrance has started and nothing is drawn.
   expect(clock.to).toBe(0)
   expect(bars()).toBe(0)
-  reveal(0.1)
+  reveal(0.3)
   await nextTick()
   expect(clock.to).toBe(0)
-  reveal(0.3)
+  reveal(0.5)
   await nextTick()
   await nextTick()
   expect(clock.to).toBeGreaterThan(0)
