@@ -12,6 +12,16 @@ beforeEach(() => {
 const linePath = (container: Element) => container.querySelector('.v-charts-sparkline-line')!.getAttribute('d')!
 
 describe('<Sparkline />', () => {
+  it.each([
+    [[1e20], 'M50,20Z'],
+    [[5, 5, 5], 'M3,20L50,20L97,20'],
+  ])('draws constant values %j at mid-height', (data, expected) => {
+    const { container } = render(() => (
+      <Sparkline width={100} height={40} data={data} curve="linear" isAnimationActive={false} />
+    ))
+    expect(linePath(container)).toBe(expected)
+  })
+
   it('breaks the line at missing values instead of bridging them', () => {
     const { container } = render(() => <Sparkline width={100} height={30} curve="linear" isAnimationActive={false} data={[1, 2, null, 4, 5]} />)
     expect(linePath(container).match(/M/g)).toHaveLength(2)

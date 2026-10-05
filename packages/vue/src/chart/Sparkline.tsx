@@ -92,10 +92,8 @@ const SparklineInner = defineComponent({
         lo = props.min ?? Math.min(0, lo)
         hi = props.max ?? Math.max(0, hi)
       }
-      if (hi === lo) {
+      if (hi === lo && props.type === 'bar')
         hi += 1
-        lo -= props.type === 'bar' ? 0 : 1
-      }
       return { lo, hi }
     })
 
@@ -104,7 +102,9 @@ const SparklineInner = defineComponent({
       const height = size.effectiveHeight.value
       const n = values.value.length
       const { lo, hi } = domain.value
-      const yOf = (value: number) => PAD + (1 - (value - lo) / (hi - lo)) * (height - PAD * 2)
+      function yOf(value: number) {
+        return hi === lo ? height / 2 : PAD + (1 - (value - lo) / (hi - lo)) * (height - PAD * 2)
+      }
       return values.value.map((value, index) => ({
         x: n === 1 ? width / 2 : PAD + index * (width - PAD * 2) / (n - 1),
         // A gap stays a gap; the transition never interpolates through it.
