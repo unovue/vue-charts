@@ -91,4 +91,21 @@ describe('pie', () => {
     })
     expect(container.querySelectorAll('.v-charts-sector').length).toBe(0)
   })
+
+  it.each([
+    // A label's anchor slides by a share of its width near the vertical instead of jumping.
+    { endAngle: 182, anchor: 'start', transform: 'translateX(-74%)' },
+    { endAngle: 180, anchor: 'middle', transform: '' },
+    { endAngle: 60, anchor: 'start', transform: '' },
+    { endAngle: 300, anchor: 'end', transform: '' },
+  ])('anchors a label ending at $endAngle° as $anchor $transform', ({ endAngle, anchor, transform }) => {
+    const { container } = render(() => (
+      <PieChart width={500} height={500}>
+        <Pie dataKey="value" data={[{ value: 1 }]} startAngle={0} endAngle={endAngle} outerRadius={200} label isAnimationActive={false} />
+      </PieChart>
+    ))
+    const text = container.querySelector('.v-charts-pie text') as SVGTextElement
+    expect(text.getAttribute('text-anchor')).toBe(anchor)
+    expect(text.style.transform).toBe(transform)
+  })
 })

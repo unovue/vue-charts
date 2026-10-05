@@ -23,6 +23,8 @@ import type { PieProps } from './type'
 import { PieVueProps } from './type'
 
 const LABEL_OFFSET = 20
+/** Horizontal distance from the centre over which a label's anchor blends from start to end. */
+const ANCHOR_BLEND = 8
 
 export interface PieSlots {
   label?: (props: PieSectorDataItem & { index: number }) => import('vue').VNodeChild
@@ -139,7 +141,14 @@ const PieView = defineComponent({
       const midAngle = (sector.startAngle + sector.endAngle) / 2
       const edgePoint = rounded(polarToCartesian(sector.cx, sector.cy, sector.outerRadius, midAngle))
       const pos = rounded(polarToCartesian(sector.cx, sector.cy, sector.outerRadius + LABEL_OFFSET, midAngle))
-      const anchor = pos.x > sector.cx ? 'start' : pos.x < sector.cx ? 'end' : 'middle'
+      // Right of the centre a label starts at its point, left of it it ends there. Near the
+      // vertical it slides between the two by a share of its own width, so a label travelling
+      // round the pie does not jump by its width when it crosses.
+      const towardEnd = Math.min(1, Math.max(0, 0.5 - (pos.x - sector.cx) / (2 * ANCHOR_BLEND)))
+      const anchor = towardEnd === 0 ? 'start' : towardEnd === 1 ? 'end' : towardEnd === 0.5 ? 'middle' : 'start'
+      const slide = anchor === 'start' && towardEnd > 0
+        ? { transformBox: 'fill-box', transform: `translateX(${-Math.round(towardEnd * 1000) / 10}%)` }
+        : undefined
       return (
         <g key={`label-${String(key)}`} opacity={opacity}>
           {props.labelLine && (
@@ -159,6 +168,7 @@ const PieView = defineComponent({
                   x={pos.x}
                   y={pos.y}
                   text-anchor={anchor}
+                  style={slide}
                   dominant-baseline="middle"
                   fill={sector.fill}
                 >
