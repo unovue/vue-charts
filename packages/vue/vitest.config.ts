@@ -27,7 +27,7 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['text-summary', 'json', 'html'],
       include: ['src/**/*.{ts,tsx,vue}'],
-      exclude: [...coverageConfigDefaults.exclude, 'src/test/**', 'src/**/__stories__/**', 'src/storybook/**'],
+      exclude: [...coverageConfigDefaults.exclude, '**/__tests__/**', 'src/test/**', 'src/**/__stories__/**', 'src/storybook/**'],
     },
     server: {
       deps: {

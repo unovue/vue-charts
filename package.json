@@ -13,7 +13,7 @@
     "test": "pnpm --filter vccs test",
     "dev": "pnpm --filter vccs dev",
     "build": "pnpm --filter vccs build",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "pnpm --filter vccs exec vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "play": "pnpm --filter play dev",
     "build-storybook": "storybook build",
