@@ -355,6 +355,16 @@ stays in the report and gates only with `--strict-timing`. This reduces default 
 the frame-exact checks remain unchanged. Keep the separate real-clock benchmark and report
 inconclusive timing evidence explicitly; deterministic geometry does not prove runtime speed.
 
+**D-25b Browser motion checks measure painted geometry.** The baseline playground recorder
+mistakes transparent interaction rectangles and rectangles with zero fill opacity for visible
+paint. The cell-chart reproduction has 121 teleport flags: 62 rectangles have zero fill opacity
+and 59 transparent fill in both consecutive frames; none paints a stroke. Correct the recorder
+to consider resolved fill/stroke alpha, fill/stroke opacity and stroke width, alongside its
+existing ancestor visibility and clipping checks. Preserve the jump threshold and detect opaque
+fills and stroke-only shapes with positive controls. Zero-alpha interaction geometry must not
+satisfy or fail a visible-motion assertion. This is a metric correction, not an accepted-flag
+list. Transient overflow and unexplained entrance flags remain failures until diagnosed.
+
 **D-26 Motion fixes** (reviews/motion.md):
 - A data change that changes nothing on screen (equal content) runs no animation, renders no
   frames and emits no `animation-start`/`animation-end`.

@@ -153,6 +153,11 @@ Enter emits `node-click` with that node.
   uses `--v-charts-text`.
 - Brush traveller semantics from D-16 (labels and `aria-value*`; the range model itself changes
   in 3.6).
+- Correct the existing playground recorder's painted-visibility predicate (D-25b). Keep all
+  thresholds. Its browser fixture must detect opaque-fill and stroke-only teleports and reject
+  equivalent zero-alpha interaction geometry as visible motion. Record resolved paint opacity
+  in frames and filmstrips. Diagnose early overflow without discarding early frames; deliberate
+  transient and persistent overflow must continue to fail.
 - Add `scripts/check-a11y.mjs` (root script `check:a11y`, add it to `scripts/verify.mjs`),
   adapted from `reviews/ssr-a11y/*.mjs`. Use `axe-core` (already a root dev dependency). It renders all 19 charts plus
   Tooltip, Legend and Brush in a fixture page (light and dark theme with the docs' token values),
