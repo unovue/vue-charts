@@ -153,3 +153,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - [Commands, proofs and limits](../../../.evidence/release-1.0/step-1.9-checks.md); screenshots / final results in `.evidence/release-1.0/a11y/`.
 - Assumptions: retain 18% BarList tint; buttons when a row-click listener exists; preserve links / slots. Variable fills use explicit D-20 foregrounds; opaque fixture tests automatic choice.
 - Limits: semantic fixtures disable animation; both motion preferences hydrate. Chromium at 900px, Node 22.23.1, two workers; no screen-reader application exercised.
+
+## Step 1.10 evidence
+- Done: `38e5e17` carries occurrence indexes and displayed presence; height shares the row clock and frame indexing is linear.
+- Gate PASS: 129 files / 1,272 tests (76.68 s), typecheck, build and changed-file eslint with zero warnings.
+- Two regressions fail before / under the final reverse patch and pass restored. Heights: 212 → 194 → 176; empty 0; two rows 68.
+- Interruption initially jumped 194 → 212; carried presence fixes it. Regression verifies 194 → 203 → 212 without a reset.
+- Chromium 900 / 390px: 120 intermediate heights each, final 176; duplicate slot / click index 1; interrupted heights unchanged; zero page errors.
+- Accessibility remains PASS: 100 cases / 780 samples, minimum 4.83:1. [Commands and evidence](../../../.evidence/release-1.0/step-1.10-checks.md).
+- Assumptions: preserve sorted display indexes; bound presence to 0–1; reuse the motion clock. Linear work verified by source review; no CPU timing claim. Verification servers closed.
