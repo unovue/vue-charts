@@ -1,5 +1,5 @@
 import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
-import { usePreferredReducedMotion } from '@vueuse/core'
+import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
@@ -95,7 +95,7 @@ const JourneySankeyInner = defineComponent({
   slots: Object as SlotsType<JourneySankeySlots>,
   setup(props, { emit, slots }) {
     const tooltip = useChartTooltip()
-    const reducedMotion = usePreferredReducedMotion()
+    const reducedMotion = useReducedMotion()
     const rows = useTrackedData(() => props.data)
     const numbers = computed(() => new Intl.NumberFormat(props.locale))
     const percent = computed(() => new Intl.NumberFormat(props.locale, { maximumFractionDigits: 1 }))

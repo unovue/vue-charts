@@ -1,8 +1,8 @@
 import type { AnimationPlaybackControls } from 'motion-dom'
 import { animate } from 'motion-v'
-import { usePreferredReducedMotion } from '@vueuse/core'
+import { useReducedMotion } from '@/animation/useReducedMotion'
 import type { ShallowRef } from 'vue'
-import { nextTick, onScopeDispose, shallowRef, watch } from 'vue'
+import { getCurrentInstance, nextTick, onMounted, onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { cascadeTiming, motionTokens } from './motion'
 import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from './renderPhase'
@@ -111,7 +111,9 @@ export function useKeyedTransition<T>(
 ): { items: ShallowRef<DisplayItem<T>[]>, isAnimating: ShallowRef<boolean> } {
   const items = shallowRef<DisplayItem<T>[]>([])
   const isAnimating = shallowRef(false)
-  const reducedMotion = usePreferredReducedMotion()
+  const reducedMotion = useReducedMotion()
+  const component = getCurrentInstance()
+  let mounted = component == null
   let skipEntrance = shouldSkipEntrance()
   const onServer = isServerRender()
   let hasEntered = false
@@ -235,12 +237,33 @@ export function useKeyedTransition<T>(
     return [...staying.flatMap(item => [...(exitsBefore.get(item.key) ?? []), item]), ...trailingExits]
   }
 
-  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value, size: chartSize(), dragging: gesture.value, seen: inView.value }), (state) => {
+  function transitionState() {
+    return {
+      next: target(),
+      active: options.isActive(),
+      reduced: reducedMotion.value,
+      size: chartSize(),
+      dragging: gesture.value,
+      seen: inView.value,
+    }
+  }
+
+  function update(state: ReturnType<typeof transitionState>) {
     // A getter that throws (e.g. a user dataKey function) leaves no state; keep what is drawn.
     if (!state)
       return
     const { next, active, reduced, size, dragging, seen } = state
     const nextItems = next ?? []
+    // Keep the first render deterministic; start clocks only after the preference is known.
+    if (!mounted && !onServer && active) {
+      items.value = plan(nextItems, options.reveal?.()).map(({ key, from }) => ({
+        key,
+        value: from,
+        phase: 'enter',
+        progress: 0,
+      }))
+      return
+    }
     let skip = skipEntrance && !hasEntered
     if (skip && (options.entranceAfterHydration ?? !options.followsSeries) && active && nextItems.length) {
       const start = plan(nextItems, options.reveal?.()).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
@@ -375,7 +398,18 @@ export function useKeyedTransition<T>(
       },
       onComplete: finish,
     })
-  }, { immediate: true })
+  }
+
+  watch(transitionState, update, { immediate: true })
+  if (component) {
+    onMounted(() => {
+      mounted = true
+      if (options.isActive() && reducedMotion.value !== 'reduce') {
+        items.value = []
+        update(transitionState())
+      }
+    })
+  }
 
   onScopeDispose(stop)
   return { items, isAnimating }

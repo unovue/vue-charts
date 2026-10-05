@@ -1,5 +1,5 @@
 import { type PropType, type SlotsType, type StyleValue, computed, defineComponent, ref, useId, watch } from 'vue'
-import { usePreferredReducedMotion } from '@vueuse/core'
+import { useReducedMotion } from '@/animation/useReducedMotion'
 import { get } from 'es-toolkit/compat'
 import { useChartTooltip } from '@/state/chartContext'
 import type { ChartOptions } from '@/state/chartOptions'
@@ -183,7 +183,7 @@ export const CellGridLayer = defineComponent({
   slots: Object as SlotsType<CellGridSlots>,
   setup(props, { emit, slots }) {
     const tooltip = useChartTooltip()
-    const reducedMotion = usePreferredReducedMotion()
+    const reducedMotion = useReducedMotion()
     const baseId = useId()
     const activeKey = ref<string>()
     const keyboard = ref(false)

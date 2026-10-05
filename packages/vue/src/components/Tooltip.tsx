@@ -16,7 +16,8 @@ import {
   selectTooltipPayload,
   useChartName,
 } from '@/state/selectors/selectors'
-import { useMagicKeys, usePreferredReducedMotion } from '@vueuse/core'
+import { useMagicKeys } from '@vueuse/core'
+import { useReducedMotion } from '@/animation/useReducedMotion'
 import type { AxisId } from '@/state/chartCartesianAxis'
 import type {
   ChartCoordinate,
@@ -276,7 +277,7 @@ const TooltipBoundingBox = defineComponent({
     const el = ref<HTMLDivElement>()
     const tooltipSize = ref({ width: 0, height: 0 })
     let preTransform: CSSProperties | undefined
-    const reducedMotion = usePreferredReducedMotion()
+    const reducedMotion = useReducedMotion()
     const spring = computed(() => ({ type: 'spring' as const, stiffness: 500, damping: 40, mass: 1, ...props.transition }))
     const x = useSpring(0, spring)
     const y = useSpring(0, spring)
@@ -753,10 +754,11 @@ const _Tooltip = defineComponent({
             : [Array.isArray(formatted) ? formatted.join(' ~ ') : formatted, entry.name]
           return [`${name ?? ''} ${value ?? ''}`.trim()]
         })
-        if (entries.length)
+        if (entries.length) {
           tooltip.announcement.value = finalLabel.value == null
             ? entries.join(', ')
             : `${finalLabel.value}: ${entries.join(', ')}`
+        }
       }, 150)
       cleanup(() => clearTimeout(timer))
     }, { flush: 'post' })
