@@ -75,6 +75,35 @@ describe('computeJourneyLayout', () => {
 })
 
 describe('<JourneySankey />', () => {
+  it('ignores invalid counts without changing valid journey geometry', () => {
+    const { container } = render(() => (
+      <JourneySankey
+        width={500}
+        height={300}
+        data={[
+          { path: ['a', 'b'], count: 10 },
+          { path: ['x', 'y', 'z'], count: Infinity },
+          { path: ['x', 'y'], count: NaN },
+          { path: ['x', 'y'], count: -1 },
+        ]}
+        isAnimationActive={false}
+      />
+    ))
+    const attributes = Array.from(container.querySelectorAll('*')).flatMap(element =>
+      Array.from(element.attributes, attribute => attribute.value),
+    )
+    expect(attributes.filter(value => /NaN|Infinity/.test(value))).toEqual([])
+    const nodes = Array.from(container.querySelectorAll('.v-charts-journey-node-continue'))
+    expect(nodes.map(node => ['x', 'y', 'width', 'height'].map(name =>
+      Math.round(Number(node.getAttribute(name))),
+    ))).toEqual([[0, 28, 8, 272], [372, 28, 8, 272]])
+    const link = container.querySelector('.v-charts-journey-link')!
+    const coordinates = link.getAttribute('d')!.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+    expect(coordinates.map(value => Math.round(value * 100) / 100))
+      .toEqual([8, 164, 160.88, 164, 219.12, 164, 372, 164])
+    expect(Number(link.getAttribute('stroke-width'))).toBeCloseTo(272, 8)
+  })
+
   const links = (container: Element) => Array.from(container.querySelectorAll<SVGPathElement>('.v-charts-journey-link'))
 
   it('shows how many sessions end at a node, as a grey segment and in its label', () => {

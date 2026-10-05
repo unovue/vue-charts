@@ -103,7 +103,10 @@ const JourneySankeyInner = defineComponent({
 
     const journeys = computed<JourneyInput[]>(() => (rows.value ?? []).flatMap((row) => {
       const path = row?.[props.pathKey]
-      return Array.isArray(path) ? [{ path: path.map(String), count: Number(row[props.dataKey]) }] : []
+      const count = Number(row?.[props.dataKey])
+      return Array.isArray(path) && Number.isFinite(count) && count > 0
+        ? [{ path: path.map(String), count }]
+        : []
     }))
     const stepCount = computed(() => props.steps ?? Math.max(1, ...journeys.value.map(journey => journey.path.length)))
     const labelWidth = computed(() => Math.min(200, Math.max(120, props.width * 0.2)))
