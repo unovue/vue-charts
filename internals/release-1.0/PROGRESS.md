@@ -162,3 +162,10 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Chromium 900 / 390px: 120 intermediate heights each, final 176; duplicate slot / click index 1; interrupted heights unchanged; zero page errors.
 - Accessibility remains PASS: 100 cases / 780 samples, minimum 4.83:1. [Commands and evidence](../../../.evidence/release-1.0/step-1.10-checks.md).
 - Assumptions: preserve sorted display indexes; bound presence to 0–1; reuse the motion clock. Linear work verified by source review; no CPU timing claim. Verification servers closed.
+
+## Step 1.11 evidence
+- Done: `a920bd6` preserves equal targets, cascade turns and animation elapsed time; springs overshoot geometry, while opacity and presence stay bounded.
+- Five regressions fail with the engine reversed; restored PASS, including inactive and public resize snaps. Existing snap assertions now follow D-26; callback recovery uses a real run.
+- Gate PASS: 129 files / 1,277 tests (65.33 s), typecheck and eight changed files lint with zero warnings.
+- Evidence: `.evidence/release-1.0/step-1.11-gate.log`, `step-1.11-reverse-final.log`, `step-1.11-typecheck-final.log`, `step-1.11-lint.log`.
+- Assumptions: existing es-toolkit equality compares target content; equal in-flight refreshes leave the current run alone. Node 22.23.1, two workers; no timing claim.
