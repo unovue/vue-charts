@@ -29,6 +29,8 @@ interface RowState {
   y: number
   ratio: number
   opacity: number
+  /** Moving up past another row during a change: drawn above the rows it passes. */
+  rising?: boolean
 }
 
 export const BarListVueProps = {
@@ -81,16 +83,23 @@ const BarListInner = defineComponent({
       }))
     })
 
+    const crossing = (from: RowState, to: RowState, t: number) => from.y - to.y > props.rowHeight && t < 1 ? { rising: true } : { rising: undefined }
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition<RowState>(() => target.value, {
       key: state => state.name,
       interpolate: (from, to, t) => ({
         ...to,
+        // The number counts along with its bar instead of jumping ahead of it; whole numbers stay
+        // whole on the way.
+        value: Number.isInteger(to.value) ? Math.round(from.value + (to.value - from.value) * t) : from.value + (to.value - from.value) * t,
         y: from.y + (to.y - from.y) * t,
+        // Rows changing rank cross each other: the ones moving up pass over at full strength while
+        // the ones moving down dim underneath, so one label always reads clearly.
+        ...crossing(from, to, t),
         ratio: from.ratio + (to.ratio - from.ratio) * t,
-        opacity: from.opacity + (to.opacity - from.opacity) * t,
+        opacity: (from.opacity + (to.opacity - from.opacity) * t) * (to.y - from.y > props.rowHeight ? 1 - 0.7 * Math.sin(Math.PI * t) : 1),
       }),
-      enterFrom: to => ({ ...to, ratio: 0, opacity: 0 }),
+      enterFrom: to => ({ ...to, value: 0, ratio: 0, opacity: 0 }),
       exitTo: from => ({ ...from, ratio: 0, opacity: 0 }),
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
@@ -124,6 +133,7 @@ const BarListInner = defineComponent({
                 height: `${props.rowHeight}px`,
                 transform: `translateY(${state.y}px)`,
                 opacity: state.opacity,
+                zIndex: state.rising ? 1 : undefined,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',

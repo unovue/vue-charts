@@ -71,6 +71,20 @@ describe('useKeyedTransition', () => {
     expect(view()).toEqual(['A:update:20', 'B:update:20'])
   })
 
+  // A data change in the entrance's last moments inherited the few milliseconds left and
+  // snapped (a bar list re-ranking 0.9 s after mount finished in 50 ms).
+  it('gives a change near the end of the entrance its full update time', async () => {
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    const { data, view } = setup([{ name: 'A', height: 100 }])
+    at(motionTokens.enter.duration * 0.95)
+    now.mockReturnValue(motionTokens.enter.duration * 950)
+    data.value = [{ name: 'A', height: 0 }]
+    await nextTick()
+    at(motionTokens.update.duration / 2)
+    expect(view()[0]).not.toBe('A:update:0')
+    now.mockRestore()
+  })
+
   it('enters from the start state and lands on the target', () => {
     const { view } = setup([{ name: 'A', height: 100 }])
     expect(view()).toEqual(['A:enter:0'])

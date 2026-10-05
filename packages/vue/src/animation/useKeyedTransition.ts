@@ -319,8 +319,11 @@ export function useKeyedTransition<T>(
     }
     else if (entering && entranceClock) {
       // A change during the entrance continues it on the same clock and curve: no restart, no
-      // change of pace.
-      entrance = continueTiming(entranceClock.timing, (performance.now() - entranceClock.start) / 1000)
+      // change of pace. Near its end too little time is left for a real change, which would
+      // snap; it then gets its own update timing instead.
+      const rest = continueTiming(entranceClock.timing, (performance.now() - entranceClock.start) / 1000)
+      if (rest.duration >= motionTokens.update.duration)
+        entrance = rest
     }
     const timing = (phase: TransitionPhase): PhaseTiming => entrance ?? motionTokens[options.connected ? 'update' : phase]
     hasEntered = true
