@@ -224,8 +224,7 @@ and `aria-valuetext` the category label. Never render a slider with a negative m
 | Polar charts (Pie, Radar) | bar props `barSize`, `barGap`, `barCategoryGap`, `maxBarSize` | removed (RadialBarChart keeps them) |
 | FunnelChart | polar and bar props | removed |
 | Line, Area | `points`, `path`, `baseLine`, `layout`, `left`, `top`, `width`, `height`, `animationId`, `activePoint`, `needClip`, `activeIndex` | removed from public props (internal view props only) |
-| Bar | `needClip`, `id` | removed from public props |
-| Bar, Pie | one-way `activeIndex` contract | `v-model:active-index` (D-13); the new model declares an `activeIndex` prop and update emit |
+| Bar | `needClip`, `id`, `activeIndex` (see D-13) | removed from public props |
 | Legend | `chartWidth`, `chartHeight`, `margin` | removed from public props |
 | Label | `parentViewBox`, `index` | removed from public props |
 | Tooltip | `content` prop; default slot as content | removed; use `#content` |
@@ -307,22 +306,6 @@ one development warning per app (through `src/utils/log.ts`), exactly:
   group), `grid`, `x-axis`, `y-axis`, `series` (each graphical item's root group), `tooltip`,
   `legend`, `brush`, `cell` (each cell in cell charts), `label`.
 
-**D-22a Series paint order is registration order.** Within the graphical layer, series paint
-in their stable registration order, including after SSR hydration, animated entrances and
-reduced-motion snaps. Keep the cursor → graphical → label tiers and existing geometry and
-motion. A keyed series retains its registration position; removal and a new registration follow
-the same registry rule as D-19's colors. Do not let the time at which a Teleport first renders
-choose its position.
-
-Evidence: the packed `83dc1b0` ComposedChart with Area, Bar, Line declared in that order paints
-Bar → Area → Line after animated hydration, versus Area → Bar → Line on an animation-disabled
-client mount. Both have identical path geometry and no browser errors; the captured comparison
-shows the area covering bars only in the hydrated chart. Reproduction:
-`.evidence/release-1.0/paint-order/probe.mjs`, `result.json`, `comparison.png` (Node 22.23.3,
-locked Chromium). This resolves the intended behavior for ssr-a11y.md P2 row 4; the regression
-and current-path fix belong to PLAN 2.0 and must survive the registry migration in 2.3. The
-finding is not fixed merely by recording this decision.
-
 **D-23 Slots and events to add.**
 - Radar: slots `shape`, `dot`, `activeDot`, `label` (the boolean/object props stay as toggles).
 - RadialBar: slots `shape`, `label`.
@@ -354,16 +337,6 @@ That number depends on machine load, so a cloud machine cannot gate on it reliab
 stays in the report and gates only with `--strict-timing`. This reduces default timing coverage;
 the frame-exact checks remain unchanged. Keep the separate real-clock benchmark and report
 inconclusive timing evidence explicitly; deterministic geometry does not prove runtime speed.
-
-**D-25b Browser motion checks measure painted geometry.** The baseline playground recorder
-mistakes transparent interaction rectangles and rectangles with zero fill opacity for visible
-paint. The cell-chart reproduction has 121 teleport flags: 62 rectangles have zero fill opacity
-and 59 transparent fill in both consecutive frames; none paints a stroke. Correct the recorder
-to consider resolved fill/stroke alpha, fill/stroke opacity and stroke width, alongside its
-existing ancestor visibility and clipping checks. Preserve the jump threshold and detect opaque
-fills and stroke-only shapes with positive controls. Zero-alpha interaction geometry must not
-satisfy or fail a visible-motion assertion. This is a metric correction, not an accepted-flag
-list. Transient overflow and unexplained entrance flags remain failures until diagnosed.
 
 **D-26 Motion fixes** (reviews/motion.md):
 - A data change that changes nothing on screen (equal content) runs no animation, renders no
@@ -423,3 +396,9 @@ The packed tarball's `LICENSE` must contain both notices.
 **D-30 Nuxt module prefix** stays `''` (no prefix). The Nuxt guide documents the name collision
 with shadcn-vue / Nuxt UI components (`Tooltip`, `Legend`, `Label`, …) and shows
 `vccs: { prefix: 'V' }` as the fix. No code change.
+
+## Amendments
+
+- **D-22a (2.0/2.3):** preserve registration paint order through hydration, reduced motion and updates; keep cursor → graphical → label tiers and geometry. [Reproduction](../../../.evidence/release-1.0/paint-order/result.json) shows hydrated Bar→Area→Line versus static Area→Bar→Line.
+- **D-17 (3.3/3.6):** remove Bar's internal `needClip`/`id`; replace its old one-way `activeIndex` with D-13's model prop and update emit. The model prop remains public. [Conflicting baseline contracts](../../../.evidence/release-1.0/model-prop-contract.md).
+- **D-25b (1.9):** motion checks require visible fill or stroke, including resolved alpha/opacity and stroke width; retain thresholds and positive opaque/stroke-only controls. [121 zero-alpha cell flags](../../../.evidence/breakit/B9/cell-charts-1280-result.json) are checker artifacts; unexplained overflow/entrance still fails.

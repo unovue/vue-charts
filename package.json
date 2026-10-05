@@ -33,7 +33,9 @@
     "check:docs": "node scripts/check-docs.mjs",
     "check:play": "node scripts/check-play.mjs",
     "check:seen": "node scripts/check-seen.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "bench": "node scripts/bench.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "dependencies": {
     "@vueuse/core": "^13.1.0",

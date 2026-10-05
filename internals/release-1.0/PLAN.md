@@ -153,11 +153,6 @@ Enter emits `node-click` with that node.
   uses `--v-charts-text`.
 - Brush traveller semantics from D-16 (labels and `aria-value*`; the range model itself changes
   in 3.6).
-- Correct the existing playground recorder's painted-visibility predicate (D-25b). Keep all
-  thresholds. Its browser fixture must detect opaque-fill and stroke-only teleports and reject
-  equivalent zero-alpha interaction geometry as visible motion. Record resolved paint opacity
-  in frames and filmstrips. Diagnose early overflow without discarding early frames; deliberate
-  transient and persistent overflow must continue to fail.
 - Add `scripts/check-a11y.mjs` (root script `check:a11y`, add it to `scripts/verify.mjs`),
   adapted from `reviews/ssr-a11y/*.mjs`. Use `axe-core` (already a root dev dependency). It renders all 19 charts plus
   Tooltip, Legend and Brush in a fixture page (light and dark theme with the docs' token values),
@@ -261,10 +256,6 @@ tooltip sync with mismatched data, resize, dynamic axis IDs, removal of the firs
 while another survives, registration disposal and repeated mount/unmount. Preserve existing
 nested-data and hierarchy mutation tests. Reproduce the in-place margin defect, fix its current
 reporting path, and keep the public regression through 2.2; do not carry a deliberately red suite.
-Add the ssr-a11y.md P2 row 4 ComposedChart paint-order regression (D-22a): the same
-Area/Bar/Line registration order after animated hydration, reduced motion and an animation-disabled
-client mount, with unchanged literal geometry. Fix the current Teleport ordering path before
-the model migration; preserve this regression through 2.3.
 Controlled rejection and empty ranges get their new-contract cases in 2.7/3.6.
 **Done when:** strict typecheck, packed nullability probe and the regression suite pass before
 2.1 starts. List remaining `@/state` test imports for migration/deletion in 2.10.
@@ -423,9 +414,8 @@ barrels it reads. Fix `docs/content/2.guides/14.typescript.md`'s claim to match.
 ### 3.3 Internal props out of the public API
 **Finding:** api.md P1-3. **Change:** D-17 rows for Line, Area, Bar, Legend, Label: outer
 (public) and inner (view) components, as XAxis already does.
-**Test:** the runtime `props` of each outer component contains none of the removed internal
-view names (one table test). Bar's `activeIndex` is replaced by the D-13 model contract in 3.6,
-so that model prop is not an internal-view name forbidden by this test; Line/Area have no model.
+**Test:** the runtime `props` of each outer component contains none of the removed names (one
+table test).
 
 ### 3.4 Chart prop sets and chart-level animation
 **Finding:** api.md P2-7, P3-12. **Change:** D-17 chart rows (remove `to`, `throttleDelay`; split
