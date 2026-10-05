@@ -1,5 +1,10 @@
 export default defineNuxtConfig({
   extends: ['docus'],
+  vite: {
+    // Docus' robots and og-image runtimes import nuxt/app without declaring nuxt, so they get
+    // whichever copy pnpm hoists; another workspace package's newer nuxt breaks the build.
+    resolve: { dedupe: ['nuxt'] },
+  },
   css: ['~/assets/main.css'],
   app: {
     head: {
