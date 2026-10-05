@@ -4,7 +4,7 @@ A Vite app with chart scenarios (`?s=bar`, `?s=areaStacked`, `?s=brush`, `?s=str
 
 | Command | What it proves |
 |---|---|
-| `pnpm motion:report [scenario…] --prod --check` | Every transition, frame-exact: video of every fake-clock animation frame and 4× slow motion, each moving shape's progress against the ideal easing, flags (jumps, reversals, stalls, unsettled shapes), page errors and Vue warnings, and real-clock frame timing at normal speed and with the CPU slowed 4×. Writes `.evidence/motion-report/index.html`. `--check` exits 1 on any flag, error or repeated slow frame. |
+| `pnpm motion:report [scenario…] --prod --check` | Every transition, frame-exact: video of every fake-clock animation frame and 4× slow motion, each moving shape's progress against the ideal easing, flags (jumps, reversals, stalls, unsettled shapes), page errors and Vue warnings, and real-clock frame timing at normal speed and with the CPU slowed 4×. Writes `.evidence/motion-report/index.html`. `--check` exits 1 on unaccepted flags, stale accepted flags or errors. `--strict-timing` also gates repeated slow frames. |
 | `pnpm motion:film [scenario…] [--steps=a,b] [--every=3]` | Contact sheets of every Nth frame on a fake clock, with numeric flags for pop-in/out, late snaps, path topology changes and NaN attributes. Quick visual review. |
 | `pnpm motion:audit [scenario…]` | No chart data in DOM attributes and no React-style attribute names. Exits 1 on any. |
 | `pnpm motion:profile <scenario> <step> [backStep] [cpuSlowdown]` | CPU profile of one step in a production build; top self-time functions. |
@@ -41,7 +41,7 @@ Dashboard scenarios:
 
 Report and film collect every SVG surface, prefixing identities only for additional
 surfaces. Overlap is measured within each surface's coordinate system. HTML BarList
-rows retain their keyed identities and contribute translateY progress; their bars'
+container height is sampled before each change to catch a synchronous snap. Rows retain their keyed identities and contribute translateY progress; their bars'
 percentage widths resolve to pixels for progress and jump thresholds. Films also
 capture row opacity. HTML rows do not participate in the SVG overlap metric.
 Color-only heatmap/cohort changes are visible in films but have no geometry curves.

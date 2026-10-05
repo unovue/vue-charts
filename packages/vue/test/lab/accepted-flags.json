@@ -1,0 +1,27 @@
+[
+  {
+    "scenario": "journey top8",
+    "kind": "backwards",
+    "element": "rect.v-charts-journey-node-continue#n:1\u0001/features/web-analytics@1"
+  },
+  {
+    "scenario": "journey top8",
+    "kind": "jump",
+    "element": "rect.v-charts-journey-node-continue#n:1\u0001/features/web-analytics@1"
+  },
+  {
+    "scenario": "journey top8",
+    "kind": "overlap",
+    "element": "bars"
+  },
+  {
+    "scenario": "journey top15",
+    "kind": "jump",
+    "element": "rect.v-charts-journey-node-continue#n:1\u0001/features/web-analytics@1"
+  },
+  {
+    "scenario": "journey top15",
+    "kind": "overlap",
+    "element": "bars"
+  }
+]

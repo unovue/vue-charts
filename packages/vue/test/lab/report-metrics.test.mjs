@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 // eslint-disable-next-line test/no-import-node-test
 import { test } from 'node:test'
 import { installHTMLGeometry } from './html-geometry.mjs'
-import { curves, flags } from './report-metrics.mjs'
+import { checkReport, curves, flags } from './report-metrics.mjs'
 import { advanceFrame, launchBrowser } from './shared.mjs'
 
 // Catch a gate regression that silently stops detecting a real one-frame discontinuity.
@@ -98,4 +98,43 @@ test('HTML bar list geometry keeps row identities and resolves widths to pixels'
   finally {
     await browser.close()
   }
+})
+
+// Catch acceptance hiding a new flag, a stale entry, page errors or strict timing failures.
+test('the report gate accepts only current listed identities', () => {
+  const row = {
+    scenario: 'journey',
+    step: 'top8',
+    issues: ['jump rect.node @112ms +30% (7px)'],
+    errors: [],
+    timing: { '1x': { slow: 3 } },
+  }
+  const accepted = [{ scenario: 'journey top8', kind: 'jump', element: 'rect.node' }]
+  for (const [name, report, entries, strict, failures, stale] of [
+    ['unlisted', [row], [], false, 1, 0],
+    ['listed', [row], accepted, false, 0, 0],
+    ['different element', [{ ...row, issues: ['jump rect.other @112ms +30% (7px)'] }], accepted, false, 1, 1],
+    ['stale', [{ ...row, issues: [] }], accepted, false, 0, 1],
+    ['page error', [{ ...row, errors: ['SVG height is negative'] }], accepted, false, 1, 0],
+    ['strict timing', [row], accepted, true, 1, 0],
+    ['focused run', [{ ...row, scenario: 'bar', step: 'values', issues: [] }], accepted, false, 0, 0],
+  ]) {
+    const result = checkReport(report, entries, strict)
+    assert.equal(result.failed.length, failures, name)
+    assert.equal(result.stale.length, stale, name)
+  }
+})
+
+// Catch a list that snaps its container height before its first recorded frame.
+test('a synchronous bar list height change is flagged', () => {
+  const id = 'ul.v-charts-bar-list#barList0'
+  const frames = [176, 176, 176].map((height, i) => ({
+    t: i * 16,
+    shapes: { [id]: `||${height}` },
+    overlap: 0,
+    ...(i === 0 ? { before: { [id]: '||212' } } : {}),
+  }))
+  assert.deepEqual(flags(curves(frames), frames).issues, [
+    'height jump ul.v-charts-bar-list#barList0 @0ms 212→176px',
+  ])
 })

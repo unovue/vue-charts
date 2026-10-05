@@ -2,45 +2,28 @@
 // moving shape's progress against the ideal easing, and real-clock frame timing at normal speed
 // and with the CPU slowed 4x. Writes an HTML report.
 // pnpm motion:report [scenario...] [--steps=a,b] [--out=dir] [--no-throttle] [--prod] [--browser=…] [--check]
-// --check exits 1 on any motion flag, page error, Vue warning or slow frame at normal speed.
+// --check gates geometry and page errors; --strict-timing also gates real-clock slow frames.
 /* eslint-disable no-console -- command-line output is the interface of these tools */
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { curves, flags } from './report-metrics.mjs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+import { motionTokens } from '../../src/animation/motion.ts'
+import { checkReport, curves, flags } from './report-metrics.mjs'
 import { installHTMLGeometry } from './html-geometry.mjs'
 import { FRAME, advanceFrame, flag, has, launchBrowser, positional, repo, settle, startServer } from './shared.mjs'
 
-const out = flag('out', join(repo, '.evidence/motion-report'))
+const out = resolve(flag('out', join(repo, '.evidence/motion-report')))
+const accepted = JSON.parse(readFileSync(new URL('./accepted-flags.json', import.meta.url), 'utf8'))
 const only = flag('steps', '')
 const throttle = !has('no-throttle')
 const WINDOW = 900
 const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'tracker', 'calendar', 'heatmap', 'cohort', 'sparkline', 'barList', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
 const scenarios = positional()
 
-// cubic-bezier(0.22, 1, 0.36, 1) sampled by Newton iteration, as the motion tokens define it.
-function bezier(x1, y1, x2, y2) {
-  const cx = 3 * x1
-  const bx = 3 * (x2 - x1) - cx
-  const ax = 1 - cx - bx
-  const cy = 3 * y1
-  const by = 3 * (y2 - y1) - cy
-  const ay = 1 - cy - by
-  const sx = t => ((ax * t + bx) * t + cx) * t
-  const sy = t => ((ay * t + by) * t + cy) * t
-  return (x) => {
-    let t = x
-    for (let i = 0; i < 8; i++) {
-      const d = (3 * ax * t + 2 * bx) * t + cx
-      if (Math.abs(d) < 1e-6)
-        break
-      t -= (sx(t) - x) / d
-    }
-    return sy(Math.min(1, Math.max(0, t)))
-  }
+const ideal = {
+  update: t => motionTokens.update.ease(Math.min(1, t / (motionTokens.update.duration * 1000))),
+  enter: t => motionTokens.enter.ease(Math.min(1, t / (motionTokens.enter.duration * 1000))),
 }
-const quint = bezier(0.22, 1, 0.36, 1)
-const ideal = { update: t => quint(Math.min(1, t / 500)), enter: t => quint(Math.min(1, t / 600)) }
 
 const server = await startServer()
 const url = server.url
@@ -90,7 +73,7 @@ function SAMPLER() {
       shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|') + faint(el)
     }
     for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
-      shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
+      shapes[id] = [attrs.transform ?? '', attrs.width ?? '', attrs.height ?? ''].join('|')
     const tip = document.querySelector('[role="tooltip"]')
     if (tip && tip.style.visibility === 'visible')
       shapes.tooltip = tip.style.transform
@@ -158,7 +141,7 @@ function SAMPLER() {
         shapes[`${base}@${counts[base]}`] = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'transform', 'points', 'stroke-width'].map(a => el.getAttribute(a) ?? '').join('|') + faint(el)
       }
       for (const [id, attrs] of Object.entries(window.__htmlGeometry()))
-        shapes[id] = [attrs.transform ?? '', attrs.width ?? ''].join('|')
+        shapes[id] = [attrs.transform ?? '', attrs.width ?? '', attrs.height ?? ''].join('|')
       const tip = document.querySelector('[role="tooltip"]')
       if (tip && tip.style.visibility === 'visible')
         shapes.tooltip = tip.style.transform
@@ -213,6 +196,7 @@ async function record(page, dir, name, act) {
   mkdirSync(frameDir, { recursive: true })
   const clip = await page.locator('.frame').boundingBox()
   const frames = []
+  const before = await page.evaluate(() => window.__snapshot())
   await act()
   const started = await page.evaluate(() => performance.now())
   for (let i = 0, t = 0; t <= WINDOW; i++) {
@@ -221,6 +205,7 @@ async function record(page, dir, name, act) {
     await advanceFrame(page)
     t = await page.evaluate(start => performance.now() - start, started)
   }
+  frames[0].before = before
   const video = join(dir, `${name}.mp4`)
   const slow = join(dir, `${name}-slow.mp4`)
   const scale = 'scale=trunc(iw/2)*2:trunc(ih/2)*2'
@@ -378,10 +363,12 @@ await browser.close()
 await server.close()
 
 if (has('check')) {
-  const failed = report.filter(r => r.issues.length || r.errors.length || (r.timing['1x']?.slow ?? 0) > 2)
+  const { failed, stale } = checkReport(report, accepted, has('strict-timing'))
   for (const r of failed)
-    console.error(`FAIL ${r.scenario} ${r.step}: ${[...r.issues, ...r.errors].slice(0, 3).join(' | ') || `${r.timing['1x'].slow} slow frames`}`)
+    console.error(`FAIL ${r.scenario} ${r.step}: ${r.failures.slice(0, 3).join(' | ')}`)
+  for (const entry of stale)
+    console.error(`STALE ${entry.scenario}: ${entry.kind} ${entry.element}`)
   console.log(`${report.length - failed.length}/${report.length} transitions clean · report: ${join(out, 'index.html')}`)
-  if (failed.length)
+  if (failed.length || stale.length)
     process.exitCode = 1
 }

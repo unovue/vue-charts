@@ -71,6 +71,15 @@ export function flags(curveList, frames) {
     if (!settle)
       issues.push(`unsettled ${c.id}`)
   }
+  // A synchronous height snap happens before the first animation frame.
+  for (const [id, shape] of Object.entries(frames[0]?.before ?? {})) {
+    if (!id.startsWith('ul.v-charts-bar-list#'))
+      continue
+    const before = nums(shape)[0]
+    const after = nums(frames[0].shapes[id])[0]
+    if (Math.abs(after - before) > 6)
+      issues.push(`height jump ${id} @0ms ${before}→${after}px`)
+  }
   // Bars that cover each other mid-transition although neither layout overlaps.
   if (frames.length && !frames[0].overlap && !frames.at(-1).overlap) {
     const worst = frames.reduce((a, f) => f.overlap > a.overlap ? f : a, frames[0])
@@ -79,4 +88,28 @@ export function flags(curveList, frames) {
   }
   const intervals = frames.slice(1).map((f, i) => f.t - frames[i].t)
   return { issues, intervals }
+}
+
+function identity(scenario, issue) {
+  const [kind, element] = issue.split(' ')
+  return { scenario, kind, element }
+}
+
+/** Gate only recorded scenarios, so focused runs can use the same acceptance file. */
+export function checkReport(report, accepted, strictTiming = false) {
+  const same = (a, b) => a.scenario === b.scenario && a.kind === b.kind && a.element === b.element
+  const observed = report.flatMap(r =>
+    r.issues.map(issue => identity(`${r.scenario} ${r.step}`, issue)))
+  const recorded = new Set(report.map(r => `${r.scenario} ${r.step}`))
+  const stale = accepted.filter(entry =>
+    recorded.has(entry.scenario) && !observed.some(flag => same(flag, entry)))
+  const failed = report.flatMap((r) => {
+    const failures = r.issues.filter(issue =>
+      !accepted.some(entry => same(identity(`${r.scenario} ${r.step}`, issue), entry)))
+    failures.push(...r.errors)
+    if (strictTiming && (r.timing['1x']?.slow ?? 0) > 2)
+      failures.push(`${r.timing['1x'].slow} slow frames`)
+    return failures.length ? [{ ...r, failures }] : []
+  })
+  return { failed, stale }
 }
