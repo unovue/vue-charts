@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Chart body for LandingCodeCard — one of four chart types by prop.
-// Animation off: transitions between charts are the parent's clip-path wipe.
+// Each chart plays its own entrance when its tab opens; the card only fades the old one out.
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, PolarGrid, Radar, RadarChart, XAxis } from 'vccs'
 
 defineProps<{ type: string }>()

@@ -116,10 +116,8 @@ const enterTransition = computed(() => reduced.value
 
 const tabBase = 'relative inline-flex h-7 cursor-pointer touch-manipulation items-center rounded-full px-3 font-mono text-[13px] font-medium transition-colors duration-(--ds-t-colour) ease-(--ds-ease) [-webkit-tap-highlight-color:transparent] [corner-shape:squircle] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ds-accent)'
 
-// Chart morph via AnimatePresence — exit is half the enter
-const chartEnter = computed(() => reduced.value
-  ? { duration: 0 }
-  : { duration: 0.32, ease: [0.2, 0, 0, 1] as const })
+// The old chart fades out; the new one appears at once and plays its own entrance, which a
+// fade on top would hide.
 const chartExit = computed(() => reduced.value
   ? { duration: 0 }
   : { duration: 0.16, ease: [0.2, 0, 0, 1] as const })
@@ -185,10 +183,9 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
           <motion.div
             :key="active"
             class="w-full"
-            :initial="reduced ? false : { opacity: 0, filter: 'blur(4px)' }"
+            :initial="false"
             :animate="{ opacity: 1, filter: 'blur(0px)' }"
             :exit="{ opacity: 0, filter: 'blur(4px)', transition: chartExit }"
-            :transition="chartEnter"
           >
             <LandingCodeCardChart
               :type="active"
