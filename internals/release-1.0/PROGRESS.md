@@ -12,8 +12,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.1 | License notice | yes | phase 0 | done | `193d090`, `35d815e` | Packed LICENSE contains each notice exactly once; full MIT blocks;1,240 tests and typing PASS. |
 | 1.2 | Stack ids that match Object members | yes | phase 0 | done | `afea98a` | Both accumulators prototype-safe;4 literal-height cases;reverse proof fails;1,244 tests/typecheck/build/lint PASS. |
 | 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | done | `4bd43ca` | 126 files / 1,245 tests, typing and changed-file lint PASS; reverse proof fails as expected. |
-| 1.4 | Funnel arrow keys never throw | yes | phase 0 | done | this commit | 126 files / 1,246 tests, typing and changed-file lint PASS; reverse proof reproduces two TypeErrors. |
-| 1.5 | Edge-data bugs | yes | phase 0 | todo | | |
+| 1.4 | Funnel arrow keys never throw | yes | phase 0 | done | `a6e54f7` | 126 files / 1,246 tests, typing and changed-file lint PASS; reverse proof reproduces two TypeErrors. |
+| 1.5 | Edge-data bugs | yes | phase 0 | done | `dba58d8`, `fa22eb5`, `8ece9ee`, `285bb44`, `fc53e5d` | Five separate bug commits; all reverse proofs fail as expected; 126 files / 1,254 tests, typing and changed-file lint PASS. |
 | 1.6 | Keyboard for item charts | yes | 1.4 | todo | | |
 | 1.7 | Treemap, Sankey, SunburstChart: attributes, names, keyboard | yes | 1.6 | todo | | |
 | 1.8 | Reduced motion hydrates cleanly | yes | phase 0 | todo | | |
@@ -112,3 +112,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Public focus and ArrowRight / ArrowLeft / Home / End test checks window errors and console errors without suppressing either.
 - Reverse patch reproduces two null-length TypeErrors; restored gate PASS: 126 files / 1,246 tests (79.64s), typecheck and changed-file lint zero warnings. [Proof](../../../.evidence/release-1.0/step-1.4-reverse.log), [suite](../../../.evidence/release-1.0/step-1.4-tests.log).
 - Assumptions: no navigation behavior added ahead of 1.6; Node 22.18.0 and two workers as in 1.3.
+
+## Step 1.5 evidence
+- Commits: B3 `dba58d8`, B4 `fa22eb5`, B5 `8ece9ee`, B6 `285bb44`, S1 `fc53e5d`; one bug per commit.
+- Public regressions cover missing calendar values, constant Sparkline paths, invalid journey counts and literal valid geometry, initial tooltip selection, and null / undefined / zero cohort periods.
+- All five reverse patches fail on the original bug and are restored; ordinary constant data and undefined / zero cohort controls already pass before their fixes.
+- Gate PASS: 126 files / 1,254 tests (64.81s), typecheck and all seven changed source/spec files lint with zero warnings.
+- [Commands and results](../../../.evidence/release-1.0/slice-1.3-1.5-checks.md); full suite and per-bug proof logs are in `.evidence/release-1.0/`.
+- Assumptions: validate journey counts before default step selection, preserving numeric coercion; selected Sparkline point watch follows data/geometry too. Node 22.18.0, two workers; no browser check named for this slice.
