@@ -225,6 +225,11 @@ async function openPage(s, fake) {
     await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'))
   }
   await page.goto(`${url}?s=${s}`)
+  if (fake) {
+    // Responsive charts reveal their measured layout on rAF; the paused clock must release it.
+    await page.waitForSelector('svg.v-charts-surface', { state: 'attached' })
+    await advanceFrame(page)
+  }
   await page.waitForSelector('svg.v-charts-surface')
   return { context, page, errors }
 }
