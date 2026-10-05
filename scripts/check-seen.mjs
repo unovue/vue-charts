@@ -17,7 +17,8 @@ const { chromium } = require('playwright-core')
 const option = name => process.argv.find(a => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 const fixture = process.argv.includes('--fixture')
 const only = option('only')
-const routeFilter = option('route')
+// `--route=/a,/b` checks only these routes.
+const routeFilter = option('route')?.split(',')
 const widths = option('width') ? [Number(option('width'))] : [1440, 390]
 if (only && !['docs', 'landing', 'play'].includes(only))
   throw new Error('Expected --only=docs|landing|play')
@@ -237,10 +238,10 @@ try {
       const routes = (await htmlFiles(publicDir)).map(file => `/${relative(publicDir, file).split(sep).join('/').replace(/(?:^|\/)index\.html$/, '').replace(/\.html$/, '')}`).filter(r => r === '/' || r.startsWith('/charts/')).sort()
       for (const width of widths) {
         if (only !== 'landing') {
-          for (const route of routes.filter(r => !routeFilter || routeFilter === r))
+          for (const route of routes.filter(r => !routeFilter || routeFilter.includes(r)))
             await run(docsBase, route, width)
         }
-        if ((!only || only === 'landing' || only === 'docs') && (!routeFilter || routeFilter === '/'))
+        if ((!only || only === 'landing' || only === 'docs') && (!routeFilter || routeFilter.includes('/')))
           await run(docsBase, '/', width, true)
       }
     }
@@ -248,7 +249,7 @@ try {
       const base = await servePlay()
       const routes = (await readdir(join(root, 'playground/nuxt/app/pages'))).filter(f => f.endsWith('.vue')).sort().map(f => f === 'index.vue' ? '/' : `/${f.slice(0, -4)}`)
       for (const width of widths) {
-        for (const route of routes.filter(r => !routeFilter || r === routeFilter))
+        for (const route of routes.filter(r => !routeFilter || routeFilter.includes(r)))
           await run(base, route, width)
       }
     }

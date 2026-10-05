@@ -7,7 +7,7 @@ Playwright is resolved through the existing @nuxt/test-utils installation.
 Only ports 4690–4699 are used; servers and browsers are stopped on completion.
 
 Options: `--fixture` runs just the five synthetic controls; `--only=docs|landing|play`
-selects a site/scenario; `--route=/charts/area-chart` filters exact routes;
+selects a site/scenario; `--route=/charts/area-chart,/bar-charts` filters exact routes (comma list);
 `--width=390` selects one width; `--skip-build` uses existing builds.
 `--only=docs` includes landing scroll and landing clicks; `--only=landing` runs
 only landing clicks. An unmatched route is a failed empty run.
