@@ -230,8 +230,10 @@ export function analyzeSeen(frames, meta) {
     const flags = []
     const disabled = samples.every(s => s.disabled)
     const firstHalfVisible = samples.find(s => s.visibleRatio >= 0.5) ?? samples[0]
-    // A chart with animation off, or one that never moves, has no entrance to miss.
-    if (!disabled && changes.length && (seenAt === null || progressAtSeen > 0.15 || seenMotionMs < 400))
+    // A chart with animation off, or one that only re-lays out for a frame or two at mount, has no
+    // entrance to miss.
+    const animated = entrance && samples[entrance.end].t - samples[entrance.start].t >= 100
+    if (!disabled && animated && (seenAt === null || progressAtSeen > 0.15 || seenMotionMs < 400))
       flags.push('unseen-entrance')
     if (!disabled && !changes.length)
       flags.push('no-entrance')
@@ -239,7 +241,10 @@ export function analyzeSeen(frames, meta) {
       flags.push('late-start')
     // A tooltip shown on purpose (defaultIndex) stays; a hover mark that flashes up without the
     // pointer and goes again is the defect.
-    if (samples.some(s => s.strayHover) && !samples.at(-1).strayHover)
+    // Judged only while the chart is on screen: a kept tooltip scrolled away is not "gone".
+    const onScreen = samples.filter(s => s.visibleRatio >= 0.5)
+    const firstStray = onScreen.findIndex(s => s.strayHover)
+    if (firstStray >= 0 && onScreen.slice(firstStray).some(s => !s.strayHover))
       flags.push('stray-hover')
     return { ...meta, chart: samples[0].name, id, trigger: meta.trigger ?? (firstHalfVisible.scrollY === 0 ? 'load' : 'scroll-into-view'), seenAt, motionStart, motionEnd, progressAtSeen, geometryProgressAtSeen, seenMotionMs, startDelayMs: seenAt !== null && motionStart !== null ? motionStart - seenAt : null, strayHoverFrames: samples.filter(s => s.strayHover).length, strayHoverAt: samples.find(s => s.strayHover)?.t ?? null, initialDistance, disabled, maximumGapMs, nearSeenGapMs, reliability: nearSeenGapMs > 50 ? 'unreliable' : 'reliable', flags }
   })

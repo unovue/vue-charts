@@ -105,7 +105,8 @@ onMounted(async () => {
   })
 })
 
-// Entrance transition; frozen under reduced motion.
+// Entrance: the card rises into place without fading, so its chart's own entrance is visible
+// from the first frame; frozen under reduced motion.
 // No motion `layout` here on purpose: height changes are eliminated at the
 // source (fixed chart heights) and the code pane's height is animated by
 // shiki-magic-move's own container animation — FLIP scaleY would squash text.
@@ -153,8 +154,8 @@ function pick(key: string) {
 <template>
   <motion.figure
     class="m-0 rounded-(--ds-radius-card) bg-(--ds-surface) p-(--ds-card-pad) shadow-(--ds-shadow-card)"
-    :initial="reduced ? false : { opacity: 0, y: 12 }"
-    :animate="{ opacity: 1, y: 0 }"
+    :initial="reduced ? false : { y: 12 }"
+    :animate="{ y: 0 }"
     :transition="enterTransition"
     @mouseenter="paused = true"
     @mouseleave="paused = false"
