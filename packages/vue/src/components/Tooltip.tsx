@@ -754,7 +754,9 @@ const _Tooltip = defineComponent({
           return [`${name ?? ''} ${value ?? ''}`.trim()]
         })
         if (entries.length)
-          tooltip.announcement.value = `${selectedLabel.value ?? ''}: ${entries.join(', ')}`
+          tooltip.announcement.value = finalLabel.value == null
+            ? entries.join(', ')
+            : `${finalLabel.value}: ${entries.join(', ')}`
       }, 150)
       cleanup(() => clearTimeout(timer))
     }, { flush: 'post' })

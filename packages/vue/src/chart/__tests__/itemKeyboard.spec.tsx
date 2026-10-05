@@ -30,7 +30,7 @@ it.each([
       </Pie>
       <Tooltip isAnimationActive={false} />
     </PieChart>
-  ), '1: B 20'],
+  ), 'B 20'],
   ['Scatter', () => (
     <ScatterChart width={500} height={300}>
       <XAxis dataKey="x" type="number" name="Position" />
@@ -40,7 +40,7 @@ it.each([
       </Scatter>
       <Tooltip isAnimationActive={false} />
     </ScatterChart>
-  ), '2: Position 2, Value 20'],
+  ), 'Position 2, Value 20'],
   ['Funnel', () => (
     <FunnelChart width={500} height={300}>
       <Funnel data={data} dataKey="value" isAnimationActive={false}>
@@ -48,7 +48,7 @@ it.each([
       </Funnel>
       <Tooltip isAnimationActive={false} />
     </FunnelChart>
-  ), ': B 20'],
+  ), 'B 20'],
 ])('%s navigates data and announces its tooltip', async (_, chart, announcement) => {
   mockGetBoundingClientRect({ width: 500, height: 300 })
   vi.useFakeTimers()

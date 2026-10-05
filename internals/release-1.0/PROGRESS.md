@@ -14,7 +14,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | done | `4bd43ca` | 126 files / 1,245 tests, typing and changed-file lint PASS; reverse proof fails as expected. |
 | 1.4 | Funnel arrow keys never throw | yes | phase 0 | done | `a6e54f7` | 126 files / 1,246 tests, typing and changed-file lint PASS; reverse proof reproduces two TypeErrors. |
 | 1.5 | Edge-data bugs | yes | phase 0 | done | `dba58d8`, `fa22eb5`, `8ece9ee`, `285bb44`, `fc53e5d` | Five separate bug commits; all reverse proofs fail as expected; 126 files / 1,254 tests, typing and changed-file lint PASS. |
-| 1.6 | Keyboard for item charts | yes | 1.4 | done | `f8484c3` | 127 files / 1,258 tests; typing and changed-file lint PASS. |
+| 1.6 | Keyboard for item charts | yes | 1.4 | done | `f8484c3`, announcement follow-up | 127 files / 1,258 tests; typing and changed-file lint PASS. |
 | 1.7 | Treemap, Sankey, SunburstChart: attributes, names, keyboard | yes | 1.6 | done | `f3528ef`, migration note commit | 128 files / 1,261 tests; typing and changed-file lint PASS. |
 | 1.8 | Reduced motion hydrates cleanly | yes | phase 0 | todo | | |
 | 1.9 | Contrast, Legend and Brush semantics, and an a11y check | yes | 1.6–1.8 | todo | | |
@@ -127,6 +127,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Gate PASS: 127 files / 1,258 tests (68.37s), typecheck, changed-file eslint zero warnings. [Suite](../../../.evidence/release-1.0/step-1.6-tests.log).
 - Chromium keyboard PASS for Pie, Scatter and Funnel at 900px and 390px; visible tooltip / live region / 2px outline, zero page errors. [Results](../../../.evidence/release-1.0/keyboard-browser/before-1.7.json).
 - Assumptions: keep existing tooltip label wording; identify equal-data-key series by their registered configuration; use Node 22.23.1 and two workers. Commit: this step's final commit.
+
+- Final comparison: announcements now use the displayed tooltip label; reverse fails three item cases. Final slice gate: 1,265 tests, typing and lint PASS. [Proof](../../../.evidence/release-1.0/item-announcement-reverse.log). Follow-up: this commit.
 
 ## Step 1.7 evidence
 - Done: root attrs, D-15 titles/descriptions, D-14 spatial/pre-order navigation and Enter node-click; nested Treemap paths use source identity.
