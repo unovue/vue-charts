@@ -11,8 +11,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 0.3 | Coverage that runs | yes | 0.1 | done | `b8ad56b`, `4ed7d5b` | 126 files/1,240 tests PASS; statements87.03%, branches75.63%, lines86.65%;272 source files, no tests/helpers/stories instrumented. |
 | 1.1 | License notice | yes | phase 0 | done | `193d090`, `35d815e` | Packed LICENSE contains each notice exactly once; full MIT blocks;1,240 tests and typing PASS. |
 | 1.2 | Stack ids that match Object members | yes | phase 0 | done | `afea98a` | Both accumulators prototype-safe;4 literal-height cases;reverse proof fails;1,244 tests/typecheck/build/lint PASS. |
-| 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | done | this commit | 126 files / 1,245 tests, typing and changed-file lint PASS; reverse proof fails as expected. |
-| 1.4 | Funnel arrow keys never throw | yes | phase 0 | todo | | |
+| 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | done | `4bd43ca` | 126 files / 1,245 tests, typing and changed-file lint PASS; reverse proof fails as expected. |
+| 1.4 | Funnel arrow keys never throw | yes | phase 0 | done | this commit | 126 files / 1,246 tests, typing and changed-file lint PASS; reverse proof reproduces two TypeErrors. |
 | 1.5 | Edge-data bugs | yes | phase 0 | todo | | |
 | 1.6 | Keyboard for item charts | yes | 1.4 | todo | | |
 | 1.7 | Treemap, Sankey, SunburstChart: attributes, names, keyboard | yes | 1.6 | todo | | |
@@ -106,3 +106,9 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Reverse patch fails: expected `10`, received `10,20`; restored fix passes. [Proof](../../../.evidence/release-1.0/step-1.3-reverse.log).
 - Gate PASS: 126 files / 1,245 tests (98.81s), typecheck, changed-file eslint zero warnings. [Suite](../../../.evidence/release-1.0/step-1.3-tests.log).
 - Assumptions: two workers as in baseline; Node 22.18.0 available locally; slot text checks literal payload values and visible tooltip. No browser check required by this step.
+
+## Step 1.4 evidence
+- Guard missing or empty axis ticks before axis keyboard interaction; item navigation remains step 1.6.
+- Public focus and ArrowRight / ArrowLeft / Home / End test checks window errors and console errors without suppressing either.
+- Reverse patch reproduces two null-length TypeErrors; restored gate PASS: 126 files / 1,246 tests (79.64s), typecheck and changed-file lint zero warnings. [Proof](../../../.evidence/release-1.0/step-1.4-reverse.log), [suite](../../../.evidence/release-1.0/step-1.4-tests.log).
+- Assumptions: no navigation behavior added ahead of 1.6; Node 22.18.0 and two workers as in 1.3.

@@ -65,6 +65,8 @@ export function useChartInteractions() {
       combineActiveTooltipIndex(keyboardInteraction, selectTooltipDisplayedData(state)),
     )
     const tooltipTicks = selectTooltipAxisTicks(state)
+    if (!tooltipTicks?.length)
+      return
     if (key === 'Enter') {
       const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(keyboardInteraction.index))
       tooltip.setKeyboardInteraction({

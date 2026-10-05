@@ -1,8 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { defineComponent, nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FunnelChart } from '@/chart/FunnelChart'
-import { Funnel } from '@/cartesian/funnel/Funnel'
+import { Funnel, FunnelChart } from '@/index'
 import { Tooltip } from '@/components/Tooltip'
 import { Legend } from '@/components/legend'
 import { Cell } from '@/components/Cell'
@@ -20,6 +19,35 @@ describe('funnelChart', () => {
     { value: 50, name: 'Checkout', fill: '#8dd1e1' },
     { value: 30, name: 'Purchase', fill: '#82ca9d' },
   ]
+
+  it('handles navigation keys without axis ticks or console errors', async () => {
+    const error = vi.spyOn(console, 'error')
+    const errors: unknown[] = []
+    function onError(event: ErrorEvent) {
+      errors.push(event.error)
+    }
+    window.addEventListener('error', onError)
+    try {
+      const { container } = render(() => (
+        <FunnelChart width={500} height={300}>
+          <Funnel dataKey="value" data={data} isAnimationActive={false} />
+          <Tooltip />
+        </FunnelChart>
+      ))
+      const root = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+      root.focus()
+      await nextTick()
+      expect(document.activeElement).toBe(root)
+      for (const key of ['ArrowRight', 'ArrowLeft', 'Home', 'End'])
+        await fireEvent.keyDown(root, { key })
+      expect(errors).toEqual([])
+      expect(error).not.toHaveBeenCalled()
+    }
+    finally {
+      window.removeEventListener('error', onError)
+      error.mockRestore()
+    }
+  })
 
   describe('basic rendering', () => {
     it('renders 4 trapezoid elements', () => {
