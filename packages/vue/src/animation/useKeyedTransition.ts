@@ -51,7 +51,8 @@ export interface KeyedTransitionOptions<T> {
   keepEntrance?: (current: T, target: T) => T
   /**
    * Play the entrance after hydration instead of showing the final state at once. The server
-   * renders the entrance's start (e.g. a line not drawn yet), so hydration matches it.
+   * renders the entrance's start (e.g. a line not drawn yet, bars on their baseline), so
+   * hydration matches it. On by default for series; axes and grids follow them.
    */
   entranceAfterHydration?: boolean
   onStart?: () => void
@@ -107,7 +108,8 @@ export function useKeyedTransition<T>(
   // chart then follows its box directly instead of trailing it.
   const chartSize = useChartSize()
   const gesture = useChartGesture()
-  let lastSize: string | undefined
+  let lastSize: string | null | undefined
+  let resizing = false
   // The first appearance is animating, on this clock (ms) and timing.
   let entering = false
   let entranceClock: { start: number, timing: PhaseTiming } | undefined
@@ -228,7 +230,7 @@ export function useKeyedTransition<T>(
     const { next, active, reduced, size, dragging } = state
     const nextItems = next ?? []
     let skip = skipEntrance && !hasEntered
-    if (skip && options.entranceAfterHydration && active && nextItems.length) {
+    if (skip && (options.entranceAfterHydration ?? !options.followsSeries) && active && nextItems.length) {
       const start = plan(nextItems).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
       if (onServer) {
         // The server sends the entrance's start; the client plays it after hydration.
@@ -244,7 +246,7 @@ export function useKeyedTransition<T>(
         hasEntered = true
         return
       }
-      if (size === undefined) {
+      if (size == null) {
         // Hydrated but not measured yet: keep the server's start and draw once the real size
         // is known, so the entrance does not slide from the initial size.
         items.value = start
@@ -254,14 +256,30 @@ export function useKeyedTransition<T>(
       items.value = []
       skip = false
     }
+    // A responsive chart that has not measured itself is invisible: its entrance waits for the
+    // real size instead of playing at the initial one and sliding when the size arrives.
+    if (size === null && !skip && !hasEntered && !onServer && active && reduced !== 'reduce') {
+      items.value = []
+      return
+    }
     // A new size snaps. The first measurement replaces the initial size: an entrance still in
     // flight re-targets to it, but anything else (a hydrated server render, or a small update
     // after mount) snaps, instead of sliding from the initial size to the measured one.
-    const resized = size !== undefined && size !== lastSize && (lastSize !== undefined || (hasEntered && !entering))
+    const resized = size != null && size !== lastSize && (lastSize !== undefined || (hasEntered && !entering))
     lastSize = size ?? lastSize
     skipEntrance = false
+    // Layout that follows a resize a step later (axis offsets, bar positions) is part of the
+    // resize until the next frame, instead of sliding from the old size.
+    if (resized) {
+      resizing = true
+      if (typeof requestAnimationFrame === 'function')
+        requestAnimationFrame(() => { resizing = false })
+      else
+        resizing = false
+    }
+    const followsResize = resizing && !resized
     let keepDrawing = false
-    if (resized && entering && options.keepEntrance && active && reduced !== 'reduce' && !dragging) {
+    if ((resized || followsResize) && entering && options.keepEntrance && active && reduced !== 'reduce' && !dragging) {
       // Take the new layout at once and let the entrance carry on from where it was.
       const current = new Map(items.value.map(item => [item.key, item.value]))
       items.value = keyed(nextItems).map(({ key, value }) => {
@@ -270,7 +288,7 @@ export function useKeyedTransition<T>(
       })
       keepDrawing = true
     }
-    if (skip || !active || reduced === 'reduce' || (resized && !keepDrawing) || dragging) {
+    if (skip || !active || reduced === 'reduce' || ((resized || followsResize) && !keepDrawing) || dragging) {
       hasEntered = true
       snap(nextItems)
       return

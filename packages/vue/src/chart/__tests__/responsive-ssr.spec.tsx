@@ -61,6 +61,10 @@ describe('responsive server rendering', () => {
     expect(box.style.visibility).toBe('hidden')
     MockResizeObserver.instances.at(-1)!.trigger(800, 400)
     await nextTick()
+    // Shown a frame later, once layout that follows the size has caught up.
+    expect(box.style.visibility).toBe('hidden')
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    await nextTick()
     expect(box.style.visibility).toBe('')
     expect(container.querySelector('svg')!.getAttribute('width')).toBe('800')
     expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 800 400')
@@ -142,7 +146,7 @@ describe('specialized responsive charts', () => {
   it.each([
     ['Sankey', () => <Sankey data={{ nodes: [{ name: 'A' }, { name: 'B' }], links: [{ source: 0, target: 1, value: 10 }] }} isAnimationActive={false} />, '.v-charts-sankey-node rect'],
     ['Treemap', () => <Treemap data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]} isAnimationActive={false} />, '.v-charts-treemap rect'],
-    ['Sunburst', () => <SunburstChart data={{ name: 'root', children: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }] }} />, '.v-charts-sunburst-sector'],
+    ['Sunburst', () => <SunburstChart data={{ name: 'root', children: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }] }} isAnimationActive={false} />, '.v-charts-sunburst-sector'],
   ])('renders and hydrates %s at initial geometry, then resizes', async (_name, render, selector) => {
     class DeferredObserver extends MockResizeObserver {
       observe() {}

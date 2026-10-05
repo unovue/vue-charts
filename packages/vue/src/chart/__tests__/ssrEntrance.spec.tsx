@@ -46,11 +46,10 @@ function geometry(container: HTMLElement) {
 }
 
 describe('entrance animation and server rendering', () => {
-  it('renders the final chart on the server with animations enabled', async () => {
+  it('sends the series at the start of their entrance, which plays after hydration', async () => {
     const shown = geometry(parse(await renderToString(createSSRApp({ render }))))
-    expect(shown.bars).toHaveLength(2)
-    expect(shown.area).not.toBeNull()
-    // Lines draw themselves after hydration, like Recharts; the server sends them undrawn.
+    // Bars sit on their baseline (nothing to draw yet) and the line is not drawn yet.
+    expect(shown.bars).toHaveLength(0)
     expect(shown.lineVisible).toBe(true)
     expect(shown.lineDrawn).toBe('0 1')
   })

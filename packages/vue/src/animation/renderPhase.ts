@@ -3,7 +3,7 @@ import { Global } from '@/utils/Global'
 import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, onScopeDispose, provide, ref, ssrContextKey } from 'vue'
 
 const renderPhaseKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-render-phase')
-const chartSizeKey: InjectionKey<() => string | undefined> = Symbol('v-charts-size')
+const chartSizeKey: InjectionKey<() => string | null | undefined> = Symbol('v-charts-size')
 const seriesMotionKey: InjectionKey<Set<() => boolean>> = Symbol('v-charts-series-motion')
 const gestureKey: InjectionKey<Ref<boolean>> = Symbol('v-charts-gesture')
 
@@ -36,12 +36,16 @@ export function useSeriesMotion() {
  * Called by the chart root with its settled size (undefined until a responsive chart has measured
  * its box). Motion uses it to tell a resize from a data change.
  */
-export function provideChartSize(size: () => string | undefined) {
+/** `null` while a responsive chart has not measured itself yet. */
+export function provideChartSize(size: () => string | null) {
   provide(chartSizeKey, size)
 }
 
-/** The chart's settled size, as an opaque string; changes only when the chart is resized. */
-export function useChartSize(): () => string | undefined {
+/**
+ * The chart's settled size, as an opaque string; changes only when the chart is resized.
+ * `null` while a responsive chart has not measured itself, `undefined` outside a chart.
+ */
+export function useChartSize(): () => string | null | undefined {
   return hasInjectionContext() ? inject(chartSizeKey, () => undefined) : () => undefined
 }
 
