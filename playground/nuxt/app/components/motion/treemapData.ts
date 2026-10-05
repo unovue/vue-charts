@@ -1,4 +1,4 @@
-// The docs' simple treemap data, so the variants compare against what visitors see there.
+// The docs' simple treemap data, so the motion page shows what visitors see there.
 export const treemapData = [
   {
     name: 'axis',

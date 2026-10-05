@@ -7,6 +7,8 @@ defineProps<{
   description: string
   /** Each button runs one data change, so its transition plays. */
   steps: { label: string, run: () => void }[]
+  /** Changes to replay every card at once. */
+  replayAll?: number
 }>()
 
 // Remounting replays the entrance with the current data.
@@ -34,7 +36,7 @@ const mount = ref(0)
         Entrance
       </Button>
     </header>
-    <div :key="mount">
+    <div :key="`${replayAll ?? 0}-${mount}`">
       <slot />
     </div>
     <div class="flex flex-wrap gap-2">
