@@ -90,9 +90,8 @@ export function isServerRender(): boolean {
 }
 
 /**
- * Called by every chart root. Entrance animations must not run when the chart's content is
- * already visible: on the server (the HTML must show the final chart) and while hydrating
- * server HTML (replaying the entrance would make the chart vanish and regrow).
+ * Called by every chart root. The server sends the entrance start; hydration preserves that
+ * geometry. The entrance plays after hydration when the chart is measured and on screen.
  *
  * Text measurement also waits so hydration reproduces the server layout before relayout.
  * The gate stays closed until the first frame after mount, because series move into their
@@ -112,7 +111,7 @@ export function provideRenderPhase() {
   provide(gestureKey, ref(false))
 }
 
-/** True when an element created now must appear in its final state. Call during setup. */
+/** True during server rendering or the first hydration frame. Call during setup. */
 export function shouldSkipEntrance(): boolean {
   return isServerRender() || (inject(renderPhaseKey, null)?.value ?? false)
 }

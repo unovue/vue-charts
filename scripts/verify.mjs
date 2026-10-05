@@ -3,6 +3,11 @@
 // See VERIFY.md for what each check proves. `--quick` skips the browser sweeps.
 import { spawnSync } from 'node:child_process'
 
+const docsBrowsers = process.argv.find(arg => arg.startsWith('--docs-browser='))?.slice(15)
+if (docsBrowsers && !/^(?:chromium|firefox|webkit)(?:,(?:chromium|firefox|webkit))*$/.test(docsBrowsers))
+  throw new Error('Expected --docs-browser=chromium,firefox,webkit or a subset')
+const docsCommand = `pnpm check:docs${docsBrowsers ? ` --browser=${docsBrowsers}` : ''}`
+
 const quick = process.argv.includes('--quick')
 const checks = [
   ['unit and regression tests', 'pnpm test'],
@@ -15,7 +20,8 @@ const checks = [
         ['accessibility, contrast and hydration', 'pnpm check:a11y'],
         ['frame-exact motion (lab)', 'pnpm motion:report --prod --check'],
         ['playground pages in a browser', 'pnpm check:play'],
-        ['docs pages in Chromium and WebKit', 'pnpm check:docs'],
+        ['docs pages in selected browsers', docsCommand],
+        ['docs checker regression', 'node --test scripts/check-docs.test.mjs'],
         ['entrances visitors actually see', 'pnpm check:seen'],
       ]),
 ]

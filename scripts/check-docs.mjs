@@ -89,6 +89,8 @@ if (!routes.length)
   throw new Error(`No HTML routes found${onlyRoute ? ` for ${onlyRoute}` : ''}; build the docs first`)
 const chartRoutes = routes.filter(route => route.startsWith('/charts/'))
 let origin
+const chartGeometry = 'svg.v-charts-surface, ul.v-charts-bar-list'
+
 async function audit(browser, engine, route, mobile) {
   const viewport = mobile ? { width: 375, height: 812 } : { width: 1280, height: 800 }
   const page = await browser.newPage({ viewport })
@@ -119,15 +121,15 @@ async function audit(browser, engine, route, mobile) {
       const demo = demos.nth(i)
       await demo.scrollIntoViewIfNeeded()
       try {
-        await demo.locator('svg.v-charts-surface').first().waitFor({ state: 'visible', timeout: 10000 })
+        await demo.locator(chartGeometry).first().waitFor({ state: 'visible', timeout: 10000 })
       }
       catch {
-        result.findings.push({ kind: 'demo', text: `Demo ${i + 1}: no visible svg.v-charts-surface; ${(await demo.innerText()).slice(0, 300)}` })
+        result.findings.push({ kind: 'demo', text: `Demo ${i + 1}: no visible chart geometry; ${(await demo.innerText()).slice(0, 300)}` })
       }
       await page.waitForTimeout(300)
-      const surfaces = await demo.locator('svg.v-charts-surface').evaluateAll(nodes => nodes.map((node) => {
+      const surfaces = await demo.locator(chartGeometry).evaluateAll(nodes => nodes.map((node) => {
         const box = node.getBoundingClientRect()
-        return { width: box.width, height: box.height, shapes: node.querySelectorAll('path,rect,circle,polygon,line,text').length }
+        return { width: box.width, height: box.height, shapes: node.querySelectorAll('path,rect,circle,polygon,line,text,.v-charts-bar-list-row').length }
       }))
       result.demos.push({ index: i + 1, surfaces })
       if (!surfaces.length || surfaces.some(surface => surface.width <= 0 || surface.height <= 0))
