@@ -403,3 +403,8 @@ with shadcn-vue / Nuxt UI components (`Tooltip`, `Legend`, `Label`, …) and sho
 - **D-17 (3.3/3.6):** remove Bar's internal `needClip`/`id`; replace its old one-way `activeIndex` with D-13's model prop and update emit. The model prop remains public. [Conflicting baseline contracts](../../../.evidence/release-1.0/model-prop-contract.md).
 - **D-25b (1.9):** motion checks require visible fill or stroke, including resolved alpha/opacity and stroke width; retain thresholds and positive opaque/stroke-only controls. [121 zero-alpha cell flags](../../../.evidence/breakit/B9/cell-charts-1280-result.json) are checker artifacts; unexplained overflow/entrance still fails.
 - **D-27a (1.2):** prototype-safe grouping must cover axis stack groups and bar sizing. The [one-path fix reproduction](../../../.evidence/release-1.0/step-1.2-regression-after.log) still crashes all three prototype-named IDs in `combineBarSizeList`; preserve literal bar heights and ordinary/numeric grouping.
+- **D-25c (1.12 evidence):** the pre-slice engine reproduces six `top8` flags:
+  four backwards, one 7px jump and one 78px² overlap; `top15` has two jumps and an 83px² overlap.
+  [Comparison](../../.evidence/release-1.0/journey-baseline/report.json).
+  The extra `top8` jump and overlap contradict D-25's enumeration. Acceptance and checks
+  remain unchanged; reconcile the discrepancy in 1.13.

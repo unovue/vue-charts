@@ -164,8 +164,19 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Assumptions: preserve sorted display indexes; bound presence to 0–1; reuse the motion clock. Linear work verified by source review; no CPU timing claim. Verification servers closed.
 
 ## Step 1.11 evidence
-- Done: `a920bd6` preserves equal targets, cascade turns and animation elapsed time; springs overshoot geometry, while opacity and presence stay bounded.
-- Five regressions fail with the engine reversed; restored PASS, including inactive and public resize snaps. Existing snap assertions now follow D-26; callback recovery uses a real run.
-- Gate PASS: 129 files / 1,277 tests (65.33 s), typecheck and eight changed files lint with zero warnings.
-- Evidence: `.evidence/release-1.0/step-1.11-gate.log`, `step-1.11-reverse-final.log`, `step-1.11-typecheck-final.log`, `step-1.11-lint.log`.
-- Assumptions: existing es-toolkit equality compares target content; equal in-flight refreshes leave the current run alone. Node 22.23.1, two workers; no timing claim.
+- Done: `a920bd6`, `e7daf33`, `dd12465`, `8a15c6c`.
+- Equal copies, cascade turns, spring overshoot and one animation clock fixed.
+- Snaps emit no callbacks; opacity and presence stay bounded; endpoints stay exact.
+- Gate PASS: 129 files / 1,277 tests initially; final combined 1,280 tests (70.86 s).
+- Typecheck, lint and build PASS; six regressions fail with their fixes reversed.
+- Evidence: `.evidence/release-1.0/step-1.11-1.12-checks.md`; logs alongside.
+- Assumptions: existing es-toolkit equality; Node 22.23.1, two workers.
+
+## Step 1.12 evidence
+- Done: `54ee9cf`; tokens, shared reveal and child labels preserve chart context.
+- Gate PASS: 129 files / 1,280 tests; typing, lint on 18 files and build PASS.
+- Two label reverse proofs fail as intended; restored PASS; tooltip timing is 150ms.
+- Chromium 900/390px: Thu 110 → ≈92.336 → 91.5; 12/12 months retained; zero errors.
+- Full lab: 280/285, exit 1; corrected Sankey recheck 12/12. Journey extras match baseline (D-25c).
+- Evidence: `.evidence/release-1.0/step-1.11-1.12-checks.md`; reports linked there.
+- Assumptions: domain and YYYY-MM keys; initial labels unchanged; acceptance unchanged.
