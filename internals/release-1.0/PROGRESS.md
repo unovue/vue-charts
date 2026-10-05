@@ -144,3 +144,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Chromium Node SSR/hydration: 8/8 cases, zero warnings/errors; reduced cells have zero transitions. Final keyboard: 12/12 visible tooltips and matching live content, zero errors. [Checks](../../../.evidence/release-1.0/slice-1.6-1.8-checks.md).
 - Earlier attempts had 11, 16 and 19 failures; fixed clock ordering and effect-scope startup without changing those tests. Vite optimizer 504 timeout was retained and a warmed rerun passed.
 - Assumptions: detached effect scopes have no hydration phase; unit SSR disables matchMedia before client reduce; Node 22.23.1, two workers. Chromium only; no screen-reader certification.
+
+## Step 1.9 evidence
+- Done: `7176d44` adds D-20 contrast, native Legend / BarList controls, D-16 Brush semantics and `check:a11y` in verify.
+- Gate PASS: 129 files / 1,270 tests (75.70 s), typecheck, build and changed-file eslint with zero warnings.
+- Browser PASS: 100 cases / 780 text samples; minimum 4.83:1; zero serious / critical axe violations, hydration warnings or page errors; 25 SSR cases render.
+- Six public regressions fail under reverse patches and pass restored. Tooltip positive control exits 1 with 34 contrast failures (minimum 3.53:1); restored full check exits 0.
+- [Commands, proofs and limits](../../../.evidence/release-1.0/step-1.9-checks.md); screenshots / final results in `.evidence/release-1.0/a11y/`.
+- Assumptions: retain 18% BarList tint; buttons when a row-click listener exists; preserve links / slots. Variable fills use explicit D-20 foregrounds; opaque fixture tests automatic choice.
+- Limits: semantic fixtures disable animation; both motion preferences hydrate. Chromium at 900px, Node 22.23.1, two workers; no screen-reader application exercised.
