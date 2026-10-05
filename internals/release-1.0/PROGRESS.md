@@ -22,7 +22,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.11 | Engine: equal data, cascades, springs, events, one clock | yes | phase 0 | todo | | |
 | 1.12 | Motion tokens, shared cascade, moving labels | yes | 1.11 | todo | | |
 | 1.13 | Lab: current curve, list height, accepted flags | yes | 1.10–1.12 | done | 660f4d8 | 285/285 lab; 1,280 tests; 6 metrics tests |
-| 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | todo | | |
+| 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | done | bbde4b8 | 126/126 docs; 1,280 tests; 1 CLI regression |
 | 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | todo | | |
 | 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
@@ -190,3 +190,13 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/step-1.13-checks.md`; baseline worktree removed.
 - Anomaly: 78 throttled worst intervals are smaller; largest 33.2 → 10.4 ms. No speed conclusion.
 - Assumptions: Node 22 source imports; focused staleness; existing overlap identity; absolute output.
+
+## Step 1.14 evidence
+- Done: `bbde4b8`; generated timing table, riding labels, D-1 SSR facts and D-30 prefix note.
+- Guide headings unchanged; rendered text and final guide screenshots reviewed.
+- Gate PASS: 129 files / 1,280 tests; typecheck and lint with zero warnings; timing table check.
+- Docs PASS: 126 visits; zero failures or engine errors in Chromium/WebKit. Firefox cannot launch.
+- Native BarList checker regression: one test passes; fails under its reverse patch; restored PASS.
+- Existing Unhead override repaired in one lock entry; offline install reused cache, zero downloads.
+- Evidence: `.evidence/release-1.0/step-1.14-checks.md`; initial eight docs failures retained there.
+- Assumptions: normal docs build; Node 22; `verify --docs-browser=chromium,webkit`; thresholds unchanged.
