@@ -38,15 +38,23 @@ export function curves(frames) {
   return result
 }
 
+// A rect folded to under 2 px (width or height) is not visible, so moving it is not a visible jump:
+// cells that fold away and unfold one column over (a calendar's first weekday) do exactly that.
+function folded(frames, id, t) {
+  const parts = String(frames.find(f => f.t === t)?.shapes[id] ?? '').split('|')
+  const [width, height] = [Number(parts[3]), Number(parts[4])]
+  return parts[3] !== '' && parts[4] !== '' && (Math.abs(width) < 2 || Math.abs(height) < 2)
+}
+
 export function flags(curveList, frames) {
   const issues = []
   for (const c of curveList) {
     for (let i = 1; i < c.pts.length; i++) {
       const [t, p] = c.pts[i]
-      const [, prev] = c.pts[i - 1]
+      const [tPrev, prev] = c.pts[i - 1]
       if (c.id !== 'tooltip' && p - prev < -0.04 && prev < 1.02)
         issues.push(`backwards ${c.id} @${Math.round(t)}ms ${prev.toFixed(2)}→${p.toFixed(2)}`)
-      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6)
+      if (i > 1 && p - prev > 0.3 && c.span * (p - prev) > 6 && !(folded(frames, c.id, tPrev) && folded(frames, c.id, t)))
         issues.push(`jump ${c.id} @${Math.round(t)}ms +${((p - prev) * 100).toFixed(0)}% (${(c.span * (p - prev)).toFixed(0)}px)`)
     }
     // A stall: progress stuck mid-way for 3+ frames.

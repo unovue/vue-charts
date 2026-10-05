@@ -4,7 +4,7 @@
 /* eslint-disable no-console -- command-line output is the interface of these tools */
 import { launchBrowser, positional, startServer } from './shared.mjs'
 
-const all = ['bar', 'barStacked', 'barHorizontal', 'line', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'sunburst', 'tooltip']
+const all = ['bar', 'barStacked', 'barHorizontal', 'line', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'tracker', 'calendar', 'heatmap', 'cohort', 'sparkline', 'barList', 'sunburst', 'tooltip']
 const browser = await launchBrowser()
 let server
 try {

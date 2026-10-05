@@ -12,7 +12,7 @@ const dark = process.argv.includes('--dark')
 const every = Number(flag('every', 3))
 const out = flag('out', join(repo, '.evidence/motion-film'))
 const WINDOW = Number(flag('window', 900))
-const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'sunburst', 'resize']
+const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'tracker', 'calendar', 'heatmap', 'cohort', 'sparkline', 'barList', 'sunburst', 'resize']
 const scenarios = positional()
 const only = flag('steps', '')
 

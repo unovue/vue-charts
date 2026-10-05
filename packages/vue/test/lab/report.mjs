@@ -15,7 +15,7 @@ const out = flag('out', join(repo, '.evidence/motion-report'))
 const only = flag('steps', '')
 const throttle = !has('no-throttle')
 const WINDOW = 900
-const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
+const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'tracker', 'calendar', 'heatmap', 'cohort', 'sparkline', 'barList', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
 const scenarios = positional()
 
 // cubic-bezier(0.22, 1, 0.36, 1) sampled by Newton iteration, as the motion tokens define it.

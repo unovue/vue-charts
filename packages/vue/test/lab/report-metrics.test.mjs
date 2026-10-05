@@ -16,6 +16,16 @@ test('a bar that skips 40px in one frame is flagged', () => {
   assert.ok(flags(curves(frames), frames).issues.includes('jump rect.#bar0/Apr@1 @48ms +40% (40px)'))
 })
 
+test('a cell that moves while folded to nothing is not a jump', () => {
+  // Fold away at x=0, move to x=78 while under 2 px, unfold there.
+  const frames = [[0, 12], [0, 6], [0, 1], [78, 1], [78, 6], [78, 12], [78, 12]].map(([x, size], i) => ({
+    t: i * 16,
+    shapes: { 'rect.v-charts-cell-rect#2025-01-12@1': `|${x}|0|${size}|${size}|||||` },
+    overlap: 0,
+  }))
+  assert.deepEqual(flags(curves(frames), frames).issues.filter(issue => issue.startsWith('jump')), [])
+})
+
 // Catch sampling two rAF callbacks as one frame after earlier steps change the clock phase.
 test('each clock advance samples exactly one animation frame at every phase', async () => {
   const browser = await launchBrowser()
