@@ -157,6 +157,7 @@ export function useKeyedTransition<T>(
   }
 
   function snap(next: readonly T[]) {
+    lastTarget = next
     stop()
     entering = false
     items.value = keyed(next).map(({ key, value }) => ({ key, value, phase: 'update' as const }))

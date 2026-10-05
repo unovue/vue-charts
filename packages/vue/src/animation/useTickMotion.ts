@@ -58,7 +58,7 @@ export function useTickMotion<T extends TickLike>(
       ...to,
       coordinate: mix(from.coordinate, to.coordinate, t),
       ...(typeof from.tickCoord === 'number' && typeof to.tickCoord === 'number' ? { tickCoord: mix(from.tickCoord, to.tickCoord, t) } : {}),
-      opacity: mix(from.opacity, to.opacity, t),
+      opacity: Math.min(1, Math.max(0, mix(from.opacity, to.opacity, t))),
     }),
     enterFrom: to => placeOn(to, shownScale, scale()),
     exitTo: from => placeOn(from, scale(), shownScale),

@@ -56,7 +56,8 @@ describe('useKeyedTransition', () => {
   it('does not animate an equal copy, including during entrance', async () => {
     const onStart = vi.fn()
     const onEnd = vi.fn()
-    const { data } = setup([{ name: 'A', height: 100 }], { onStart, onEnd })
+    const active = shallowRef(true)
+    const { data, result } = setup([{ name: 'A', height: 100 }], { onStart, onEnd, isActive: () => active.value })
     at(0.3)
     onStart.mockClear()
     data.value = [{ name: 'A', height: 100 }]
@@ -71,6 +72,15 @@ describe('useKeyedTransition', () => {
     expect(clock.runs).toHaveLength(1)
     expect(onStart).not.toHaveBeenCalled()
     expect(onEnd).not.toHaveBeenCalled()
+    active.value = false
+    data.value = [{ name: 'A', height: 200 }]
+    await nextTick()
+    active.value = true
+    data.value = [{ name: 'A', height: 100 }]
+    await nextTick()
+    expect(result.isAnimating.value).toBe(true)
+    finish()
+    expect(result.items.value[0].value.height).toBe(100)
   })
 
   it('keeps an unstarted cascade item waiting after a change', async () => {
