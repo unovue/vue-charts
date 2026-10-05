@@ -9,6 +9,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent, ref, toRaw, watch } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
@@ -323,7 +324,7 @@ const TreemapInner = defineComponent({
       }
     }
 
-    function renderNode(node: TreemapLayoutNode, index: number, key: PropertyKey) {
+    function renderNode(node: TreemapLayoutNode, index: number, key: PropertyKey, labelFade?: number) {
       const nodeFill = getNodeFill(node)
 
       const nodeProps: TreemapContentSlotProps = {
@@ -376,6 +377,7 @@ const TreemapInner = defineComponent({
               y={node.y + node.height / 2 + 7}
               fill="var(--v-charts-background, #fff)"
               font-size={14}
+              opacity={labelFade}
             >
               {node.name}
             </text>
@@ -439,7 +441,7 @@ const TreemapInner = defineComponent({
         {renderBreadcrumb()}
         <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
           <Layer class="v-charts-treemap">
-            {items.value.map(({ key, value }, index) => renderNode(value, index, key))}
+            {items.value.map((item, index) => renderNode(item.value, index, item.key, labelOpacity(item)))}
           </Layer>
         </Surface>
       </>

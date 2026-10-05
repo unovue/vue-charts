@@ -226,5 +226,15 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       await frame()
       expect(container.textContent).toContain('Root')
     })
+
+    it('fades treemap labels in with their tiles', async () => {
+      mockGetBoundingClientRect({ width: 10, height: 10 })
+      const { container } = render(() => <Treemap width={400} height={300} data={initial} />)
+      const label = () => container.querySelector('.v-charts-treemap-node text')
+      await frame(0.05)
+      expect(Number(label()?.getAttribute('opacity') ?? 1)).toBeLessThan(0.5)
+      await frame()
+      expect(label()?.hasAttribute('opacity')).toBe(false)
+    })
   }
 }
