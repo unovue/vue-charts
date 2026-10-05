@@ -166,6 +166,28 @@ describe('cartesianGrid', () => {
   })
 
   describe('rendering inside LineChart', () => {
+    it('keeps grid geometry off lines while preserving user stroke attributes', () => {
+      const { container } = render(() => (
+        <LineChart width={500} height={300} data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <CartesianGrid stroke="#123456" stroke-dasharray="3 3" stroke-opacity={0.5} />
+          <Line dataKey="uv" isAnimationActive={false} />
+        </LineChart>
+      ))
+
+      expect(getHorizontalLines(container).length).toBeGreaterThan(0)
+      expect(getVerticalLines(container).length).toBeGreaterThan(0)
+      container.querySelectorAll('.v-charts-cartesian-grid line').forEach((line) => {
+        for (const attribute of ['x', 'y', 'width', 'height', 'offset']) {
+          expect(line.hasAttribute(attribute), attribute).toBe(false)
+        }
+        expect(line.getAttribute('stroke')).toBe('#123456')
+        expect(line.getAttribute('stroke-dasharray')).toBe('3 3')
+        expect(line.getAttribute('stroke-opacity')).toBe('0.5')
+      })
+    })
+
     it('renders grid lines inside a LineChart', () => {
       const { container } = render(() => (
         <LineChart width={500} height={300} data={data}>

@@ -10,6 +10,6 @@ export function renderLineItem(slot: ((...args: any[]) => any) | undefined, opti
   }
 
   const { x1, y1, x2, y2, key, ...others } = { ...props } as any
-  const { offset: __, ...restOfFilteredProps } = filterProps(others, false) as any
+  const { x: _x, y: _y, width: _width, height: _height, offset: _offset, ...restOfFilteredProps } = filterProps(others, false) as any
   return <line {...restOfFilteredProps} x1={x1} y1={y1} x2={x2} y2={y2} fill="none" key={key} />
 }
