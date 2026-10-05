@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Funnel, FunnelChart, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, Sankey, Treemap } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { motionTokens } from '@/animation/motion'
 
 const clock = vi.hoisted(() => ({ reduced: false, runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean, duration?: number }> }))
 vi.mock('motion-v', async original => ({
@@ -222,7 +223,7 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       const count = clock.runs.length
       await fireEvent.click(container.querySelector('.v-charts-treemap-node')!)
       expect(clock.runs.length).toBe(count + 1)
-      expect(clock.runs.at(-1)?.duration).toBe(0.6)
+      expect(clock.runs.at(-1)?.duration).toBe(motionTokens.enter.duration)
       await frame()
       expect(container.textContent).toContain('Root')
     })

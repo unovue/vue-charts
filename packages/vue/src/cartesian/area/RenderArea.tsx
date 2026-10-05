@@ -10,7 +10,8 @@ import { getValueByDataKey, isClipDot } from '@/utils/chart'
 import { Dot } from '@/shape/Dot'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
-import { labelOpacity, sweepShare, sweptLabels } from '@/animation/ridingLabels'
+import { labelOpacity, polylineLength, sweepShare, sweptLabels } from '@/animation/ridingLabels'
+import { drawTiming } from '@/animation/motion'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisSettings } from '@/state/selectors/axisSelectors'
 import { useAreaContext } from './hooks/useArea'
@@ -92,6 +93,8 @@ export const StaticArea = defineComponent({
       valueAxis: () => layout.value === 'vertical' ? 'x' : 'y',
       isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
+      // The area sweeps open at the pace a line of the same outline draws, so both move together.
+      entrance: () => drawTiming(polylineLength(points.value ?? [])),
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),
     })

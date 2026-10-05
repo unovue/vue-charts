@@ -9,6 +9,7 @@ import { useReportScale } from '@/state/utils/useReportScale'
 import { providePortalRaw } from '@/chart/TooltipPortalContext'
 import { provideLegendPortalRaw } from '@/chart/LegendPortalContext'
 import { getChartPointer } from '@/utils/chart'
+import { provideChartInView } from '@/animation/renderPhase'
 
 export const ChartsWrapper = defineComponent({
   name: 'ChartsWrapper',
@@ -47,6 +48,28 @@ export const ChartsWrapper = defineComponent({
       legendPortal.value = node
       wrapperEl.value = node
     }
+
+    // On screen once a quarter of the chart is visible, or half the viewport for a chart taller
+    // than that. Without IntersectionObserver (tests, old browsers) the chart counts as seen.
+    const inView = ref(typeof IntersectionObserver === 'undefined')
+    provideChartInView(inView)
+    let viewObserver: IntersectionObserver | undefined
+    onMounted(() => {
+      if (inView.value || !wrapperEl.value) {
+        inView.value = true
+        return
+      }
+      viewObserver = new IntersectionObserver((entries) => {
+        const entry = entries.at(-1)!
+        const viewport = entry.rootBounds?.height ?? window.innerHeight
+        if (entry.isIntersecting && (entry.intersectionRatio >= 0.25 || entry.intersectionRect.height >= viewport / 2)) {
+          inView.value = true
+          viewObserver?.disconnect()
+        }
+      }, { threshold: [0, 0.25, 0.5, 1] })
+      viewObserver.observe(wrapperEl.value)
+    })
+    onUnmounted(() => viewObserver?.disconnect())
 
     let observer: ResizeObserver | undefined
     onMounted(() => {

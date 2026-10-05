@@ -5,7 +5,7 @@ import type { ShallowRef } from 'vue'
 import { nextTick, onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { motionTokens } from './motion'
-import { isServerRender, shouldSkipEntrance, useChartGesture, useChartSize, useSeriesMotion } from './renderPhase'
+import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from './renderPhase'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
 
@@ -108,6 +108,7 @@ export function useKeyedTransition<T>(
   // chart then follows its box directly instead of trailing it.
   const chartSize = useChartSize()
   const gesture = useChartGesture()
+  const inView = useChartInView()
   let lastSize: string | null | undefined
   let resizing = false
   // The first appearance is animating, on this clock (ms) and timing.
@@ -223,11 +224,11 @@ export function useKeyedTransition<T>(
     return [...staying.flatMap(item => [...(exitsBefore.get(item.key) ?? []), item]), ...trailingExits]
   }
 
-  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value, size: chartSize(), dragging: gesture.value }), (state) => {
+  watch(() => ({ next: target(), active: options.isActive(), reduced: reducedMotion.value, size: chartSize(), dragging: gesture.value, seen: inView.value }), (state) => {
     // A getter that throws (e.g. a user dataKey function) leaves no state; keep what is drawn.
     if (!state)
       return
-    const { next, active, reduced, size, dragging } = state
+    const { next, active, reduced, size, dragging, seen } = state
     const nextItems = next ?? []
     let skip = skipEntrance && !hasEntered
     if (skip && (options.entranceAfterHydration ?? !options.followsSeries) && active && nextItems.length) {
@@ -246,9 +247,9 @@ export function useKeyedTransition<T>(
         hasEntered = true
         return
       }
-      if (size == null) {
-        // Hydrated but not measured yet: keep the server's start and draw once the real size
-        // is known, so the entrance does not slide from the initial size.
+      if (size == null || !seen) {
+        // Hydrated but not measured or not on screen yet: keep the server's start and draw once
+        // the real size is known and the reader can see it.
         items.value = start
         return
       }
@@ -257,8 +258,9 @@ export function useKeyedTransition<T>(
       skip = false
     }
     // A responsive chart that has not measured itself is invisible: its entrance waits for the
-    // real size instead of playing at the initial one and sliding when the size arrives.
-    if (size === null && !skip && !hasEntered && !onServer && active && reduced !== 'reduce') {
+    // real size instead of playing at the initial one and sliding when the size arrives. A chart
+    // off screen waits until it scrolls into view.
+    if ((size === null || !seen) && !skip && !hasEntered && !onServer && active && reduced !== 'reduce') {
       items.value = []
       return
     }

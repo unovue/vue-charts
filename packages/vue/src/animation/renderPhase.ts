@@ -6,6 +6,20 @@ const renderPhaseKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-re
 const chartSizeKey: InjectionKey<() => string | null | undefined> = Symbol('v-charts-size')
 const seriesMotionKey: InjectionKey<Set<() => boolean>> = Symbol('v-charts-series-motion')
 const gestureKey: InjectionKey<Ref<boolean>> = Symbol('v-charts-gesture')
+const inViewKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-in-view')
+
+/**
+ * Called by the chart wrapper: whether the chart has been on screen. Entrances wait for it, so a
+ * chart further down the page plays its entrance when the reader gets there, not unseen at load.
+ */
+export function provideChartInView(inView: Readonly<Ref<boolean>>) {
+  provide(inViewKey, inView)
+}
+
+/** Whether the chart has been on screen; always true outside a chart. */
+export function useChartInView(): Readonly<Ref<boolean>> {
+  return (hasInjectionContext() ? inject(inViewKey, null) : null) ?? ref(true)
+}
 
 /**
  * True while the user drags something that changes the chart continuously (a brush). Like a
