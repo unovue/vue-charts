@@ -147,7 +147,7 @@ const PieView = defineComponent({
       const towardEnd = Math.min(1, Math.max(0, 0.5 - (pos.x - sector.cx) / (2 * ANCHOR_BLEND)))
       const anchor = towardEnd === 0 ? 'start' : towardEnd === 1 ? 'end' : towardEnd === 0.5 ? 'middle' : 'start'
       const slide = anchor === 'start' && towardEnd > 0
-        ? { transformBox: 'fill-box', transform: `translateX(${-Math.round(towardEnd * 1000) / 10}%)` }
+        ? { transformBox: 'fill-box' as const, transform: `translateX(${-Math.round(towardEnd * 1000) / 10}%)` }
         : undefined
       return (
         <g key={`label-${String(key)}`} opacity={opacity}>
