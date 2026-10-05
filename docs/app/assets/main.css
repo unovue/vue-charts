@@ -76,6 +76,21 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Chart chrome follows the docs theme; vccs reads these variables with Recharts colours as fallback. */
+:root {
+  --v-charts-grid: var(--ds-border);
+  --v-charts-axis: var(--ds-border);
+  --v-charts-text: var(--ds-muted);
+  --v-charts-cursor: var(--ds-border);
+  --v-charts-muted: var(--ds-block);
+  --v-charts-background: var(--ds-surface);
+  --v-charts-inactive: var(--ds-muted);
+  --v-charts-focus: var(--ds-accent);
+  --v-charts-tooltip-background: var(--ds-surface);
+  --v-charts-tooltip-border: var(--ds-border);
+  --v-charts-tooltip-foreground: var(--ds-text);
+}
+
 /* Match Recharts default axis tick font size */
 .v-charts-cartesian-axis-tick {
   font-size: 0.75rem;
