@@ -8,8 +8,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | --- | --- | --- | --- | --- | --- | --- |
 | 0.1 | Environment and baseline verdict | yes | — | done | `c0c4d81`, `745da98`, `9e82e9b`, `a25538c` | Frozen install, Node 22 setup, locked/prefetched consumers and fresh network-denied typechecks/builds PASS. Step gate: current-config typecheck PASS; 126 files / 1,240 tests PASS with two workers; changed-file lint PASS with zero warnings. Full untouched-library baseline recorded below, including failed/unavailable checks. No library/model source changes. |
 | 0.2 | Baseline build, benchmark and bundle scripts | yes | 0.1 | done | `a2554e2`, `7ae8462` | A/A18/18 within7.9%; CPU-control verified; size/standalone baseline and step gate recorded below. |
-| 0.3 | Coverage that runs | yes | 0.1 | done | `b8ad56b` | 126 files/1,240 tests PASS; statements87.03%, branches75.63%, lines86.65%;272 source files, no tests/helpers/stories instrumented. |
-| 1.1 | License notice | yes | phase 0 | todo | | |
+| 0.3 | Coverage that runs | yes | 0.1 | done | `b8ad56b`, `4ed7d5b` | 126 files/1,240 tests PASS; statements87.03%, branches75.63%, lines86.65%;272 source files, no tests/helpers/stories instrumented. |
+| 1.1 | License notice | yes | phase 0 | done | `193d090` | Packed LICENSE contains each notice exactly once; full MIT blocks;1,240 tests and typing PASS. |
 | 1.2 | Stack ids that match Object members | yes | phase 0 | todo | | |
 | 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | todo | | |
 | 1.4 | Funnel arrow keys never throw | yes | phase 0 | todo | | |
@@ -91,3 +91,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - `b8ad56b`: root coverage script targets vccs; exclude `**/__tests__/**` from instrumentation. No runtime/source behavior changed.
 - `pnpm test:coverage --maxWorkers=2` PASS:126 files/1,240 tests,82.56s; statements87.03% (8,095/9,301), branches75.63% (5,387/7,122), lines86.65% (7,395/8,534). [Log](../../../.evidence/release-1.0/step-0.3-coverage.log).
 - Report written;272 source files, zero test/helper/story entries. [Preserved baseline JSON](../../../.evidence/baseline/coverage-final.json). Current-config typing and targeted lint PASS with zero warnings; instrumented full suite supplies the unit gate.
+
+## Step 1.1 evidence
+- `193d090`: preserve Rick-hup's MIT notice and append D-29's full upstream notice. Packed root LICENSE contains one `2015-present recharts`, one `Rick-hup`, two full permission blocks; no duplicate library LICENSE needed. [Result](../../../.evidence/release-1.0/step-1.1-license.json).
+- Node22 `pnpm --dir packages/vue pack --pack-destination ../../.evidence/pack` PASS. The plan's `--filter ... pack` command fails on pnpm9's unsupported recursive option; equivalent directory-scoped packing succeeds. Typing and126 files/1,240 tests PASS (75.04s); lint N/A (license text only).
