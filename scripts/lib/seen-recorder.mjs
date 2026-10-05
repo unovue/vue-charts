@@ -36,14 +36,15 @@ export function installSeenRecorder() {
       const s = styleOf(p)
       opacity *= Number(s.opacity)
       hidden ||= s.display === 'none' || s.visibility === 'hidden'
-      // blur(0px) is still a blur filter per the brief's literal definition.
-      blurred ||= s.filter !== 'none' && s.filter.includes('blur')
-      blur += Number.parseFloat(s.filter.match(/blur\(([^)]+)/)?.[1] ?? '0')
+      // A blur that has settled at 0px (a finished fade-in) no longer hides anything.
+      const radius = Number.parseFloat(s.filter.match(/blur\(([^)]+)/)?.[1] ?? '0')
+      blurred ||= radius > 0.3
+      blur += radius
       if (s.scale && s.scale !== 'none')
-        blurred ||= s.scale.split(' ').some(value => Number.parseFloat(value) / (value.endsWith('%') ? 100 : 1) !== 1)
+        blurred ||= s.scale.split(' ').some(value => Math.abs(Number.parseFloat(value) / (value.endsWith('%') ? 100 : 1) - 1) > 0.01)
       if (s.transform !== 'none') {
         const matrix = new DOMMatrixReadOnly(s.transform)
-        blurred ||= Math.hypot(matrix.m11, matrix.m12, matrix.m13) !== 1 || Math.hypot(matrix.m21, matrix.m22, matrix.m23) !== 1 || Math.hypot(matrix.m31, matrix.m32, matrix.m33) !== 1
+        blurred ||= [[matrix.m11, matrix.m12, matrix.m13], [matrix.m21, matrix.m22, matrix.m23], [matrix.m31, matrix.m32, matrix.m33]].some(row => Math.abs(Math.hypot(...row) - 1) > 0.01)
       }
     }
     return { visibleRatio: hidden ? 0 : ratio, effectiveOpacity: opacity, blurred, blur, box: [box.x, box.y, box.width, box.height] }
@@ -161,29 +162,32 @@ const numeric = /[-+]?(?:\d*\.\d+|\d+)(?:e[-+]?\d+)?/gi
 function signature(geometry) {
   return JSON.stringify(geometry).replace(numeric, v => String(Math.round(Number(v) * 1000) / 1000))
 }
-// Each attribute contributes its relative L1 distance; missing shapes contribute one.
+// Each attribute contributes its relative L1 distance, capped at one per shape: a shape that is
+// not drawn yet is the farthest a shape can be from its final state.
 function distance(geometry, final) {
   const current = new Map(geometry.map(s => [s.id, s.values]))
   const target = new Map(final.map(s => [s.id, s.values]))
   let sum = 0
-  for (const key of new Set([...current.keys(), ...target.keys()])) {
+  // Only the final chart's shapes count; shapes on their way out are not part of the entrance.
+  for (const [key, b] of target) {
     const a = current.get(key)
-    const b = target.get(key)
-    if (!a || !b) {
+    if (!a) {
       sum++
       continue
     }
+    let shape = 0
     for (const attr of new Set([...Object.keys(a), ...Object.keys(b)])) {
       if (a[attr] === b[attr])
         continue
       const x = String(a[attr] ?? '').match(numeric)?.map(Number) ?? []
       const y = String(b[attr] ?? '').match(numeric)?.map(Number) ?? []
       if (!x.length || x.length !== y.length) {
-        sum++
+        shape++
         continue
       }
-      sum += x.reduce((n, v, i) => n + Math.abs(v - y[i]), 0) / Math.max(1, x.reduce((n, v) => n + Math.abs(v), 0), y.reduce((n, v) => n + Math.abs(v), 0))
+      shape += x.reduce((n, v, i) => n + Math.abs(v - y[i]), 0) / Math.max(1, x.reduce((n, v) => n + Math.abs(v), 0), y.reduce((n, v) => n + Math.abs(v), 0))
     }
+    sum += Math.min(1, shape)
   }
   return sum
 }
@@ -201,13 +205,26 @@ export function analyzeSeen(frames, meta) {
   return [...entries].map(([id, samples]) => {
     const seenIndex = samples.findIndex(s => s.visibleRatio >= 0.5 && s.effectiveOpacity >= 0.95 && !s.blurred)
     const changes = samples.map((s, i) => i && signature(s.geometry) !== signature(samples[i - 1].geometry) ? i : -1).filter(i => i >= 0)
-    const startIndex = changes[0]
+    // The entrance is the longest run of changing frames (gaps up to 120 ms); one-frame layout
+    // changes at mount, while the chart is still off screen or hidden, are not part of it.
+    const runs = []
+    for (const index of changes) {
+      const run = runs.at(-1)
+      if (run && samples[index].t - samples[run.end].t <= 120)
+        run.end = index
+      else
+        runs.push({ start: index, end: index })
+    }
+    const entrance = runs.reduce((best, run) => !best || samples[run.end].t - samples[run.start].t > samples[best.end].t - samples[best.start].t ? run : best, null)
+    const startIndex = entrance?.start
     const seenAt = seenIndex < 0 ? null : samples[seenIndex].t
-    const motionStart = startIndex === undefined ? null : samples[startIndex].t
-    const motionEnd = changes.length ? samples[changes.at(-1)].t : null
+    const motionStart = entrance ? samples[entrance.start].t : null
+    const motionEnd = entrance ? samples[entrance.end].t : null
     const final = samples.at(-1).geometry
     const initialDistance = startIndex === undefined ? 0 : distance(samples[startIndex - 1].geometry, final)
-    const progressAtSeen = seenAt === null ? null : initialDistance ? 1 - distance(samples[seenIndex].geometry, final) / initialDistance : 1
+    // Share of the entrance's time that had passed when the chart was first properly visible.
+    const progressAtSeen = seenAt === null ? null : motionEnd === motionStart ? 1 : Math.min(1, Math.max(0, (seenAt - motionStart) / (motionEnd - motionStart)))
+    const geometryProgressAtSeen = seenAt === null || !initialDistance ? null : 1 - distance(samples[seenIndex].geometry, final) / initialDistance
     const seenMotionMs = seenAt === null || motionEnd === null ? 0 : Math.max(0, motionEnd - seenAt)
     const nearSeenGapMs = Math.max(0, ...frames.slice(1).map((f, i) => seenAt !== null && f.t >= seenAt - 100 && frames[i].t <= seenAt + 1200 ? f.t - frames[i].t : 0))
     const flags = []
@@ -221,6 +238,6 @@ export function analyzeSeen(frames, meta) {
       flags.push('late-start')
     if (samples.some(s => s.strayHover))
       flags.push('stray-hover')
-    return { ...meta, chart: samples[0].name, id, trigger: meta.trigger ?? (firstHalfVisible.scrollY === 0 ? 'load' : 'scroll-into-view'), seenAt, motionStart, motionEnd, progressAtSeen, seenMotionMs, startDelayMs: seenAt !== null && motionStart !== null ? motionStart - seenAt : null, strayHoverFrames: samples.filter(s => s.strayHover).length, strayHoverAt: samples.find(s => s.strayHover)?.t ?? null, initialDistance, disabled, maximumGapMs, nearSeenGapMs, reliability: nearSeenGapMs > 50 ? 'unreliable' : 'reliable', flags }
+    return { ...meta, chart: samples[0].name, id, trigger: meta.trigger ?? (firstHalfVisible.scrollY === 0 ? 'load' : 'scroll-into-view'), seenAt, motionStart, motionEnd, progressAtSeen, geometryProgressAtSeen, seenMotionMs, startDelayMs: seenAt !== null && motionStart !== null ? motionStart - seenAt : null, strayHoverFrames: samples.filter(s => s.strayHover).length, strayHoverAt: samples.find(s => s.strayHover)?.t ?? null, initialDistance, disabled, maximumGapMs, nearSeenGapMs, reliability: nearSeenGapMs > 50 ? 'unreliable' : 'reliable', flags }
   })
 }

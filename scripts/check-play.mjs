@@ -276,7 +276,7 @@ try {
       throw new Error(`${filter} build exited ${build.status}; see build-${filter}.log`)
   }
   let base
-  for (let port = 4690; !process.argv.includes('--fixture-only') && port <= 4699; port++) {
+  for (let port = 4660; !process.argv.includes('--fixture-only') && port <= 4669; port++) {
     serverLog = ''
     server = spawn(process.execPath, ['.output/server/index.mjs'], { cwd: join(root, 'playground/nuxt'), env: { ...process.env, PORT: String(port), HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] })
     server.stdout.on('data', chunk => serverLog += chunk)
@@ -292,7 +292,7 @@ try {
     }
   }
   if (!base && !process.argv.includes('--fixture-only'))
-    throw new Error('No server started in ports 4690–4699')
+    throw new Error('No server started in ports 4660–4669')
   browser = await chromium.launch({ headless: true, ...(process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
   async function run(route, width, fixture = false) {
     const name = `${fixture ? 'fixture' : route.replaceAll('/', '') || 'index'}-${width}`
