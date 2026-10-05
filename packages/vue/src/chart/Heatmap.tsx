@@ -170,7 +170,6 @@ const _Heatmap = defineComponent({
             column,
             label: `${yText(y)}, ${xText(x)}`,
             value: text ?? null,
-            amount: data.value,
             text: props.showValues ? text : undefined,
             strong: ratio > 0.55,
             payload: data,
@@ -214,7 +213,6 @@ const _Heatmap = defineComponent({
               ariaLabel={props.ariaLabel}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
-              entrance={props.entrance}
               {...{
                 'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
                 'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),

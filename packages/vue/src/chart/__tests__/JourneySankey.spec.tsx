@@ -112,6 +112,18 @@ describe('<JourneySankey />', () => {
     expect(pinned.value).toBeNull()
   })
 
+  it('fades the pages in one after another, starting from the top-left', async () => {
+    const { container } = render(() => <JourneySankey width={900} height={600} data={journeys} />)
+    await nextTick()
+    const nodes = Array.from(container.querySelectorAll<SVGGElement>('.v-charts-journey-node'))
+    const shown = (node: SVGGElement) => Number(node.style.opacity)
+    expect(nodes.every(node => shown(node) === 0)).toBe(true)
+    await frame(0.4)
+    expect(shown(nodes[0]!)).toBeGreaterThan(shown(nodes.at(-1)!))
+    await frame()
+    expect(nodes.every(node => shown(node) === 1)).toBe(true)
+  })
+
   it('fades a removed journey out before the remaining nodes slide past it', async () => {
     const data = ref(journeys)
     const { container, getByText } = render(() => <JourneySankey width={900} height={600} data={data.value} />)

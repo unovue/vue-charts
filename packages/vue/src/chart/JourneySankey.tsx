@@ -45,21 +45,7 @@ const LABEL_HEIGHT = 34
 const CHAR_WIDTH = 6.6
 const CURVATURE = 0.42
 
-/**
- * How the journeys first appear. Experimental: the playground's motion page compares these
- * until the default is chosen.
- * - `grow`: every page and band grows at once
- * - `flow`: step by step from the left, each band stretching out from its source page
- * - `columns`: column by column, pages settling into place, bands arriving with their target
- * - `diagonal`: a wave from the top-left corner, like the treemap
- * - `pages`: the pages first, column by column, then the paths between them
- * - `fade`: everything fades in together
- */
-export type JourneyEntrance = 'grow' | 'flow' | 'columns' | 'diagonal' | 'pages' | 'fade'
-
 export const JourneySankeyVueProps = {
-  /** How the journeys first appear; see `JourneyEntrance`. Experimental. */
-  entrance: { type: String as PropType<JourneyEntrance>, default: undefined },
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   /** One row per journey: the pages (or events) in order and how many sessions took it. */
@@ -161,7 +147,7 @@ const JourneySankeyInner = defineComponent({
       exitTo: shape => shape.kind === 'node'
         ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }
         : { kind: 'link', link: { ...shape.link, width: 0 } },
-      reveal: () => revealOf(props.entrance ?? 'grow'),
+      reveal,
       connected: true,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
@@ -181,36 +167,19 @@ const JourneySankeyInner = defineComponent({
       return to
     }
 
-    // Where each page and band starts, and its turn (0 first, 1 last), per entrance style.
-    function revealOf(style: JourneyEntrance): Reveal<Shape> | undefined {
-      const { steps, nodes } = layout.value
-      if (style === 'grow' || !nodes.length)
+    // The first appearance: a wave from the top-left corner, like the treemap. Pages and bands
+    // fade in on their turn while settling a few pixels down into place.
+    function reveal(): Reveal<Shape> | undefined {
+      const { nodes } = layout.value
+      if (!nodes.length)
         return undefined
-      const last = Math.max(1, steps.length - 1)
-      const column = (step: number) => Math.min(1, Math.max(0, step / last))
       const bottom = Math.max(...nodes.map(node => node.y + node.continueHeight + node.exitHeight))
       const span = props.width + bottom || 1
-      const settle = (shape: Shape, dy: number): Shape => shape.kind === 'node'
-        ? { ...shape, node: { ...shape.node, y: shape.node.y - dy }, fade: 0 }
-        : { ...shape, link: { ...shape.link, y0: shape.link.y0 - dy, y1: shape.link.y1 - dy }, fade: 0 }
-      // A band stretching out from its source page to its target.
-      const stretch = (shape: Shape): Shape => shape.kind === 'link'
-        ? { ...shape, link: { ...shape.link, x1: shape.link.x0, y1: shape.link.y0 }, fade: 0 }
-        : { ...shape, node: { ...shape.node, continueHeight: 0, exitHeight: 0 }, fade: 0 }
-      switch (style) {
-        case 'fade':
-          return { from: shape => ({ ...shape, fade: 0 }) }
-        case 'flow':
-          return { from: stretch, order: shape => shape.kind === 'node' ? column(shape.node.step) : column(shape.link.step + 0.5) }
-        case 'columns':
-          return { from: shape => settle(shape, 8), order: shape => shape.kind === 'node' ? column(shape.node.step) : column(shape.link.step + 1) }
-        case 'diagonal':
-          return {
-            from: shape => settle(shape, 6),
-            order: shape => shape.kind === 'node' ? (shape.node.x + shape.node.y) / span : (shape.link.x0 + shape.link.y0) / span,
-          }
-        case 'pages':
-          return { from: shape => settle(shape, 6), order: shape => shape.kind === 'node' ? column(shape.node.step) * 0.5 : 0.6 + column(shape.link.step) * 0.4 }
+      return {
+        from: shape => shape.kind === 'node'
+          ? { ...shape, node: { ...shape.node, y: shape.node.y - 6 }, fade: 0 }
+          : { ...shape, link: { ...shape.link, y0: shape.link.y0 - 6, y1: shape.link.y1 - 6 }, fade: 0 },
+        order: shape => shape.kind === 'node' ? (shape.node.x + shape.node.y) / span : (shape.link.x0 + shape.link.y0) / span,
       }
     }
 

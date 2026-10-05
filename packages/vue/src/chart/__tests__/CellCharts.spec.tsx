@@ -287,6 +287,31 @@ describe('<Heatmap />', () => {
   })
 })
 
+describe('first appearance', () => {
+  const fade = (rect: SVGRectElement) => Number(rect.getAttribute('fill-opacity') ?? 1)
+  it.each([
+    { name: 'Tracker', slides: true, chart: () => <Tracker width={300} height={20} data={[{ date: 'a', status: 'up' }, { date: 'b', status: 'down' }, { date: 'c', status: 'up' }]} /> },
+    { name: 'Heatmap', slides: false, chart: () => <Heatmap width={300} height={200} data={[{ x: 'a', y: 'r', value: 1 }, { x: 'b', y: 's', value: 2 }]} /> },
+    { name: 'CohortChart', slides: false, chart: () => <CohortChart width={300} height={120} data={[{ cohort: 'Jan', values: [10, 5] }, { cohort: 'Feb', values: [8, 4] }]} /> },
+    { name: 'CalendarHeatmap', slides: false, chart: () => <CalendarHeatmap width={400} height={200} start="2026-02-01" end="2026-02-28" data={[]} /> },
+  ])('$name fades its cells in one after another from the top-left', async ({ slides, chart }) => {
+    const { container } = render(chart)
+    await nextTick()
+    const cells = bars(container)
+    const start = geometry(cells[0]!)
+    expect(cells.every(rect => fade(rect) === 0)).toBe(true)
+    await frame(0.4)
+    expect(fade(cells[0]!)).toBeGreaterThan(fade(cells.at(-1)!))
+    await frame()
+    expect(cells.every(rect => fade(rect) === 1)).toBe(true)
+    // A tracker slides each bar in from the left; a grid settles each cell from a smaller size.
+    if (slides)
+      expect(geometry(cells[0]!).x).toBeCloseTo(start.x + 8)
+    else
+      expect(geometry(cells[0]!).width).toBeGreaterThan(start.width)
+  })
+})
+
 describe('<CohortChart />', () => {
   it('shows each period as a share of the cohort size and leaves immature periods blank', () => {
     const { container } = render(() => (

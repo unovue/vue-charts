@@ -120,26 +120,8 @@ export const cellGridEmits = {
   'animation-end': () => true,
 }
 
-/**
- * How the cells first appear. Experimental: the playground's motion page compares these until
- * each chart's default is chosen.
- * - `grow`: every cell grows from its center (or bottom edge), all at once
- * - `fade`: every cell fades in place, all at once
- * - `cascade`: a diagonal wave from the top-left corner, cells fading in as they settle
- * - `wave`: a diagonal wave from the top-left corner, cells only fading in, no size change
- * - `sweep`: column by column from the left, like time running
- * - `rows`: row by row from the top, each settling down into place
- * - `rise`: column by column from the left, each cell rising from its bottom edge
- * - `ripple`: from the middle outwards
- * - `values`: the largest values first
- * - `slide`: row by row, each row sliding in from the left
- */
-export type CellEntrance = 'grow' | 'fade' | 'cascade' | 'wave' | 'sweep' | 'rows' | 'rise' | 'ripple' | 'values' | 'slide'
-
 /** Props every cell chart passes straight through to the layer. */
 export const cellGridSharedProps = {
-  /** How the cells first appear; see `CellEntrance`. Experimental. */
-  entrance: { type: String as PropType<CellEntrance>, default: undefined },
   /** Corner radius of each cell in px; capped at half the cell's shorter side. */
   radius: { type: Number, default: 2 },
   isAnimationActive: { type: Boolean, default: true },
@@ -150,63 +132,29 @@ type Rect = Pick<GridCell, 'x' | 'y' | 'width' | 'height'>
 /** A cell as drawn: `opacity` is the entrance's fade. */
 type ShownCell = GridCell & { opacity?: number }
 
-/** Where each cell starts and its turn (0 first, 1 last) for an entrance style. */
-function revealOf(style: CellEntrance, cells: readonly GridCell[]): Reveal<ShownCell> | undefined {
-  if (style === 'grow' || !cells.length)
+/**
+ * The first appearance, as a wave from the top-left corner: each cell fades in on its turn.
+ * `cascade` settles each cell from 92 % of its size; `slide` moves it in from the left, which
+ * suits a timeline.
+ */
+function revealOf(style: 'cascade' | 'slide', cells: readonly GridCell[]): Reveal<ShownCell> | undefined {
+  if (!cells.length)
     return undefined
   let left = Infinity
   let top = Infinity
   let right = -Infinity
   let bottom = -Infinity
-  let low = Infinity
-  let high = -Infinity
-  const amountOf = (cell: GridCell) => cell.amount ?? (typeof cell.value === 'number' ? cell.value : null)
   for (const cell of cells) {
     left = Math.min(left, cell.x)
     top = Math.min(top, cell.y)
     right = Math.max(right, cell.x + cell.width)
     bottom = Math.max(bottom, cell.y + cell.height)
-    const amount = amountOf(cell)
-    if (amount != null && Number.isFinite(amount)) {
-      low = Math.min(low, amount)
-      high = Math.max(high, amount)
-    }
   }
-  const width = right - left || 1
-  const height = bottom - top || 1
-  const share = (v: number, span: number) => Math.min(1, Math.max(0, v / span))
-  // Fading in while settling from 92 % of its size: present, but never a pop.
-  const settle = (cell: ShownCell): ShownCell => ({ ...cell, x: cell.x + cell.width * 0.04, y: cell.y + cell.height * 0.04, width: cell.width * 0.92, height: cell.height * 0.92, opacity: 0 })
-  const centerX = left + width / 2
-  const centerY = top + height / 2
-  const farthest = Math.hypot(width / 2, height / 2) || 1
-  switch (style) {
-    case 'fade':
-      return { from: cell => ({ ...cell, opacity: 0 }) }
-    case 'cascade':
-      return { from: settle, order: cell => share(cell.x - left + cell.y - top, width + height) }
-    case 'wave':
-      return { from: cell => ({ ...cell, opacity: 0 }), order: cell => share(cell.x - left + cell.y - top, width + height) }
-    case 'sweep':
-      return { from: settle, order: cell => share(cell.x - left, width) }
-    case 'rows':
-      return { from: cell => ({ ...cell, y: cell.y - 6, opacity: 0 }), order: cell => share(cell.y - top, height) }
-    case 'rise':
-      return { from: cell => ({ ...cell, y: cell.y + cell.height, height: 0 }), order: cell => share(cell.x - left, width) }
-    case 'ripple':
-      return { from: settle, order: cell => share(Math.hypot(cell.x + cell.width / 2 - centerX, cell.y + cell.height / 2 - centerY), farthest) }
-    case 'values':
-      return {
-        from: settle,
-        order: (cell) => {
-          const amount = amountOf(cell)
-          // Cells without a number come last; equal numbers all come first.
-          return amount == null || !Number.isFinite(amount) ? 1 : high > low ? (high - amount) / (high - low) : 0
-        },
-      }
-    case 'slide':
-      return { from: cell => ({ ...cell, x: cell.x - 12, opacity: 0 }), order: cell => share(cell.y - top, height) }
-  }
+  const span = right - left + bottom - top || 1
+  const order = (cell: GridCell) => Math.min(1, Math.max(0, (cell.x - left + cell.y - top) / span))
+  return style === 'slide'
+    ? { from: cell => ({ ...cell, x: cell.x - 8, opacity: 0 }), order }
+    : { from: cell => ({ ...cell, x: cell.x + cell.width * 0.04, y: cell.y + cell.height * 0.04, width: cell.width * 0.92, height: cell.height * 0.92, opacity: 0 }), order }
 }
 
 /**
@@ -223,7 +171,9 @@ export const CellGridLayer = defineComponent({
     gap: { type: Number, default: 0 },
     /** How the other cells react to an active one: `ring` outlines it, `dim` fades the rest. */
     activeStyle: { type: String as PropType<'ring' | 'dim'>, default: 'ring' },
-    /** Where entering cells grow from. */
+    /** How the cells first appear: `cascade` for grids, `slide` for a single timeline row. */
+    entrance: { type: String as PropType<'cascade' | 'slide'>, default: 'cascade' },
+    /** Where cells entering after the first appearance grow from. */
     grow: { type: String as PropType<'center' | 'bottom'>, default: 'center' },
     ariaLabel: { type: String, default: undefined },
     /** Controlled active cell by position; `undefined` leaves it to pointer and keyboard. */
@@ -339,7 +289,7 @@ export const CellGridLayer = defineComponent({
       },
       // One clock for entering, staying and leaving cells keeps the belt gap-free.
       connected: true,
-      reveal: () => revealOf(props.entrance ?? 'grow', props.cells),
+      reveal: () => revealOf(props.entrance, props.cells),
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
       onStart: callbacks.onStart,
