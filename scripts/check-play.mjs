@@ -6,7 +6,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const evidence = join(root, '.evidence/breakit/B9')
+const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B9')
 const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
 const { chromium } = require('playwright-core')
 
@@ -260,7 +260,7 @@ function analyze(frames, entrance, settleMs = 2500, existingSeries = []) {
   return flags
 }
 
-if (spawnSync('git', ['check-ignore', '.evidence/breakit/B9/findings.md'], { cwd: root }).status !== 0)
+if (spawnSync('git', ['check-ignore', join(evidence, 'findings.md')], { cwd: root }).status !== 0)
   throw new Error('Evidence directory must be git-ignored')
 await mkdir(evidence, { recursive: true })
 const results = []
@@ -276,7 +276,7 @@ try {
       throw new Error(`${filter} build exited ${build.status}; see build-${filter}.log`)
   }
   let base
-  for (let port = 4660; !process.argv.includes('--fixture-only') && port <= 4669; port++) {
+  for (let port = 4690; !process.argv.includes('--fixture-only') && port <= 4699; port++) {
     serverLog = ''
     server = spawn(process.execPath, ['.output/server/index.mjs'], { cwd: join(root, 'playground/nuxt'), env: { ...process.env, PORT: String(port), HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] })
     server.stdout.on('data', chunk => serverLog += chunk)
@@ -292,7 +292,7 @@ try {
     }
   }
   if (!base && !process.argv.includes('--fixture-only'))
-    throw new Error('No server started in ports 4660–4669')
+    throw new Error('No server started in ports 4690–4699')
   browser = await chromium.launch({ headless: true, ...(process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
   async function run(route, width, fixture = false) {
     const name = `${fixture ? 'fixture' : route.replaceAll('/', '') || 'index'}-${width}`

@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Visibility motion detector positive and negative controls</title>
+<style>
+body { margin: 0; padding: 20px; font: 16px system-ui; }
+.v-charts-wrapper { width: 420px; height: 180px; margin: 16px 0; }
+svg { width: 420px; height: 180px; }
+.spacer { height: 1050px; }
+#fade { animation: fade 1.3s linear forwards; }
+@keyframes fade { from {opacity:0;filter:blur(8px)} 99% {filter:blur(1px)} to {opacity:1;filter:none} }
+</style>
+<!-- A host CSS variable must not cause every SVG shape to be treated as a cursor. -->
+<body class="[--v-charts-cursor:var(--border)]">
+<div id="fade"><div class="v-charts-wrapper" data-chart="b"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="orange"/></svg></div></div>
+<div class="v-charts-wrapper" data-chart="c"><svg class="v-charts-surface"><rect x="0" y="20" width="400" height="120" fill="orange"/></svg></div>
+<div class="v-charts-wrapper" data-chart="d"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="orange"/><g class="v-charts-active-dot"><circle cx="200" cy="40" r="6" fill="red"/></g></svg></div>
+<div class="spacer"></div>
+<div class="v-charts-wrapper" data-chart="a"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="orange"/></svg></div>
+<div class="spacer"></div>
+<div class="v-charts-wrapper" data-chart="e"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="green"/></svg></div>
+<script>
+function animate(chart) {
+  const rect = chart.querySelector('rect');
+  const start = performance.now();
+  function step() {
+    const p = Math.min(1, Math.max(0, (performance.now() - start) / 1000));
+    rect.setAttribute('width', 400 * (1 - (1 - p) ** 3));
+    if (p < 1) requestAnimationFrame(step);
+    else chart.querySelector('.v-charts-active-dot')?.remove();
+  }
+  requestAnimationFrame(step);
+}
+for (const chart of document.querySelectorAll('[data-chart="a"],[data-chart="b"],[data-chart="d"]')) animate(chart);
+const observer = new IntersectionObserver(entries => {
+  for (const entry of entries) if (entry.intersectionRatio >= 0.5) { animate(entry.target); observer.unobserve(entry.target); }
+}, {threshold: 0.5});
+observer.observe(document.querySelector('[data-chart="e"]'));
+</script>

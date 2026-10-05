@@ -27,3 +27,6 @@ docs/test-results
 .playwright-mcp
 
 openspec
+
+# Local check recordings and reports
+.evidence/

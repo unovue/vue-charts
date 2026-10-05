@@ -127,7 +127,7 @@ const lineTransition = computed(() => reduced.value
   ? { duration: 0 }
   : { duration: 0.3, ease: [0.2, 0, 0, 1] as const })
 
-// Auto-rotate through chart types; pauses on hover, off under reduced motion
+// Auto-rotate through chart types; pauses on hover, stops once a tab is picked, off under reduced motion
 const keys = charts.map(c => c.key)
 const paused = ref(false)
 let rotateTimer: ReturnType<typeof setInterval> | undefined
@@ -142,6 +142,12 @@ onMounted(() => {
   }, 3200)
 })
 onBeforeUnmount(() => clearInterval(rotateTimer))
+
+// A tab the visitor picks stays: rotating on would replace it mid-entrance.
+function pick(key: string) {
+  clearInterval(rotateTimer)
+  active.value = key
+}
 </script>
 
 <template>
@@ -164,7 +170,7 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
         :class="[tabBase, active === c.key ? 'text-(--ds-text)' : 'text-(--ds-muted) hover:text-(--ds-text)']"
         role="tab"
         :aria-selected="active === c.key"
-        @click="active = c.key"
+        @click="pick(c.key)"
       >
         <motion.span
           v-if="active === c.key"
