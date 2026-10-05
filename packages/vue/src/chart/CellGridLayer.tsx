@@ -160,14 +160,16 @@ function revealOf(style: CellEntrance, cells: readonly GridCell[]): Reveal<Shown
   let bottom = -Infinity
   let low = Infinity
   let high = -Infinity
+  const amountOf = (cell: GridCell) => cell.amount ?? (typeof cell.value === 'number' ? cell.value : null)
   for (const cell of cells) {
     left = Math.min(left, cell.x)
     top = Math.min(top, cell.y)
     right = Math.max(right, cell.x + cell.width)
     bottom = Math.max(bottom, cell.y + cell.height)
-    if (typeof cell.value === 'number' && Number.isFinite(cell.value)) {
-      low = Math.min(low, cell.value)
-      high = Math.max(high, cell.value)
+    const amount = amountOf(cell)
+    if (amount != null && Number.isFinite(amount)) {
+      low = Math.min(low, amount)
+      high = Math.max(high, amount)
     }
   }
   const width = right - left || 1
@@ -196,7 +198,11 @@ function revealOf(style: CellEntrance, cells: readonly GridCell[]): Reveal<Shown
     case 'values':
       return {
         from: settle,
-        order: cell => typeof cell.value === 'number' && Number.isFinite(cell.value) && high > low ? (high - cell.value) / (high - low) : 1,
+        order: (cell) => {
+          const amount = amountOf(cell)
+          // Cells without a number come last; equal numbers all come first.
+          return amount == null || !Number.isFinite(amount) ? 1 : high > low ? (high - amount) / (high - low) : 0
+        },
       }
     case 'slide':
       return { from: cell => ({ ...cell, x: cell.x - 12, opacity: 0 }), order: cell => share(cell.y - top, height) }

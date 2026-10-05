@@ -14,6 +14,8 @@ export interface GridCell<P = unknown> {
   label: string
   /** Default tooltip value, e.g. "4" or "Operational". */
   value: string | number | null
+  /** The number behind the cell when `value` is formatted text, e.g. for an entrance by value. */
+  amount?: number | null
   /** Text drawn centered on the cell, e.g. "42%"; hidden when it does not fit. */
   text?: string
   /** Strong fill: the text is drawn light on it. */

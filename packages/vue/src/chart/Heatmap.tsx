@@ -170,6 +170,7 @@ const _Heatmap = defineComponent({
             column,
             label: `${yText(y)}, ${xText(x)}`,
             value: text ?? null,
+            amount: data.value,
             text: props.showValues ? text : undefined,
             strong: ratio > 0.55,
             payload: data,
