@@ -7,8 +7,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | Step | Title | Release-blocking | Dependencies | Status | Commits | Verification evidence and notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | 0.1 | Environment and baseline verdict | yes | — | done | `c0c4d81`, `745da98`, `9e82e9b`, `a25538c` | Frozen install, Node 22 setup, locked/prefetched consumers and fresh network-denied typechecks/builds PASS. Step gate: current-config typecheck PASS; 126 files / 1,240 tests PASS with two workers; changed-file lint PASS with zero warnings. Full untouched-library baseline recorded below, including failed/unavailable checks. No library/model source changes. |
-| 0.2 | Baseline build, benchmark and bundle scripts | yes | 0.1 | done | `a2554e2` | A/A18/18 within7.9%; CPU-control verified; size/standalone baseline and step gate recorded below. |
-| 0.3 | Coverage that runs | yes | 0.1 | todo | | |
+| 0.2 | Baseline build, benchmark and bundle scripts | yes | 0.1 | done | `a2554e2`, `7ae8462` | A/A18/18 within7.9%; CPU-control verified; size/standalone baseline and step gate recorded below. |
+| 0.3 | Coverage that runs | yes | 0.1 | done | `b8ad56b` | 126 files/1,240 tests PASS; statements87.03%, branches75.63%, lines86.65%;272 source files, no tests/helpers/stories instrumented. |
 | 1.1 | License notice | yes | phase 0 | todo | | |
 | 1.2 | Stack ids that match Object members | yes | phase 0 | todo | | |
 | 1.3 | Tooltip `shared` reacts to changes | yes | phase 0 | todo | | |
@@ -63,7 +63,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 
 | Phase | Date | `pnpm verify` | bench vs baseline | Other | Verdict |
 | --- | --- | --- | --- | --- | --- |
-| 0 | | | | | |
+| 0 | 2026-10-05 | Baseline FAIL retained (0.1) | A/A PASS; CPU control verified | 0.1–0.3 done; baseline metrics/report retained | PASS: setup/recording criteria; no claim of a green release verifier |
 | 1 | | | | | |
 | 2 | | | | | |
 | 3 | | | | | |
@@ -85,4 +85,9 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Step gate: current-config typing PASS;126 files/1,240 tests PASS (70.40s); build PASS; final changed-file lint PASS, zero warnings. [Logs](../../../.evidence/release-1.0/step-0.2-tests.log).
 - Node22 bundle sizes PASS; standalone assertion expected FAIL for9/10 (BarList clean): retained axis/decimal/d3-time-format/reselect modules. [Compact sizes/medians](../../../.evidence/baseline/metrics.md); Node22.23.3/esbuild0.28.2/Playwright1.58.2/Chromium145.0.7632.6.
 - Both builds regenerate each run: no cache/manifest. One page/CDP, shared peers; identical runtime source uses one canonical module, changed builds stay separate. Earlier noise/GC attempts inconclusive; GC removed. [Attempts](../../../.evidence/release-1.0/bench-noise.md).
-- Limits: fixed900×400, equal warmups, rotated cases/alternating order; all values/fills/shapes checked, intermediate motion required. CPU/frame includes dispatch/layout/700ms idle tail, excludes GPU. Commit: `a2554e2`.
+- Limits: fixed900×400, equal warmups, rotated cases/alternating order; all values/fills/shapes checked, intermediate motion required. CPU/frame includes dispatch/layout/700ms idle tail, excludes GPU. Commits: `a2554e2`, `7ae8462`.
+
+## Step 0.3 evidence
+- `b8ad56b`: root coverage script targets vccs; exclude `**/__tests__/**` from instrumentation. No runtime/source behavior changed.
+- `pnpm test:coverage --maxWorkers=2` PASS:126 files/1,240 tests,82.56s; statements87.03% (8,095/9,301), branches75.63% (5,387/7,122), lines86.65% (7,395/8,534). [Log](../../../.evidence/release-1.0/step-0.3-coverage.log).
+- Report written;272 source files, zero test/helper/story entries. [Preserved baseline JSON](../../../.evidence/baseline/coverage-final.json). Current-config typing and targeted lint PASS with zero warnings; instrumented full suite supplies the unit gate.
