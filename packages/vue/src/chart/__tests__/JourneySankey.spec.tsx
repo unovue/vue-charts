@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { JourneySankey } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { computeJourneyLayout } from '../journeyUtils'
+import { computeJourneyLayout, reorderedNodes } from '../journeyUtils'
 
 // Shaped like an analytics journeys view: 11 sessions go / → /pricing and 6 of them end there.
 const journeys = [
@@ -147,5 +147,19 @@ describe('<JourneySankey />', () => {
     expect(group.getAttribute('aria-label')).toBe('/pricing, step 2: 11 · 55% end here')
     await fireEvent.keyDown(group, { key: 'Enter' })
     expect(pinned.value).toEqual(['/', '/pricing'])
+  })
+})
+
+describe('reorderedNodes', () => {
+  const layoutOf = (journeys: { path: string[], count: number }[]) => computeJourneyLayout(journeys, { width: 600, height: 300, steps: 2, exitsKnown: true, nodeWidth: 8, nodePadding: 12, labelHeight: 30, labelWidth: 120, top: 0 }).nodes
+  const before = layoutOf([{ path: ['/', '/a'], count: 10 }, { path: ['/', '/b'], count: 5 }, { path: ['/', '/c'], count: 2 }])
+
+  it.each([
+    // /b overtakes /a: both cross each other, /c keeps its place below them.
+    ['a rank swap', [{ path: ['/', '/a'], count: 4 }, { path: ['/', '/b'], count: 9 }, { path: ['/', '/c'], count: 2 }], ['1\u0001/a', '1\u0001/b']],
+    // Same order, other sizes: everything slides and nothing folds.
+    ['a resize in the same order', [{ path: ['/', '/a'], count: 20 }, { path: ['/', '/b'], count: 6 }, { path: ['/', '/c'], count: 1 }], []],
+  ])('folds only nodes that cross a neighbour: %s', (_name, next, expected) => {
+    expect([...reorderedNodes(before, layoutOf(next))].sort()).toEqual(expected)
   })
 })

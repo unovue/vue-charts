@@ -273,3 +273,24 @@ export function truncateMiddle(text: string, maxChars: number): string {
   const head = Math.ceil(keep / 2)
   return `${text.slice(0, head)}…${text.slice(text.length - (keep - head))}`
 }
+
+/**
+ * Nodes on both layouts whose rank within their step changes. Sliding them would pass them through
+ * their neighbours, so they fold away and unfold at their new place instead.
+ */
+export function reorderedNodes(previous: readonly JourneyNode[], next: readonly JourneyNode[]): Set<string> {
+  const before = new Map(previous.map(node => [node.id, node]))
+  const common = next.filter(node => before.has(node.id))
+  const moved = new Set<string>()
+  for (const step of new Set(common.map(node => node.step))) {
+    const nodes = common.filter(node => node.step === step)
+    const oldOrder = [...nodes].sort((a, b) => before.get(a.id)!.y - before.get(b.id)!.y)
+    const newOrder = [...nodes].sort((a, b) => a.y - b.y)
+    // A node keeps its rank when the same nodes stay above it; anything else crosses a neighbour.
+    newOrder.forEach((node, rank) => {
+      if (oldOrder[rank] !== node)
+        moved.add(node.id)
+    })
+  }
+  return moved
+}

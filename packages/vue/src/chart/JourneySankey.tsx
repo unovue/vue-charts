@@ -20,6 +20,7 @@ import {
   connectedLinks,
   journeyLinksOf,
   largestJourneyThrough,
+  reorderedNodes,
   truncateMiddle,
 } from './journeyUtils'
 
@@ -118,7 +119,16 @@ const JourneySankeyInner = defineComponent({
       top: props.headers ? HEADER_BAND : 0,
     }))
 
-    // Nodes and bands keep their identity (step and name) across data changes and morph.
+    // Nodes and bands keep their identity (step and name) across data changes and morph. A node
+    // that changes rank in its step would slide through its neighbours: it folds away where it was
+    // and unfolds where it goes instead, its label and bands fading with it.
+    let reordered = new Set<string>()
+    let previousNodes: JourneyNode[] = []
+    watch(layout, ({ nodes }) => {
+      reordered = reorderedNodes(previousNodes, nodes)
+      previousNodes = nodes
+    }, { immediate: true, flush: 'sync' })
+    const fold = (node: JourneyNode, size: number) => ({ ...node, continueHeight: node.continueHeight * size, exitHeight: node.exitHeight * size })
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const mix = (a: number, b: number, t: number) => a + (b - a) * t
     const { items } = useKeyedTransition<Shape>(() => [
@@ -128,6 +138,8 @@ const JourneySankeyInner = defineComponent({
       key: shape => shape.kind === 'node' ? `n:${shape.node.id}` : `l:${shape.link.id}`,
       interpolate: (from, to, t) => {
         if (from.kind === 'node' && to.kind === 'node') {
+          if (reordered.has(to.node.id))
+            return { kind: 'node', node: t < 0.5 ? fold(from.node, 1 - t * 2) : fold(to.node, t * 2 - 1) }
           return { kind: 'node', node: { ...to.node, x: mix(from.node.x, to.node.x, t), y: mix(from.node.y, to.node.y, t), continueHeight: mix(from.node.continueHeight, to.node.continueHeight, t), exitHeight: mix(from.node.exitHeight, to.node.exitHeight, t) } }
         }
         if (from.kind === 'link' && to.kind === 'link') {
@@ -332,8 +344,14 @@ const JourneySankeyInner = defineComponent({
       const presence = (phase: string, progress: number | undefined) => phase === 'exit'
         ? Math.max(0, 1 - (progress ?? 1) * 2)
         : phase === 'enter' ? Math.max(0, (progress ?? 1) * 2 - 1) : 1
-      const links = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'link' ? [{ key, link: value.link, phase, shown: presence(phase, progress), moving: progress !== undefined }] : [])
-      const nodes = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'node' ? [{ key, node: value.node, phase, shown: presence(phase, progress), moving: progress !== undefined }] : [])
+      // A reordered node is hidden at the midpoint of its fold, and so are its bands.
+      const folding = (progress: number | undefined) => progress === undefined ? 1 : Math.abs(1 - progress * 2)
+      const links = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'link'
+        ? [{ key, link: value.link, phase, shown: presence(phase, progress) * (reordered.has(value.link.source) || reordered.has(value.link.target) ? folding(progress) : 1), moving: progress !== undefined }]
+        : [])
+      const nodes = shapes.flatMap(({ key, value, phase, progress }) => value.kind === 'node'
+        ? [{ key, node: value.node, phase, shown: presence(phase, progress) * (phase === 'update' && reordered.has(value.node.id) ? folding(progress) : 1), moving: progress !== undefined }]
+        : [])
       const labelChars = Math.floor((columnWidth.value - props.nodeWidth - 16) / CHAR_WIDTH)
       return (
         <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
