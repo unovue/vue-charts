@@ -6,6 +6,8 @@ import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
+import { drawTiming } from '@/animation/motion'
+import { polylineLength } from '@/animation/ridingLabels'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
@@ -123,6 +125,8 @@ const SparklineInner = defineComponent({
       baseline: () => baselineY.value,
       isActive: () => props.isAnimationActive,
       transition: () => props.transition,
+      // Drawn like Line and Area: longer lines take longer, so the pen moves at a steady pace.
+      entrance: () => drawTiming(polylineLength(points.value)),
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),
     })

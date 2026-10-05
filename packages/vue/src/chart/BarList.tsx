@@ -1,7 +1,7 @@
-import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
+import { type ComponentPublicInstance, type PropType, type SlotsType, computed, defineComponent, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { provideRenderPhase } from '@/animation/renderPhase'
+import { provideChartInView, provideRenderPhase } from '@/animation/renderPhase'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { cellGridSharedProps } from './CellGridLayer'
 
@@ -154,10 +154,14 @@ const _BarList = defineComponent({
   emits: barListEmits,
   slots: Object as SlotsType<BarListSlots>,
   setup(props, { emit, slots }) {
-    // The render phase reaches children only, so the transition lives one level down.
+    // The render phase and the on-screen state reach children only, so the transition lives one
+    // level down.
     provideRenderPhase()
+    const inner = ref<ComponentPublicInstance | null>(null)
+    provideChartInView(computed(() => inner.value?.$el))
     return () => (
       <BarListInner
+        ref={inner}
         {...props}
         {...{
           'onRow-click': (row: BarListRow, index: number, event: MouseEvent) => emit('row-click', row, index, event),

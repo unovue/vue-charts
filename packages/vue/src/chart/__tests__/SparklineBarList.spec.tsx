@@ -122,9 +122,11 @@ describe('<BarList />', () => {
 
 describe('server rendering', () => {
   it.each([
-    ['BarList', () => <BarList data={[{ name: 'a', value: 2 }, { name: 'b', value: 1 }]} />, '.v-charts-bar-list-bar', (el: Element) => (el as HTMLElement).style.width, '100%'],
+    // Like every chart, the server sends the entrance's start and the client plays it once the
+    // list is on screen.
+    ['BarList', () => <BarList data={[{ name: 'a', value: 2 }, { name: 'b', value: 1 }]} />, '.v-charts-bar-list-bar', (el: Element) => (el as HTMLElement).style.width, '0%'],
     ['Sparkline', () => <Sparkline width={100} height={30} data={[1, 3, 2]} />, '.v-charts-sparkline-line', (el: Element) => el.getAttribute('d')!.length > 0 ? 'drawn' : 'empty', 'drawn'],
-  ])('%s shows its final state on the server and keeps it while hydrating', async (_name, view, selector, read, expected) => {
+  ])('%s hydrates the server state without a mismatch', async (_name, view, selector, read, expected) => {
     const html = await renderToString(createSSRApp({ render: view }))
     const container = document.createElement('div')
     container.innerHTML = html

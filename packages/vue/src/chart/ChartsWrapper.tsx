@@ -49,28 +49,7 @@ export const ChartsWrapper = defineComponent({
       wrapperEl.value = node
     }
 
-    // On screen once half the chart is visible, or half the viewport for a chart taller than
-    // that: a chart peeking in at the bottom edge would play its entrance mostly unseen. Without
-    // IntersectionObserver (tests, old browsers) the chart counts as seen.
-    const inView = ref(typeof IntersectionObserver === 'undefined')
-    provideChartInView(inView)
-    let viewObserver: IntersectionObserver | undefined
-    onMounted(() => {
-      if (inView.value || !wrapperEl.value) {
-        inView.value = true
-        return
-      }
-      viewObserver = new IntersectionObserver((entries) => {
-        const entry = entries.at(-1)!
-        const viewport = entry.rootBounds?.height ?? window.innerHeight
-        if (entry.isIntersecting && (entry.intersectionRatio >= 0.5 || entry.intersectionRect.height >= viewport / 2)) {
-          inView.value = true
-          viewObserver?.disconnect()
-        }
-      }, { threshold: [0, 0.25, 0.5, 0.75, 1] })
-      viewObserver.observe(wrapperEl.value)
-    })
-    onUnmounted(() => viewObserver?.disconnect())
+    provideChartInView(wrapperEl)
 
     let observer: ResizeObserver | undefined
     onMounted(() => {

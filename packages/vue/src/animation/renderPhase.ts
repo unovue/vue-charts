@@ -9,11 +9,32 @@ const gestureKey: InjectionKey<Ref<boolean>> = Symbol('v-charts-gesture')
 const inViewKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-in-view')
 
 /**
- * Called by the chart wrapper: whether the chart has been on screen. Entrances wait for it, so a
+ * Called by the chart's root: watches `el` and tells entrances once the chart is on screen, so a
  * chart further down the page plays its entrance when the reader gets there, not unseen at load.
+ * On screen means half the chart is visible, or half the viewport for a chart taller than that: a
+ * chart peeking in at the bottom edge would play its entrance mostly unseen. Without
+ * IntersectionObserver (tests, old browsers) the chart counts as seen.
  */
-export function provideChartInView(inView: Readonly<Ref<boolean>>) {
+export function provideChartInView(el: Readonly<Ref<Element | null | undefined>>) {
+  const inView = ref(typeof IntersectionObserver === 'undefined')
   provide(inViewKey, inView)
+  let observer: IntersectionObserver | undefined
+  onMounted(() => {
+    if (inView.value || !el.value) {
+      inView.value = true
+      return
+    }
+    observer = new IntersectionObserver((entries) => {
+      const entry = entries.at(-1)!
+      const viewport = entry.rootBounds?.height ?? window.innerHeight
+      if (entry.isIntersecting && (entry.intersectionRatio >= 0.5 || entry.intersectionRect.height >= viewport / 2)) {
+        inView.value = true
+        observer?.disconnect()
+      }
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] })
+    observer.observe(el.value)
+  })
+  onScopeDispose(() => observer?.disconnect())
 }
 
 /** Whether the chart has been on screen; always true outside a chart. */

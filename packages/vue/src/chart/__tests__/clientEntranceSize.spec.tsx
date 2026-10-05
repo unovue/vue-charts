@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { createApp, nextTick } from 'vue'
-import { Bar, BarChart, XAxis } from '@/index'
+import { Bar, BarChart, BarList, XAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
 const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0 }))
@@ -49,7 +49,19 @@ it('starts a client-side entrance at the measured size', async () => {
 
 // Charts further down the page played their entrance at load, unseen; it now waits until the
 // chart scrolls into view.
-it('starts the entrance when the chart scrolls into view', async () => {
+it.each([
+  {
+    name: 'BarChart',
+    chart: () => (
+      <BarChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+        <Bar dataKey="value" />
+      </BarChart>
+    ),
+    shapes: '.v-charts-bar-rectangle path',
+  },
+  // BarList is plain HTML without the chart wrapper, so it watches the screen on its own.
+  { name: 'BarList', chart: () => <BarList data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]} />, shapes: '.v-charts-bar-list-row' },
+])('$name starts its entrance when it scrolls into view', async ({ chart, shapes }) => {
   let reveal: (ratio: number) => void = () => {}
   vi.stubGlobal('IntersectionObserver', class {
     constructor(callback: (entries: Partial<IntersectionObserverEntry>[]) => void) {
@@ -61,15 +73,11 @@ it('starts the entrance when the chart scrolls into view', async () => {
   })
   const container = document.createElement('div')
   document.body.append(container)
-  const app = createApp({ render: () => (
-    <BarChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
-      <Bar dataKey="value" />
-    </BarChart>
-  ) })
+  const app = createApp({ render: chart })
   app.mount(container)
   clock.to = 0
   await nextTick()
-  const bars = () => container.querySelectorAll('.v-charts-bar-rectangle path').length
+  const bars = () => container.querySelectorAll(shapes).length
   // Not on screen yet: no entrance has started and nothing is drawn.
   expect(clock.to).toBe(0)
   expect(bars()).toBe(0)
