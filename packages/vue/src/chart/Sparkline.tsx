@@ -173,16 +173,6 @@ const SparklineInner = defineComponent({
       localActive.value = index
       emit('update:activeIndex', index)
     }
-    watch(active, (index) => {
-      if (props.type === 'bar')
-        return
-      const point = index == null ? undefined : points.value[index]
-      if (!point || point.value === null) {
-        tooltip.mouseLeaveItem()
-        return
-      }
-      tooltip.setActiveMouseOverItemIndex({ activeIndex: String(index), activeDataKey: 'value', activeCoordinate: { x: point.x, y: point.y } })
-    })
 
     // Line and area register their own tooltip entries; bars get theirs from the cell grid.
     watch(computed(() => {
@@ -199,6 +189,20 @@ const SparklineInner = defineComponent({
         return
       tooltip.addTooltipEntrySettings(settings)
       onCleanup(() => tooltip.removeTooltipEntrySettings(settings))
+    }, { immediate: true })
+
+    watch(() => active.value == null ? undefined : points.value[active.value], (point) => {
+      if (props.type === 'bar')
+        return
+      if (!point || point.value === null) {
+        tooltip.mouseLeaveItem()
+        return
+      }
+      tooltip.setActiveMouseOverItemIndex({
+        activeIndex: String(point.index),
+        activeDataKey: 'value',
+        activeCoordinate: { x: point.x, y: point.y },
+      })
     }, { immediate: true })
 
     function onPointer(event: MouseEvent) {

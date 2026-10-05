@@ -56,6 +56,22 @@ describe('<Sparkline />', () => {
     expect(active.value).toBeNull()
   })
 
+  it('shows an initially controlled point in the tooltip on mount', async () => {
+    const { container } = render(() => (
+      <Sparkline width={100} height={40} data={[10, 20, 30]} activeIndex={1} isAnimationActive={false}>
+        <Tooltip isAnimationActive={false} />
+      </Sparkline>
+    ))
+    await nextTick()
+    await nextTick()
+    const tooltip = container.querySelector<HTMLElement>('.v-charts-tooltip-wrapper')!
+    expect(tooltip.style.visibility).toBe('visible')
+    expect(tooltip.querySelector('.v-charts-tooltip-item-value')?.textContent).toBe('20')
+    const point = container.querySelector('.v-charts-sparkline-active circle')!
+    expect(point.getAttribute('cx')).toBe('50')
+    expect(point.getAttribute('cy')).toBe('20')
+  })
+
   it('shows the hovered value in a Tooltip', async () => {
     const { container, findByText } = render(() => (
       <Sparkline width={100} height={30} isAnimationActive={false} nameKey="day" data={[{ day: 'Mon', value: 3 }, { day: 'Tue', value: 42 }]}>
