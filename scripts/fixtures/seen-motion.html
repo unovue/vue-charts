@@ -16,6 +16,8 @@ svg { width: 420px; height: 180px; }
 <div class="v-charts-wrapper" data-chart="d"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="orange"/><g class="v-charts-active-dot"><circle cx="200" cy="40" r="6" fill="red"/></g></svg></div>
 <div class="spacer"></div>
 <div class="v-charts-wrapper" data-chart="a"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="orange"/></svg></div>
+<!-- An HTML bar list (no SVG) below the fold that animates at load. -->
+<ul class="v-charts-bar-list" data-chart="f" style="position:relative;width:420px;height:80px;margin:16px 0;padding:0;list-style:none"><li class="v-charts-bar-list-row" style="position:absolute;inset:0;height:32px"><div class="v-charts-bar-list-bar" style="position:absolute;inset:0 auto 0 0;width:0%;background:orange"></div></li></ul>
 <div class="spacer"></div>
 <div class="v-charts-wrapper" data-chart="e"><svg class="v-charts-surface"><rect x="0" y="20" width="0" height="120" fill="green"/></svg></div>
 <script>
@@ -31,6 +33,13 @@ function animate(chart) {
   requestAnimationFrame(step);
 }
 for (const chart of document.querySelectorAll('[data-chart="a"],[data-chart="b"],[data-chart="d"]')) animate(chart);
+const listBar = document.querySelector('[data-chart="f"] .v-charts-bar-list-bar');
+const listStart = performance.now();
+(function grow() {
+  const p = Math.min(1, (performance.now() - listStart) / 1000);
+  listBar.style.width = `${100 * (1 - (1 - p) ** 3)}%`;
+  if (p < 1) requestAnimationFrame(grow);
+})();
 const observer = new IntersectionObserver(entries => {
   for (const entry of entries) if (entry.intersectionRatio >= 0.5) { animate(entry.target); observer.unobserve(entry.target); }
 }, {threshold: 0.5});

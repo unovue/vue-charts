@@ -263,8 +263,8 @@ finally {
   await browser?.close()
   for (const stop of servers.reverse())
     await stop()
-  const expected = { a: ['unseen-entrance'], b: ['unseen-entrance'], c: ['no-entrance'], d: ['stray-hover'], e: [] }
-  const fixturePassed = fixture && rows.length === 5 && Object.entries(expected).every(([chart, flags]) => {
+  const expected = { a: ['unseen-entrance'], b: ['unseen-entrance'], c: ['no-entrance'], d: ['stray-hover'], e: [], f: ['unseen-entrance'] }
+  const fixturePassed = fixture && rows.length === Object.keys(expected).length && Object.entries(expected).every(([chart, flags]) => {
     const row = rows.find(r => r.chart === chart)
     return row && JSON.stringify([...row.flags].sort()) === JSON.stringify([...flags].sort()) && row.reliability === 'reliable'
   })

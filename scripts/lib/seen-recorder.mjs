@@ -68,15 +68,27 @@ export function installSeenRecorder() {
     walk(document.getElementById('__nuxt')?._vnode)
     return nodes
   }
+  // HTML charts (BarList) have no SVG surface: the root itself holds the shapes.
+  const isHTMLChart = root => root.matches('.v-charts-bar-list')
+  const surfaceOf = root => isHTMLChart(root) ? root : root.querySelector('svg.v-charts-surface')
+  const svgStyles = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'visibility', 'display', 'font-size', 'font-family', 'transform', 'transform-origin', 'color', 'filter']
+  const htmlStyles = ['position', 'display', 'top', 'left', 'right', 'bottom', 'inset', 'width', 'height', 'transform', 'opacity', 'visibility', 'color', 'background', 'background-color', 'font-size', 'font-family', 'font-weight', 'line-height', 'align-items', 'gap', 'flex', 'padding', 'margin', 'border-radius', 'overflow', 'white-space', 'text-overflow', 'list-style']
   function snapshot(wrapper, info, t) {
-    const svg = wrapper.querySelector('svg.v-charts-surface')
-    const clone = svg.cloneNode(true)
-    const originals = [svg, ...svg.querySelectorAll('*')]
+    const surface = surfaceOf(wrapper)
+    const html = isHTMLChart(wrapper)
+    const clone = surface.cloneNode(true)
+    const originals = [surface, ...surface.querySelectorAll('*')]
     const copies = [clone, ...clone.querySelectorAll('*')]
     for (let i = 0; i < originals.length; i++) {
       const style = styleOf(originals[i])
-      for (const property of ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'visibility', 'display', 'font-size', 'font-family', 'transform', 'transform-origin', 'color', 'filter'])
+      for (const property of html ? htmlStyles : svgStyles)
         copies[i].style.setProperty(property, style.getPropertyValue(property))
+    }
+    if (html) {
+      // Filmed through a foreignObject, so the strip renders HTML like SVG.
+      clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
+      const body = new XMLSerializer().serializeToString(clone)
+      return { t, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${info.box[2]}" height="${info.box[3]}"><foreignObject width="100%" height="100%">${body}</foreignObject></svg>`, opacity: info.effectiveOpacity, blur: info.blur, box: info.box }
     }
     // HTML serialization can emit named HTML entities that are invalid in SVG XML.
     clone.removeAttribute('xmlns')
@@ -89,11 +101,11 @@ export function installSeenRecorder() {
     const t = performance.now()
     styles = new Map()
     const exemptions = disabledNodes()
-    const charts = [...document.querySelectorAll('.v-charts-wrapper')].filter(w => w.querySelector('svg.v-charts-surface')).map((wrapper) => {
+    const charts = [...document.querySelectorAll('.v-charts-wrapper, .v-charts-bar-list')].filter(surfaceOf).map((wrapper) => {
       const key = id(wrapper)
       const info = visibility(wrapper)
-      const svg = wrapper.querySelector('svg.v-charts-surface')
-      const shapes = [...svg.querySelectorAll('path,rect,circle,ellipse,line,polyline,polygon,text,use,image')].filter((shape) => {
+      const svg = surfaceOf(wrapper)
+      const shapes = [...svg.querySelectorAll(isHTMLChart(wrapper) ? '.v-charts-bar-list-row,.v-charts-bar-list-bar' : 'path,rect,circle,ellipse,line,polyline,polygon,text,use,image')].filter((shape) => {
         const ignored = shape.closest('[class*="active-dot"],[class*="tooltip"],[class*="cursor"]')
         // Host utility classes can mention cursors/tooltips without being hover shapes.
         return !ignored || !svg.contains(ignored)
@@ -104,6 +116,10 @@ export function installSeenRecorder() {
         values.opacity = style.opacity
         values['stroke-dasharray'] = style.strokeDasharray
         values['stroke-dashoffset'] = style.strokeDashoffset
+        if (isHTMLChart(wrapper)) {
+          values.width = style.width
+          values.transform = style.transform
+        }
         const ancestors = []
         for (let p = shape; p && p !== svg; p = p.parentElement)
           ancestors.push([p.getAttribute('transform'), styleOf(p).transform, styleOf(p).opacity, p.getAttribute('clip-path')])
@@ -115,7 +131,7 @@ export function installSeenRecorder() {
         }
         return { id: id(shape), values }
       })
-      const seriesShapes = shapes.filter(shape => shape.closest('.v-charts-bar,.v-charts-line,.v-charts-area,.v-charts-pie,.v-charts-radar,.v-charts-radial-bar,.v-charts-funnel,.v-charts-sankey,.v-charts-treemap,.v-charts-sunburst,.v-charts-scatter'))
+      const seriesShapes = isHTMLChart(wrapper) ? shapes : shapes.filter(shape => shape.closest('.v-charts-bar,.v-charts-line,.v-charts-area,.v-charts-pie,.v-charts-radar,.v-charts-radial-bar,.v-charts-funnel,.v-charts-sankey,.v-charts-treemap,.v-charts-sunburst,.v-charts-scatter,.v-charts-cell-grid,[class*="v-charts-sparkline"],[class*="v-charts-journey"]'))
       const disabled = seriesShapes.length > 0 && seriesShapes.every((shape) => {
         for (let p = shape; p; p = p.parentElement) {
           if (exemptions.has(p) || p.getAttribute('data-animation') === 'false')
