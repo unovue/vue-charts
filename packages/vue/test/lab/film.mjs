@@ -15,10 +15,6 @@ const all = ['brush', 'bar', 'barStacked', 'barHorizontal', 'barNegative', 'line
 const scenarios = positional()
 const only = flag('steps', '')
 
-const server = await startServer()
-const url = server.url
-const browser = await launchBrowser()
-
 // Runs in the page: every drawn shape with a stable identity and its numeric geometry.
 function capture() {
   const keyOf = (el) => {
@@ -190,61 +186,73 @@ async function film(page, name, dir, action, pointer, perFrame) {
   return { ...analyse(frames), sheet, frames }
 }
 
-mkdirSync(out, { recursive: true })
-const report = {}
-for (const s of scenarios.length ? scenarios : all) {
-  const dir = join(out, '_frames', s + (dark ? '-dark' : ''))
-  rmSync(dir, { recursive: true, force: true })
-  mkdirSync(dir, { recursive: true })
-  const page = await browser.newPage({ viewport: { width: 800, height: 480 }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' })
-  const errors = collectErrors(page)
-  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
-  await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'))
-  await page.goto(`${url}?s=${s}${dark ? '&dark=1' : ''}`)
-  await page.waitForSelector('svg.v-charts-surface', { timeout: 15000 })
-  report[s] = { entrance: await film(page, '00-entrance', dir), errors }
-  if (s === 'tooltip') {
-    const box = await page.locator('.v-charts-wrapper').boundingBox()
-    await page.clock.runFor(1000)
-    report[s].enter = await film(page, '01-pointer-enter', dir, null, () => page.mouse.move(box.x + 150, box.y + 150))
-    report[s].move = await film(page, '02-pointer-move', dir, null, () => page.mouse.move(box.x + 520, box.y + 150))
-    report[s].leave = await film(page, '03-pointer-leave', dir, null, () => page.mouse.move(box.x + 520, box.y + box.height + 60))
+const browser = await launchBrowser()
+let server
+try {
+  server = await startServer()
+  const url = server.url
+
+  mkdirSync(out, { recursive: true })
+  const report = {}
+  for (const s of scenarios.length ? scenarios : all) {
+    const dir = join(out, '_frames', s + (dark ? '-dark' : ''))
+    rmSync(dir, { recursive: true, force: true })
+    mkdirSync(dir, { recursive: true })
+    const page = await browser.newPage({ viewport: { width: 800, height: 480 }, deviceScaleFactor: 1, colorScheme: dark ? 'dark' : 'light' })
+    const errors = collectErrors(page)
+    await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+    await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'))
+    await page.goto(`${url}?s=${s}${dark ? '&dark=1' : ''}`, { timeout: 120000 })
+    await page.waitForSelector('svg.v-charts-surface', { state: 'attached', timeout: 120000 })
+    // Responsive charts reveal their measured layout on rAF; the paused clock must release it.
+    await advanceFrame(page)
+    await page.waitForSelector('svg.v-charts-surface', { timeout: 15000 })
+    report[s] = { entrance: await film(page, '00-entrance', dir), errors }
+    if (s === 'tooltip') {
+      const box = await page.locator('.v-charts-wrapper').boundingBox()
+      await page.clock.runFor(1000)
+      report[s].enter = await film(page, '01-pointer-enter', dir, null, () => page.mouse.move(box.x + 150, box.y + 150))
+      report[s].move = await film(page, '02-pointer-move', dir, null, () => page.mouse.move(box.x + 520, box.y + 150))
+      report[s].leave = await film(page, '03-pointer-leave', dir, null, () => page.mouse.move(box.x + 520, box.y + box.height + 60))
+    }
+    if (s === 'brush') {
+      await page.clock.runFor(1000)
+      const slide = await page.locator('.v-charts-brush-slide').boundingBox()
+      const sx = slide.x + slide.width / 2
+      const sy = slide.y + slide.height / 2
+      await page.mouse.move(sx, sy)
+      await page.mouse.down()
+      let n = 0
+      // Drag 8 px per frame for 24 frames, then hold.
+      report[s].drag = await film(page, '01-drag', dir, null, async () => {}, async () => {
+        if (n < 24) {
+          n++
+          await page.mouse.move(sx + n * 8, sy)
+        }
+      })
+      await page.mouse.up()
+    }
+    const steps = await page.evaluate(() => window.lab.steps)
+    for (const [i, step] of steps.entries()) {
+      if (only && !only.split(',').includes(step))
+        continue
+      report[s][step] = await film(page, `${String(i + 1).padStart(2, '0')}-${step}`, dir, `window.lab.step(${JSON.stringify(step)})`)
+    }
+    // Interrupt: two changes 150 ms apart.
+    if (['values', 'fromOne', 'removeMiddle'].every(step => steps.includes(step)) && (!only || only.includes('interrupt'))) {
+      await page.evaluate(() => window.lab.step('fromOne'))
+      await page.clock.runFor(1000)
+      await page.evaluate(() => window.lab.step('values'))
+      await page.clock.runFor(150)
+      report[s].interrupt = await film(page, '99-interrupt', dir, `window.lab.step('removeMiddle')`)
+    }
+    await page.close()
+    const summary = Object.entries(report[s]).filter(([k]) => k !== 'errors').map(([k, v]) => `  ${k.padEnd(13)} settle=${String(v.settledAt).padStart(4)}ms shapes=${v.shapes} issues=${v.issues.length}${v.issues.length ? `\n${v.issues.slice(0, 12).map(x => `      - ${x}`).join('\n')}${v.issues.length > 12 ? `\n      … +${v.issues.length - 12}` : ''}` : ''}`).join('\n')
+    console.log(`== ${s}${errors.length ? `  ERRORS: ${[...new Set(errors)].slice(0, 5).join(' | ')}` : ''}\n${summary}`)
   }
-  if (s === 'brush') {
-    await page.clock.runFor(1000)
-    const slide = await page.locator('.v-charts-brush-slide').boundingBox()
-    const sx = slide.x + slide.width / 2
-    const sy = slide.y + slide.height / 2
-    await page.mouse.move(sx, sy)
-    await page.mouse.down()
-    let n = 0
-    // Drag 8 px per frame for 24 frames, then hold.
-    report[s].drag = await film(page, '01-drag', dir, null, async () => {}, async () => {
-      if (n < 24) {
-        n++
-        await page.mouse.move(sx + n * 8, sy)
-      }
-    })
-    await page.mouse.up()
-  }
-  const steps = await page.evaluate(() => window.lab.steps)
-  for (const [i, step] of steps.entries()) {
-    if (only && !only.split(',').includes(step))
-      continue
-    report[s][step] = await film(page, `${String(i + 1).padStart(2, '0')}-${step}`, dir, `window.lab.step(${JSON.stringify(step)})`)
-  }
-  // Interrupt: two changes 150 ms apart.
-  if (['values', 'fromOne', 'removeMiddle'].every(step => steps.includes(step)) && (!only || only.includes('interrupt'))) {
-    await page.evaluate(() => window.lab.step('fromOne'))
-    await page.clock.runFor(1000)
-    await page.evaluate(() => window.lab.step('values'))
-    await page.clock.runFor(150)
-    report[s].interrupt = await film(page, '99-interrupt', dir, `window.lab.step('removeMiddle')`)
-  }
-  await page.close()
-  const summary = Object.entries(report[s]).filter(([k]) => k !== 'errors').map(([k, v]) => `  ${k.padEnd(13)} settle=${String(v.settledAt).padStart(4)}ms shapes=${v.shapes} issues=${v.issues.length}${v.issues.length ? `\n${v.issues.slice(0, 12).map(x => `      - ${x}`).join('\n')}${v.issues.length > 12 ? `\n      … +${v.issues.length - 12}` : ''}` : ''}`).join('\n')
-  console.log(`== ${s}${errors.length ? `  ERRORS: ${[...new Set(errors)].slice(0, 5).join(' | ')}` : ''}\n${summary}`)
+  writeFileSync(join(out, `report${dark ? '-dark' : ''}.json`), JSON.stringify(report, (k, v) => k === 'frames' ? undefined : v, 2))
 }
-writeFileSync(join(out, `report${dark ? '-dark' : ''}.json`), JSON.stringify(report, (k, v) => k === 'frames' ? undefined : v, 2))
-await browser.close()
-await server.close()
+finally {
+  await browser.close()
+  await server?.close()
+}

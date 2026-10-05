@@ -37,10 +37,10 @@ export async function startServer() {
   if (has('prod') || process.env.LAB_PROD) {
     const outDir = join(here, 'dist')
     await build({ configFile, logLevel: 'error', mode: 'production', build: { outDir, emptyOutDir: true, minify: false } })
-    const server = await preview({ configFile, logLevel: 'error', build: { outDir }, preview: { port: 0, host: '127.0.0.1' } })
+    const server = await preview({ configFile, logLevel: 'error', build: { outDir }, preview: { port: Number(flag('port', 4680)), strictPort: true, host: '127.0.0.1' } })
     return { url: server.resolvedUrls.local[0], close: () => new Promise(resolve => server.httpServer.close(resolve)) }
   }
-  const server = await createServer({ configFile, logLevel: 'error', server: { port: 0 } })
+  const server = await createServer({ configFile, logLevel: 'error', server: { port: Number(flag('port', 4680)), strictPort: true, host: '127.0.0.1' } })
   await server.listen()
   return { url: server.resolvedUrls.local[0], close: () => server.close() }
 }

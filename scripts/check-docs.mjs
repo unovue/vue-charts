@@ -10,17 +10,21 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(root, 'docs/.output/public')
-const evidence = join(root, '.evidence/breakit/B6/docs')
+const output = process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B12/docs'
+const evidence = resolve(root, output)
 const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
 const playwright = require('playwright-core')
 
-const engines = ['chromium', 'firefox', 'webkit']
+const selected = process.argv.find(arg => arg.startsWith('--browser='))?.slice(10)
+const engines = selected ? selected.split(',') : ['chromium', 'firefox', 'webkit']
+if (engines.some(engine => !['chromium', 'firefox', 'webkit'].includes(engine)))
+  throw new Error(`Unknown browser: ${selected}`)
 if (process.argv.includes('--install-browsers')) {
   const install = spawnSync(process.execPath, [join(dirname(require.resolve('playwright-core')), 'cli.js'), 'install', 'chromium-headless-shell', 'firefox', 'webkit'], { stdio: 'inherit' })
   if (install.status !== 0)
     process.exit(install.status ?? 1)
 }
-if (spawnSync('git', ['check-ignore', '.evidence/breakit/B6/docs/summary.json'], { cwd: root }).status !== 0)
+if (spawnSync('git', ['check-ignore', join(evidence, 'summary.json')], { cwd: root }).status !== 0)
   throw new Error('Evidence must be git-ignored before running this check')
 await mkdir(evidence, { recursive: true })
 
@@ -58,7 +62,7 @@ const server = createServer(async (req, res) => {
   }
 })
 async function listen() {
-  for (let port = 4600; port <= 4699; port++) {
+  for (let port = 4680; port <= 4689; port++) {
     try {
       await new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -74,21 +78,24 @@ async function listen() {
         throw error
     }
   }
-  throw new Error('No free port in 4600–4699')
+  throw new Error('No free port in 4680–4689')
 }
 const results = []
 const errors = []
 const links = new Map()
-const routes = (await htmlFiles(publicDir)).map(file => `/${relative(publicDir, file).split(sep).join('/').replace(/(?:^|\/)index\.html$/, '').replace(/\.html$/, '')}`).sort()
+const onlyRoute = process.argv.find(arg => arg.startsWith('--route='))?.slice(8)
+const routes = (await htmlFiles(publicDir)).map(file => `/${relative(publicDir, file).split(sep).join('/').replace(/(?:^|\/)index\.html$/, '').replace(/\.html$/, '')}`).sort().filter(route => !onlyRoute || route === onlyRoute)
+if (!routes.length)
+  throw new Error(`No HTML routes found${onlyRoute ? ` for ${onlyRoute}` : ''}; build the docs first`)
 const chartRoutes = routes.filter(route => route.startsWith('/charts/'))
 let origin
 async function audit(browser, engine, route, mobile) {
   const viewport = mobile ? { width: 375, height: 812 } : { width: 1280, height: 800 }
   const page = await browser.newPage({ viewport })
-  const result = { route, browser: engine, viewport, mobile, findings: [], requests: [], demos: [], screenshot: `.evidence/breakit/B6/docs/${engine}/${route === '/' ? 'index' : route.slice(1).replaceAll('/', '__')}${mobile ? '--mobile' : ''}.png` }
+  const result = { route, browser: engine, viewport, mobile, findings: [], requests: [], demos: [], screenshot: `${relative(root, evidence)}/${engine}/${route === '/' ? 'index' : route.slice(1).replaceAll('/', '__')}${mobile ? '--mobile' : ''}.png` }
   page.on('console', (message) => {
     if (message.type() === 'error' || /hydration/i.test(message.text()))
-      result.findings.push({ kind: 'console', type: message.type(), text: message.text() })
+      result.findings.push({ kind: 'console', type: message.type(), text: message.text(), location: message.location() })
   })
   page.on('pageerror', error => result.findings.push({ kind: 'pageerror', text: error.message }))
   page.on('response', (response) => {
@@ -105,8 +112,8 @@ async function audit(browser, engine, route, mobile) {
   try {
     await page.goto(`${origin}${route}`, { waitUntil: 'networkidle', timeout: 30000 })
     result.heading = await page.locator('h1').first().textContent({ timeout: 5000 }).catch(() => null)
-    if (result.heading?.trim() === 'Page not found')
-      result.findings.push({ kind: 'render', text: `Nuxt error screen: ${result.heading.trim()}` })
+    if (await page.locator('#__nuxt_error').count() || result.heading?.trim() === 'Page not found')
+      result.findings.push({ kind: 'render', text: `Nuxt error screen: ${result.heading?.trim() ?? 'unknown error'}` })
     const demos = page.locator('.chart-demo')
     for (let i = 0; i < await demos.count(); i++) {
       const demo = demos.nth(i)
@@ -163,7 +170,7 @@ try {
   for (const engine of engines) {
     let browser
     try {
-      browser = await playwright[engine].launch({ headless: true, timeout: 30000 })
+      browser = await playwright[engine].launch({ headless: !process.argv.includes('--headed'), timeout: 30000, ...(engine === 'chromium' && process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
       // Two pages at a time bounds memory while keeping the run practical.
       const jobs = [...routes.map(route => [route, false]), ...chartRoutes.map(route => [route, true])]
       let next = 0
