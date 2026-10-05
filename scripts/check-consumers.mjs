@@ -1,13 +1,15 @@
+/* eslint-disable no-console -- CLI check results. */
 import { spawnSync } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { copyFile, cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const fixtures = join(root, 'scripts/fixtures/consumers')
+const prepare = process.argv.includes('--prepare')
 const temporary = await mkdtemp(join(tmpdir(), 'vccs-consumers-'))
-const rootPackage = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
-const libraryPackage = JSON.parse(await readFile(join(root, 'packages/vue/package.json'), 'utf8'))
 const env = { ...process.env, CI: 'true', NODE_ENV: 'production' }
 delete env.NODE_PATH
 const failures = []
@@ -31,165 +33,48 @@ function check(cwd, args) {
   }
 }
 
-async function write(directory, name, contents) {
-  const path = join(directory, name)
-  await mkdir(dirname(path), { recursive: true })
-  await writeFile(path, typeof contents === 'string' ? contents : `${JSON.stringify(contents, null, 2)}\n`)
-}
-
-const chart = `<script setup lang="ts">
-IMPORTS
-const data = [{ name: 'A', value: 12 }, { name: 'B', value: 24 }]
-</script>
-
-<template>
-  <BarChart :width="600" :height="300" :data="data">
-    <Bar data-key="value" :is-animation-active="false" />
-    <XAxis data-key="name" />
-    <YAxis />
-    <Tooltip>
-      <template #content="{ active, payload, label }">
-        <div v-if="active">{{ label }}: {{ payload.map(item => item.value).join(', ') }}</div>
-      </template>
-      <template #cursor="{ width, height }"><rect :width="width" :height="height" /></template>
-    </Tooltip>
-    <Legend />
-  </BarChart>
-  <LineChart :width="600" :height="300" :data="data">
-    <Line data-key="value" :is-animation-active="false" />
-    <Tooltip />
-    <Legend />
-  </LineChart>
-</template>
-`
-
 try {
-  console.log(`Packed consumer checks; Node ${process.version}; temporary apps: ${temporary}`)
+  console.log(`Packed consumers; Node ${process.version}; ${prepare ? 'network-enabled preparation' : 'offline frozen installation'}; ${temporary}`)
   run(root, ['--filter', 'vccs', 'build'])
   run(join(root, 'packages/vue'), ['pack', '--pack-destination', temporary])
   const archives = (await readdir(temporary)).filter(name => name.endsWith('.tgz'))
   if (archives.length !== 1)
     throw new Error(`Expected one packed library, found ${archives.length}`)
-  const dependencies = {
-    'vccs': `file:${join(temporary, archives[0])}`,
-    'vue': '^3.5.0',
-    'motion-v': libraryPackage.peerDependencies['motion-v'],
-  }
-  const devDependencies = {
-    'typescript': rootPackage.devDependencies.typescript,
-    'vue-tsc': rootPackage.devDependencies['vue-tsc'],
-    '@types/node': rootPackage.devDependencies['@types/node'],
-  }
-  const vite = join(temporary, 'vite')
-  await write(vite, 'package.json', {
-    name: 'vccs-vite-consumer',
-    private: true,
-    type: 'module',
-    packageManager: rootPackage.packageManager,
-    dependencies,
-    devDependencies: {
-      ...devDependencies,
-      'vite': rootPackage.devDependencies.vite,
-      '@vitejs/plugin-vue': rootPackage.devDependencies['@vitejs/plugin-vue'],
-    },
-  })
-  await write(vite, 'tsconfig.json', {
-    compilerOptions: {
-      target: 'ES2023',
-      module: 'ESNext',
-      moduleResolution: 'Bundler',
-      lib: ['ES2023', 'DOM', 'DOM.Iterable'],
-      types: ['node'],
-      strict: true,
-      skipLibCheck: false,
-      noEmit: true,
-    },
-    include: ['src/**/*.ts', 'src/**/*.vue'],
-  })
-  await write(vite, 'vite.config.mjs', 'import { defineConfig } from \'vite\'\nimport vue from \'@vitejs/plugin-vue\'\nexport default defineConfig({ plugins: [vue()] })\n')
-  await write(vite, 'index.html', '<!doctype html><html><head><title>vccs consumer</title></head><body><div id="app"></div><script type="module" src="/src/main.ts"></script></body></html>\n')
-  await write(vite, 'src/main.ts', 'import { createApp } from \'vue\'\nimport App from \'./App.vue\'\ncreateApp(App).mount(\'#app\')\n')
-  await write(vite, 'src/App.vue', chart.replace('IMPORTS', 'import { BarChart, Bar, LineChart, Line, Tooltip, Legend, XAxis, YAxis } from \'vccs\''))
-  // Minimal shadcn-vue shape: theme variables on a container and typed chart slots.
-  await write(vite, 'src/ChartContainer.vue', `<script setup lang="ts">
-import { useId } from 'vue'
-const id = useId()
-</script>
-<template>
-  <div data-slot="chart" :data-chart="id" style="--v-charts-grid: var(--border); --v-charts-axis: var(--border); --v-charts-text: var(--muted-foreground); --v-charts-cursor: var(--border); --v-charts-muted: var(--muted); --v-charts-background: var(--background); --v-charts-inactive: var(--muted-foreground); --v-charts-focus: var(--ring)">
-    <slot />
-  </div>
-</template>
-`)
-  await write(vite, 'src/RegistryChart.vue', `<script setup lang="ts">
-import { CartesianGrid, defineChartComponents } from 'vccs'
-import ChartContainer from './ChartContainer.vue'
-interface Row { month: string; visitors: number }
-const { AreaChart, Area, XAxis, Tooltip } = defineChartComponents<Row>()
-const rows: Row[] = [{ month: 'January', visitors: 12 }]
-</script>
-<template>
-  <ChartContainer>
-    <AreaChart :data="rows" :width="600" :height="300">
-      <CartesianGrid />
-      <XAxis data-key="month" />
-      <Area data-key="visitors" :is-animation-active="false" />
-      <Tooltip>
-        <template #content="{ active, payload, label }">
-          <div v-if="active">{{ label }}: {{ payload.map(item => item.payload.visitors).join(', ') }}</div>
-        </template>
-      </Tooltip>
-    </AreaChart>
-  </ChartContainer>
-</template>
-`)
-  const app = await readFile(join(vite, 'src/App.vue'), 'utf8')
-  await write(vite, 'src/App.vue', app
-    .replace('<script setup lang="ts">', '<script setup lang="ts">\nimport RegistryChart from \'./RegistryChart.vue\'')
-    .replace('<template>', '<template>\n  <RegistryChart />'))
-  run(vite, ['install', '--prod=false', '--no-frozen-lockfile'])
-  check(vite, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
-  check(vite, ['exec', 'vite', 'build'])
+  await copyFile(join(temporary, archives[0]), join(temporary, 'vccs.tgz'))
 
-  if (!libraryPackage.exports['./nuxt'])
-    throw new Error('The packed library must export vccs/nuxt for the Nuxt consumer check')
-  const nuxt = join(temporary, 'nuxt')
-  await write(nuxt, 'package.json', {
-    name: 'vccs-nuxt-consumer',
-    private: true,
-    type: 'module',
-    packageManager: rootPackage.packageManager,
-    dependencies,
-    devDependencies: { ...devDependencies, nuxt: libraryPackage.devDependencies.nuxt },
-  })
-  await write(nuxt, 'nuxt.config.ts', `export default defineNuxtConfig({
-  modules: ['vccs/nuxt'],
-  devtools: { enabled: false },
-  typescript: { strict: true },
-})\n`)
-  await write(nuxt, 'tsconfig.json', {
-    files: [],
-    references: ['app', 'server', 'shared', 'node'].map(context => ({ path: `./.nuxt/tsconfig.${context}.json` })),
-  })
-  // Auto-imported components must infer slots from the packed public declarations.
-  await write(nuxt, 'app/app.vue', chart
-    .replace('IMPORTS', '')
-    .replace('const data =', 'const rows: { name: string, value: number }[] =')
-    .replaceAll(':data="data"', ':data="rows"')
-    .replace('payload.map(item => item.value).join(\', \')', 'payload?.[0]?.value'))
-  run(nuxt, ['install', '--prod=false', '--no-frozen-lockfile'])
-  run(nuxt, ['exec', 'nuxi', 'prepare'])
-  for (const context of ['app', 'server', 'shared', 'node']) {
-    const config = JSON.parse(await readFile(join(nuxt, `.nuxt/tsconfig.${context}.json`), 'utf8'))
-    if (config.compilerOptions.strict !== true)
-      throw new Error(`Nuxt ${context} must use strict: true`)
-    console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}`)
+  for (const name of ['vite', 'nuxt']) {
+    const app = join(temporary, name)
+    await cp(join(fixtures, name), app, { recursive: true })
+    // pnpm refreshes the local archive's integrity. Existing registry resolutions
+    // stay locked; fixture preparation is required if a new dependency is absent.
+    run(app, ['update', 'vccs', '--lockfile-only', ...(prepare ? [] : ['--offline'])])
+    if (prepare)
+      run(app, ['fetch', '--prod=false'])
+    run(app, ['install', '--prod=false', '--offline', '--frozen-lockfile'])
+    const lock = await readFile(join(app, 'pnpm-lock.yaml'))
+    console.log(`${name} lockfile SHA-256: ${createHash('sha256').update(lock).digest('hex')}`)
+    if (prepare)
+      await copyFile(join(app, 'pnpm-lock.yaml'), join(fixtures, name, 'pnpm-lock.yaml'))
+
+    if (name === 'vite') {
+      check(app, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
+      check(app, ['exec', 'vite', 'build'])
+    }
+    else {
+      run(app, ['exec', 'nuxi', 'prepare'])
+      for (const context of ['app', 'server', 'shared', 'node']) {
+        const config = JSON.parse(await readFile(join(app, `.nuxt/tsconfig.${context}.json`), 'utf8'))
+        if (config.compilerOptions.strict !== true)
+          throw new Error(`Nuxt ${context} must use strict: true`)
+        console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}`)
+      }
+      check(app, ['exec', 'nuxi', 'typecheck'])
+      check(app, ['exec', 'nuxi', 'build'])
+    }
   }
-  check(nuxt, ['exec', 'nuxi', 'typecheck'])
-  check(nuxt, ['exec', 'nuxi', 'build'])
   if (failures.length)
     throw new AggregateError(failures, `${failures.length} packed consumer checks failed`)
-  console.log('\nPASS: packed Vite and Nuxt consumers typecheck strictly and build.')
+  console.log('\nPASS: fresh packed Vite and Nuxt consumers typecheck strictly and build.')
 }
 catch (error) {
   console.error(error)
