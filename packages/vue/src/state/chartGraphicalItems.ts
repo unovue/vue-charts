@@ -1,10 +1,9 @@
-import { computed, shallowRef } from 'vue'
 import type { ChartData } from './chartData'
-import type { AxisId } from './chartCartesianAxis'
 import type { MaybeStackedGraphicalItem } from './selectors/barSelectors'
+import type { AxisId } from './chartCartesianAxis'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { DataKey } from '@/types'
-import type { NormalizedStackId } from '@/shape'
+import type { MinPointSize, NormalizedStackId } from '@/shape'
 import type { StackId } from '@/types/tick'
 
 /**
@@ -33,7 +32,7 @@ export type CartesianGraphicalItemType = 'area' | 'bar' | 'line' | 'scatter'
 export type PolarGraphicalItemType = 'pie' | 'radar' | 'radialBar' | 'funnel'
 
 export interface GraphicalItemSettings extends MaybeStackedGraphicalItem {
-  data: ChartData
+  data: ChartData | undefined
   dataKey: DataKey<any> | undefined
   /**
    * Why not just stop pushing the graphical items to state when they are hidden?
@@ -53,7 +52,7 @@ export type CartesianGraphicalItemSettings = GraphicalItemSettings & {
    */
   xAxisId: AxisId
   yAxisId: AxisId
-  zAxisId: AxisId
+  zAxisId: AxisId | undefined
   /**
    * ErrorBars are only rendered if they are explicitly set in the React tree, otherwise this will be an empty array.
    * One graphical item can have multiple error bars. This probably only makes sense in Scatter.
@@ -64,6 +63,7 @@ export type CartesianGraphicalItemSettings = GraphicalItemSettings & {
    * This property is only used in Bar and RadialBar items
    */
   barSize: number | string | undefined
+  minPointSize?: MinPointSize
 }
 
 export type PolarGraphicalItemSettings = GraphicalItemSettings & {
@@ -73,15 +73,10 @@ export type PolarGraphicalItemSettings = GraphicalItemSettings & {
   /**
    * Only used by RadialBar items
    */
-  barSize?: number | string
-  stackId?: StackId
+  barSize: number | string | undefined
+  stackId: StackId | undefined
   minPointSize?: number
   maxBarSize?: number
-}
-
-type ReplacePayload<T> = {
-  prev: T
-  next: T
 }
 
 export type GraphicalItemsState = {
@@ -90,7 +85,7 @@ export type GraphicalItemsState = {
    * Graphical item is a visual representation of data on the chart.
    * Some examples are: Line, Bar.
    *
-   * The order is arbitrary; do not expect that indexes here will be the same as indexes elsewhere.
+   * Setup order is stable across prop changes and keyed DOM reorders.
    */
   cartesianItems: ReadonlyArray<CartesianGraphicalItemSettings>
   /**
@@ -98,59 +93,7 @@ export type GraphicalItemsState = {
    * Graphical item is a visual representation of data on the chart.
    * Some examples are: Pie, Radar, RadialBar
    *
-   * The order is arbitrary; do not expect that indexes here will be the same as indexes elsewhere.
+   * Setup order is stable across prop changes and keyed DOM reorders.
    */
   polarItems: ReadonlyArray<PolarGraphicalItemSettings>
-}
-
-export function createChartGraphicalItems() {
-  const state = shallowRef<GraphicalItemsState>({ cartesianItems: [], polarItems: [] })
-
-  function addCartesianGraphicalItem(item: CartesianGraphicalItemSettings) {
-    state.value = { ...state.value, cartesianItems: [...state.value.cartesianItems, item] }
-  }
-
-  function removeCartesianGraphicalItem(item: CartesianGraphicalItemSettings) {
-    const index = state.value.cartesianItems.indexOf(item)
-    if (index === -1)
-      return
-    state.value = { ...state.value, cartesianItems: state.value.cartesianItems.filter((_, i) => i !== index) }
-  }
-
-  function replaceCartesianGraphicalItem({ prev, next }: ReplacePayload<CartesianGraphicalItemSettings>) {
-    const index = state.value.cartesianItems.indexOf(prev)
-    if (index === -1)
-      return prev
-    if (prev === next || (Object.keys(prev).length === Object.keys(next).length
-      && Object.keys(next).every(key => Object.is(Reflect.get(prev, key), Reflect.get(next, key))))) {
-      return prev
-    }
-    state.value = { ...state.value, cartesianItems: state.value.cartesianItems.map((item, i) => i === index ? next : item) }
-    return next
-  }
-
-  function addPolarGraphicalItem(item: PolarGraphicalItemSettings) {
-    state.value = { ...state.value, polarItems: [...state.value.polarItems, item] }
-  }
-
-  function removePolarGraphicalItem(item: PolarGraphicalItemSettings) {
-    const index = state.value.polarItems.indexOf(item)
-    if (index === -1)
-      return
-    state.value = { ...state.value, polarItems: state.value.polarItems.filter((_, i) => i !== index) }
-  }
-
-  function replacePolarGraphicalItem({ prev, next }: ReplacePayload<PolarGraphicalItemSettings>) {
-    const index = state.value.polarItems.indexOf(prev)
-    if (index === -1)
-      return prev
-    if (prev === next || (Object.keys(prev).length === Object.keys(next).length
-      && Object.keys(next).every(key => Object.is(Reflect.get(prev, key), Reflect.get(next, key))))) {
-      return prev
-    }
-    state.value = { ...state.value, polarItems: state.value.polarItems.map((item, i) => i === index ? next : item) }
-    return next
-  }
-
-  return { state: computed(() => state.value), addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem, addPolarGraphicalItem, removePolarGraphicalItem, replacePolarGraphicalItem }
 }

@@ -272,7 +272,7 @@ export const CellGridLayer = defineComponent({
       onEnd: callbacks.onEnd,
     })
 
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: props.cells.map(cell => ({ name: cell.label, value: cell.value, payload: cell.payload, color: cell.fill })),
         positions: undefined,
@@ -290,10 +290,7 @@ export const CellGridLayer = defineComponent({
         },
       }
       return settings
-    }), (settings, _previous, onCleanup) => {
-      tooltip.addTooltipEntrySettings(settings)
-      onCleanup(() => tooltip.removeTooltipEntrySettings(settings))
-    }, { immediate: true })
+    }))
 
     // A data change can move or remove the active cell; the tooltip follows it or closes. This
     // only re-syncs and never reports back: a controlled index keeps deciding which cell it is.

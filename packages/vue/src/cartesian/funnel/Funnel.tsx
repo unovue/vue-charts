@@ -3,7 +3,7 @@ import { funnelEvents } from '@/events/itemEvents'
 import type { ComputedRef, ExtractPropTypes, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartTooltip } from '@/state/chartContext'
+import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
@@ -11,9 +11,6 @@ import { Trapezoid } from '@/shape/Trapezoid'
 import { getValueByDataKey } from '@/utils/chart'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
-import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
@@ -71,24 +68,22 @@ const FunnelView = defineComponent({
       onEnd: () => emit('animation-end'),
     })
 
-    const tooltipConfiguration = SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: data.value ?? [],
-        positions: trapezoids.value.map((t: any) => t.tooltipPosition),
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: props.nameKey,
-          name: String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: props.fill,
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
-        },
-      })),
-    })
+    const tooltipConfiguration = computed(() => ({
+      dataDefinedOnItem: data.value ?? [],
+      positions: trapezoids.value.map((t: any) => t.tooltipPosition),
+      settings: {
+        dataKey: props.dataKey,
+        nameKey: props.nameKey,
+        name: String(props.dataKey ?? ''),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: props.fill,
+        fill: props.fill,
+        stroke: props.stroke,
+        unit: '',
+      },
+    }))
+    useChartTooltip().entries.register(tooltipConfiguration)
 
     // LabelList children ride along with the trapezoids as drawn, show the new values at once
     // and fade with trapezoids that enter or leave.
@@ -223,7 +218,9 @@ const _Funnel = defineComponent({
       },
     }))
 
-    SetPolarGraphicalItem(computed(() => ({
+    useChartGraphicalItems().polar.register(computed(() => ({
+      stackId: undefined,
+      barSize: undefined,
       type: 'funnel' as const,
       data: data.value ?? [],
       dataKey: props.dataKey,
@@ -250,7 +247,7 @@ const _Funnel = defineComponent({
         inactive: props.hide,
       }))
     })
-    SetLegendPayload(computed(() => legendPayload.value))
+    useChartLegend().entries.register(computed(() => legendPayload.value))
 
     const View = useDeferredView(FunnelView)
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)

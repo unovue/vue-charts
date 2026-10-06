@@ -1,8 +1,8 @@
-import { createChartCartesianAxis } from './chartCartesianAxis'
-import { createChartGraphicalItems } from './chartGraphicalItems'
+import { createRegistries } from '@/model/registries'
+import type { ChartRegistries } from '@/model/registries'
+import type { Registry } from '@/model/registry'
+import type { AxisId } from './chartCartesianAxis'
 import type { ChartOptions } from './chartOptions'
-import { createChartReferenceElements } from './chartReferenceElements'
-import { createChartPolarAxis } from './chartPolarAxis'
 import { createChartLegend } from './chartLegend'
 import { createChartBrush } from './chartBrush'
 import { computed, inject, provide, shallowRef } from 'vue'
@@ -19,10 +19,10 @@ interface ChartContext {
   data: ReturnType<typeof createChartData>
   brush: ReturnType<typeof createChartBrush>
   legend: ReturnType<typeof createChartLegend>
-  polarAxis: ReturnType<typeof createChartPolarAxis>
-  referenceElements: ReturnType<typeof createChartReferenceElements>
-  cartesianAxis: ReturnType<typeof createChartCartesianAxis>
-  graphicalItems: ReturnType<typeof createChartGraphicalItems>
+  polarAxis: ChartRegistries['axes']
+  referenceElements: ChartRegistries['references']
+  cartesianAxis: ChartRegistries['axes']
+  graphicalItems: ChartRegistries['items']
   tooltip: ReturnType<typeof createChartTooltip>
 }
 
@@ -30,30 +30,63 @@ const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
 export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart) {
   const root = chart ?? createStandaloneInputs(initialOptions)
-  const cartesianAxis = createChartCartesianAxis()
-  const graphicalItems = createChartGraphicalItems()
+  const registries = chart ?? createRegistries()
+  const { axes, items, references } = registries
+  const xAxis = axisSettings(axes.xAxis)
+  const yAxis = axisSettings(axes.yAxis)
+  const zAxis = axisSettings(axes.zAxis)
+  const angleAxis = axisSettings(axes.angleAxis)
+  const radiusAxis = axisSettings(axes.radiusAxis)
   const brush = createChartBrush()
-  const legend = createChartLegend()
-  const polarAxis = createChartPolarAxis()
-  const referenceElements = createChartReferenceElements()
+  const legend = createChartLegend(registries.legendEntries)
   const data = createChartData(() => chart?.data.value)
-  const tooltip = createChartTooltip()
+  const tooltip = createChartTooltip(registries.tooltipEntries)
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
-    get cartesianAxis() { return cartesianAxis.state.value },
-    get graphicalItems() { return graphicalItems.state.value },
+    cartesianAxis: {
+      get xAxis() { return xAxis.value },
+      get yAxis() { return yAxis.value },
+      get zAxis() { return zAxis.value },
+    },
+    graphicalItems: {
+      get cartesianItems() { return items.cartesian.entries.value },
+      get polarItems() { return items.polar.entries.value },
+    },
     get layout() { return root.layout.value },
     get chartData() { return data.state.value },
     get brush() { return brush.state.value },
-    get legend() { return legend.state.value },
+    legend: {
+      get settings() { return legend.state.value.settings },
+      get size() { return legend.state.value.size },
+      get hidden() { return legend.state.value.hidden },
+      get payload() { return legend.entries.entries.value },
+    },
     get options() { return root.options.value },
     get rootProps() { return root.rootProps.value },
     get polarOptions() { return root.polarOptions.value },
-    get polarAxis() { return polarAxis.state.value },
-    get referenceElements() { return referenceElements.state.value },
+    polarAxis: {
+      get angleAxis() { return angleAxis.value },
+      get radiusAxis() { return radiusAxis.value },
+    },
+    referenceElements: {
+      get dots() { return references.dots.entries.value },
+      get areas() { return references.areas.entries.value },
+      get lines() { return references.lines.entries.value },
+    },
     get tooltip() { return tooltip.state.value },
   })
-  provide(chartContextKey, { view, layout: root, data, brush, legend, polarAxis, referenceElements, tooltip, cartesianAxis, graphicalItems })
+  provide(chartContextKey, {
+    view,
+    layout: root,
+    data,
+    brush,
+    legend,
+    polarAxis: axes,
+    referenceElements: references,
+    tooltip,
+    cartesianAxis: axes,
+    graphicalItems: items,
+  })
 }
 
 function useChartContext() {
@@ -127,4 +160,8 @@ function createStandaloneInputs(initialOptions?: ChartOptions) {
     options: computed(() => options),
     setScale(value: number) { scale.value = value },
   }
+}
+
+function axisSettings<T extends { id?: AxisId }>(registry: Registry<T>) {
+  return computed(() => Object.fromEntries(registry.entries.value.map(axis => [axis.id, axis])))
 }

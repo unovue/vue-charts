@@ -1,17 +1,22 @@
-import type { AreaProps, AreaPropsWithSVG } from '@/cartesian/area/type'
+import type { MinPointSize } from '@/shape'
+import type { AreaProps } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/chartGraphicalItems'
-import { SetCartesianGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
-import { getTooltipNameProp } from '@/utils/chart'
+import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
+import { getNormalizedStackId, getTooltipNameProp } from '@/utils/chart'
 import type { SVGAttributes, ShallowRef } from 'vue'
 import { computed, useAttrs } from 'vue'
 import { useTrackedData } from './useTrackedData'
+import type { AxisId } from '@/state/chartCartesianAxis'
 
-function getLegendItemColor(stroke: string | undefined, fill: string): string {
-  return stroke && stroke !== 'none' ? stroke : fill
-}
+type GraphicalItemProps = Partial<Pick<AreaProps, 'dataKey' | 'stackId' | 'hide' | 'xAxisId' | 'yAxisId'
+  | 'stroke' | 'fill' | 'name' | 'legendType' | 'tooltipType' | 'unit'>> & {
+    data?: readonly unknown[]
+    strokeDasharray?: string | number
+    zAxisId?: AxisId
+    barSize?: number | string
+    minPointSize?: MinPointSize
+  }
 
 function getItemColor(type: CartesianGraphicalItemType, stroke: string | undefined, fill: string | undefined): string | undefined {
   // Bar's primary visual is fill, not stroke
@@ -19,14 +24,21 @@ function getItemColor(type: CartesianGraphicalItemType, stroke: string | undefin
     return fill
   }
   // Area/Line primary visual is stroke
-  return getLegendItemColor(stroke, fill!)
+  return stroke && stroke !== 'none' ? stroke : fill
 }
 
-export function useSetupGraphicalItem(props: AreaProps | any, type: CartesianGraphicalItemType, options?: { skipTooltip?: boolean, errorBars?: ShallowRef<ReadonlyArray<ErrorBarsSettings>> }) {
+export function useSetupGraphicalItem(
+  props: GraphicalItemProps,
+  type: CartesianGraphicalItemType,
+  options?: {
+    skipTooltip?: boolean
+    errorBars?: ShallowRef<ReadonlyArray<ErrorBarsSettings>>
+  },
+) {
   const data = useTrackedData<unknown>(() => props.data)
   const attrs = useAttrs() as SVGAttributes
 
-  const legendPayload = computed(() => {
+  const legendPayload = computed<readonly LegendPayload[]>(() => {
     return [
       {
         inactive: props.hide,
@@ -39,45 +51,42 @@ export function useSetupGraphicalItem(props: AreaProps | any, type: CartesianGra
           data: data.value,
         },
       },
-    ] as ReadonlyArray<LegendPayload>
+    ]
   })
-  SetCartesianGraphicalItem(computed(() => {
+  useChartGraphicalItems().cartesian.register(computed(() => {
     return {
-      ...props,
       data: data.value,
+      dataKey: props.dataKey,
+      stackId: getNormalizedStackId(props.stackId),
+      hide: props.hide ?? false,
+      xAxisId: props.xAxisId ?? 0,
+      yAxisId: props.yAxisId ?? 0,
+      zAxisId: props.zAxisId,
+      barSize: props.barSize,
+      minPointSize: props.minPointSize,
       type,
       errorBars: options?.errorBars?.value,
     }
   }))
 
-  SetLegendPayload(legendPayload)
+  useChartLegend().entries.register(legendPayload)
   if (!options?.skipTooltip) {
-    SetTooltipEntrySettings({ fn: getTooltipEntrySettings as any, args: computed(() => ({
-      ...props,
-      data: data.value,
-      ...attrs,
-      _itemType: type,
-    } as AreaPropsWithSVG | any)) })
+    useChartTooltip().entries.register(computed(() => ({
+      dataDefinedOnItem: data.value,
+      positions: undefined,
+      settings: {
+        stroke: attrs.stroke ?? props.stroke,
+        strokeWidth: attrs['stroke-width'],
+        fill: attrs.fill ?? props.fill,
+        dataKey: props.dataKey,
+        nameKey: undefined,
+        name: getTooltipNameProp(props.name, props.dataKey),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: getItemColor(type, attrs.stroke ?? props.stroke, attrs.fill ?? props.fill),
+        unit: props.unit,
+      },
+    })))
   }
   return data
-}
-
-function getTooltipEntrySettings(props: AreaPropsWithSVG & { _itemType?: CartesianGraphicalItemType } | any) {
-  const { dataKey, data, stroke, fill, name, hide, unit, _itemType } = props
-  return {
-    dataDefinedOnItem: data,
-    positions: undefined,
-    settings: {
-      stroke,
-      strokeWidth: props['stroke-width'],
-      fill,
-      dataKey,
-      nameKey: undefined,
-      name: getTooltipNameProp(name, dataKey),
-      hide,
-      type: props.tooltipType,
-      color: getItemColor(_itemType!, stroke, fill),
-      unit,
-    },
-  }
 }

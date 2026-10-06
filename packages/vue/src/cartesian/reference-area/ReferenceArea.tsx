@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
@@ -131,8 +131,8 @@ const _ReferenceArea = defineComponent({
   props: ReferenceAreaVueProps,
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    const { addArea, removeArea } = useChartReferenceElements()
-    const settings = reactive({
+    const { areas } = useChartReferenceElements()
+    const settings = computed(() => ({
       xAxisId: props.xAxisId,
       yAxisId: props.yAxisId,
       ifOverflow: props.ifOverflow,
@@ -140,12 +140,9 @@ const _ReferenceArea = defineComponent({
       x2: props.x2,
       y1: props.y1,
       y2: props.y2,
-    })
+    }))
 
-    addArea(settings)
-    onUnmounted(() => {
-      removeArea(settings)
-    })
+    areas.register(settings)
 
     const View = useDeferredView(ReferenceAreaView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

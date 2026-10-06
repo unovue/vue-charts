@@ -175,7 +175,7 @@ const SparklineInner = defineComponent({
     }
 
     // Line and area register their own tooltip entries; bars get theirs from the cell grid.
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       if (props.type === 'bar')
         return undefined
       const settings: TooltipPayloadConfiguration = {
@@ -184,12 +184,7 @@ const SparklineInner = defineComponent({
         settings: { stroke: props.color, strokeWidth: undefined, fill: props.color, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: props.color, unit: '' },
       }
       return settings
-    }), (settings, _previous, onCleanup) => {
-      if (!settings)
-        return
-      tooltip.addTooltipEntrySettings(settings)
-      onCleanup(() => tooltip.removeTooltipEntrySettings(settings))
-    }, { immediate: true })
+    }))
 
     watch(() => active.value == null ? undefined : points.value[active.value], (point) => {
       if (props.type === 'bar')

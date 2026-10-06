@@ -1,3 +1,5 @@
+import type { ChartRegistries } from './registries'
+import { createRegistries } from './registries'
 import type { ComputedRef, EffectScope, InjectionKey } from 'vue'
 import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
@@ -18,7 +20,7 @@ export interface ChartInputs {
   tooltip: Omit<ChartOptions, 'eventEmitter'>
 }
 
-export interface Chart {
+export interface Chart extends ChartRegistries {
   readonly inputs: ChartInputs
   readonly scope: EffectScope
   readonly data: ComputedRef<ChartData | undefined>
@@ -53,7 +55,7 @@ export function createChart(inputs: ChartInputs): Chart {
     scale.value = value
   }
 
-  return { inputs, scope, data, layout, rootProps, polarOptions, options, setScale }
+  return { inputs, scope, data, layout, rootProps, polarOptions, options, setScale, ...createRegistries() }
 }
 
 export function provideChart(chart: Chart) {

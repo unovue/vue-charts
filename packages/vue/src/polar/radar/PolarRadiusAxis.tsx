@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onUnmounted, provide, watch } from 'vue'
+import { computed, defineComponent, h, provide } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useAppSelector } from '@/state/hooks'
@@ -130,11 +130,10 @@ const _PolarRadiusAxis = defineComponent({
   name: 'PolarRadiusAxis',
   props: PolarRadiusAxisViewProps,
   setup(props, { attrs, slots }) {
-    const { addRadiusAxis, removeRadiusAxis } = useChartPolarAxis()
+    const { radiusAxis } = useChartPolarAxis()
     const layout = useChartLayout()
 
-    let prevSettings: RadiusAxisSettings | null = null
-    watch(() => ({
+    const settings = computed<RadiusAxisSettings>(() => ({
       id: props.radiusAxisId,
       type: resolveAxisType(props.type, layout.value, 'radiusAxis'),
       dataKey: props.dataKey,
@@ -152,17 +151,8 @@ const _PolarRadiusAxis = defineComponent({
       tickCount: props.tickCount,
       ticks: props.ticks,
       tick: props.tick,
-    }), (settings) => {
-      addRadiusAxis(settings)
-      prevSettings = settings
-    }, { immediate: true })
-
-    onUnmounted(() => {
-      if (prevSettings) {
-        removeRadiusAxis(prevSettings)
-        prevSettings = null
-      }
-    })
+    }))
+    radiusAxis.register(settings)
 
     const View = useDeferredView(PolarRadiusAxisView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

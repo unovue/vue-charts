@@ -7,9 +7,7 @@ import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useAppSelector } from '@/state/hooks'
-import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
+import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { selectRadarPoints } from '@/state/selectors/radarSelectors'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
@@ -268,7 +266,9 @@ export const Radar = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     radarEvents.provide(emit)
-    SetPolarGraphicalItem(computed(() => ({
+    useChartGraphicalItems().polar.register(computed(() => ({
+      stackId: undefined,
+      barSize: undefined,
       type: 'radar' as const,
       data: undefined,
       dataKey: props.dataKey,
@@ -277,7 +277,7 @@ export const Radar = defineComponent({
       radiusAxisId: props.radiusAxisId,
     })))
 
-    SetLegendPayload(computed(() => [{
+    useChartLegend().entries.register(computed(() => [{
       dataKey: props.dataKey,
       type: props.legendType,
       color: getLegendItemColor(props.stroke, props.fill),
@@ -286,24 +286,21 @@ export const Radar = defineComponent({
       inactive: props.hide,
     }]))
 
-    SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: undefined,
-        positions: undefined,
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: undefined,
-          name: props.name ?? String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: getLegendItemColor(props.stroke, props.fill),
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
-        },
-      })),
-    })
+    useChartTooltip().entries.register(computed(() => ({
+      dataDefinedOnItem: undefined,
+      positions: undefined,
+      settings: {
+        dataKey: props.dataKey,
+        nameKey: undefined,
+        name: props.name ?? String(props.dataKey ?? ''),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: getLegendItemColor(props.stroke, props.fill),
+        fill: props.fill,
+        stroke: props.stroke,
+        unit: '',
+      },
+    })))
 
     const View = useDeferredView(RadarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

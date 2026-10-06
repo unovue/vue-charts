@@ -1,4 +1,4 @@
-import { defineComponent, h, onUnmounted, watch } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useAppSelector } from '@/state/hooks'
@@ -159,10 +159,9 @@ const _PolarAngleAxis = defineComponent({
     tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
   }>,
   setup(props, { attrs, slots }) {
-    const { addAngleAxis, removeAngleAxis } = useChartPolarAxis()
+    const { angleAxis } = useChartPolarAxis()
 
-    let prevSettings: AngleAxisSettings | null = null
-    watch(() => ({
+    const settings = computed<AngleAxisSettings>(() => ({
       id: props.angleAxisId,
       type: props.type,
       dataKey: props.dataKey,
@@ -178,17 +177,8 @@ const _PolarAngleAxis = defineComponent({
       tickCount: props.tickCount,
       ticks: props.ticks,
       tick: props.tick,
-    }), (settings) => {
-      addAngleAxis(settings)
-      prevSettings = settings
-    }, { immediate: true })
-
-    onUnmounted(() => {
-      if (prevSettings) {
-        removeAngleAxis(prevSettings)
-        prevSettings = null
-      }
-    })
+    }))
+    angleAxis.register(settings)
 
     const View = useDeferredView(PolarAngleAxisView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

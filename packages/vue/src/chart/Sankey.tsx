@@ -3,7 +3,7 @@ import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -216,7 +216,7 @@ const SankeyInner = defineComponent({
       return { nodes, links }
     })
 
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: payloadTree.value,
         positions: undefined,
@@ -244,12 +244,7 @@ const SankeyInner = defineComponent({
         },
       }
       return settings
-    }), (settings, _previous, onCleanup) => {
-      tooltip.addTooltipEntrySettings(settings)
-      onCleanup(() => {
-        tooltip.removeTooltipEntrySettings(settings)
-      })
-    }, { immediate: true })
+    }))
 
     function handleNodeMouseEnter(node: SankeyLayoutNode, index: number, e: MouseEvent) {
       const coord: Coordinate = {

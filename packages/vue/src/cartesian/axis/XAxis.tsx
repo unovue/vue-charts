@@ -5,7 +5,7 @@ import { useChartCartesianAxis } from '@/state/chartContext'
  * @fileOverview X Axis
  */
 import type { PropType } from 'vue'
-import { defineComponent, onUnmounted, watch } from 'vue'
+import { computed, defineComponent } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import type { XAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitXAxis, selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize } from '@/state/selectors/axisSelectors'
@@ -87,9 +87,8 @@ const XAxisSettingsDispatcher = defineComponent({
     tickFormatter: Function as PropType<TickFormatter>,
   },
   setup(props, { slots: dispatcherSlots }) {
-    const { addXAxis, removeXAxis } = useChartCartesianAxis()
-    let registeredSettings: XAxisSettings | undefined
-    watch(() => {
+    const { xAxis } = useChartCartesianAxis()
+    const settings = computed<XAxisSettings>(() => {
       return {
         interval: props.interval ?? 'preserveEnd',
         id: props.xAxisId,
@@ -116,20 +115,9 @@ const XAxisSettingsDispatcher = defineComponent({
         tick: props.tick ?? true,
         tickFormatter: props.tickFormatter,
       } as XAxisSettings
-    }, (settings) => {
-      if (registeredSettings && registeredSettings.id !== settings.id) {
-        removeXAxis(registeredSettings)
-      }
-      addXAxis(settings)
-      registeredSettings = settings
-    }, { immediate: true })
-    // SSR stops watch immediately; its cleanup would remove settings before rendering.
-    onUnmounted(() => {
-      if (registeredSettings) {
-        removeXAxis(registeredSettings)
-        registeredSettings = undefined
-      }
     })
+    xAxis.register(settings)
+
     const View = useDeferredView(XAxisImpl)
     return () => (
       <View

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Scatter, ScatterChart, XAxis, YAxis, ZAxis } from '@/index'
+import { Bar, ComposedChart, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('<Scatter />', () => {
@@ -180,4 +180,26 @@ describe('<Scatter />', () => {
       expect(container.querySelectorAll('.v-charts-scatter-symbol')).toHaveLength(data01.length + data02.length)
     })
   })
+})
+
+it('keeps non-Scatter series out of the ZAxis sizing domain', () => {
+  const scatter = [{ x: 1, y: 1, z: 1 }, { x: 2, y: 2, z: 2 }]
+  const bars = [{ x: 1, y: 1, z: 100 }, { x: 2, y: 2, z: 200 }]
+  const { container } = render(() => (
+    <ComposedChart width={500} height={500}>
+      <XAxis type="number" dataKey="x" />
+      <YAxis dataKey="y" />
+      <ZAxis dataKey="z" domain={['dataMin', 'dataMax']} range={[100, 400]} />
+      <Bar data={bars} dataKey="y" isAnimationActive={false} />
+      <Scatter
+        data={scatter}
+        isAnimationActive={false}
+        v-slots={{
+          shape: point => <circle data-size={point.size} cx={point.cx} cy={point.cy} r={point.radius} />,
+        }}
+      />
+    </ComposedChart>
+  ))
+  expect([...container.querySelectorAll('circle[data-size]')].map(point => point.getAttribute('data-size')))
+    .toEqual(['100', '400'])
 })

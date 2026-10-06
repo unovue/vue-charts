@@ -4,7 +4,7 @@ import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, watch } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { ChartTransition } from '@/animation/motion'
@@ -146,7 +146,7 @@ const SunburstInner = defineComponent({
     })
 
     // Register tooltip entry settings
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: data.value,
         values: Object.fromEntries(nodes.value.map(node => [node.tooltipIndex, node.value])),
@@ -176,12 +176,7 @@ const SunburstInner = defineComponent({
         },
       }
       return tooltipEntrySettings
-    }), (tooltipEntrySettings, _previous, onCleanup) => {
-      tooltip.addTooltipEntrySettings(tooltipEntrySettings)
-      onCleanup(() => {
-        tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
-      })
-    }, { immediate: true })
+    }))
 
     function getNodeFill(node: SunburstLayoutNode): string {
       if (node.fill)

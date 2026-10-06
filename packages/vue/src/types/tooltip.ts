@@ -33,7 +33,7 @@ export interface Payload<TValue extends ValueType, TName extends NameType> {
   // formatter?: Formatter<TValue, TName>
   name?: TName
   value?: TValue
-  unit?: string
+  unit?: string | number
   fill?: string
   dataKey?: DataKey<any>
   nameKey?: DataKey<any>

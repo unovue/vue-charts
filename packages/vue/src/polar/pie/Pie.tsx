@@ -3,7 +3,7 @@ import { pieEvents } from '@/events/itemEvents'
 import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, ref, watch } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartTooltip } from '@/state/chartContext'
+import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { useAppSelector } from '@/state/hooks'
 import { Layer } from '@/container/Layer'
@@ -11,9 +11,6 @@ import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/pieSelectors'
 import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
@@ -97,24 +94,22 @@ const PieView = defineComponent({
       },
     })
 
-    const tooltipConfiguration = SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: displayedData.value ?? [],
-        positions: sectors.value?.map(s => s.tooltipPosition),
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: props.nameKey,
-          name: String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: props.fill,
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
-        },
-      })),
-    })
+    const tooltipConfiguration = computed(() => ({
+      dataDefinedOnItem: displayedData.value ?? [],
+      positions: sectors.value?.map(s => s.tooltipPosition),
+      settings: {
+        dataKey: props.dataKey,
+        nameKey: props.nameKey,
+        name: String(props.dataKey ?? ''),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: props.fill,
+        fill: props.fill,
+        stroke: props.stroke,
+        unit: '',
+      },
+    }))
+    useChartTooltip().entries.register(tooltipConfiguration)
 
     // Hoisted event handlers — stable closures, not recreated per animation frame
     function handleSectorEnter(sector: PieSectorDataItem, index: number) {
@@ -274,7 +269,9 @@ const _Pie = defineComponent({
       presentationProps: {},
     }))
 
-    SetPolarGraphicalItem(computed(() => ({
+    useChartGraphicalItems().polar.register(computed(() => ({
+      stackId: undefined,
+      barSize: undefined,
       type: 'pie' as const,
       data: data.value ?? [],
       dataKey: props.dataKey,
@@ -284,7 +281,7 @@ const _Pie = defineComponent({
     })))
 
     const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
-    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
+    useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(PieView)
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)

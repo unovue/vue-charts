@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
@@ -149,19 +149,16 @@ const _ReferenceLine = defineComponent({
   props: ReferenceLineVueProps,
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    const { addLine, removeLine } = useChartReferenceElements()
-    const settings = reactive({
+    const { lines } = useChartReferenceElements()
+    const settings = computed(() => ({
       xAxisId: props.xAxisId,
       yAxisId: props.yAxisId,
       ifOverflow: props.ifOverflow,
       x: props.x,
       y: props.y,
-    })
+    }))
 
-    addLine(settings)
-    onUnmounted(() => {
-      removeLine(settings)
-    })
+    lines.register(settings)
 
     const View = useDeferredView(ReferenceLineView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

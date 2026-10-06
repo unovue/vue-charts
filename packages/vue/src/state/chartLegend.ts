@@ -1,4 +1,5 @@
 import { computed, shallowRef } from 'vue'
+import type { Registry } from '@/model/registry'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LayoutType, Size } from '@/types'
@@ -27,11 +28,10 @@ export type LegendState = {
   payload: ReadonlyArray<ReadonlyArray<LegendPayload>>
 }
 
-export function createChartLegend() {
-  const state = shallowRef<LegendState>({
+export function createChartLegend(entries: Registry<readonly LegendPayload[]>) {
+  const state = shallowRef<Omit<LegendState, 'payload'>>({
     settings: { layout: 'horizontal', align: 'center', verticalAlign: 'middle' },
     size: { width: 0, height: 0 },
-    payload: [],
     hidden: new Set(),
   })
 
@@ -58,16 +58,11 @@ export function createChartLegend() {
     state.value = { ...state.value, settings: { ...settings } }
   }
 
-  function addLegendPayload(payload: ReadonlyArray<LegendPayload>) {
-    state.value = { ...state.value, payload: [...state.value.payload, payload] }
+  return {
+    state: computed(() => state.value),
+    entries,
+    setHidden,
+    setLegendSize,
+    setLegendSettings,
   }
-
-  function removeLegendPayload(payload: ReadonlyArray<LegendPayload>) {
-    const index = state.value.payload.indexOf(payload)
-    if (index < 0)
-      return
-    state.value = { ...state.value, payload: state.value.payload.filter((_, i) => i !== index) }
-  }
-
-  return { state: computed(() => state.value), setHidden, setLegendSize, setLegendSettings, addLegendPayload, removeLegendPayload }
 }

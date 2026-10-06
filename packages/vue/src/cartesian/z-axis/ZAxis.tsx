@@ -1,6 +1,6 @@
 import { useChartCartesianAxis } from '@/state/chartContext'
 import type { PropType } from 'vue'
-import { defineComponent, onUnmounted, watch } from 'vue'
+import { computed, defineComponent } from 'vue'
 import type { ZAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitZAxis } from '@/state/selectors/axisSelectors'
 import type { AxisRange } from '@/state/selectors/axisSelectors'
@@ -45,10 +45,9 @@ export const ZAxis = defineComponent({
     },
   },
   setup(props) {
-    const { addZAxis, removeZAxis } = useChartCartesianAxis()
+    const { zAxis } = useChartCartesianAxis()
 
-    let registeredSettings: ZAxisSettings | undefined
-    watch((): ZAxisSettings => {
+    const settings = computed<ZAxisSettings>(() => {
       return {
         id: props.zAxisId,
         dataKey: props.dataKey,
@@ -63,16 +62,8 @@ export const ZAxis = defineComponent({
         reversed: implicitZAxis.reversed,
         includeHidden: implicitZAxis.includeHidden,
       }
-    }, (settings) => {
-      if (registeredSettings && registeredSettings.id !== settings.id)
-        removeZAxis(registeredSettings)
-      addZAxis(settings)
-      registeredSettings = settings
-    }, { immediate: true })
-    onUnmounted(() => {
-      if (registeredSettings)
-        removeZAxis(registeredSettings)
     })
+    zAxis.register(settings)
 
     return () => null
   },

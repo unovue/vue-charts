@@ -7,7 +7,7 @@ import { provideChartContext, useChartTooltip } from '@/state/chartContext'
 import { provideRenderPhase, useCanMeasureText } from '@/animation/renderPhase'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent, ref, toRaw, watch } from 'vue'
+import { type PropType, type SlotsType, computed, defineComponent, ref, toRaw } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { labelOpacity } from '@/animation/ridingLabels'
@@ -225,7 +225,7 @@ const TreemapInner = defineComponent({
     })
 
     // Register tooltip entry settings (like Funnel/Scatter do)
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       const tooltipEntrySettings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: nodeTree.value,
         positions: undefined,
@@ -251,12 +251,7 @@ const TreemapInner = defineComponent({
         },
       }
       return tooltipEntrySettings
-    }), (tooltipEntrySettings, _previous, onCleanup) => {
-      tooltip.addTooltipEntrySettings(tooltipEntrySettings)
-      onCleanup(() => {
-        tooltip.removeTooltipEntrySettings(tooltipEntrySettings)
-      })
-    }, { immediate: true })
+    }))
 
     // Map layout node name → tooltipIndex from nodeTree
     function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {

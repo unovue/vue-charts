@@ -23,7 +23,6 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { getLinearRegression } from '@/utils/getLinearRegression'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
 import { useAppSelector } from '@/state/hooks'
 import { selectActiveTooltipDataKey, selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
@@ -91,35 +90,24 @@ const ScatterView = defineComponent({
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
     // arrayTooltipSearcher returns the tooltipPayload array for the active index,
     // which combineTooltipPayload processes into per-axis tooltip entries.
-    const tooltipConfiguration = SetTooltipEntrySettings({
-      fn: input => ({
-        // This owned array contains payloads that reference caller-owned rows.
-        dataDefinedOnItem: input.points && input.points.map(p => p.tooltipPayload),
-        positions: input.points?.map(point => point.tooltipPosition),
-        settings: {
-          stroke: input.stroke,
-          strokeWidth: input.strokeWidth,
-          fill: input.fill,
-          dataKey: input.dataKey,
-          nameKey: undefined,
-          name: getTooltipNameProp(input.name, input.dataKey),
-          hide: input.hide,
-          type: input.tooltipType,
-          color: input.fill,
-          unit: '',
-        },
-      }),
-      args: computed(() => ({
-        points: points.value,
-        fill: svgAttrs.fill as string ?? props.fill,
+    const tooltipConfiguration = computed(() => ({
+      // This owned array contains payloads that reference caller-owned rows.
+      dataDefinedOnItem: points.value?.map(point => point.tooltipPayload),
+      positions: points.value?.map(point => point.tooltipPosition),
+      settings: {
         stroke: svgAttrs.stroke as string,
         strokeWidth: svgAttrs['stroke-width'] as string | number | undefined,
-        name: props.name,
+        fill: svgAttrs.fill as string ?? props.fill,
         dataKey: props.dataKey,
+        nameKey: undefined,
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
-        tooltipType: props.tooltipType,
-      })),
-    })
+        type: props.tooltipType,
+        color: svgAttrs.fill as string ?? props.fill,
+        unit: '',
+      },
+    }))
+    tooltip.entries.register(tooltipConfiguration)
 
     provideErrorBarContext({
       data: points,

@@ -1,4 +1,5 @@
 import { computed, shallowRef } from 'vue'
+import type { Registry } from '@/model/registry'
 import type { AxisId } from './chartCartesianAxis'
 import type { ChartCoordinate, Coordinate, DataKey, NameType, Payload, TooltipTrigger, ValueType } from '@/types'
 
@@ -239,9 +240,9 @@ export const noInteraction: TooltipInteractionState = Object.freeze({
   coordinate: undefined,
 })
 
-export function createChartTooltip() {
+export function createChartTooltip(entries: Registry<TooltipPayloadConfiguration>) {
   const announcement = shallowRef('')
-  const state = shallowRef<TooltipState>({
+  const state = shallowRef<Omit<TooltipState, 'tooltipItemPayloads'>>({
     itemInteraction: {
       click: { ...noInteraction },
       hover: { ...noInteraction },
@@ -258,7 +259,6 @@ export function createChartTooltip() {
       label: undefined,
       coordinate: undefined,
     },
-    tooltipItemPayloads: [],
     settings: {
       shared: undefined,
       trigger: 'hover',
@@ -281,18 +281,6 @@ export function createChartTooltip() {
 
   function sameInteraction(a: TooltipInteractionState, b: TooltipInteractionState) {
     return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate && a.configuration === b.configuration
-  }
-
-  function addTooltipEntrySettings(settings: TooltipPayloadConfiguration) {
-    state.value = { ...state.value, tooltipItemPayloads: [...state.value.tooltipItemPayloads, settings] }
-  }
-
-  function removeTooltipEntrySettings(settings: TooltipPayloadConfiguration) {
-    const current = state.value
-    const index = current.tooltipItemPayloads.indexOf(settings)
-    if (index < 0)
-      return
-    state.value = { ...current, tooltipItemPayloads: current.tooltipItemPayloads.filter((_, i) => i !== index) }
   }
 
   function setTooltipSettingsState(settings: TooltipSettingsState) {
@@ -386,9 +374,8 @@ export function createChartTooltip() {
 
   return {
     announcement,
-    state: computed(() => state.value),
-    addTooltipEntrySettings,
-    removeTooltipEntrySettings,
+    state: computed(() => ({ ...state.value, tooltipItemPayloads: entries.entries.value })),
+    entries,
     setTooltipSettingsState,
     setActiveIndexListener,
     setActiveMouseOverItemIndex,

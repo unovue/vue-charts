@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onUnmounted, reactive } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
@@ -143,20 +143,17 @@ const _ReferenceDot = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<ReferenceDotSlots>,
   setup(props, { attrs, slots }) {
-    const { addDot, removeDot } = useChartReferenceElements()
-    const settings = reactive({
+    const { dots } = useChartReferenceElements()
+    const settings = computed(() => ({
       xAxisId: props.xAxisId,
       yAxisId: props.yAxisId,
       ifOverflow: props.ifOverflow,
       x: props.x,
       y: props.y,
       r: props.r,
-    })
+    }))
 
-    addDot(settings)
-    onUnmounted(() => {
-      removeDot(settings)
-    })
+    dots.register(settings)
 
     const View = useDeferredView(ReferenceDotView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

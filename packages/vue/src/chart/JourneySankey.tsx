@@ -253,7 +253,7 @@ const JourneySankeyInner = defineComponent({
         value: `${numbers.value.format(link.count)} sessions · ${percent.value.format(link.count / source.count * 100)}% of those on ${source.name} at step ${source.step + 1}`,
       }
     }
-    watch(computed(() => {
+    tooltip.entries.register(computed(() => {
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: {
           nodes: layout.value.nodes.map(node => ({ name: node.name, value: subtitleOf(node), payload: node })),
@@ -263,10 +263,7 @@ const JourneySankeyInner = defineComponent({
         settings: { stroke: undefined, strokeWidth: undefined, fill: undefined, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: undefined, unit: '' },
       }
       return settings
-    }), (settings, _previous, onCleanup) => {
-      tooltip.addTooltipEntrySettings(settings)
-      onCleanup(() => tooltip.removeTooltipEntrySettings(settings))
-    }, { immediate: true })
+    }))
 
     function enterNode(node: JourneyNode) {
       hover.value = { kind: 'node', id: node.id }

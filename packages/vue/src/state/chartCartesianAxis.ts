@@ -1,4 +1,3 @@
-import { computed, shallowRef } from 'vue'
 import type { AxisRange } from './selectors/axisSelectors'
 import type { SVGAttributes } from 'vue'
 import type { RechartsScale, ScaleType } from '@/types/scale'
@@ -73,11 +72,6 @@ export type YAxisSettings = CartesianAxisSettings & {
   padding: YAxisPadding
   width: YAxisWidth
   orientation: YAxisOrientation
-  /**
-   * Internal: recent measured widths, used to detect A→B→A oscillation
-   * when width is measured dynamically (width === 'auto').
-   */
-  widthHistory?: number[]
 }
 
 /**
@@ -92,77 +86,4 @@ export type CartesianAxisState = {
   xAxis: Record<AxisId, XAxisSettings>
   yAxis: Record<AxisId, YAxisSettings>
   zAxis: Record<AxisId, ZAxisSettings>
-}
-
-export function createChartCartesianAxis() {
-  const state = shallowRef<CartesianAxisState>({ xAxis: {}, yAxis: {}, zAxis: {} })
-
-  function addXAxis(axis: XAxisSettings) {
-    const previous = state.value.xAxis[axis.id!]
-    if (previous && Object.keys(previous).length === Object.keys(axis).length
-      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
-      return
-    }
-    state.value = { ...state.value, xAxis: { ...state.value.xAxis, [axis.id!]: axis } }
-  }
-
-  function removeXAxis(axis: XAxisSettings) {
-    if (!Object.hasOwn(state.value.xAxis, axis.id!))
-      return
-    const xAxis = { ...state.value.xAxis }
-    delete xAxis[axis.id!]
-    state.value = { ...state.value, xAxis }
-  }
-
-  function addYAxis(axis: YAxisSettings) {
-    const previous = state.value.yAxis[axis.id!]
-    if (previous && Object.keys(previous).length === Object.keys(axis).length
-      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
-      return
-    }
-    state.value = { ...state.value, yAxis: { ...state.value.yAxis, [axis.id!]: axis } }
-  }
-
-  function removeYAxis(axis: YAxisSettings) {
-    if (!Object.hasOwn(state.value.yAxis, axis.id!))
-      return
-    const yAxis = { ...state.value.yAxis }
-    delete yAxis[axis.id!]
-    state.value = { ...state.value, yAxis }
-  }
-
-  function addZAxis(axis: ZAxisSettings) {
-    const previous = state.value.zAxis[axis.id!]
-    if (previous && Object.keys(previous).length === Object.keys(axis).length
-      && Object.keys(axis).every(key => Object.is(Reflect.get(previous, key), Reflect.get(axis, key)))) {
-      return
-    }
-    state.value = { ...state.value, zAxis: { ...state.value.zAxis, [axis.id!]: axis } }
-  }
-
-  function removeZAxis(axis: ZAxisSettings) {
-    if (!Object.hasOwn(state.value.zAxis, axis.id!))
-      return
-    const zAxis = { ...state.value.zAxis }
-    delete zAxis[axis.id!]
-    state.value = { ...state.value, zAxis }
-  }
-
-  function updateYAxisWidth({ id, width }: { id: AxisId, width: number }) {
-    const axis = state.value.yAxis[id]
-    if (!axis || axis.width === width)
-      return
-    const history = axis.widthHistory || []
-    // Suppress subpixel A → B → A oscillation, as in the original reducer.
-    if (history.length === 3 && history[0] === history[2] && width === history[1]
-      && Math.abs(width - (history[0] ?? 0)) <= 1) {
-      return
-    }
-    state.value = {
-      ...state.value,
-      yAxis: { ...state.value.yAxis, [id]: { ...axis, width, widthHistory: [...history, width].slice(-3) } },
-    }
-  }
-
-  return { state: computed(() => state.value), addXAxis, removeXAxis, addYAxis, removeYAxis, addZAxis, removeZAxis, updateYAxisWidth }
 }

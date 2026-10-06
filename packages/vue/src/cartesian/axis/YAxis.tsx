@@ -3,7 +3,7 @@ import { useCanMeasureText } from '@/animation/renderPhase'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartCartesianAxis } from '@/state/chartContext'
 import type { ComponentPublicInstance, PropType } from 'vue'
-import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import type { YAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitYAxis, selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize } from '@/state/selectors/axisSelectors'
@@ -23,11 +23,11 @@ const YAxisImpl = defineComponent({
     },
   },
   inheritAttrs: false,
-  setup(props, { attrs, slots }) {
+  emits: ['measure-width'],
+  setup(props, { attrs, slots, emit }) {
     const canMeasureText = useCanMeasureText()
 
     const axisType = 'yAxis'
-    const { updateYAxisWidth } = useChartCartesianAxis()
     const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId))
     const axisSize = useAppSelector(state => selectYAxisSize(state, props.yAxisId!))
     const position = useAppSelector(state => selectYAxisPosition(state, props.yAxisId!))
@@ -55,7 +55,7 @@ const YAxisImpl = defineComponent({
     // Reset to the default width when data becomes available so the axis can shrink back (Recharts 3.x parity)
     watch(chartDataLengthEmpty, (empty) => {
       if (empty === false && isAutoWidth()) {
-        updateYAxisWidth({ id: props.yAxisId!, width: DEFAULT_Y_AXIS_WIDTH })
+        emit('measure-width', DEFAULT_Y_AXIS_WIDTH)
       }
     })
 
@@ -75,7 +75,7 @@ const YAxisImpl = defineComponent({
       }
       // Update the stored measurement only when its rounded width changes
       if (Math.round(axisSize.value.width) !== Math.round(updatedYAxisWidth)) {
-        updateYAxisWidth({ id: props.yAxisId!, width: updatedYAxisWidth })
+        emit('measure-width', updatedYAxisWidth)
       }
     }
 
@@ -115,7 +115,7 @@ const YAxisImpl = defineComponent({
   },
 })
 
-// Handles YAxis settings registration in the store
+// Register before deferred geometry renders.
 const YAxisSettingsDispatcher = defineComponent({
   props: {
     interval: [String, Number],
@@ -150,36 +150,41 @@ const YAxisSettingsDispatcher = defineComponent({
     },
   },
   setup(props, { slots }) {
-    const { addYAxis, removeYAxis } = useChartCartesianAxis()
-    let registeredSettings: YAxisSettings | undefined
-    watch(() => {
+    const { yAxis } = useChartCartesianAxis()
+    const measured = shallowRef<{ id: string | number, width: number, history: number[] }>()
+
+    function updateWidth(width: number) {
+      const previous = measured.value?.id === props.yAxisId ? measured.value : undefined
+      if (previous?.width === width)
+        return
+      const history = previous?.history ?? []
+      // Suppress subpixel A → B → A oscillation, preserving the existing guard.
+      if (history.length === 3 && history[0] === history[2] && width === history[1]
+        && Math.abs(width - history[0]!) <= 1) {
+        return
+      }
+      measured.value = { id: props.yAxisId, width, history: [...history, width].slice(-3) }
+    }
+    const settings = computed<YAxisSettings>(() => {
       return {
         ...props,
         interval: props.interval ?? 'preserveEnd',
         id: props.yAxisId,
+        width: props.width === 'auto' && measured.value?.id === props.yAxisId
+          ? measured.value.width
+          : props.width,
         dataKey: props.dataKey,
         includeHidden: props.includeHidden ?? false,
         angle: props.angle ?? 0,
         minTickGap: props.minTickGap ?? 5,
         tick: props.tick ?? true,
       } as YAxisSettings
-    }, (settings) => {
-      if (registeredSettings && registeredSettings.id !== settings.id) {
-        removeYAxis(registeredSettings)
-      }
-      addYAxis(settings)
-      registeredSettings = settings
-    }, { immediate: true })
-    // SSR stops watch immediately; its cleanup would remove settings before rendering.
-    onUnmounted(() => {
-      if (registeredSettings) {
-        removeYAxis(registeredSettings)
-        registeredSettings = undefined
-      }
     })
+    yAxis.register(settings)
+
     const View = useDeferredView(YAxisImpl)
     return () => (
-      <View {...props} v-slots={slots} />
+      <View {...props} onMeasure-width={updateWidth} v-slots={slots} />
     )
   },
 })

@@ -3,11 +3,8 @@ import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartTooltip } from '@/state/chartContext'
+import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
-import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import type { RadialBarDataItem, RadialBarSettings } from '@/state/selectors/radialBarSelectors'
 import { selectRadialBarLegendPayload, selectRadialBarSectors } from '@/state/selectors/radialBarSelectors'
 import { Layer } from '@/container/Layer'
@@ -54,24 +51,21 @@ const RadialBarView = defineComponent({
       ),
     )
 
-    SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: undefined,
-        positions: undefined,
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: undefined,
-          name: props.name ?? String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: getLegendItemColor(props.stroke, props.fill),
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
-        },
-      })),
-    })
+    useChartTooltip().entries.register(computed(() => ({
+      dataDefinedOnItem: undefined,
+      positions: undefined,
+      settings: {
+        dataKey: props.dataKey,
+        nameKey: undefined,
+        name: props.name ?? String(props.dataKey ?? ''),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: getLegendItemColor(props.stroke, props.fill),
+        fill: props.fill,
+        stroke: props.stroke,
+        unit: '',
+      },
+    })))
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
@@ -225,7 +219,7 @@ export const RadialBar = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     radialBarEvents.provide(emit)
-    SetPolarGraphicalItem(computed(() => ({
+    useChartGraphicalItems().polar.register(computed(() => ({
       type: 'radialBar' as const,
       data: undefined,
       dataKey: props.dataKey,
@@ -242,7 +236,7 @@ export const RadialBar = defineComponent({
       selectRadialBarLegendPayload(state, props.legendType),
     )
     // Rows without their own fill are drawn in the series colour; their legend icons match.
-    SetLegendPayload(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
+    useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
