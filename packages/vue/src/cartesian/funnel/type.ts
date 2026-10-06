@@ -30,7 +30,7 @@ export const FunnelVueProps = {
   nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   lastShapeType: { type: String as PropType<'triangle' | 'rectangle'>, default: 'triangle' },
   reversed: { type: Boolean, default: false },
-  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  fill: { type: String, default: undefined },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },

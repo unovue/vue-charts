@@ -301,7 +301,7 @@ const _Scatter = defineComponent({
     default?: () => VNode[]
   }>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useSeriesProps(inputProps)
+    const props = useSeriesProps(inputProps, ['fill'])
     scatterEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)

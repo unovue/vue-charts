@@ -27,10 +27,10 @@ export const AreaVueProps = {
     required: true as const,
   },
   dot: { type: Boolean, default: false },
-  fill: { type: String, default: 'var(--v-charts-series, #3182bd)' },
+  fill: { type: String, default: undefined },
   fillOpacity: { type: Number, default: 0.6 },
   strokeWidth: { type: Number },
-  stroke: { type: String, default: 'var(--v-charts-series, #3182bd)' },
+  stroke: { type: String, default: undefined },
   hide: { type: Boolean, default: false },
   isAnimationActive: { type: Boolean, default: undefined },
   /**

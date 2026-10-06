@@ -1,3 +1,4 @@
+import { seriesColor, seriesForeground } from '@/utils/theme'
 import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, toRaw, toRefs } from 'vue'
 import { useCanMeasureText } from '@/model/runtime'
 import { labelColor } from '@/utils/labelColor'
@@ -24,17 +25,6 @@ import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 interface TreemapData extends Record<string, unknown> {
   children?: TreemapData[]
 }
-
-const DEFAULT_COLORS = [
-  '#8889DD',
-  '#9597E4',
-  '#8DC77B',
-  '#A5D297',
-  '#E2CF45',
-  '#F8C12D',
-  '#F89C24',
-  '#F56E1A',
-]
 
 export interface TreemapContentSlotProps extends TreemapLayoutNode {
   index: number
@@ -121,7 +111,7 @@ const TreemapVueProps = {
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   aspectRatio: { type: Number, default: 4 / 3 },
-  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  fill: { type: String, default: seriesColor(0) },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
   colorPanel: { type: Array as PropType<string[]>, default: undefined },
@@ -144,7 +134,6 @@ function useTreemap(
 ) {
   const tooltip = useTooltipController()
   const canMeasureText = useCanMeasureText()
-  const colors = computed(() => props.colorPanel ?? DEFAULT_COLORS)
 
   // Nest mode state
   const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
@@ -179,7 +168,7 @@ function useTreemap(
       dataKey: isNestMode.value ? 'value' : props.dataKey,
       nameKey: props.nameKey,
       aspectRatio: props.aspectRatio,
-      colorPanel: colors.value,
+      colorPanel: props.colorPanel,
     })
   })
 
@@ -301,7 +290,7 @@ function useTreemap(
   }
 
   function getNodeFill(node: TreemapLayoutNode) {
-    return node.color ?? props.fill
+    return node.color ?? seriesColor(node.entryIndex)
   }
 
   function handleNodeMouseEnter(node: TreemapLayoutNode, index: number, e: MouseEvent) {
@@ -345,6 +334,7 @@ function useTreemap(
   // `opacity` is the entrance's fade, not part of the layout a custom content slot receives.
   function renderNode({ opacity, ...node }: TreemapLayoutNode & { opacity?: number }, index: number, key: PropertyKey, labelFade?: number) {
     const nodeFill = getNodeFill(node)
+    const labelFill = node.color == null ? seriesForeground(node.entryIndex) : labelColor(nodeFill)
     const fade = opacity != null && opacity < 1 ? opacity : undefined
 
     const nodeProps: TreemapContentSlotProps = {
@@ -382,7 +372,7 @@ function useTreemap(
       ? (
           <polygon
             points={`${node.x + 2},${node.y + node.height / 2} ${node.x + 6},${node.y + node.height / 2 + 3} ${node.x + 2},${node.y + node.height / 2 + 6}`}
-            fill={labelColor(nodeFill)}
+            fill={labelFill}
           />
         )
       : null
@@ -396,7 +386,7 @@ function useTreemap(
           <text
             x={node.x + 8}
             y={node.y + node.height / 2 + 7}
-            fill={labelColor(nodeFill)}
+            fill={labelFill}
             font-size={14}
             opacity={labelFade}
           >

@@ -50,7 +50,7 @@ export const LineVueProps = {
   hide: { type: Boolean, default: false },
   label: { type: [Boolean, Object] },
   legendType: { type: String as PropType<LegendType>, default: 'line' },
-  stroke: { type: String, default: 'var(--v-charts-series, #3182bd)' },
+  stroke: { type: String, default: undefined },
   strokeWidth: { type: Number, default: 1 },
   tooltipType: { type: String as PropType<TooltipType> },
   transition: {

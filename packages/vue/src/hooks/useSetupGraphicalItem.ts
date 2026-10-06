@@ -1,4 +1,5 @@
 import { useChart } from '@/model/chart'
+import { getSeriesId } from './useSeriesProps'
 import { provideTooltipEntry } from '@/model/tooltip'
 import type { Coordinate } from '@/types'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
@@ -59,6 +60,7 @@ export function useSetupGraphicalItem(
   })
   useChart().items.cartesian.register(computed(() => {
     return {
+      seriesId: getSeriesId(props),
       data: data.value,
       dataKey: props.dataKey,
       stackId: getNormalizedStackId(props.stackId),

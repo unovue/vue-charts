@@ -78,7 +78,7 @@ const _Area = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<AreaSlots>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useSeriesProps(inputProps)
+    const props = useSeriesProps(inputProps, ['fill', 'stroke'])
     areaEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)

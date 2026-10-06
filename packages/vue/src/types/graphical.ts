@@ -32,6 +32,7 @@ export type CartesianGraphicalItemType = 'area' | 'bar' | 'line' | 'scatter'
 type PolarGraphicalItemType = 'pie' | 'radar' | 'radialBar' | 'funnel'
 
 export interface GraphicalItemSettings extends MaybeStackedGraphicalItem {
+  seriesId?: symbol
   data: ChartData | undefined
   dataKey: ChartDataKey | undefined
   /**

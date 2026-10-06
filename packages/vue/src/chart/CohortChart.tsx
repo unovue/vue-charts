@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent } from 'vue'
 import { chartEmits } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
@@ -19,7 +20,7 @@ const CohortChartVueProps = {
   mode: { type: String as PropType<'percent' | 'count'>, default: 'percent' },
   /** Column heading per period, e.g. `i => \`Month ${i}\``. */
   periodLabel: { type: Function as PropType<(period: number) => string>, default: (period: number) => String(period) },
-  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
+  color: { type: String, default: seriesColor(0) },
   emptyColor: { type: String, default: 'var(--v-charts-muted, #eef2f7)' },
   /** Locale for numbers. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },

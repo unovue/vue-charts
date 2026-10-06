@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, useId } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -37,7 +38,7 @@ const SparklineVueProps = {
   /** Identity of a point across updates, e.g. its date, so a moving window slides. Defaults to the position. */
   nameKey: { type: String, default: undefined },
   type: { type: String as PropType<'line' | 'area' | 'bar'>, default: 'line' },
-  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
+  color: { type: String, default: seriesColor(0) },
   strokeWidth: { type: Number, default: 1.5 },
   curve: { type: String as PropType<'monotone' | 'linear'>, default: 'monotone' },
   /** Lowest value on the scale. Set `min` and `max` on several sparklines to compare them. */

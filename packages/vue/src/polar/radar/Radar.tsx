@@ -1,5 +1,5 @@
 import type { ChartDataKey } from '@/types/base'
-import { useSeriesProps } from '@/hooks/useSeriesProps'
+import { getSeriesId, useSeriesProps } from '@/hooks/useSeriesProps'
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -34,7 +34,7 @@ const RadarViewProps = {
   name: { type: String, default: undefined },
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  fill: { type: String, default: undefined },
   stroke: { type: String, default: undefined },
   fillOpacity: { type: Number, default: 0.6 },
   strokeWidth: { type: Number, default: undefined },
@@ -271,12 +271,13 @@ export const Radar = defineComponent({
   inheritAttrs: false,
   props: RadarViewProps,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useSeriesProps(inputProps)
+    const props = useSeriesProps(inputProps, ['fill'])
     radarEvents.provide(emit)
     useChart().items.polar.register(computed(() => ({
       stackId: undefined,
       barSize: undefined,
       type: 'radar' as const,
+      seriesId: getSeriesId(props),
       data: undefined,
       dataKey: props.dataKey,
       hide: props.hide,

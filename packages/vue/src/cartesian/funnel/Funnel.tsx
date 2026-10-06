@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import type { ComputedRef, ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { funnelEvents } from '@/events/itemEvents'
@@ -102,7 +103,7 @@ const FunnelView = defineComponent({
           dataKey: props.dataKey,
           inactive: props.hide,
           parentViewBox: trap.parentViewBox,
-          fill: trap.fill ?? props.fill,
+          fill: trap.fill ?? props.fill ?? seriesColor(trap.index),
           key: item.key,
           ...(opacity != null ? { opacity } : {}),
         }
@@ -142,7 +143,7 @@ const FunnelView = defineComponent({
         <Layer data-slot="series" class={['v-charts-funnel', props.class]}>
           {items.value.map(({ key, value: trap }) => {
             const cellProps = cells[trap.index] ?? {}
-            const trapFill = cellProps.fill ?? getValueByDataKey(trap.payload, 'fill') ?? props.fill
+            const trapFill = cellProps.fill ?? getValueByDataKey(trap.payload, 'fill') ?? props.fill ?? seriesColor(trap.index)
             const trapStroke = cellProps.stroke ?? stroke
 
             const trapezoidProps = {
@@ -245,7 +246,7 @@ const _Funnel = defineComponent({
       return trapList.map((trap, i: number) => ({
         type: props.legendType,
         value: String(trap.name ?? ''),
-        color: cells[i]?.fill ?? trap.fill ?? props.fill,
+        color: cells[i]?.fill ?? trap.fill ?? props.fill ?? seriesColor(i),
         payload: trap.payload as import('@/types/legend').LegendPayload['payload'],
         dataKey: props.dataKey,
         inactive: props.hide,

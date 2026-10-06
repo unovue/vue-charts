@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, toRefs } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
@@ -84,9 +85,9 @@ const SankeyVueProps = {
     type: Object as PropType<{ top?: number, right?: number, bottom?: number, left?: number }>,
     default: () => ({ top: 5, right: 5, bottom: 5, left: 5 }),
   },
-  nodeFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
+  nodeFill: { type: String, default: seriesColor(0) },
   nodeStroke: { type: String, default: 'var(--v-charts-background, #fff)' },
-  linkFill: { type: String, default: 'var(--v-charts-series, #0088fe)' },
+  linkFill: { type: String, default: seriesColor(0) },
   linkStroke: { type: String, default: 'none' },
   isAnimationActive: { type: Boolean, default: true },
   transition: {

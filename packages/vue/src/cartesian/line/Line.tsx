@@ -86,7 +86,7 @@ const _Line = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<LineSlots>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useSeriesProps(inputProps)
+    const props = useSeriesProps(inputProps, ['stroke'])
     lineEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'line')
     const View = useDeferredView(LineView)

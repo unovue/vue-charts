@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent } from 'vue'
 import type { Coordinate, DataKey } from '@/types'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -68,7 +69,7 @@ const SunburstChartVueProps = {
   endAngle: { type: Number, default: 360 },
   ringPadding: { type: Number, default: 2 },
   padding: { type: Number, default: 2 },
-  fill: { type: String, default: 'var(--v-charts-series, #3182bd)' },
+  fill: { type: String, default: undefined },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   isAnimationActive: { type: Boolean, default: true },
   transition: { type: Object as PropType<ChartTransition>, default: undefined },
@@ -179,7 +180,9 @@ const SunburstInner = defineComponent({
     function getNodeFill(node: SunburstLayoutNode): string {
       if (node.fill)
         return node.fill
-      return props.fill
+      const branchIndex = Number(node.tooltipIndex.match(/^children\[(\d+)\]/)?.[1] ?? 0)
+      const branch = props.data.children?.[branchIndex]
+      return props.fill ?? branch?.fill ?? seriesColor(branchIndex)
     }
 
     function getTooltipCoordinate(node: SunburstLayoutNode): Coordinate {

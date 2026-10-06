@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { getValueByDataKey } from '@/utils/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
@@ -178,7 +179,7 @@ const RadialBarView = defineComponent({
           value: sector.value ?? '',
           payload: sector.payload,
           parentViewBox: undefined,
-          fill: sector.fill ?? defaultFill,
+          fill: sector.fill ?? defaultFill ?? seriesColor(sector.index),
           cx: sector.cx,
           cy: sector.cy,
           innerRadius: sector.innerRadius,
@@ -225,7 +226,7 @@ const RadialBarView = defineComponent({
               || sector.startAngle == null || sector.endAngle == null) {
               return null
             }
-            const sectorFill = sector.fill ?? defaultFill
+            const sectorFill = sector.fill ?? defaultFill ?? seriesColor(sector.index)
             const onMouseenter = (event: MouseEvent) => {
               tooltip.setActiveMouseOverItemIndex({
                 activeIndex: String(sector.index),
@@ -313,7 +314,7 @@ export const RadialBar = defineComponent({
     const chart = useChart()
     const legendPayload = computed(() => radialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
-    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
+    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entry.color ?? props.fill ?? seriesColor(index), dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

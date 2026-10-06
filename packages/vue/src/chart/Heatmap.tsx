@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -40,7 +41,7 @@ const HeatmapVueProps = {
   /** Row order, top to bottom. Defaults to the order of first appearance in `data`. */
   yDomain: { type: Array as PropType<HeatmapKey[]>, default: undefined },
   /** Full-intensity color; lower values mix it with `emptyColor`. */
-  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
+  color: { type: String, default: seriesColor(0) },
   emptyColor: { type: String, default: 'var(--v-charts-muted, #eef2f7)' },
   /** Steps above empty; `0` mixes continuously. */
   levels: { type: Number, default: 0 },

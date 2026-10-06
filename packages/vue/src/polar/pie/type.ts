@@ -18,7 +18,7 @@ export const PieVueProps = {
   endAngle: { type: Number, default: 360 },
   paddingAngle: { type: Number, default: 0 },
   minAngle: { type: Number, default: 0 },
-  fill: { type: String, default: 'var(--v-charts-series, #808080)' },
+  fill: { type: String, default: undefined },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },

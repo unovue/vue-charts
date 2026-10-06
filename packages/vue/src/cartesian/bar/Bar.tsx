@@ -158,7 +158,7 @@ const _Bar = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<BarSlots>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useSeriesProps(inputProps)
+    const props = useSeriesProps(inputProps, ['fill'])
     barEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)

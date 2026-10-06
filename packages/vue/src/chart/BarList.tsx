@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type ComponentPublicInstance, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
@@ -46,7 +47,7 @@ const BarListVueProps = {
   /** Field with a link; the label becomes an anchor. */
   hrefKey: { type: String, default: undefined },
   sort: { type: String as PropType<'descending' | 'ascending' | 'none'>, default: 'descending' },
-  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
+  color: { type: String, default: seriesColor(0) },
   valueFormat: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
   /** Locale for the default number format. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },

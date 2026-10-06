@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
 import { useReducedMotion } from '@/animation/useReducedMotion'
@@ -59,7 +60,7 @@ const JourneySankeyVueProps = {
    * were cut before they reached you, so no node claims an "end here" share.
    */
   exitsKnown: { type: Boolean, default: true },
-  color: { type: String, default: 'var(--v-charts-series, #2563eb)' },
+  color: { type: String, default: seriesColor(0) },
   /** Fill for the part of a node whose sessions end there. */
   exitColor: { type: String, default: 'var(--v-charts-inactive, #a3a3a3)' },
   nodeWidth: { type: Number, default: 8 },

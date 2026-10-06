@@ -14,6 +14,7 @@ export interface TreemapLayoutNode {
   payload: Record<string, unknown>
   color?: string
   root: number
+  entryIndex: number
 }
 
 export interface TreemapLayoutOptions {
@@ -62,6 +63,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
       value: leaf.value ?? 0,
       payload: d,
       root: rootIndex,
+      entryIndex: data.indexOf(ancestor.data),
       color: colorPanel ? colorPanel[rootIndex % colorPanel.length] : undefined,
     }
   })

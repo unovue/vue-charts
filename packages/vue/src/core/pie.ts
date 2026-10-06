@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import type { ChartDataKey } from '@/types/base'
 import type { ChartOffset, Coordinate } from '@/types/common'
 import type { TooltipType } from '@/types/tooltip'
@@ -16,7 +17,7 @@ export type ResolvedPieSettings = {
   tooltipType?: TooltipType | undefined
 
   legendType?: LegendType
-  fill: string
+  fill: string | undefined
 
   cx?: number | string
   cy?: number | string
@@ -134,7 +135,7 @@ export function computePieSectors({
     const sectorColor: string
       = (entryWithInfo != null && 'fill' in entryWithInfo && typeof entryWithInfo.fill === 'string')
         ? entryWithInfo.fill
-        : pieSettings.fill
+        : pieSettings.fill ?? seriesColor(i)
 
     let tempStartAngle: number
     if (i) {
@@ -185,7 +186,7 @@ export function pieLegend(
     const color = typeof entry === 'object' && entry != null
       && 'fill' in entry && typeof entry.fill === 'string'
       ? entry.fill
-      : settings.fill
+      : settings.fill ?? seriesColor(index)
     return {
       value: (name ?? String(settings.dataKey ?? index)) as string,
       color,

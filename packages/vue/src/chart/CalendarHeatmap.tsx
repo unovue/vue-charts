@@ -1,3 +1,4 @@
+import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -37,7 +38,7 @@ const CalendarHeatmapVueProps = {
   /** 0 = Sunday (GitHub), 1 = Monday (ISO). */
   weekStart: { type: Number as PropType<0 | 1 | 2 | 3 | 4 | 5 | 6>, default: 0 },
   /** Full-intensity color; lower levels mix it with `emptyColor`. */
-  color: { type: String, default: 'var(--v-charts-series, #16a34a)' },
+  color: { type: String, default: seriesColor(0) },
   emptyColor: { type: String, default: 'var(--v-charts-muted, #ebedf0)' },
   /** Number of intensity steps above empty. */
   levels: { type: Number, default: 4 },

@@ -69,7 +69,7 @@ describe('<ComposedChart />', () => {
     }
     expect(colors).toContain('var(--v-charts-muted, #eee)')
     expect(colors).toContain('var(--v-charts-background, #fff)')
-    expect(colors).toContain('var(--v-charts-series, #3182bd)')
+    expect(colors).toContain('var(--v-charts-series-2, var(--v-charts-series, #f97316))')
     expect(colors).toContain('var(--v-charts-tooltip-background, #fff)')
     expect(colors).toContain('1px solid var(--v-charts-tooltip-border, #ccc)')
     for (const color of colors) {
