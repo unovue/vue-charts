@@ -466,3 +466,14 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/product-fix/` (gates, reverse proofs, profiles, matching frames).
 - Limits: fresh-mount capture varies even on phase 2; unequal-load timings are not compared.
 - Assumptions: profile saved docs assets; full playground sweep plus final Journey route; Reveal already satisfied.
+
+## Phase 3 part A
+
+### 3.1 Strict declarations — deferred
+- Existing strict nullability probe retained; library typecheck/build pass.
+- Gate: Vitest 130 files / 1310 tests; check:code passes (`part-a/3.1-*.log`).
+- Packed check fails: Vite dependency declarations (motion-v/framer-motion, VueUse); Nuxt builds.
+- Attempts: offline missing archive; fetch existing locks; rerun with prepared store.
+- No partial implementation to revert; no check or dependency contract weakened.
+- Evidence: `.evidence/release-1.0/part-a/3.1-consumers.log`.
+- Assumption: dependency declaration failures defer packed acceptance, not independent API steps.
