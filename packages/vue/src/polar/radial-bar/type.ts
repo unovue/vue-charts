@@ -1,5 +1,5 @@
 import type { PropType } from 'vue'
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { DataKey, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'

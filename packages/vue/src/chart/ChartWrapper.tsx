@@ -5,10 +5,8 @@ import { useTooltipController } from '@/model/tooltip'
 import type { ChartPointer } from '@/types'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
 import { classProp } from '@/types'
-import { providePortalRaw } from '@/chart/TooltipPortalContext'
-import { provideLegendPortalRaw } from '@/chart/LegendPortalContext'
+import { provideChartInView, provideLegendPortalRaw, providePortalRaw } from '@/model/runtime'
 import { getChartPointer } from '@/utils/chart'
-import { provideChartInView } from '@/animation/renderPhase'
 
 export interface WrapperInteractions {
   click: (pointer: ChartPointer) => void

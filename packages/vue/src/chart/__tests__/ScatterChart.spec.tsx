@@ -6,7 +6,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { Legend } from '@/components/legend'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('scatterChart', () => {
   beforeEach(() => {

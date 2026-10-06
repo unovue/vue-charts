@@ -1,4 +1,4 @@
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { VueClassValue } from '@/types/common'
 
 export interface Point {

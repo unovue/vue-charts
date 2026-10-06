@@ -1,4 +1,4 @@
-import { useCanMeasureText } from '@/animation/renderPhase'
+import { useCanMeasureText } from '@/model/runtime'
 /**
  * @fileOverview Cartesian Axis
  */

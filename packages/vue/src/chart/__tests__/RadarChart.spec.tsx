@@ -8,7 +8,7 @@ import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 type ExpectedRadarPolygon = {
   d: string

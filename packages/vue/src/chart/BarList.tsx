@@ -1,7 +1,7 @@
 import { type ComponentPublicInstance, type PropType, type SlotsType, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { provideChartInView, provideRenderPhase } from '@/animation/renderPhase'
+import { provideChartInView, provideRenderPhase } from '@/model/runtime'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { cellGridSharedProps } from './cellGridProps'
 

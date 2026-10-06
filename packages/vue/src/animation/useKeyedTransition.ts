@@ -1,4 +1,4 @@
-import type { AnimationPlaybackControls } from 'motion-dom'
+import type { AnimationPlaybackControls } from 'motion-v'
 import { animate } from 'motion-v'
 import { isEqual } from 'es-toolkit'
 import { useReducedMotion } from '@/animation/useReducedMotion'
@@ -6,7 +6,7 @@ import type { ShallowRef } from 'vue'
 import { getCurrentInstance, nextTick, onMounted, onScopeDispose, shallowRef, watch } from 'vue'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { cascadeTiming, motionTokens } from './motion'
-import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from './renderPhase'
+import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from '@/model/runtime'
 
 export type TransitionPhase = 'enter' | 'update' | 'exit'
 

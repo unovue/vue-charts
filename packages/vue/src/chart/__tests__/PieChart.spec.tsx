@@ -7,7 +7,7 @@ import { Legend } from '@/components/legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('pieChart', () => {
   beforeEach(() => {

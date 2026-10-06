@@ -19,7 +19,7 @@ import { LabelList } from '@/components/label/LabelList'
 import type { ErrorBarDataItem, ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 import type { BarRectangleItem } from '@/types/bar'
 import { getValueByDataKey } from '@/utils/chart'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 

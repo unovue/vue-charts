@@ -6,7 +6,7 @@ import type { ActivePointSlotProps } from '@/cartesian/area/ActivePoints'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { nextTick } from 'vue'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('areaChart', () => {
   beforeEach(() => {

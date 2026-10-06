@@ -1,7 +1,7 @@
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
-import { useCanMeasureText } from '@/animation/renderPhase'
+import { useCanMeasureText } from '@/model/runtime'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'

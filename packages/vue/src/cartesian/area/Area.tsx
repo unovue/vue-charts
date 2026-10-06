@@ -13,7 +13,7 @@ import { StaticArea } from '@/cartesian/area/RenderArea'
 import { ActivePoints } from '@/cartesian/area/ActivePoints'
 import type { ActivePointsSlots } from './ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { useGraphicalLayerRef } from '@/model/runtime'
 
 export type AreaSlots = ActivePointsSlots & {
   label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild

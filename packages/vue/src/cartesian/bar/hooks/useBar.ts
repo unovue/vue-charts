@@ -1,7 +1,6 @@
+import { computed, inject, provide, ref, shallowRef } from 'vue'
+import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
-import type { Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, ref, shallowRef } from 'vue'
-import { createContext } from 'motion-v'
 import type { ResolvedBarProps } from '../type'
 import { getNormalizedStackId } from '@/utils/chart'
 import { useChartLayout } from '@/context/chartLayoutContext'
@@ -37,7 +36,21 @@ export interface DrawnBar {
   /** Below 1 while the bar fades in or out. */
   opacity?: number
 }
-export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
+const barKey: InjectionKey<BarContext> = Symbol('v-charts-bar-context')
+
+export function provideBarContext(value: BarContext) {
+  provide(barKey, value)
+  return value
+}
+
+export function useBarContext(fallback?: BarContext): BarContext
+export function useBarContext(fallback: BarContext | null): BarContext | null
+export function useBarContext(fallback?: BarContext | null) {
+  const value = inject(barKey, fallback)
+  if (value === undefined)
+    throw new Error('vccs: useBarContext requires its provider.')
+  return value
+}
 
 export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
   const chart = useChart()

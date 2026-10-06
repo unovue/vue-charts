@@ -4,7 +4,7 @@ import { useRoundedSize } from '@/hooks/useRoundedSize'
 import type { RoundedSize } from '@/hooks/useRoundedSize'
 import { useInitialDimension } from '@/container/useSizeContext'
 import { validateWidthHeight } from '@/utils'
-import { provideChartSize } from '@/animation/renderPhase'
+import { provideChartSize } from '@/model/runtime'
 
 export const chartSizeProps = {
   width: { type: Number },

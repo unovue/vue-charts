@@ -1,9 +1,9 @@
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { animate } from 'motion-v'
-import type { AnimationPlaybackControls } from 'motion-dom'
+import type { AnimationPlaybackControls } from 'motion-v'
 import { defineComponent, nextTick, onMounted, onScopeDispose, ref } from 'vue'
 import { motionTokens } from './motion'
-import { shouldSkipEntrance } from './renderPhase'
+import { shouldSkipEntrance } from '@/model/runtime'
 
 /** Radius and opacity appear together; pointer retargeting keeps the mounted dot. */
 export const ActiveDot = defineComponent({

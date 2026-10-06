@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { type StyleValue, computed, ref } from 'vue'
 import type { VueClassValue } from '@/types'
-import { provideCursorLayerRef } from '@/context/cursorLayerContext'
-import { provideGraphicalLayerRef } from '@/context/graphicalLayerContext'
-import { provideLabelLayerRef } from '@/context/labelLayerContext'
+import { provideCursorLayerRef, provideGraphicalLayerRef, provideLabelLayerRef } from '@/model/runtime'
 
 interface SurfaceProps {
   width: number

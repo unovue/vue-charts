@@ -1,4 +1,4 @@
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import { cubicBezier } from 'motion-v'
 import type { Reveal } from './useKeyedTransition'
 

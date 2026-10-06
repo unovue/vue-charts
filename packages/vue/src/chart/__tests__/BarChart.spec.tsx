@@ -5,7 +5,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { getBarRectangles, getBarRects } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 import { defineComponent, nextTick } from 'vue'
 
 describe('barChart', () => {

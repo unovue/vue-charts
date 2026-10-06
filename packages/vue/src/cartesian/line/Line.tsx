@@ -14,7 +14,7 @@ import { ActivePoints } from '@/cartesian/line/ActivePoints'
 import type { ActivePointsSlots } from './ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 
 export type LineSlots = ActivePointsSlots & {

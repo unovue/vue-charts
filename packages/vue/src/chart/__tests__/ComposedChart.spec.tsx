@@ -5,7 +5,7 @@ import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, T
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('<ComposedChart />', () => {
   beforeEach(() => {

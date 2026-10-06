@@ -5,7 +5,7 @@ import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('lineChart', () => {
   beforeEach(() => {

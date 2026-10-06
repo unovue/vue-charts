@@ -1,4 +1,4 @@
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { PropType } from 'vue'
 import { classProp } from '@/types'
 import type { DataKey, TooltipType, WithSVGProps } from '@/types'

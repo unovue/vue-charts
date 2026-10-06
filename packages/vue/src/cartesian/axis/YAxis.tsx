@@ -1,6 +1,6 @@
 import { useChart } from '@/model/chart'
 import type { AxisSlots, TickFormatter } from '@/types/tick'
-import { useCanMeasureText } from '@/animation/renderPhase'
+import { useCanMeasureText } from '@/model/runtime'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ComponentPublicInstance, PropType } from 'vue'
 import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } from 'vue'

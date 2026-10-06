@@ -16,7 +16,7 @@ import { useBrushSetting } from '@/cartesian/brush/hooks/useBrushSetting'
 import { useBrushChartSynchronisation } from '@/synchronisation/useChartSynchronisation'
 import type { BrushStartEndIndex } from '@/types/chartData'
 import { isNumber } from '@/utils'
-import { useChartGesture } from '@/animation/renderPhase'
+import { useChartGesture } from '@/model/runtime'
 
 const brushEmits = {
   'update:startIndex': (_index: number) => true,

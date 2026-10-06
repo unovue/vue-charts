@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCanMeasureText } from '@/animation/renderPhase'
+import { useCanMeasureText } from '@/model/runtime'
 import { computed, useAttrs } from 'vue'
 import { getStringSize } from '@/utils/attrs'
 import { svgAttrs } from '@/utils/VueUtils'

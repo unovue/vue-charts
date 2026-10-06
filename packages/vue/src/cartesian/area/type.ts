@@ -6,7 +6,7 @@ import type {
   VuePropsToType,
   WithSVGProps,
 } from '@/types'
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { BaseValue } from '@/types/area'
 import type { AxisId } from '@/types/axis'
 import type { LegendType } from '@/types/legend'

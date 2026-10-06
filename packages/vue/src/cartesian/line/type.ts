@@ -1,6 +1,6 @@
 import type { DataKey, LayoutType, TooltipType, VueClassValue, VuePropsToType, WithSVGProps } from '@/types'
 import type { AxisId } from '@/types/axis'
-import type { ValueAnimationTransition } from 'motion-dom'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
 import type { CurveType } from '@/shape/Curve'

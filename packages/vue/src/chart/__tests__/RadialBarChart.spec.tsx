@@ -5,7 +5,7 @@ import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
 import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
+import { useClipPathId } from '@/model/runtime'
 
 describe('radialBarChart', () => {
   beforeEach(() => {

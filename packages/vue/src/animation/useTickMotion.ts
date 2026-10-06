@@ -1,7 +1,7 @@
 import type { RechartsScale } from '@/types/scale'
 import { onMounted } from 'vue'
 import { useKeyedTransition } from './useKeyedTransition'
-import { useSeriesMotion } from './renderPhase'
+import { useSeriesMotion } from '@/model/runtime'
 
 interface TickLike {
   value?: unknown
