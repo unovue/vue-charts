@@ -46,6 +46,18 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Code
 
+- **Platform reuse (research done, `.evidence/release-1.0/platform-report.md`, checked against
+  vue-core 3.5.0, VueUse 13.1, Nuxt 3.15 sources).** Verdict: the code already uses Vue and
+  VueUse for most things; the remaining wins are modest. Scheduled in the run:
+  native prop defaults instead of `resolveDefaultProps` (~216 lines, step 3.4); `createContext`
+  → provide/inject (2.12); remove `Global` (2.13); VueUse observer, listener, timeout and
+  mounted helpers (~50 lines, 2.13). Rejected with evidence: Teleport `defer` (does not order
+  series, so D-22a needs our own fix), lazy hydration (Nuxt 3.16+, and it delays interactivity),
+  useElementVisibility (wrong predicate), numeric `watch` deep (misses nested edits D-7 needs).
+- **P3 Hydration detection reads `vnode.el`, a Vue internal** (`animation/renderPhase.ts:88–107`).
+  Vue has no public "is hydrating" API in 3.5. Keep it, cover it with a hydration test per Vue
+  minor, and watch vuejs/core for a public API.
+
 - **Elegance pass, scheduled inside the run (step 2.13), not later:** model surfaces expose
   only what consumers read (5 of 10 AxisModel computeds have no outside reader); domain names
   instead of store names (`rootProps`, `layoutType`, `polarOptions`, 30 `combine*` functions);
