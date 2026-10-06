@@ -17,12 +17,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.6 | Keyboard for item charts | yes | 1.4 | done | `f8484c3`, `d245f27` | 127 files / 1,258 tests; typing and changed-file lint PASS. |
 | 1.7 | Treemap, Sankey, SunburstChart: attributes, names, keyboard | yes | 1.6 | done | `f3528ef`, `43bb297` | 128 files / 1,261 tests; typing and changed-file lint PASS. |
 | 1.8 | Reduced motion hydrates cleanly | yes | phase 0 | done | `5de7aba` | 129 files / 1,265 tests; typing and changed-file lint PASS. |
-| 1.9 | Contrast, Legend and Brush semantics, and an a11y check | yes | 1.6–1.8 | todo | | |
-| 1.10 | BarList: height, index and per-frame cost | yes | phase 0 | todo | | |
-| 1.11 | Engine: equal data, cascades, springs, events, one clock | yes | phase 0 | todo | | |
-| 1.12 | Motion tokens, shared cascade, moving labels | yes | 1.11 | todo | | |
-| 1.13 | Lab: current curve, list height, accepted flags | yes | 1.10–1.12 | done | 660f4d8 | 285/285 lab; 1,280 tests; 6 metrics tests |
-| 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | done | bbde4b8 | 126/126 docs; 1,280 tests; 1 CLI regression |
+| 1.9 | Contrast, Legend and Brush semantics, and an a11y check | yes | 1.6–1.8 | done | `7176d44` | Existing step evidence: 1,270 tests; 100 a11y cases PASS |
+| 1.10 | BarList: height, index and per-frame cost | yes | phase 0 | done | `38e5e17` | Existing step evidence: 1,272 tests; browser height checks PASS |
+| 1.11 | Engine: equal data, cascades, springs, events, one clock | yes | phase 0 | done | `a920bd6`, `e7daf33`, `dd12465`, `8a15c6c` | Existing step evidence: combined 1,280 tests; six reverse proofs |
+| 1.12 | Motion tokens, shared cascade, moving labels | yes | 1.11 | done | `54ee9cf` | Existing step evidence: 1,280 tests; two reverse proofs |
+| 1.13 | Lab: current curve, list height, accepted flags | yes | 1.10–1.12 | done | `660f4d8`, `456dab2` | 285/285 lab; 1,280 tests; 6 metrics tests |
+| 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | done | `bbde4b8`, `1995171` | 126/126 docs; 1,280 tests; 1 CLI regression |
 | 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | todo | | |
 | 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
@@ -64,7 +64,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | Phase | Date | `pnpm verify` | bench vs baseline | Other | Verdict |
 | --- | --- | --- | --- | --- | --- |
 | 0 | 2026-10-05 | Baseline FAIL retained (0.1) | A/A PASS; CPU control verified | 0.1–0.3 done; baseline metrics/report retained | PASS: setup/recording criteria; no claim of a green release verifier |
-| 1 | | | | | |
+| 1 | 2026-10-06 | FAIL: 8 PASS / 2 FAIL; Chromium/WebKit | PASS: 21 rounds / 18 metrics | 1.13–1.14 done; Firefox unavailable | FAIL: playground flags and visitor capture crash |
 | 2 | | | | | |
 | 3 | | | | | |
 | 4 | | | | | |
@@ -200,3 +200,25 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Existing Unhead override repaired in one lock entry; offline install reused cache, zero downloads.
 - Evidence: `.evidence/release-1.0/step-1.14-checks.md`; initial eight docs failures retained there.
 - Assumptions: normal docs build; Node 22; `verify --docs-browser=chromium,webkit`; thresholds unchanged.
+
+## Phase 1 gate evidence
+
+| Check | Verdict | Observed result |
+| --- | --- | --- |
+| Unit and regression tests | PASS | 129 files / 1,280 tests |
+| Root lint | PASS | Zero errors; 27 existing warnings; changed-file lint zero warnings |
+| Library build | PASS | Production build completes |
+| Package exports and types | PASS | 589 files / three exports; strict publint and attw |
+| Accessibility, contrast and hydration | PASS | 100 cases / 780 samples; minimum contrast 4.83 |
+| Production motion lab | PASS | 285/285 transitions; nine accepted baseline Journey flags |
+| Playground browser sweep | FAIL | 773 flags: 81 artifacts, 692 labelled product bugs; fixture PASS |
+| Docs in Chromium and WebKit | PASS | 126 visits; zero failures or engine errors |
+| Docs checker regression | PASS | One public CLI regression |
+| Visitor-seen entrances | FAIL | 66 logged rows: 45 PASS, 21 unreliable; calendar tab crash, then string-size error; no final summary |
+| Benchmark vs baseline | PASS | 21 rounds / 18 metrics; zero errors; B/A 0.901–1.052 |
+
+- Commands: `VITEST_MAX_WORKERS=2 pnpm verify --docs-browser=chromium,webkit` exits 1; `pnpm bench --compare=.evidence/baseline/dist` exits 0. Node 22.23.3 / pnpm 9.15.0; no quick mode or threshold changes.
+- Evidence: [.evidence/release-1.0/phase-1-checks.md](../../../.evidence/release-1.0/phase-1-checks.md), full logs, archived browser reports and benchmark JSON. Firefox launch unavailable; full visitor sweep unverified after Playwright `ERR_STRING_TOO_LONG`.
+- Anomaly: 773 playground flags versus baseline 679; a zero-fill-opacity rectangle is wrongly marked visible, contradicting D-25b. [Frames and flag](../../../.evidence/release-1.0/phase-1-transparent-geometry.json). Other product labels remain unreviewed; no regression conclusion.
+- Anomaly: 67 throttled worst intervals are smaller than 1x; largest 41.7 → 9.4 ms. Replay state, cadence and load differ; no speed conclusion. [Timing evidence](../../../.evidence/release-1.0/phase-1-timing-anomalies.json).
+- Assumption: record failed gates without expanding this slice into playground or visitor-recorder repairs. Phase 1 remains incomplete; thresholds and accepted Journey identities are unchanged. Temporary baseline worktree and verification processes are cleaned up. Stale 1.9–1.12 table rows reconciled with their existing done evidence; no new claim of rerunning those steps.
