@@ -117,3 +117,13 @@ export type PublicPropsProbe = [
   ZAxisProps,
   TooltipPayloadEntry,
 ]
+
+// @ts-expect-error Cartesian charts do not accept polar geometry.
+export type CartesianPolarProp = BarChartProps['cx']
+// @ts-expect-error Pie charts do not accept bar sizing.
+export type PieBarProp = PieChartProps['barSize']
+// @ts-expect-error Funnel charts do not accept polar geometry.
+export type FunnelPolarProp = FunnelChartProps['cx']
+// @ts-expect-error Funnel charts do not accept bar sizing.
+export type FunnelBarProp = FunnelChartProps['barSize']
+export type RadialBarSizing = RadialBarChartProps['barSize']

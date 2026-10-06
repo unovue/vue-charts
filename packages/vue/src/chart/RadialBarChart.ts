@@ -1,7 +1,7 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
+import { generateRadialChart } from '@/chart/generateCategoricalChart'
 import { arrayTooltipSearcher } from '@/model/options'
 
-export const RadialBarChart = generateCategoricalChart({
+export const RadialBarChart = generateRadialChart({
   chartName: 'RadialBarChart',
   defaultProps: {
     layout: 'radial',

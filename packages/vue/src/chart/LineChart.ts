@@ -1,10 +1,10 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
+import { generateCartesianChart } from '@/chart/generateCategoricalChart'
 import { arrayTooltipSearcher } from '@/model/options'
 import type { TooltipEventType } from '@/types'
 
 const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
-export const LineChart = generateCategoricalChart({
+export const LineChart = generateCartesianChart({
   chartName: 'LineChart',
   defaultTooltipEventType: 'axis',
   tooltipPayloadSearcher: arrayTooltipSearcher,

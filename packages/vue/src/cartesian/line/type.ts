@@ -39,7 +39,7 @@ export interface LineProps {
 
 export const LineVueProps = {
   activeDot: { type: [Boolean, Object, Function], default: true },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   connectNulls: { type: Boolean, default: false },
   data: { type: Array, default: undefined },
   dataKey: {

@@ -35,7 +35,7 @@ export const FunnelVueProps = {
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   hide: { type: Boolean, default: false },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,

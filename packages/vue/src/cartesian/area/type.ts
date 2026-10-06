@@ -32,7 +32,7 @@ export const AreaVueProps = {
   strokeWidth: { type: Number },
   stroke: { type: String, default: 'var(--v-charts-series, #3182bd)' },
   hide: { type: Boolean, default: false },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   /**
    * Label for each data point.
    * - boolean: true for default label rendering

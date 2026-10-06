@@ -1,5 +1,5 @@
 import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { lineEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -86,7 +86,7 @@ const _Line = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<LineSlots>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     lineEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'line')
     const View = useDeferredView(LineView)

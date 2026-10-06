@@ -1,7 +1,7 @@
 import type { ChartDataKey } from '@/types/base'
 import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { scatterEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
@@ -51,7 +51,7 @@ const ScatterVueProps = {
   hide: { type: Boolean, default: false },
   fill: { type: String, default: undefined },
   shape: { type: String as PropType<SymbolType>, default: 'circle' },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   line: { type: [Boolean, Object], default: false },
   lineType: { type: String as PropType<'fitting' | 'joint'>, default: 'joint' },
   lineJointType: { type: [String, Function] as PropType<CurveType>, default: 'linear' },
@@ -129,7 +129,7 @@ const ScatterView = defineComponent({
         }),
         enterFrom: to => ({ ...to, size: 0 }),
         exitTo: from => ({ ...from, size: 0 }),
-        isActive: () => props.isAnimationActive,
+        isActive: () => props.isAnimationActive !== false,
         transition: () => props.transition,
         ...callbacks,
       })
@@ -301,7 +301,7 @@ const _Scatter = defineComponent({
     default?: () => VNode[]
   }>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     scatterEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)

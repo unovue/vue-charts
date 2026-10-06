@@ -9,6 +9,8 @@ import { createRegistry } from '@/model/registry'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ChartOptions } from '@/model/options'
 import { provideRenderPhase } from '@/model/runtime'
+import { provideChartAnimation } from '@/model/animation'
+import type { ChartTransition } from '@/animation/motion'
 import { useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { ChartWrapper } from './ChartWrapper'
 import { useItemInteractions } from '@/events/useItemInteractions'
@@ -17,10 +19,11 @@ import { boxAttrs, rootAttrs } from './CellGridLayer'
 
 /** Size and selection live in the root scope; descendants share only these capabilities. */
 export function useChartShell(
-  props: Parameters<typeof useResponsiveSize>[0],
+  props: Parameters<typeof useResponsiveSize>[0] & { isAnimationActive?: boolean, transition?: ChartTransition },
   options: ChartOptions,
 ) {
   provideRenderPhase()
+  provideChartAnimation(props)
   const size = useResponsiveSize(props)
   const dimensions = computed(() => ({
     width: size.effectiveWidth.value,

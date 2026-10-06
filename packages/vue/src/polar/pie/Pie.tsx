@@ -1,5 +1,5 @@
 import type { ComputedRef, PropType, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { pieEvents } from '@/events/itemEvents'
 import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -228,7 +228,7 @@ const _Pie = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => VNode[] }>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     pieEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const pieSettings = computed<ResolvedPieSettings>(() => ({

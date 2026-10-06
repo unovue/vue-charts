@@ -495,3 +495,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Reverse proofs fail removed-props table and Label attr regression; restored runs pass.
 - Evidence: `.evidence/release-1.0/3.3/` and `.evidence/release-1.0/part-a/3.3-*.log`.
 - Assumptions: Bar keeps D-13 model; Area default unclipped rendering and Line/Area id retained.
+
+### 3.4 Chart prop sets and animation — done
+- Concrete cartesian, polar, radial and funnel props; dead props removed; migration rows added.
+- Chart animation defaults inherit into series; explicit item overrides remain authoritative.
+- Gate: typecheck/lint/code pass; Vitest 132 files / 1331 tests (`3.4-*.log`).
+- Packed consumers pass; strict guard 298 files / zero vccs errors / 100 external diagnostics.
+- Negative packed prop probes pass; reverse production patch fails 11 focused assertions.
+- Evidence: `.evidence/release-1.0/part-a/3.4-*.log` and `3.4-fix.patch`.
+- Assumptions: retain polar layout/angle defaults; radial charts combine polar and bar sizing props.

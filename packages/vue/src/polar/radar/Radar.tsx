@@ -1,5 +1,5 @@
 import type { ChartDataKey } from '@/types/base'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -45,7 +45,7 @@ const RadarViewProps = {
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   connectNulls: { type: Boolean, default: false },
   label: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,
@@ -109,7 +109,7 @@ const RadarView = defineComponent({
       enterFrom: to => ({ point: centre(to.point), baseline: to.baseline && centre(to.baseline) }),
       exitTo: from => ({ point: centre(from.point), baseline: from.baseline && centre(from.baseline) }),
       connected: true,
-      isActive: () => props.isAnimationActive,
+      isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
       onEnd: callbacks.onEnd,
       onStart: callbacks.onStart,
@@ -271,7 +271,7 @@ export const Radar = defineComponent({
   inheritAttrs: false,
   props: RadarViewProps,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     radarEvents.provide(emit)
     useChart().items.polar.register(computed(() => ({
       stackId: undefined,

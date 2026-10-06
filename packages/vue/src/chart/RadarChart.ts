@@ -1,7 +1,7 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
+import { generatePolarChart } from '@/chart/generateCategoricalChart'
 import { arrayTooltipSearcher } from '@/model/options'
 
-export const RadarChart = generateCategoricalChart({
+export const RadarChart = generatePolarChart({
   chartName: 'RadarChart',
   defaultProps: {
     layout: 'centric',

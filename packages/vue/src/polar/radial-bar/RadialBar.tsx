@@ -1,5 +1,5 @@
 import { getValueByDataKey } from '@/utils/chart'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
@@ -156,7 +156,7 @@ const RadialBarView = defineComponent({
       }),
       enterFrom: to => ({ ...to, endAngle: to.startAngle ?? 0 }),
       exitTo: from => ({ ...from, endAngle: from.startAngle ?? 0 }),
-      isActive: () => props.isAnimationActive,
+      isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
       onEnd: callbacks.onEnd,
       onStart: callbacks.onStart,
@@ -295,7 +295,7 @@ export const RadialBar = defineComponent({
   props: RadialBarVueProps,
   inheritAttrs: false,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     radialBarEvents.provide(emit)
     useChart().items.polar.register(computed(() => ({
       type: 'radialBar' as const,

@@ -1,6 +1,6 @@
 import type { PropType, SVGAttributes, ShallowRef, SlotsType, VNodeChild } from 'vue'
 import type { LabelListSlotProps } from '@/components/label/types'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { areaEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -78,7 +78,7 @@ const _Area = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<AreaSlots>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     areaEvents.provide(emit)
     const data = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)

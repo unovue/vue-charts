@@ -41,7 +41,7 @@ export const BarVueProps = {
     type: [Number, Array] as PropType<number | [number, number, number, number]>,
     default: undefined,
   },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, unknown> | boolean>, default: false },
   activeIndex: { type: Number as PropType<number | null>, default: undefined },
   stackId: {

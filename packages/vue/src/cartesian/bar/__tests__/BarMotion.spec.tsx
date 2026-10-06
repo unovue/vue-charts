@@ -4,12 +4,13 @@ import { nextTick, ref } from 'vue'
 import { Bar, BarChart, XAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0, runs: 0 }))
+const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0, runs: 0, duration: 0 }))
 vi.mock('motion-v', async original => ({
   ...await original<typeof import('motion-v')>(),
-  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void }) => {
+  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void, duration?: number }) => {
     if (typeof from === 'number') {
       clock.runs++
+      clock.duration = options.duration ?? 0
       clock.update = options.onUpdate
       clock.to = to
     }
@@ -104,4 +105,34 @@ it('follows a resize at once instead of trailing behind the box', async () => {
   expect(clock.runs).toBe(runs)
   const right = Math.max(...[...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => Number(path.getAttribute('x')) + Number(path.getAttribute('width'))))
   expect(right).toBeLessThanOrEqual(200)
+})
+
+it.each([
+  { chart: false, item: undefined, height: '100' },
+  { chart: false, item: true, height: null },
+  { chart: true, item: false, height: '100' },
+  { chart: true, item: undefined, height: null },
+])('resolves chart animation $chart and item override $item on the first frame', async ({ chart, item, height }) => {
+  const { container } = render(() => (
+    <BarChart width={200} height={100} margin={{ top: 0, right: 0, bottom: 0, left: 0 }} data={[{ value: 12 }]} isAnimationActive={chart}>
+      <Bar dataKey="value" isAnimationActive={item} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector('.v-charts-bar-rectangle path')?.getAttribute('height') ?? null).toBe(height)
+})
+
+it.each([
+  { item: undefined, expected: 0.2 },
+  { item: { duration: 0.4 }, expected: 0.4 },
+])('resolves chart transition and item override $item', async ({ item, expected }) => {
+  render(() => (
+    <BarChart width={200} height={100} data={[{ value: 12 }]} transition={{ duration: 0.2 }}>
+      <Bar dataKey="value" transition={item} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(clock.duration).toBe(expected)
 })

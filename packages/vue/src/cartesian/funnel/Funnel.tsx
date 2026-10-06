@@ -1,5 +1,5 @@
 import type { ComputedRef, ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
-import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { funnelEvents } from '@/events/itemEvents'
 import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -61,7 +61,7 @@ const FunnelView = defineComponent({
       enterFrom: (to, neighbors) => seam(to, neighbors),
       exitTo: (from, neighbors) => seam(from, neighbors),
       connected: true,
-      isActive: () => props.isAnimationActive,
+      isActive: () => props.isAnimationActive !== false,
       transition: () => props.transition,
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),
@@ -199,7 +199,7 @@ const _Funnel = defineComponent({
     default?: () => VNode[]
   }>,
   setup(inputProps, { attrs, slots, emit }) {
-    const props = useLegendHiddenProps(inputProps)
+    const props = useSeriesProps(inputProps)
     funnelEvents.provide(emit)
     const data = useTrackedData(() => props.data)
     const cellPropsRef = shallowRef<Array<SVGAttributes & Record<string, unknown>>>([])
