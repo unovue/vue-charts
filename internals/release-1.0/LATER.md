@@ -34,6 +34,7 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Checks and tooling
 
+- **P2 Playground recorder** times out on `/line-charts` in full sweeps (2.14 and 3B); isolated capture retries pass. Find whether capture stalls or the page never settles. Evidence: `part-b/play-retry-comparison.json`.
 - ~~P2 `check:play` exits 1 at baseline~~ done in 8da11ee and eb19d45. The full product sweep
   exits zero with no real flags; detector fixture remains verified. D-25d's temporary baseline
   allowance is no longer needed. Evidence: `product-fix/play-final/results.json`.
