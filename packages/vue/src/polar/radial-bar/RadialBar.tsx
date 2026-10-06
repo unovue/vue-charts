@@ -79,7 +79,7 @@ const RadialBarView = defineComponent({
       props.maxBarSize,
     ))
     const position = computed(() => positions.value?.find(item =>
-      item.stackId === props.stackId && item.dataKeys.includes(props.dataKey!),
+      item.stackId === props.stackId && props.dataKey != null && item.dataKeys.includes(props.dataKey),
     )?.position)
     const stackedData = computed(() => getStackedData(numericAxis.value.stackGroups.value, radialBarSettings.value))
     const sectors = computed(() => {

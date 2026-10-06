@@ -1,7 +1,7 @@
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { areaEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
-import { Fragment, computed, defineComponent, watch } from 'vue'
+import { Fragment, computed, defineComponent } from 'vue'
 import { Layer } from '@/container/Layer'
 import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
@@ -75,7 +75,7 @@ export const StaticArea = defineComponent({
   name: 'StaticArea',
   setup(_, { slots }) {
     const emit = areaEvents.use()
-    const { points, clipPathId, layout, attrs, areaData, props, isAnimating } = useAreaContext()
+    const { points, clipPathId, layout, attrs, areaData, props } = useAreaContext()
     const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const chart = useChart()
@@ -101,7 +101,6 @@ export const StaticArea = defineComponent({
     })
     const currentPoints = display.points
     const currentBaseLine = display.baseline
-    watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
     const sweep = computed(() => layout.value === 'vertical'
       ? { start: offset.value.top - 8, size: offset.value.height + 16, vertical: true }
       : { start: offset.value.left - 8, size: offset.value.width + 16, vertical: false })

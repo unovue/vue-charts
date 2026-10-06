@@ -79,7 +79,7 @@ export function getCateCoordinateOfLine<T>({
     return ticks[index] ? ticks[index].coordinate + bandSize / 2 : null
   }
 
-  const value = getValueByDataKey(entry, !isNullish(dataKey) ? dataKey! : axis.dataKey!)
+  const value = getValueByDataKey(entry, !isNullish(dataKey) ? dataKey : axis.dataKey)
 
   const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
   return number != null ? axis.scale(number) : null

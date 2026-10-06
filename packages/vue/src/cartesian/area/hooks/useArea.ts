@@ -7,7 +7,6 @@ import { computed, inject, provide } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeArea } from '@/core/area'
 import { getNormalizedStackId, isClipDot } from '@/core/coordinates'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { filterProps } from '@/utils/VueUtils'
 import type { AreaPointItem, ComputedArea } from '@/core/area'
 
@@ -32,8 +31,6 @@ export interface AreaContext {
 
   areaData: Readonly<ShallowRef<ComputedArea | undefined>>
 
-  // is Area animating
-  isAnimating: Ref<boolean>
 }
 
 // Injection Key
@@ -61,10 +58,6 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
   const clipPathId = computed(() => props.id || localId)
 
   /**
-   * is Area animating
-   */
-  const isAnimating = useIsAnimating(() => props.isAnimationActive)
-  /**
    * render only when layout is horizontal or vertical and chartName is AreaChart or ComposedChart
    */
   const shouldRender = computed(() =>
@@ -76,13 +69,13 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
     () => ({
       baseValue: props.baseValue,
       stackId: props.stackId,
-      connectNulls: props.connectNulls!,
+      connectNulls: props.connectNulls,
       data: props.data,
-      dataKey: props.dataKey!,
+      dataKey: props.dataKey,
     }),
   )
-  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId!))
-  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId!))
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId))
   const stackedData = computed(() => {
     const numericAxis = layout.value === 'horizontal' ? yAxis.value : xAxis.value
     const stackId = getNormalizedStackId(props.stackId)
@@ -111,7 +104,7 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
       yAxisTicks: yTicks,
       dataStartIndex,
       areaSettings: areaSettings.value,
-      stackedData: stackedData.value!,
+      stackedData: stackedData.value,
       displayedData,
       chartBaseValue: undefined,
       bandSize: (type === 'horizontal' ? xAxis.value : yAxis.value).bandSize.value!,
@@ -135,7 +128,6 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
     dotSize,
     dotSlot,
     areaData,
-    isAnimating,
   }
 
   // Provide context

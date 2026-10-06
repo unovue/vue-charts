@@ -74,7 +74,7 @@ export const StaticLine = defineComponent({
   name: 'StaticLine',
   setup() {
     const emit = lineEvents.use()
-    const { points, clipPathId, layout, attrs, props, isAnimating, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
+    const { points, clipPathId, layout, attrs, props, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
     const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const chart = useChart()
@@ -97,7 +97,6 @@ export const StaticLine = defineComponent({
       onStart: () => emit('animation-start'),
       onEnd: () => emit('animation-end'),
     })
-    watch(display.isAnimating, (value) => { isAnimating.value = value }, { immediate: true })
     // Where the tip of the drawing line reaches each point, as a share of the line's length.
     const reached = computed(() => lengthShares(display.points.value))
     // Labels ride along with the points as drawn, appear as the tip reaches them and fade

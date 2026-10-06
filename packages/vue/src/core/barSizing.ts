@@ -57,13 +57,13 @@ export function barSizeList(
   }, initialValue)
 
   const stackedSizeList: SizeList = Object.entries(groupByStack).map(([stackId, bars]): BarCategory => {
-    const dataKeys = bars.map(b => b.dataKey!)
+    const dataKeys = bars.flatMap(bar => bar.dataKey == null ? [] : [bar.dataKey])
     const barSize: number = getBarSize(globalSize, totalSize, bars[0].barSize)!
     return { stackId, dataKeys, barSize }
   })
 
   const unstackedSizeList: SizeList = unstackedBars.map((b): BarCategory => {
-    const dataKeys = [b.dataKey!]
+    const dataKeys = b.dataKey == null ? [] : [b.dataKey]
     const barSize: number = getBarSize(globalSize, totalSize, b.barSize)!
     return { stackId: undefined, dataKeys, barSize }
   })

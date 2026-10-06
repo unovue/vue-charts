@@ -100,6 +100,9 @@ export function computePieSectors({
     tooltipType,
   } = pieSettings
 
+  if (dataKey == null)
+    return undefined
+
   const startAngle = pieSettings.startAngle ?? 0
   const endAngle = pieSettings.endAngle ?? 360
   const minAngle = Math.abs(pieSettings.minAngle ?? 0)
@@ -158,7 +161,7 @@ export function computePieSectors({
       ...entryWithInfo,
       ...coordinate,
       value: val,
-      dataKey: dataKey!,
+      dataKey,
       startAngle: tempStartAngle,
       endAngle: tempEndAngle,
       payload: entryWithInfo,

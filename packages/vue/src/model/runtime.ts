@@ -30,7 +30,9 @@ export function provideChartInView(el: Readonly<Ref<Element | null | undefined>>
     const element = el.value
     return element && (element instanceof HTMLElement || element instanceof SVGElement) ? element : null
   }, (entries) => {
-    const entry = entries.at(-1)!
+    const entry = entries.at(-1)
+    if (!entry)
+      return
     const viewport = entry.rootBounds?.height ?? window.innerHeight
     if (entry.isIntersecting && (entry.intersectionRatio >= 0.5 || entry.intersectionRect.height >= viewport / 2)) {
       inView.value = true

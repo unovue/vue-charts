@@ -79,7 +79,7 @@ export interface ScatterPointItem {
   node: ScatterPointNode
   payload?: unknown
   tooltipPayload?: TooltipPayload
-  tooltipPosition: Coordinate
+  tooltipPosition: Coordinate | undefined
 }
 
 type UnwrapPropType<T> =

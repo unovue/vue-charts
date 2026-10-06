@@ -1,5 +1,5 @@
 import type { BarSlots, ResolvedBarProps } from '../type'
-import { computed, inject, provide, ref, shallowRef } from 'vue'
+import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { getNormalizedStackId } from '@/core/coordinates'
@@ -17,7 +17,6 @@ export interface BarContext {
   props: ResolvedBarProps
   attrs: SVGAttributes
   data: Readonly<ShallowRef<readonly BarRectangleItem[] | undefined>>
-  isAnimating: Ref<boolean>
   shapeSlot?: BarSlots['shape']
   activeBarSlot?: BarSlots['shape']
   cellProps: ShallowRef<Record<string, unknown>[]>
@@ -133,7 +132,6 @@ export function useBar(
   })
 
   const clipPathId = useChartId('v-charts-bar')
-  const isAnimating = ref(false)
   const cellPropsRef = shallowRef<Record<string, unknown>[]>([])
   const drawn = shallowRef<readonly DrawnBar[]>([])
 
@@ -143,7 +141,6 @@ export function useBar(
     props,
     attrs,
     data: rects,
-    isAnimating,
     shapeSlot,
     activeBarSlot,
     cellProps: cellPropsRef,
@@ -156,7 +153,6 @@ export function useBar(
     needClip,
     clipPathId,
     barData: rects,
-    isAnimating,
     cellProps: cellPropsRef,
     drawn,
   }

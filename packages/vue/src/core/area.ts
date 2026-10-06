@@ -74,7 +74,7 @@ export function computeArea({
   bandSize,
 }: {
   areaSettings: AreaSettings
-  stackedData: number[][]
+  stackedData: number[][] | undefined
   layout: 'horizontal' | 'vertical'
   chartBaseValue: BaseValue | undefined
   xAxis: BaseAxisWithScale

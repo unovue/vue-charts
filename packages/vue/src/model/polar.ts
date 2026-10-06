@@ -12,12 +12,14 @@ export function createPolarLayout(sources: {
   polar: () => PolarChartOptions | null
 }) {
   const maxRadius = computed(() => getMaxRadius(sources.size().width, sources.size().height, sources.offset()))
-  const innerRadius = computed(() => sources.polar() == null
-    ? undefined
-    : getPercentValue(sources.polar()!.innerRadius, maxRadius.value, 0))
-  const outerRadius = computed(() => sources.polar() == null
-    ? undefined
-    : getPercentValue(sources.polar()!.outerRadius, maxRadius.value, maxRadius.value * 0.8))
+  const innerRadius = computed(() => {
+    const options = sources.polar()
+    return options == null ? undefined : getPercentValue(options.innerRadius, maxRadius.value, 0)
+  })
+  const outerRadius = computed(() => {
+    const options = sources.polar()
+    return options == null ? undefined : getPercentValue(options.outerRadius, maxRadius.value, maxRadius.value * 0.8)
+  })
   const angleRange = computed<readonly [number, number]>(() => {
     const options = sources.polar()
     return options ? [options.startAngle, options.endAngle] : [0, 0]

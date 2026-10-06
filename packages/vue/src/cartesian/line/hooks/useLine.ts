@@ -6,7 +6,6 @@ import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from '
 import { computed, inject, provide, shallowRef } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeLinePoints } from '@/core/line'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { isClipDot } from '@/core/coordinates'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 
@@ -18,7 +17,6 @@ export interface LineContext {
   props: ResolvedLineProps
   attrs: SVGAttributes
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
-  isAnimating: Ref<boolean>
   needClip: ComputedRef<boolean>
   clipDot: ComputedRef<boolean>
   shapeSlot?: LineSlots['shape']
@@ -58,16 +56,15 @@ export function useLine(
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
 
-  const isAnimating = useIsAnimating(() => props.isAnimationActive)
-  const { needClip } = useNeedsClip(() => props.xAxisId!, () => props.yAxisId!)
+  const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
 
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
     && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart'),
   )
 
-  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId!))
-  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId!))
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId))
   const lineData = computed(() => {
     const x = xAxis.value.withScale.value
     const y = yAxis.value.withScale.value
@@ -98,7 +95,6 @@ export function useLine(
     props,
     attrs,
     lineData,
-    isAnimating,
     needClip,
     clipDot,
     shapeSlot,
@@ -116,7 +112,6 @@ export function useLine(
     lineData,
     points: lineContext.points,
     clipPathId,
-    isAnimating,
     labelData: lineContext.labelData,
   }
 }

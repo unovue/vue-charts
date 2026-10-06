@@ -58,6 +58,10 @@ export function computeRadialBarDataItems({
   startAngle: number
   endAngle: number
 }): ReadonlyArray<RadialBarDataItem> {
+  const size = pos.size
+  if (size == null)
+    return []
+
   return (displayedData ?? []).flatMap((entry: unknown, index: number) => {
     let value: unknown[],
       innerRadius: number | null | undefined,
@@ -102,7 +106,7 @@ export function computeRadialBarDataItems({
         innerRadius = innerRadius - bandSize / 2
       }
       if (innerRadius != null && endAngle != null && startAngle != null) {
-        outerRadius = innerRadius + pos.size!
+        outerRadius = innerRadius + size
         const deltaAngle = endAngle - startAngle
 
         if (Math.abs(minPointSize) > 0 && Math.abs(deltaAngle) < Math.abs(minPointSize)) {
@@ -133,7 +137,7 @@ export function computeRadialBarDataItems({
         index,
       })
       if (innerRadius != null && outerRadius != null && startAngle != null) {
-        endAngle = startAngle + pos.size!
+        endAngle = startAngle + size
         const deltaRadius = outerRadius - innerRadius
 
         if (Math.abs(minPointSize) > 0 && Math.abs(deltaRadius) < Math.abs(minPointSize)) {

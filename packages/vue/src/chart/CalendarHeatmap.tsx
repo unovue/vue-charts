@@ -62,26 +62,23 @@ const _CalendarHeatmap = defineComponent({
   setup(props, { emit, slots, attrs }) {
     const rows = useTrackedData(() => props.data)
 
-    const valuesByDay = computed(() => {
+    const days = computed(() => {
       const values = new Map<number, number>()
-      for (const row of rows.value ?? []) {
-        const day = toDayNumber(row?.[props.dateKey] as string | Date | null | undefined)
-        const value = Number(row?.[props.dataKey])
-        if (day === undefined || !Number.isFinite(value))
-          continue
-        values.set(day, (values.get(day) ?? 0) + value)
-      }
-      return values
-    })
-
-    const range = computed(() => {
       let latest: number | undefined
       for (const row of rows.value ?? []) {
         const day = toDayNumber(row?.[props.dateKey] as string | Date | null | undefined)
         if (day !== undefined && (latest === undefined || day > latest))
           latest = day
+        const value = Number(row?.[props.dataKey])
+        if (day === undefined || !Number.isFinite(value))
+          continue
+        values.set(day, (values.get(day) ?? 0) + value)
       }
-      const end = toDayNumber(props.end) ?? latest
+      return { values, latest }
+    })
+
+    const range = computed(() => {
+      const end = toDayNumber(props.end) ?? days.value.latest
       if (end === undefined)
         return undefined
       const start = toDayNumber(props.start) ?? end - 52 * 7 - weekdayOffset(end)
@@ -123,7 +120,7 @@ const _CalendarHeatmap = defineComponent({
       const gap = Math.min(props.gap, step / 3)
       const cellSize = step - gap
       const firstColumn = r.start - weekdayOffset(r.start)
-      const values = valuesByDay.value
+      const values = days.value.values
       let max = props.max
       if (max === undefined) {
         max = 0

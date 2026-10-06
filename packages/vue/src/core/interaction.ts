@@ -214,29 +214,33 @@ export function getActiveCoordinate(
 
   if (entry) {
     if (layout === 'horizontal') {
-      return { x: entry.coordinate!, y: rangeObj.y! }
+      return rangeObj.y == null ? { x: 0, y: 0 } : { x: entry.coordinate, y: rangeObj.y }
     }
     if (layout === 'vertical') {
-      return { x: rangeObj.x!, y: entry.coordinate }
+      return rangeObj.x == null ? { x: 0, y: 0 } : { x: rangeObj.x, y: entry.coordinate }
     }
     if (layout === 'centric') {
       const angle = entry.coordinate
-      const { radius } = rangeObj
+      const { cx, cy, radius } = rangeObj
+      if (cx == null || cy == null || radius == null)
+        return { x: 0, y: 0 }
 
       return {
         ...rangeObj,
-        ...polarToCartesian(rangeObj.cx!, rangeObj.cy!, radius!, angle),
+        ...polarToCartesian(cx, cy, radius, angle),
         angle,
         radius,
       }
     }
 
     const radius = entry.coordinate
-    const { angle } = rangeObj
+    const { cx, cy, angle } = rangeObj
+    if (cx == null || cy == null || angle == null)
+      return { x: 0, y: 0 }
 
     return {
       ...rangeObj,
-      ...polarToCartesian(rangeObj.cx!, rangeObj.cy!, radius, angle!),
+      ...polarToCartesian(cx, cy, radius, angle),
       angle,
       radius,
     }

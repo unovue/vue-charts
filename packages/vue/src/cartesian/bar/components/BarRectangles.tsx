@@ -26,7 +26,7 @@ export const BarRectangles = defineComponent({
     if (!entry)
       throw new Error('vccs: Bar requires its tooltip entry.')
     const activeIndex = tooltip.activeIndexFor(entry)
-    const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps, band, drawn } = useBarContext()
+    const { props, data: barData, layout, shapeSlot, activeBarSlot, cellProps, band, drawn } = useBarContext()
 
     // Bars are matched across data changes by their category, so a shifted or extended
     // series slides instead of every bar morphing into its neighbour.
@@ -76,7 +76,7 @@ export const BarRectangles = defineComponent({
       }
     }
 
-    const { items, isAnimating: transitioning } = useKeyedTransition<IndexedBar>(
+    const { items } = useKeyedTransition<IndexedBar>(
       // A series hidden from the legend lets its bars leave instead of vanishing.
       () => props.hide ? [] : barData.value?.map((bar, index) => ({ bar, index, band: bandOf(bar) })),
       {
@@ -115,9 +115,6 @@ export const BarRectangles = defineComponent({
     }, { immediate: true, flush: 'sync' })
     watch(() => items.value.length > 0, (value) => {
       shown ||= value
-    }, { immediate: true })
-    watch(transitioning, (value) => {
-      isAnimating.value = value
     }, { immediate: true })
 
     const activate = (kind: 'hover' | 'click', bar: BarRectangleItem, index: number) => {

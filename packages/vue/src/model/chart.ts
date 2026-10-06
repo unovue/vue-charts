@@ -151,7 +151,8 @@ export function provideChart(chart: Chart) {
     accessibility: computed(() => chart.options.value.accessibilityLayer !== false),
     bandSize: computed(() => {
       const axis = chart.tooltip.axis.value
-      return axis ? getBandSizeOfAxis({ ...axis.settings.value, scale: axis.scale.value! }, chart.tooltip.ticks.value ?? undefined) : undefined
+      const scale = axis?.scale.value
+      return axis && scale ? getBandSizeOfAxis({ ...axis.settings.value, scale }, chart.tooltip.ticks.value ?? undefined) : undefined
     }),
     syncId: computed(() => chart.options.value.syncId),
     emitter: computed(() => chart.tooltipOptions.value.eventEmitter),

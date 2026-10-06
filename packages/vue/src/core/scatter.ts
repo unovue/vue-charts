@@ -1,6 +1,6 @@
 import type { BaseAxisWithScale, ZAxisWithScale } from '@/types/axisSettings'
 import { implicitZAxis } from '@/core/axis/settings'
-import type { Coordinate, DataKey, ScatterPointItem, ScatterPointNode, TickItem } from '@/types/common'
+import type { DataKey, ScatterPointItem, ScatterPointNode, TickItem } from '@/types/common'
 import type { NameType, Payload, TooltipType, ValueType } from '@/types/tooltip'
 
 type TooltipPayloadEntry = Payload<ValueType, NameType>
@@ -107,7 +107,7 @@ export function computeScatterPoints({
       size,
       node: { x, y, z } as ScatterPointNode,
       tooltipPayload,
-      tooltipPosition: { x: cx!, y: cy! } as Coordinate,
+      tooltipPosition: cx == null || cy == null ? undefined : { x: cx, y: cy },
       payload: entry,
     }
   })

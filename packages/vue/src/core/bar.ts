@@ -67,6 +67,10 @@ export function computeBarRectangles({
   offset: ChartOffsetInternal
   displayedData: readonly unknown[]
 }): ReadonlyArray<BarRectangleItem> | undefined {
+  const size = pos.size
+  if (size == null)
+    return undefined
+
   const parentViewBox = { x: offset.left, y: offset.top, width: offset.width, height: offset.height }
   const numericAxis = layout === 'horizontal' ? yAxis : xAxis
   // @ts-expect-error this assumes that the domain is always numeric, but doesn't check for it
@@ -104,7 +108,7 @@ export function computeBarRectangles({
         index,
       })
       y = currentValueScale ?? baseValueScale
-      width = pos.size!
+      width = size
       const computedHeight = baseValueScale - currentValueScale
       height = isNaN(computedHeight) ? 0 : computedHeight
       background = { x, y: offset.top, width, height: offset.height }
@@ -128,7 +132,7 @@ export function computeBarRectangles({
         index,
       })
       width = currentValueScale - baseValueScale
-      height = pos.size!
+      height = size
       background = { x: offset.left, y, width: offset.width, height }
 
       if (Math.abs(minPointSize) > 0 && Math.abs(width) < Math.abs(minPointSize)) {

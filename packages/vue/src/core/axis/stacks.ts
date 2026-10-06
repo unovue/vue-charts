@@ -162,7 +162,7 @@ export function stackGroups(
   )
   return Object.fromEntries(
     Object.entries(itemsGroup).map(([stackId, graphicalItems]): [StackId, StackGroup] => {
-      const dataKeys = graphicalItems.map(i => i.dataKey!)
+      const dataKeys = graphicalItems.flatMap(item => item.dataKey == null ? [] : [item.dataKey])
       return [
         stackId,
         {
