@@ -30,13 +30,12 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Checks and tooling
 
-- **P2 `check:play` exits 1 at baseline** (now 86 flags after the probe fixes); D-25d gates on
-  "no new flags". Once the P1 items are fixed, return to a plain pass/fail. The 28 below-viewport
-  entrances are by design: the detector should wait for in-view like the charts do.
+- **P2 `check:play` exits 1 at baseline.** Down to 58 flags after the probe fixes and in-view
+  entrance detection (`e862af6`); all 58 are the two P1 product bugs (46 + 6 fallback, 6
+  RadialBar). D-25d gates on "no new flags" until they are fixed; then return to plain pass/fail.
 - **P2 `check:seen` cannot pass on this machine** (see the startup item above).
-- ~~P3 Motion lab rate comparison~~ state reset done (`e78ed41`). Remaining: pointer entry
-  still shows 46 ms at 1× versus 18 ms at 4×. Likely a first-run warm-up; run a discarded
-  warm-up replay before timing, or stop reporting this comparison.
+- ~~P3 Motion lab rate comparison~~ done: state reset (`e78ed41`) and a discarded warm-up
+  replay before timed rates (`9c807fa`) remove the 1×/4× inversion.
 - ~~P3 Hover probes on SVG centres~~ done (`5bb3b5b`, `e58fa1a`): 130 → 86 flags; the rest are
   the P1 fallback (46 + 6), below-viewport entrances (28, by design) and the RadialBar P1.
 - **P3 Firefox does not launch here:** launch times out after 30 s outside the checker too, so
