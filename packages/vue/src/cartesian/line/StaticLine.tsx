@@ -50,7 +50,7 @@ const Dots = defineComponent({
       return (
         <Layer
           class="v-charts-line-dots"
-          clip-path={needClip.value ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
+          clip-path={needClip.value ? `url(#clipPath-${clipDot.value ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
             points?.map((point, position) => {
@@ -61,7 +61,7 @@ const Dots = defineComponent({
               if (dotSlot) {
                 return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
               }
-              return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} /></g>
+              return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot.value} /></g>
             })
           }
         </Layer>

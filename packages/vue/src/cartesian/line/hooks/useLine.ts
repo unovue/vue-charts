@@ -8,7 +8,6 @@ import { useChart } from '@/model/chart'
 import { computeLinePoints } from '@/core/line'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { isClipDot } from '@/core/coordinates'
-import { filterProps } from '@/utils/VueUtils'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 
 // Line Context 类型定义
@@ -21,9 +20,7 @@ export interface LineContext {
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
   isAnimating: Ref<boolean>
   needClip: ComputedRef<boolean>
-  dot: unknown
-  clipDot: boolean
-  dotSize: number
+  clipDot: ComputedRef<boolean>
   shapeSlot?: LineSlots['shape']
   dotSlot?: LineSlots['dot']
   labelSlot?: LineSlots['label']
@@ -92,11 +89,7 @@ export function useLine(
     })
   })
 
-  // Dot related logic
-  const dot = props.dot
-  const clipDot = isClipDot(dot)
-  const { r = 3, strokeWidth = 2 } = filterProps(dot, false) ?? { r: 3, strokeWidth: 2 }
-  const dotSize = (r as number) * 2 + (strokeWidth as number)
+  const clipDot = computed(() => isClipDot(props.dot))
 
   // Create Line Context - 保持响应式
   const lineContext: LineContext = {
@@ -108,9 +101,7 @@ export function useLine(
     lineData,
     isAnimating,
     needClip,
-    dot,
     clipDot,
-    dotSize,
     shapeSlot,
     dotSlot,
     labelSlot,

@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/vue'
+import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CartesianGrid, LabelList, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
@@ -392,4 +393,23 @@ describe('line', () => {
     // JSDOM never advances motion, so the entrance is still running.
     expect(container.querySelectorAll('.v-charts-label-list text')).toHaveLength(0)
   })
+})
+
+// Changing dot options must update the clip choice as well as the visible radius.
+it('updates dot clipping and size after the dot options change', async () => {
+  const dot = ref({ clipDot: true, r: 3, strokeWidth: 2 })
+  const { container } = render(() => (
+    <LineChart width={400} height={300} data={[{ value: 10 }, { value: 20 }]}>
+      <YAxis domain={[0, 20]} allowDataOverflow />
+      <Line id="reactive-dot" dataKey="value" dot={dot.value} isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  expect(container.querySelector('.v-charts-line-dots')?.getAttribute('clip-path'))
+    .toBe('url(#clipPath-reactive-dot)')
+  dot.value = { clipDot: false, r: 8, strokeWidth: 4 }
+  await nextTick()
+  expect(container.querySelector('.v-charts-line-dots')?.getAttribute('clip-path'))
+    .toBe('url(#clipPath-dots-reactive-dot)')
+  expect(container.querySelector('.v-charts-line-dot')?.getAttribute('r')).toBe('8')
 })
