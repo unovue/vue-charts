@@ -45,7 +45,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 3.5 | Axis props | yes | phase 2 | todo | | |
 | 3.6 | Active state and Brush range | yes | phase 2 | todo | | |
 | 3.7 | Accessible names and the markup contract | yes | phase 2 | done | `a164398`, log commit | D-15/D-22 gate PASS. |
-| 3.8 | Series colors | yes | phase 2 | todo | | |
+| 3.8 | Series colors | yes | phase 2 | done | `ab9bfc6`, log commit | D-19 palette and contrast PASS. |
 | 3.9 | Typed rows | yes | phase 2, 3.2, 3.4–3.6 | todo | | |
 | 3.10 | Renames, slots, events, deprecations | yes | phase 2, 3.2 | todo | | |
 | 3.11 | Docs, playground and stories on the 1.0 API | yes | 3.1–3.10 | todo | | |
@@ -541,3 +541,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Reverse proofs fail old categorical names and missing chart markers; restored tests pass.
 - Evidence: `.evidence/release-1.0/part-b/3.7-*.log`; markup proof `.evidence/release-1.0/markup-*.log`.
 - Assumptions: neutral standalone plot group; Sparkline title overrides computed name; global pnpm cache required.
+
+### 3.8 Series colors — done (ab9bfc6, this log commit)
+- Numbered palette follows registration/entry order; default Treemap labels use known palette foregrounds.
+- Gate: typecheck/lint/code/consumers PASS; final Vitest 137 files / 1396 tests; check:a11y exit 0.
+- Reverse proofs fail numbered-token and default-foreground regressions; restored tests pass.
+- Default fill changes: Treemap groups, Sunburst branches, Sankey nodes and Calendar blue; other single colors retain blue.
+- Motion lab explicit series colors stay; final numeric comparison follows at the phase gate.
+- Evidence: `.evidence/release-1.0/part-b/3.8-*.log`, `.evidence/release-1.0/3.8-*-agent.log`.
+- Assumptions: custom Treemap palette precedence stays; explicit teal/orange calendar demos stay; token overrides supply label foreground.
