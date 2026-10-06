@@ -1,7 +1,7 @@
 import { render } from '@testing-library/vue'
 import { expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
-import { Area, Bar, Brush, ComposedChart, ErrorBar, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from '@/index'
+import { Area, Bar, Brush, ComposedChart, Dot, ErrorBar, Legend, Line, ReferenceLine, ResponsiveContainer, Symbols, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
@@ -40,7 +40,39 @@ it('renders chart part classes with the v-charts- prefix and kebab-case suffixes
   expect(chartClasses.length).toBeGreaterThan(0)
   expect(chartClasses.filter(token => !token.startsWith('v-charts-') || !/^v-charts-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(token))).toEqual([])
   // Ensure hidden or unmounted parts cannot make the naming assertion pass vacuously.
-  for (const part of ['responsive-container', 'surface', 'area', 'area-dot', 'bar', 'line', 'brush', 'brush-texts', 'brush-traveller', 'brush-slide', 'legend-wrapper', 'tooltip-content', 'error-bar', 'reference-line']) {
+  for (const part of ['responsive-container', 'surface', 'area', 'area-dot', 'bar', 'line', 'brush', 'brush-texts', 'brush-traveller', 'brush-slide', 'legend-wrapper', 'default-legend', 'tooltip-content', 'error-bar', 'reference-line']) {
     expect(chartClasses).toContain(`v-charts-${part}`)
   }
+})
+
+it.each([
+  { name: 'Dot', selector: '.v-charts-dot', chart: () => <Dot cx={10} cy={20} r={5} class="custom" /> },
+  { name: 'Symbols', selector: '.v-charts-symbols', chart: () => <Symbols cx={10} cy={20} type="circle" class="custom" /> },
+  {
+    name: 'XAxis',
+    selector: '.v-charts-x-axis',
+    chart: () => (
+      <ComposedChart width={200} height={100} data={[{ value: 5 }]}>
+        <XAxis class="custom" />
+        <Bar dataKey="value" isAnimationActive={false} />
+      </ComposedChart>
+    ),
+  },
+  {
+    name: 'YAxis',
+    selector: '.v-charts-y-axis',
+    chart: () => (
+      <ComposedChart width={200} height={100} data={[{ value: 5 }]}>
+        <YAxis class="custom" />
+        <Bar dataKey="value" isAnimationActive={false} />
+      </ComposedChart>
+    ),
+  },
+])('$name keeps its default and custom classes', ({ chart, selector }) => {
+  const { container } = render(chart)
+  const tokens = container.querySelector(selector)!.getAttribute('class')!.split(/\s+/)
+  expect(tokens).toContain(selector.slice(1))
+  expect(tokens).toContain('custom')
+  if (selector === '.v-charts-x-axis' || selector === '.v-charts-y-axis')
+    expect(tokens.filter(token => token === 'custom')).toEqual(['custom'])
 })

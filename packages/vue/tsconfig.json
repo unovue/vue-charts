@@ -52,5 +52,8 @@
     "src/storybook/**",
     "src/**/*.stories.*",
     "src/**/*.story.*"
+  ],
+  "files": [
+    "./src/test/events-contract.ts"
   ]
 }

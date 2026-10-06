@@ -39,13 +39,4 @@ describe('dot', () => {
     expect(circle!.getAttribute('fill')).toBe('#ff7300')
     expect(circle!.getAttribute('stroke')).toBe('#333')
   })
-
-  it('applies custom className', () => {
-    const { container } = render(() => <Dot cx={100} cy={200} r={5} class="my-custom-class" />)
-
-    const circle = container.querySelector('.v-charts-dot')
-    expect(circle).not.toBeNull()
-    expect(circle!.classList.contains('v-charts-dot')).toBe(true)
-    expect(circle!.classList.contains('my-custom-class')).toBe(true)
-  })
 })

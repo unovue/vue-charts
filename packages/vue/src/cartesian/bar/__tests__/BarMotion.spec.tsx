@@ -1,23 +1,10 @@
+import { clock } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import type { BarSlots } from '@/index'
 import { Bar, BarChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-
-const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0, runs: 0, duration: 0 }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void, duration?: number }) => {
-    if (typeof from === 'number') {
-      clock.runs++
-      clock.duration = options.duration ?? 0
-      clock.update = options.onUpdate
-      clock.to = to
-    }
-    return { stop() {} }
-  },
-}))
 
 beforeEach(() => {
   mockGetBoundingClientRect({ width: 400, height: 300 })
@@ -99,11 +86,11 @@ it('follows a resize at once instead of trailing behind the box', async () => {
   await nextTick()
   clock.update(clock.to)
   await nextTick()
-  const runs = clock.runs
+  const runs = clock.runs.length
   width.value = 200
   await nextTick()
   await nextTick()
-  expect(clock.runs).toBe(runs)
+  expect(clock.runs.length).toBe(runs)
   const right = Math.max(...[...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => Number(path.getAttribute('x')) + Number(path.getAttribute('width'))))
   expect(right).toBeLessThanOrEqual(200)
 })
@@ -181,3 +168,6 @@ it('calls custom bar shapes only for drawable geometry through null value transi
     expect(geometry.height).not.toBe(0)
   }
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

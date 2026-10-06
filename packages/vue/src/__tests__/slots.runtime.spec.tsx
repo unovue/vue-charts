@@ -14,7 +14,7 @@ import { Area, Bar, BarList, Brush, CalendarHeatmap, CartesianGrid, CohortChart,
 // Compile the unchanged docs SFCs against source exports, so this check also
 // works in a fresh checkout where the published dist entry does not exist yet.
 function docsDemo(name: string): Component {
-  const source = readFileSync(resolve(`../../docs/app/charts/guide-charts/${name}.vue`), 'utf8')
+  const source = readFileSync(resolve(__dirname, `../../../../docs/app/charts/guide-charts/${name}.vue`), 'utf8')
   const { descriptor } = parse(source)
   const script = compileScript(descriptor, { id: name, inlineTemplate: true })
   const code = ts.transpileModule(script.content, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

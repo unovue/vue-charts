@@ -44,7 +44,7 @@ describe('<Sankey />', () => {
     const data = shallowRef(sampleData)
     const errors: unknown[] = []
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    try {
+    {
       const { container } = render(() => (
         <Sankey data={data.value} width={600} height={400} isAnimationActive={false} />
       ), { global: { config: { errorHandler: error => errors.push(error) } } })
@@ -78,9 +78,6 @@ describe('<Sankey />', () => {
       await nextTick()
       expect(errors).toEqual([])
       expect(paths()).toEqual(goodPaths)
-    }
-    finally {
-      warning.mockRestore()
     }
   })
 

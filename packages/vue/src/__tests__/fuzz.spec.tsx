@@ -184,8 +184,6 @@ async function checkCase<T>(first: T, second: T, chart: (data: T) => VNode) {
       errors.push(err)
     }
     container.remove()
-    warn.mockRestore()
-    error.mockRestore()
   }
   expect(errors, errors.map(err => String(err)).join('\n')).toEqual([])
   expect(warnings, warnings.join('\n')).toEqual([])

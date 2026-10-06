@@ -2,7 +2,7 @@
 import { Buffer } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { copyFile, cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
+import { copyFile, cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -48,7 +48,13 @@ try {
     await cp(join(fixtures, name), app, { recursive: true })
     for (const probe of ['nullability.ts', 'publicProps.ts', 'api-example-0.vue', 'api-example-1.vue', 'standalone.vue', 'renames.vue']) {
       const directory = name === 'vite' ? 'src' : 'app'
-      await copyFile(join(fixtures, probe), join(app, directory, probe))
+      if (probe === 'standalone.vue') {
+        const source = await readFile(join(root, 'packages/vue/src/test/types/standalone.vue'), 'utf8')
+        await writeFile(join(app, directory, probe), source.replace('from \'../../index\'', 'from \'vccs\''))
+      }
+      else {
+        await copyFile(join(fixtures, probe), join(app, directory, probe))
+      }
     }
     // pnpm refreshes the local archive's integrity. Existing registry resolutions
     // stay locked; fixture preparation is required if a new dependency is absent.

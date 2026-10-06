@@ -1,18 +1,10 @@
+import { clock } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Bar, BarChart, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, update: (v: number) => void }> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void }) => {
-    if (typeof from === 'number')
-      clock.runs.push({ to, update: options.onUpdate })
-    return { stop() {} }
-  },
-}))
 async function advance(fraction: number) {
   clock.runs.forEach(run => run.update(run.to * fraction))
   await nextTick()
@@ -62,3 +54,6 @@ it('keeps the axis still when the series do not animate', async () => {
   await nextTick()
   expect(clock.runs).toHaveLength(0)
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

@@ -1,3 +1,4 @@
+import { frame } from '@/test/motionClock'
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
@@ -15,28 +16,6 @@ const journeys = [
   { path: ['/', '/docs'], count: 3 },
   { path: ['/de', '/de/pricing', '/de', '/de/docs'], count: 3 },
 ]
-
-const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean }> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: number, to: number, options: { onUpdate: (v: number) => void, onComplete?: () => void }) => {
-    if (typeof from !== 'number')
-      return { stop() {} }
-    const run = { to, update: options.onUpdate, complete: () => options.onComplete?.(), stopped: false }
-    clock.runs.push(run)
-    return { stop: () => { run.stopped = true } }
-  },
-}))
-async function frame(progress?: number) {
-  for (const run of clock.runs.filter(run => !run.stopped)) {
-    run.update(progress ?? run.to)
-    if (progress == null) {
-      run.stopped = true
-      run.complete()
-    }
-  }
-  await nextTick()
-}
 
 const options = { width: 900, height: 600, steps: 4, exitsKnown: true, nodeWidth: 8, nodePadding: 8, labelHeight: 34, labelWidth: 160, top: 28 }
 
@@ -259,3 +238,6 @@ describe('reorderedNodes', () => {
     expect([...reorderedNodes(before, layoutOf(next))].sort()).toEqual(expected)
   })
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

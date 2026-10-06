@@ -42,68 +42,6 @@ describe('legend', () => {
     }
   })
 
-  describe('renders in BarChart', () => {
-    it('renders legend wrapper', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      await nextTick()
-      expect(container.querySelector('.v-charts-legend-wrapper')).toBeTruthy()
-    })
-
-    it('renders legend items for each Bar', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" name="UV" isAnimationActive={false} />
-          <Bar dataKey="pv" fill="#82ca9d" name="PV" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      await nextTick()
-      expect(container.querySelectorAll('.v-charts-legend-item').length).toBe(2)
-    })
-
-    it('renders default legend list', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      await nextTick()
-      expect(container.querySelector('.v-charts-default-legend')).toBeTruthy()
-    })
-  })
-
-  describe('renders in LineChart', () => {
-    it('renders legend items for each Line', async () => {
-      const { container } = render(() => (
-        <LineChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Line dataKey="uv" stroke="#8884d8" isAnimationActive={false} />
-          <Line dataKey="pv" stroke="#82ca9d" isAnimationActive={false} />
-        </LineChart>
-      ))
-
-      await nextTick()
-      expect(container.querySelectorAll('.v-charts-legend-item').length).toBe(2)
-    })
-  })
-
   describe('props', () => {
     it('renders with verticalAlign top', async () => {
       const { container } = render(() => (
@@ -172,40 +110,6 @@ describe('legend', () => {
       await nextTick()
       expect(container.querySelector('.custom-legend')).toBeTruthy()
       expect(container.querySelectorAll('.custom-legend-item').length).toBe(1)
-    })
-  })
-
-  describe('legend text', () => {
-    it('displays data key as legend text when name is not provided', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      await nextTick()
-      const legendText = container.querySelector('.v-charts-legend-item-text')
-      expect(legendText).toBeTruthy()
-      expect(legendText!.textContent).toBe('uv')
-    })
-
-    it('displays name prop as legend text when provided', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" name="Unique Visitors" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      await nextTick()
-      const legendText = container.querySelector('.v-charts-legend-item-text')
-      expect(legendText).toBeTruthy()
-      expect(legendText!.textContent).toBe('Unique Visitors')
     })
   })
 })

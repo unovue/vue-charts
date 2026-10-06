@@ -1,12 +1,11 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Funnel, FunnelChart } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 import { Legend } from '@/components/legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
 
 describe('funnelChart', () => {
   beforeEach(() => {
@@ -45,7 +44,6 @@ describe('funnelChart', () => {
     }
     finally {
       window.removeEventListener('error', onError)
-      error.mockRestore()
     }
   })
 
@@ -116,15 +114,8 @@ describe('funnelChart', () => {
 
   describe('lastShapeType', () => {
     it('last trapezoid narrows to triangle by default', () => {
-      const { container } = render(() => (
-        <FunnelChart width={500} height={300}>
-          <Funnel dataKey="value" data={data} isAnimationActive={false} />
-        </FunnelChart>
-      ))
-      const trapezoids = container.querySelectorAll('.v-charts-trapezoid')
-      const lastPath = trapezoids[trapezoids.length - 1]?.getAttribute('d')
-      // Triangle: lowerWidth=0, bottom two points converge
-      expect(lastPath).toBeTruthy()
+      const { container } = render(() => <FunnelChart width={500} height={300}><Funnel dataKey="value" data={data} isAnimationActive={false} /></FunnelChart>)
+      expect([...container.querySelectorAll('.v-charts-trapezoid')].at(-1)?.getAttribute('d')).toBe('M 173,215 L 317,215 L 245,285 L 245,285 Z')
     })
 
     it('lastShapeType=rectangle makes last trapezoid a rectangle', () => {
@@ -224,34 +215,6 @@ describe('funnelChart', () => {
       expect(shapeFn).toHaveBeenCalled()
       expect(shapeFn.mock.calls[0][0]).toHaveProperty('upperWidth')
       expect(shapeFn.mock.calls[0][0]).toHaveProperty('height')
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides layout context (useViewBox, useChartWidth, useChartHeight)', () => {
-      let viewBox: any
-      let chartWidth: any
-      let chartHeight: any
-
-      const Probe = defineComponent({
-        setup() {
-          viewBox = useViewBox()
-          chartWidth = useChartWidth()
-          chartHeight = useChartHeight()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <FunnelChart width={500} height={300}>
-          <Funnel dataKey="value" data={data} isAnimationActive={false} />
-          <Probe />
-        </FunnelChart>
-      ))
-
-      expect(viewBox.value).toBeDefined()
-      expect(chartWidth.value).toBe(500)
-      expect(chartHeight.value).toBe(300)
     })
   })
 })

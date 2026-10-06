@@ -1,14 +1,11 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { RadarChart } from '@/chart/RadarChart'
 import { Radar } from '@/polar/radar/Radar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
 
 type ExpectedRadarPolygon = {
   d: string
@@ -202,96 +199,6 @@ describe('radarChart', () => {
         </RadarChart>
       ))
       expect(container.querySelectorAll('.v-charts-radar-polygon').length).toBe(0)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadarChart, Comp },
-        template: `
-          <RadarChart :width="100" :height="50">
-            <Comp />
-          </RadarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadarChart, Comp },
-        template: `
-          <RadarChart :width="100" :height="50">
-            <Comp />
-          </RadarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
-    })
-
-    it('provides width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadarChart, Comp },
-        template: `
-          <RadarChart :width="100" :height="50">
-            <Comp />
-          </RadarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadarChart, Comp },
-        template: `
-          <RadarChart :width="100" :height="50">
-            <Comp />
-          </RadarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 })

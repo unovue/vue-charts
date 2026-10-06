@@ -249,23 +249,6 @@ describe('xAxis', () => {
     })
   })
 
-  describe('class prop', () => {
-    it('applies custom class to xAxis element exactly once', () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" class="my-custom-xaxis" />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      const xAxis = container.querySelector('.v-charts-x-axis')
-      expect(xAxis).toBeTruthy()
-      const classStr = xAxis!.getAttribute('class') ?? ''
-      const count = classStr.split(' ').filter(c => c === 'my-custom-xaxis').length
-      expect(count).toBe(1)
-    })
-  })
-
   describe('style prop', () => {
     it('applies custom style to xAxis element', () => {
       const { container } = render(() => (

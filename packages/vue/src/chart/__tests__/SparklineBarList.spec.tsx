@@ -223,7 +223,7 @@ describe('server rendering', () => {
     await nextTick()
     expect(read(container.querySelector(selector)!)).toBe(expected)
     expect(warn.mock.calls.filter(call => String(call[0]).includes('Hydration'))).toEqual([])
-    warn.mockRestore()
+
     app.unmount()
   })
 })

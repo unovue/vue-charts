@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Bar, BarChart, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('tooltip', () => {
@@ -17,36 +17,6 @@ describe('tooltip', () => {
     { name: 'Page E', uv: 278, pv: 3908, amt: 2400 },
     { name: 'Page F', uv: 189, pv: 4800, amt: 2400 },
   ]
-
-  describe('renders in chart', () => {
-    it('renders tooltip wrapper in BarChart', () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      // The tooltip wrapper may exist but be hidden when not active
-      // At minimum, the chart should render without errors
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
-    })
-
-    it('renders tooltip wrapper in LineChart', () => {
-      const { container } = render(() => (
-        <LineChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Line dataKey="uv" stroke="#8884d8" isAnimationActive={false} />
-        </LineChart>
-      ))
-
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
-    })
-  })
 
   it('formats the default tooltip label with its active payload', async () => {
     const labelFormatter = vi.fn((label, payload) => <strong>{`${label}: ${payload.length} series`}</strong>)
@@ -87,22 +57,15 @@ describe('tooltip', () => {
         <BarChart width={500} height={300} data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip defaultIndex={2} />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip defaultIndex={2} isAnimationActive={false} />
+          <Bar dataKey="uv" isAnimationActive={false} />
         </BarChart>
       ))
-
       await nextTick()
       await nextTick()
-
-      // With defaultIndex, tooltip should become active
-      const tooltipWrapper = container.parentElement!.querySelector('.v-charts-tooltip-wrapper')
-      if (tooltipWrapper) {
-        // When active, visibility should be visible
-        const style = (tooltipWrapper as HTMLElement).style
-        // The tooltip may take a frame to become visible
-        expect(tooltipWrapper).toBeTruthy()
-      }
+      expect(container.querySelector<HTMLElement>('[role="tooltip"]')?.style.visibility).toBe('visible')
+      expect(container.querySelector('.v-charts-tooltip-label')?.textContent).toBe('Page C')
+      expect(container.querySelector('.v-charts-tooltip-item')?.textContent).toBe('uv : 300')
     })
   })
 
@@ -112,65 +75,62 @@ describe('tooltip', () => {
         <BarChart width={500} height={300} data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip defaultIndex={0}>
-            {{
-              content: (props: any) => (
-                <div class="custom-tooltip">
-                  <span class="custom-label">{props.label}</span>
-                </div>
-              ),
-            }}
-          </Tooltip>
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip defaultIndex={0} isAnimationActive={false}>{{ content: ({ label }) => <div class="custom-tooltip"><span class="custom-label">{label}</span></div> }}</Tooltip>
+          <Bar dataKey="uv" isAnimationActive={false} />
         </BarChart>
       ))
-
       await nextTick()
       await nextTick()
-
-      // Chart should render without errors
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
+      expect(container.querySelector('.custom-label')?.textContent).toBe('Page A')
     })
   })
 
   describe('props', () => {
-    it('accepts separator prop', () => {
+    it('accepts separator prop', async () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip separator=" - " />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip defaultIndex={0} separator=" - " isAnimationActive={false} />
+          <Bar dataKey="uv" isAnimationActive={false} />
         </BarChart>
       ))
-
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
+      await nextTick()
+      await nextTick()
+      expect(container.querySelector('.v-charts-tooltip-item')?.textContent).toBe('uv - 400')
     })
 
-    it('accepts offset prop', () => {
+    it('accepts offset prop', async () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip offset={20} />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip defaultIndex={0} offset={20} allowEscapeViewBox={{ x: true, y: true }} isAnimationActive={false} />
+          <Bar dataKey="uv" isAnimationActive={false} />
         </BarChart>
       ))
-
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
+      await nextTick()
+      await nextTick()
+      expect(container.querySelector<HTMLElement>('[role="tooltip"]')?.style.transform).toBe('translate(120.83333333333334px, 172.5px)')
     })
 
-    it('accepts trigger prop', () => {
+    it('accepts trigger prop', async () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip trigger="click" />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip trigger="click" isAnimationActive={false} />
+          <Bar dataKey="uv" isAnimationActive={false} />
         </BarChart>
       ))
-
-      expect(container.querySelector('.v-charts-surface')).toBeTruthy()
+      const wrapper = container.querySelector('.v-charts-wrapper')!
+      await fireEvent.mouseMove(wrapper, { clientX: 200, clientY: 100 })
+      expect(container.querySelector('.v-charts-tooltip-content')).toBeNull()
+      await fireEvent.click(wrapper, { clientX: 200, clientY: 100 })
+      await nextTick()
+      await nextTick()
+      expect(container.querySelector('.v-charts-tooltip-label')?.textContent).toBe('Page B')
+      expect(container.querySelector('.v-charts-tooltip-item')?.textContent).toBe('uv : 300')
     })
   })
 

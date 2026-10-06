@@ -1,3 +1,4 @@
+import { clock, frame } from '@/test/motionClock'
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
@@ -5,34 +6,8 @@ import { Funnel, FunnelChart, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Ra
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { motionTokens } from '@/animation/motion'
 
-const clock = vi.hoisted(() => ({ reduced: false, runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean, duration?: number }> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: number, to: number, options: { onUpdate: (v: number) => void, onComplete?: () => void, duration?: number }) => {
-    if (typeof from !== 'number')
-      return { stop() {} }
-    const run = { to, update: options.onUpdate, complete: () => options.onComplete?.(), stopped: false, duration: options.duration }
-    clock.runs.push(run)
-    return { stop: () => { run.stopped = true } }
-  },
-}))
-vi.mock('@vueuse/core', async original => ({
-  ...await original<typeof import('@vueuse/core')>(),
-  usePreferredReducedMotion: () => ref(clock.reduced ? 'reduce' : 'no-preference'),
-}))
-async function frame(seconds?: number) {
-  for (const run of clock.runs.filter(run => !run.stopped)) {
-    run.update(seconds ?? run.to)
-    if (seconds == null) {
-      run.stopped = true
-      run.complete()
-    }
-  }
-  await nextTick()
-}
 beforeEach(() => {
   clock.runs = []
-  clock.reduced = false
   mockGetBoundingClientRect({ width: 400, height: 300 })
 })
 const initial = [{ name: 'B', value: 40 }, { name: 'C', value: 70 }]
@@ -300,3 +275,6 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
     })
   }
 }
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

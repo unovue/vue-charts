@@ -1,12 +1,10 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 import { Legend } from '@/components/legend'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
 
 describe('scatterChart', () => {
   beforeEach(() => {
@@ -154,7 +152,7 @@ describe('scatterChart', () => {
   })
 
   describe('with Legend', () => {
-    it('renders legend items for each Scatter series', () => {
+    it('renders legend items for each Scatter series', async () => {
       const { container } = render(() => (
         <ScatterChart width={400} height={400} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <XAxis dataKey="x" name="stature" unit="cm" />
@@ -164,8 +162,8 @@ describe('scatterChart', () => {
           <Legend />
         </ScatterChart>
       ))
-
-      // Legend renders (items may need async propagation through chart state)
+      await nextTick(); await nextTick()
+      expect([...container.querySelectorAll('.v-charts-legend-item-text')].map(item => item.textContent)).toEqual(['A school', 'B school'])
     })
   })
 
@@ -182,96 +180,6 @@ describe('scatterChart', () => {
 
       expect(container.querySelector('.v-charts-cartesian-grid')).toBeTruthy()
       expect(container.querySelectorAll('.v-charts-scatter-symbol')).toHaveLength(data01.length)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { ScatterChart, Comp },
-        template: `
-          <ScatterChart :width="100" :height="50">
-            <Comp />
-          </ScatterChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { ScatterChart, Comp },
-        template: `
-          <ScatterChart :width="100" :height="50">
-            <Comp />
-          </ScatterChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
-    })
-
-    it('provides width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { ScatterChart, Comp },
-        template: `
-          <ScatterChart :width="100" :height="50">
-            <Comp />
-          </ScatterChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { ScatterChart, Comp },
-        template: `
-          <ScatterChart :width="100" :height="50">
-            <Comp />
-          </ScatterChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 })

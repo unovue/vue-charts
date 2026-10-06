@@ -1,41 +1,9 @@
+import { clock, frame } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Area, AreaChart, Line, LineChart, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-
-const clock = vi.hoisted(() => ({
-  reduced: false,
-  fades: 0,
-  runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean, duration?: number }>,
-}))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (_from: number, to: number, options: { onUpdate: (v: number) => void, onComplete: () => void, duration?: number }) => {
-    if (typeof _from !== 'number') {
-      clock.fades++
-      return { stop: () => {} }
-    }
-    const run = { to, update: options.onUpdate, complete: options.onComplete, stopped: false, duration: options.duration }
-    clock.runs.push(run)
-    return { stop: () => { run.stopped = true } }
-  },
-}))
-vi.mock('@vueuse/core', async original => ({
-  ...await original<typeof import('@vueuse/core')>(),
-  usePreferredReducedMotion: () => ref(clock.reduced ? 'reduce' : 'no-preference'),
-}))
-
-async function frame(seconds?: number) {
-  for (const run of clock.runs.filter(run => !run.stopped)) {
-    run.update(seconds == null ? run.to : Math.min(seconds, run.to))
-    if (seconds == null) {
-      run.stopped = true
-      run.complete()
-    }
-  }
-  await nextTick()
-}
 
 export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
   const initial = [{ name: 'B', value: 40, x: 20 }, { name: 'C', value: 70, x: 60 }]
@@ -76,8 +44,6 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
   }
   beforeEach(() => {
     clock.runs = []
-    clock.reduced = false
-    clock.fades = 0
     mockGetBoundingClientRect({ width: 400, height: 300 })
   })
   describe(`${kind} keyed motion through the public chart API`, () => {
@@ -184,7 +150,7 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
       await frame(0.25)
       await nextTick()
       expect(view.container.querySelector('.v-charts-label-list')).not.toBeNull()
-      expect(clock.fades).toBe(0)
+      expect(clock.animations.filter(animation => typeof animation.target !== 'number').length).toBe(0)
     })
     it('skips label opacity motion under reduced motion', async () => {
       clock.reduced = true
@@ -192,7 +158,7 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
       await nextTick()
       await nextTick()
       expect(view.container.querySelector('.v-charts-label-list')).not.toBeNull()
-      expect(clock.fades).toBe(0)
+      expect(clock.animations.filter(animation => typeof animation.target !== 'number').length).toBe(0)
     })
     if (kind === 'area') {
       it.each(['numeric', 'range', 'stacked'] as const)('keeps the %s baseline on the top-point clock through interruption', async (mode) => {
@@ -318,3 +284,6 @@ export function cartesianMotionCases(kind: 'line' | 'area' | 'scatter') {
     }
   })
 }
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

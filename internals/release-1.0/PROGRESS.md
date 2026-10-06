@@ -701,3 +701,12 @@ Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms 
 - Diagnostic playground: 22 views / 211 captures, zero real flags; historical timeout cause not proven.
 - Evidence: `.evidence/release-1.0/phase-4/`; recorder recovery sweep and final verify provide follow-up.
 - Assumptions: deterministic paired bootstrap intervals declare benchmark uncertainty; unchanged ratio boundaries.
+
+### 4.1 Test surgery — done
+- Shared external motion clock; public layout/class/legend tables; literal weak assertions; reduced-motion/edge data cases.
+- One standalone type fixture; events contract moved into typecheck; Sunburst layout checks 10k and renders 1k.
+- Gate: typecheck, ESLint zero warnings; 142 files / 1406 tests PASS (`4.1-suite-2.log`).
+- Coverage: lines 90.49%, branches 79.61%; both exceed the immediate baseline (`4.1-coverage.log`).
+- M1–M3 and offset mutations each fail; restored sources pass. No public rendering or API changes.
+- Suite timings 115.20 / 82.47 s; spread 32.73 s, load/warmth uncontrolled, no performance conclusion.
+- Evidence: `.evidence/release-1.0/phase-4/`; existing Symbols/RadialBar class defects recorded in LATER.

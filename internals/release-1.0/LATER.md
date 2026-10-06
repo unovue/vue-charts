@@ -170,3 +170,8 @@ step covers only part of an item, the step is named. Items marked ✓ were check
 The tooling items run on branch `release/1.0-tooling` (worktree `fork_vue-charts-release-tooling`)
 and are cherry-picked onto `release/1.0` between phase 2 slices. Product items wait for one slice
 right after phase 2, on the new model.
+
+- **Existing class forwarding defects (phase 4.1 evidence):** Symbols repeats a custom class
+  token; RadialBar does not put the supplied class on its series layer. The former test only
+  checked inclusion and the latter only checked that a layer existed. Rendering is unchanged.
+  Evidence: `.evidence/release-1.0/phase-4/4.1-tables-final.log` (diagnostic run).

@@ -24,109 +24,73 @@ describe('legendSelectors', () => {
     { name: 'Page F', uv: 189, pv: 4800, amt: 2400 },
   ]
 
-  describe('selectLegendPayload', () => {
-    it('renders legend items matching data keys for a single Bar', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
+  describe('series legend entries', () => {
+    it.each([
+      {
+        name: 'single Bar',
+        chart: () => (
+          <BarChart width={500} height={300} data={data}>
+            <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+            <Legend />
+          </BarChart>
+        ),
+        texts: ['uv'],
+        colors: ['#8884d8'],
+      },
+      {
+        name: 'named Bars',
+        chart: () => (
+          <BarChart width={500} height={300} data={data}>
+            <Bar dataKey="uv" name="UV" fill="#8884d8" isAnimationActive={false} />
+            <Bar dataKey="pv" name="PV" fill="#82ca9d" isAnimationActive={false} />
+            <Legend />
+          </BarChart>
+        ),
+        texts: ['UV', 'PV'],
+        colors: ['#8884d8', '#82ca9d'],
+      },
+      {
+        name: 'three Bars',
+        chart: () => (
+          <BarChart width={500} height={300} data={data}>
+            <Bar dataKey="uv" name="UV" fill="#8884d8" isAnimationActive={false} />
+            <Bar dataKey="pv" name="PV" fill="#82ca9d" isAnimationActive={false} />
+            <Bar dataKey="amt" name="AMT" fill="#ffc658" isAnimationActive={false} />
+            <Legend />
+          </BarChart>
+        ),
+        texts: ['UV', 'PV', 'AMT'],
+        colors: ['#8884d8', '#82ca9d', '#ffc658'],
+      },
+      {
+        name: 'Lines',
+        chart: () => (
+          <LineChart width={500} height={300} data={data}>
+            <Line dataKey="uv" stroke="#8884d8" isAnimationActive={false} />
+            <Line dataKey="pv" stroke="#82ca9d" isAnimationActive={false} />
+            <Legend />
+          </LineChart>
+        ),
+        texts: ['uv', 'pv'],
+        colors: ['#8884d8', '#82ca9d'],
+      },
+      {
+        name: 'full name',
+        chart: () => (
+          <BarChart width={500} height={300} data={data}>
+            <Bar dataKey="uv" name="Unique Visitors" fill="#8884d8" isAnimationActive={false} />
+            <Legend />
+          </BarChart>
+        ),
+        texts: ['Unique Visitors'],
+        colors: ['#8884d8'],
+      },
+    ])('$name keeps names, colors and order', async ({ chart, texts, colors }) => {
+      const { container } = render(chart)
       await nextTick()
-
-      const items = container.querySelectorAll('.v-charts-legend-item')
-      expect(items.length).toBe(1)
-
-      const texts = container.querySelectorAll('.v-charts-legend-item-text')
-      expect(texts[0].textContent).toBe('uv')
-    })
-
-    it('renders legend items for multiple Bars with correct text', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" name="UV" isAnimationActive={false} />
-          <Bar dataKey="pv" fill="#82ca9d" name="PV" isAnimationActive={false} />
-        </BarChart>
-      ))
-      await nextTick()
-
-      const items = container.querySelectorAll('.v-charts-legend-item')
-      expect(items.length).toBe(2)
-
-      const texts = container.querySelectorAll('.v-charts-legend-item-text')
-      const textValues = Array.from(texts).map(t => t.textContent)
-      expect(textValues).toContain('UV')
-      expect(textValues).toContain('PV')
-    })
-
-    it('flattens payload from multiple graphical items into a single legend list', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" name="UV" isAnimationActive={false} />
-          <Bar dataKey="pv" fill="#82ca9d" name="PV" isAnimationActive={false} />
-          <Bar dataKey="amt" fill="#ffc658" name="AMT" isAnimationActive={false} />
-        </BarChart>
-      ))
-      await nextTick()
-
-      const items = container.querySelectorAll('.v-charts-legend-item')
-      expect(items.length).toBe(3)
-
-      const texts = container.querySelectorAll('.v-charts-legend-item-text')
-      const textValues = Array.from(texts).map(t => t.textContent)
-      expect(textValues).toContain('UV')
-      expect(textValues).toContain('PV')
-      expect(textValues).toContain('AMT')
-    })
-
-    it('shows correct colors for each legend entry in BarChart', async () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Bar dataKey="uv" fill="#8884d8" name="UV" isAnimationActive={false} />
-          <Bar dataKey="pv" fill="#82ca9d" name="PV" isAnimationActive={false} />
-        </BarChart>
-      ))
-      await nextTick()
-
-      const items = container.querySelectorAll('.v-charts-legend-item')
-      expect(items.length).toBe(2)
-
-      const texts = container.querySelectorAll('.v-charts-legend-item svg path')
-      const colors = Array.from(texts).map(t => t.getAttribute(t.getAttribute('fill') === 'none' ? 'stroke' : 'fill'))
-      expect(colors).toHaveLength(2)
-      expect(colors).toEqual(['#8884d8', '#82ca9d'])
-    })
-
-    it('shows correct colors for each legend entry in LineChart', async () => {
-      const { container } = render(() => (
-        <LineChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Legend />
-          <Line dataKey="uv" stroke="#8884d8" isAnimationActive={false} />
-          <Line dataKey="pv" stroke="#82ca9d" isAnimationActive={false} />
-        </LineChart>
-      ))
-      await nextTick()
-
-      const items = container.querySelectorAll('.v-charts-legend-item')
-      expect(items.length).toBe(2)
-
-      const texts = container.querySelectorAll('.v-charts-legend-item svg path')
-      const colors = Array.from(texts).map(t => t.getAttribute(t.getAttribute('fill') === 'none' ? 'stroke' : 'fill'))
-      expect(colors).toHaveLength(2)
-      expect(colors).toEqual(['#8884d8', '#82ca9d'])
+      expect(Array.from(container.querySelectorAll('.v-charts-legend-item-text'), item => item.textContent)).toEqual(texts)
+      expect(Array.from(container.querySelectorAll('.v-charts-legend-item svg path'), item => item.getAttribute(item.getAttribute('fill') === 'none' ? 'stroke' : 'fill'))).toEqual(colors)
+      expect(container.querySelectorAll('.v-charts-legend-item')).toHaveLength(texts.length)
     })
   })
 

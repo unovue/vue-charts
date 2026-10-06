@@ -1,20 +1,9 @@
+import { clock } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { Area, AreaChart, Bar, BarChart, Customized, Funnel, FunnelChart, Line, LineChart, Pie, PieChart, PolarAngleAxis, Radar, RadarChart, RadialBar, RadialBarChart, Scatter, ScatterChart, Tooltip, XAxis, YAxis, useIsTooltipActive } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-
-// Replace only the frame clock; all component and transition logic stays real.
-const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, onUpdate: (value: number) => void, onComplete?: () => void, stopped: boolean }> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (_from: number, to: number, options: { onUpdate: (value: number) => void, onComplete?: () => void }) => {
-    const run = { to, ...options, stopped: false }
-    clock.runs.push(run)
-    return { stop: () => { run.stopped = true } }
-  },
-}))
-afterEach(() => { clock.runs = [] })
 
 const Probe = defineComponent({
   setup() {
@@ -94,8 +83,8 @@ it.each(families)('$name emits animation callbacks without payload', async ({ Ch
   expect(end).not.toHaveBeenCalled()
   for (const run of clock.runs.splice(0)) {
     if (!run.stopped) {
-      run.onUpdate(run.to)
-      run.onComplete?.()
+      run.update(run.to)
+      run.complete()
     }
   }
   await nextTick()
@@ -126,3 +115,6 @@ it.each([
   shape.dispatchEvent(event)
   expect(click.mock.calls).toEqual([[expect.objectContaining({ payload: expect.objectContaining({ name: 'A' }) }), 0, event]])
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

@@ -1,33 +1,18 @@
+import { clock } from '@/test/motionClock'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, h, nextTick, shallowRef } from 'vue'
 import { cascadeTiming, motionTokens } from '../motion'
 import type { KeyedTransitionOptions } from '../useKeyedTransition'
 import { useKeyedTransition } from '../useKeyedTransition'
 
-// A controllable clock in place of motion-v's frame loop, which does not run in JSDOM.
-const clock = vi.hoisted(() => ({
-  runs: [] as Array<{ to: number, onUpdate: (v: number) => void, onComplete: () => void, stopped: boolean }>,
-}))
-vi.mock('motion-v', async (original) => {
-  const actual = await original<typeof import('motion-v')>()
-  return {
-    ...actual,
-    animate: (_from: number, to: number, options: { onUpdate: (v: number) => void, onComplete: () => void }) => {
-      const run = { to, onUpdate: options.onUpdate, onComplete: options.onComplete, stopped: false }
-      clock.runs.push(run)
-      return { stop: () => { run.stopped = true } }
-    },
-  }
-})
-
 function at(seconds: number) {
   const run = clock.runs.at(-1)!
-  run.onUpdate(Math.min(seconds, run.to))
+  run.update(Math.min(seconds, run.to))
 }
 function finish() {
   const run = clock.runs.at(-1)!
-  run.onUpdate(run.to)
-  run.onComplete()
+  run.update(run.to)
+  run.complete()
 }
 
 interface BarItem { name: string, height: number }
@@ -97,7 +82,7 @@ describe('useKeyedTransition', () => {
 
   it('lets a user spring interpolate beyond its target', () => {
     const { result } = setup([{ name: 'A', height: 100 }], { transition: () => ({ type: 'spring' }) })
-    clock.runs.at(-1)!.onUpdate(1.1)
+    clock.runs.at(-1)!.update(1.1)
     expect(result.items.value[0].value.height).toBeCloseTo(110)
     expect(result.items.value[0].progress).toBe(1)
     expect(result.isAnimating.value).toBe(true)
@@ -142,7 +127,6 @@ describe('useKeyedTransition', () => {
     data.value = [{ name: 'A', height: 200 }]
     await nextTick()
     expect(clock.runs.at(-1)!.to).toBeCloseTo(0.7)
-    now.mockRestore()
   })
 
   // A cascade that played every item at once, or restarted it on the next change, would look
@@ -176,7 +160,6 @@ describe('useKeyedTransition', () => {
     await nextTick()
     at(motionTokens.update.duration / 2)
     expect(view()[0]).not.toBe('A:update:0')
-    now.mockRestore()
   })
 
   it('enters from the start state and lands on the target', () => {
@@ -371,3 +354,6 @@ function setupPlain(data: { value: BarItem[] }) {
     isActive: () => true,
   }))!
 }
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

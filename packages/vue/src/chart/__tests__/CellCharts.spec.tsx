@@ -1,3 +1,4 @@
+import { clock, frame } from '@/test/motionClock'
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
@@ -5,30 +6,6 @@ import { BarList, CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { motionTokens } from '@/animation/motion'
 import { levelOf, toDayNumber } from '../cellGridUtils'
-
-const clock = vi.hoisted(() => ({ runs: [] as Array<{ to: number, update: (v: number) => void, complete: () => void, stopped: boolean }> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: number, to: number, options: { onUpdate: (v: number) => void, onComplete?: () => void }) => {
-    if (typeof from !== 'number')
-      return { stop() {} }
-    const run = { to, update: options.onUpdate, complete: () => options.onComplete?.(), stopped: false }
-    clock.runs.push(run)
-    return { stop: () => { run.stopped = true } }
-  },
-}))
-
-/** Moves every running animation to `progress`, or finishes it when omitted. */
-async function frame(progress?: number) {
-  for (const run of clock.runs.filter(run => !run.stopped)) {
-    run.update(progress ?? run.to)
-    if (progress == null) {
-      run.stopped = true
-      run.complete()
-    }
-  }
-  await nextTick()
-}
 
 beforeEach(() => {
   clock.runs = []
@@ -612,3 +589,6 @@ it('moves BarList height with entering and leaving row presence', async () => {
   await frame()
   expect(list.style.height).toBe('68px')
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

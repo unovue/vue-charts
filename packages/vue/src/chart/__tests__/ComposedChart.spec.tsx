@@ -1,11 +1,9 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
 
 describe('<ComposedChart />', () => {
   beforeEach(() => {
@@ -175,80 +173,5 @@ describe('<ComposedChart />', () => {
 
     // Tooltip cursor should be visible after mouse enter
     expect(container.querySelectorAll('.v-charts-tooltip-cursor')).toHaveLength(1)
-  })
-
-  describe('composedChart layout context', () => {
-    it('should provide viewBox', () => {
-      let viewBoxValue: any
-      const Comp = defineComponent({
-        setup() {
-          const vb = useViewBox()
-          viewBoxValue = vb
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(viewBoxValue.value).toEqual({ height: 40, width: 90, x: 5, y: 5 })
-    })
-
-    it('should provide clipPathId', () => {
-      let clipPathIdValue: any
-      const Comp = defineComponent({
-        setup() {
-          clipPathIdValue = useClipPathId()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(clipPathIdValue).toMatch(/^v-charts[\w-]+-clip$/)
-    })
-
-    it('should provide width', () => {
-      let widthValue: any
-      const Comp = defineComponent({
-        setup() {
-          widthValue = useChartWidth()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(widthValue.value).toBe(100)
-    })
-
-    it('should provide height', () => {
-      let heightValue: any
-      const Comp = defineComponent({
-        setup() {
-          heightValue = useChartHeight()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(heightValue.value).toBe(50)
-    })
   })
 })

@@ -1,20 +1,9 @@
+import { clock } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Funnel, FunnelChart } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-
-const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0 }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void }) => {
-    if (typeof from === 'number') {
-      clock.update = options.onUpdate
-      clock.to = to
-    }
-    return { stop() {} }
-  },
-}))
 
 beforeEach(() => {
   mockGetBoundingClientRect({ width: 400, height: 300 })
@@ -43,3 +32,6 @@ it('keeps the stack closed while middle rows leave', async () => {
   for (let i = 1; i < edges.length; i++)
     expect(edges[i].top).toBeCloseTo(edges[i - 1].bottom, 3)
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

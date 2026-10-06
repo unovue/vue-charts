@@ -348,24 +348,6 @@ describe('yAxis', () => {
     })
   })
 
-  describe('class prop', () => {
-    it('applies custom class to yAxis element exactly once', () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis class="my-custom-yaxis" />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      const yAxis = container.querySelector('.v-charts-y-axis')
-      expect(yAxis).toBeTruthy()
-      const classStr = yAxis!.getAttribute('class') ?? ''
-      const count = classStr.split(' ').filter(c => c === 'my-custom-yaxis').length
-      expect(count).toBe(1)
-    })
-  })
-
   describe('style prop', () => {
     it('applies custom style to yAxis element', () => {
       const { container } = render(() => (

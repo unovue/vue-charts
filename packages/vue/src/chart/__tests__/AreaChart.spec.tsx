@@ -1,12 +1,10 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull, expectAreaCurve } from '@/test/helper'
 import type { ActivePointSlotProps } from '@/cartesian/area/ActivePoints'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { nextTick } from 'vue'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
 
 describe('areaChart', () => {
   beforeEach(() => {
@@ -319,92 +317,6 @@ describe('areaChart', () => {
   //   //   expect(container.querySelectorAll('.v-charts-area-dot')).toHaveLength(1)
   //   // })
   // })
-
-  describe('areaChart layout context', () => {
-    it('should provide viewBox', async () => {
-      const spy = vi.fn()
-      const Comp = {
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      }
-      render({
-        components: { AreaChart, Comp },
-        template: `
-          <AreaChart :width="100" :height="50" :barSize="20">
-            <Comp />
-          </AreaChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('should provide clipPathId', async () => {
-      const spy = vi.fn()
-      const Comp = {
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      }
-      render({
-        components: { AreaChart, Comp },
-        template: `
-          <AreaChart :width="100" :height="50" :barSize="20">
-            <Comp />
-          </AreaChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
-    })
-
-    it('should provide width', async () => {
-      const spy = vi.fn()
-      const Comp = {
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      }
-      render({
-        components: { AreaChart, Comp },
-        template: `
-          <AreaChart :width="100" :height="50" :barSize="20">
-            <Comp />
-          </AreaChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('should provide height', async () => {
-      const spy = vi.fn()
-      const Comp = {
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      }
-      render({
-        components: { AreaChart, Comp },
-        template: `
-          <AreaChart :width="100" :height="50" :barSize="20">
-            <Comp />
-          </AreaChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
-    })
-  })
 
   it('renders null points as 0 if stacked and connectNulls is true', async () => {
     const dataWithNullPV = [

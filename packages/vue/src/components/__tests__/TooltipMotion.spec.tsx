@@ -1,3 +1,4 @@
+import { clock as motion } from '@/test/motionClock'
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
@@ -5,22 +6,8 @@ import { Bar, BarChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
-const motion = vi.hoisted(() => ({ springs: 0, animations: [] as Array<{ target: unknown, values: unknown, options: { duration: number, onComplete?: () => void } }>, reduced: false }))
-vi.mock('motion-v', async (original) => {
-  const actual = await original<typeof import('motion-v')>()
-  return { ...actual, useSpring: (...args: Parameters<typeof actual.useSpring>) => {
-    motion.springs++
-    return actual.useSpring(...args)
-  }, animate: (target: unknown, values: unknown, options: { duration: number, onComplete?: () => void }) => {
-    motion.animations.push({ target, values, options })
-    return { stop() {} }
-  } }
-})
-vi.mock('@vueuse/core', async original => ({ ...await original<typeof import('@vueuse/core')>(), usePreferredReducedMotion: () => ref(motion.reduced ? 'reduce' : 'no-preference') }))
 beforeEach(() => {
-  motion.springs = 0
   motion.animations = []
-  motion.reduced = false
   mockGetBoundingClientRect({ width: 400, height: 300 })
   vi.stubGlobal('ResizeObserver', MockResizeObserver)
 })
@@ -89,3 +76,6 @@ it('appears at its position instead of gliding in from the corner', async () => 
   await nextTick()
   expect(view.tooltip.style.transform).toBe('translate(90px, 50px)')
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

@@ -1,22 +1,14 @@
+import { clock } from '@/test/motionClock'
 import { fireEvent, render } from '@testing-library/vue'
 import { expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Area, AreaChart, Line, LineChart, XAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-const clock = vi.hoisted(() => ({ finishes: [] as Array<() => void> }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (_from: number, _to: number, options: { onComplete: () => void }) => {
-    clock.finishes.push(options.onComplete)
-    return { stop() {} }
-  },
-}))
-
 it('uses target row indices and disables exiting dots in Line and Area', async () => {
   mockGetBoundingClientRect({ width: 400, height: 300 })
   for (const kind of ['line', 'area']) {
-    clock.finishes = []
+    clock.runs = []
     const rows = ref([{ name: 'A', value: 20 }, { name: 'B', value: 40 }, { name: 'C', value: 60 }])
     const click = vi.fn()
     const { container, unmount } = render(() => kind === 'line'
@@ -33,7 +25,7 @@ it('uses target row indices and disables exiting dots in Line and Area', async (
           </AreaChart>
         ))
     await nextTick()
-    clock.finishes.forEach(finish => finish())
+    clock.runs.forEach(run => run.complete())
     await nextTick()
     rows.value = [rows.value[0], rows.value[2]]
     await nextTick()
@@ -50,3 +42,6 @@ it('uses target row indices and disables exiting dots in Line and Area', async (
     unmount()
   }
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

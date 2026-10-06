@@ -173,6 +173,5 @@ describe('default responsive sizing', () => {
     const svg = container.querySelector('.v-charts-surface') as SVGElement
     expect(svg.getAttribute('width')).toBe('400')
     expect(svg.getAttribute('height')).toBe('320')
-    disconnectSpy.mockRestore()
   })
 })

@@ -114,52 +114,16 @@ describe('responsiveContainer', () => {
   })
 
   describe('id and class props', () => {
-    it('renders with id prop', () => {
-      const { container } = render(() => (
-        <ResponsiveContainer id="my-chart-container">
-          <div class="child">test</div>
-        </ResponsiveContainer>
-      ))
-
-      const wrapper = container.querySelector('#my-chart-container')
-      expect(wrapper).toBeTruthy()
-      expect(wrapper?.classList.contains('v-charts-responsive-container')).toBe(true)
-    })
-
-    it('renders with class prop', () => {
-      const { container } = render(() => (
-        <ResponsiveContainer class="custom-class">
-          <div class="child">test</div>
-        </ResponsiveContainer>
-      ))
-
-      const wrapper = container.querySelector('.v-charts-responsive-container')
-      expect(wrapper).toBeTruthy()
-      expect(wrapper?.classList.contains('custom-class')).toBe(true)
-    })
-
-    it('renders with both id and class props', () => {
-      const { container } = render(() => (
-        <ResponsiveContainer id="chart-1" class="chart-wrapper">
-          <div class="child">test</div>
-        </ResponsiveContainer>
-      ))
-
-      const wrapper = container.querySelector('#chart-1')
-      expect(wrapper).toBeTruthy()
-      expect(wrapper?.classList.contains('v-charts-responsive-container')).toBe(true)
-      expect(wrapper?.classList.contains('chart-wrapper')).toBe(true)
-    })
-
-    it('renders with numeric id', () => {
-      const { container } = render(() => (
-        <ResponsiveContainer id={42}>
-          <div class="child">test</div>
-        </ResponsiveContainer>
-      ))
-
-      const wrapper = container.querySelector('[id="42"]')
-      expect(wrapper).toBeTruthy()
+    it.each([
+      { id: 'my-chart-container', css: undefined, expectedId: 'my-chart-container', expectedClass: 'v-charts-responsive-container' },
+      { id: undefined, css: 'custom-class', expectedId: null, expectedClass: 'v-charts-responsive-container custom-class' },
+      { id: 'chart-1', css: 'chart-wrapper', expectedId: 'chart-1', expectedClass: 'v-charts-responsive-container chart-wrapper' },
+      { id: 42, css: undefined, expectedId: '42', expectedClass: 'v-charts-responsive-container' },
+    ])('preserves id $id and class $css', ({ id, css, expectedId, expectedClass }) => {
+      const { container } = render(() => <ResponsiveContainer id={id} class={css}><div>test</div></ResponsiveContainer>)
+      const wrapper = container.querySelector('.v-charts-responsive-container')!
+      expect(wrapper.getAttribute('id')).toBe(expectedId)
+      expect(wrapper.getAttribute('class')).toBe(expectedClass)
     })
   })
 

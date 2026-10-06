@@ -46,14 +46,9 @@ describe('<Symbols />', () => {
     expect(path!.getAttribute('transform')).toBe('translate(150, 200)')
   })
 
-  it('generates a valid d attribute', () => {
-    const { container } = render(() => (
-      <Symbols type="circle" cx={100} cy={100} size={64} />
-    ))
-
-    const path = container.querySelector('.v-charts-symbols')
-    expect(path).not.toBeNull()
-    expect(path!.getAttribute('d')).toBeTruthy()
+  it('generates the literal circle path for an area of 64', () => {
+    const { container } = render(() => <Symbols type="circle" cx={100} cy={100} size={64} />)
+    expect(container.querySelector('.v-charts-symbols')?.getAttribute('d')).toBe('M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0')
   })
 
   it('renders different symbol types', () => {
@@ -66,15 +61,6 @@ describe('<Symbols />', () => {
 
       expect(container.querySelectorAll('.v-charts-symbols')).toHaveLength(1)
     }
-  })
-
-  it('merges custom class', () => {
-    const { container } = render(() => (
-      <Symbols type="circle" cx={100} cy={100} class="custom-symbol" />
-    ))
-
-    const path = container.querySelector('.v-charts-symbols.custom-symbol')
-    expect(path).not.toBeNull()
   })
 
   it('passes through SVG attributes', () => {

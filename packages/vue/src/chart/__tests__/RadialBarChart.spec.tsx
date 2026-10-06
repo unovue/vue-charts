@@ -1,11 +1,8 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
 
 describe('radialBarChart', () => {
   beforeEach(() => {
@@ -192,32 +189,6 @@ describe('radialBarChart', () => {
     })
   })
 
-  describe('class prop', () => {
-    it('adds class when set on RadialBar', () => {
-      const { container } = render(() => (
-        <RadialBarChart
-          width={500}
-          height={300}
-          cx={150}
-          cy={150}
-          innerRadius={20}
-          outerRadius={140}
-          barSize={10}
-          data={data}
-        >
-          <RadialBar
-            class="test-radial-bar"
-            dataKey="uv"
-            isAnimationActive={false}
-          />
-        </RadialBarChart>
-      ))
-
-      // The v-charts-radial-bar layer should exist
-      expect(container.querySelectorAll('.v-charts-radial-bar').length).toBe(1)
-    })
-  })
-
   describe('hide prop', () => {
     it('renders no sectors when hide is true', () => {
       const { container } = render(() => (
@@ -305,96 +276,6 @@ describe('radialBarChart', () => {
       ))
 
       expect(container.querySelectorAll('.v-charts-sector').length).toBe(0)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadialBarChart, Comp },
-        template: `
-          <RadialBarChart :width="100" :height="50">
-            <Comp />
-          </RadialBarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadialBarChart, Comp },
-        template: `
-          <RadialBarChart :width="100" :height="50">
-            <Comp />
-          </RadialBarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
-    })
-
-    it('provides width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadialBarChart, Comp },
-        template: `
-          <RadialBarChart :width="100" :height="50">
-            <Comp />
-          </RadialBarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { RadialBarChart, Comp },
-        template: `
-          <RadialBarChart :width="100" :height="50">
-            <Comp />
-          </RadialBarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 })

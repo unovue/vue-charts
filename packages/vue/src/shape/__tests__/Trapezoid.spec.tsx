@@ -4,12 +4,8 @@ import { Trapezoid } from '../Trapezoid'
 
 describe('trapezoid', () => {
   it('renders a path with correct d attribute', () => {
-    const { container } = render(() => (
-      <Trapezoid x={10} y={20} upperWidth={100} lowerWidth={60} height={50} />
-    ))
-    const path = container.querySelector('.v-charts-trapezoid')
-    expect(path).toBeTruthy()
-    expect(path?.getAttribute('d')).toBeTruthy()
+    const { container } = render(() => <Trapezoid x={10} y={20} upperWidth={100} lowerWidth={60} height={50} />)
+    expect(container.querySelector('.v-charts-trapezoid')?.getAttribute('d')).toBe('M 10,20 L 110,20 L 90,70 L 30,70 Z')
   })
 
   it('applies .v-charts-trapezoid class', () => {

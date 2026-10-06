@@ -1,16 +1,7 @@
+import { clock } from '@/test/motionClock'
 import { expect, it, vi } from 'vitest'
 import { effectScope, nextTick, shallowRef } from 'vue'
 import { usePointTransition } from '../usePointTransition'
-
-const clock = vi.hoisted(() => ({ finish: () => {}, update: (_t: number) => {} }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (_from: number, _to: number, options: { onUpdate: (t: number) => void, onComplete: () => void }) => {
-    clock.update = options.onUpdate
-    clock.finish = options.onComplete
-    return { stop() {} }
-  },
-}))
 
 it('preserves vertical gaps when either endpoint has a null x', async () => {
   const data = shallowRef([{ x: 40, y: 10 }, { x: 80, y: 20 }])
@@ -97,3 +88,6 @@ it('keeps the same points while only the entrance sweep moves, so the path is no
   expect(display.points.value).toBe(first)
   scope.stop()
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

@@ -108,7 +108,6 @@ describe('entrance animation and server rendering', () => {
     expect(container.querySelector('.v-charts-area-area')!.getAttribute('d')).toBe('M147.5,135L312.5,5L312.5,265L147.5,265Z')
     app.unmount()
     container.remove()
-    warn.mockRestore()
   })
 
   it('still animates a chart that is first rendered on the client', async () => {

@@ -1,20 +1,9 @@
+import { clock } from '@/test/motionClock'
 import { expect, it, vi } from 'vitest'
 import { createApp, createSSRApp, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { Bar, BarChart, BarList, XAxis } from '@/index'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
-
-const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0 }))
-vi.mock('motion-v', async original => ({
-  ...await original<typeof import('motion-v')>(),
-  animate: (from: unknown, to: number, options: { onUpdate: (v: number) => void }) => {
-    if (typeof from === 'number') {
-      clock.update = options.onUpdate
-      clock.to = to
-    }
-    return { stop() {} }
-  },
-}))
 
 // A responsive chart mounted on the client (e.g. inside <ClientOnly>) played its entrance at the
 // initial 640x360 size and slid into place when the real size arrived. It now waits for it.
@@ -76,7 +65,7 @@ it.each([
   document.body.append(container)
   const app = createApp({ render: chart })
   app.mount(container)
-  clock.to = 0
+  clock.runs = []
   await nextTick()
   const bars = () => container.querySelectorAll(shapes).length
   // Not on screen yet: no entrance has started and nothing is drawn.
@@ -106,7 +95,7 @@ it('plays a hydrated BarList entrance', async () => {
   document.body.append(container)
   const width = () => container.querySelector<HTMLElement>('.v-charts-bar-list-bar')!.style.width
   expect(width()).toBe('0%')
-  clock.to = 0
+  clock.runs = []
   const app = createSSRApp({ render: view })
   app.mount(container)
   await nextTick()
@@ -118,3 +107,6 @@ it('plays a hydrated BarList entrance', async () => {
   app.unmount()
   container.remove()
 })
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

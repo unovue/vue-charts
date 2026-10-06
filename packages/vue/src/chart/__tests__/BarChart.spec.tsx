@@ -1,12 +1,10 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 import { getBarRectangles, getBarRects } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/model/runtime'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 
 describe('barChart', () => {
   beforeEach(() => {
@@ -230,96 +228,6 @@ describe('barChart', () => {
 
       const bars = getBarRectangles(container)
       expect(bars.length).toBe(6)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides correct viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides correct clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^v-charts[\w-]+-clip$/))
-    })
-
-    it('provides correct width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides correct height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 

@@ -113,7 +113,7 @@ it.each(kinds.filter(kind => kind !== 'Tooltip' && kind !== 'Bar' && kind !== 'P
 // Catches conflicting controllers throwing while rendering or changing ownership after a request.
 it('warns once for conflicting controlled Tooltips, uses the first and notifies every renderer', async () => {
   const warning = vi.spyOn(console, 'warn')
-  try {
+  {
     const index = ref<number | null>(1)
     const updates = [vi.fn(), vi.fn()]
     const { container } = render(() => (
@@ -135,9 +135,6 @@ it('warns once for conflicting controlled Tooltips, uses the first and notifies 
     await nextTick()
     expect(warning).toHaveBeenCalledTimes(1)
     expect([...container.querySelectorAll('.v-charts-tooltip-item-value')].map(node => node.textContent)).toEqual(['10', '10'])
-  }
-  finally {
-    warning.mockRestore()
   }
 })
 
