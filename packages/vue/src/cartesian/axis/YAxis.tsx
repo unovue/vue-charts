@@ -1,6 +1,5 @@
-import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
-import type { AxisSlots, TickFormatter } from '@/types/tick'
+import type { AxisSlots } from '@/types/tick'
 import { useCanMeasureText } from '@/model/runtime'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ComponentPublicInstance, PropType } from 'vue'
@@ -8,7 +7,8 @@ import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } 
 import type { YAxisSettings } from '@/types/axisSettings'
 import { implicitYAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { AxisDomain, AxisInterval } from '@/types/axis'
+import type { YAxisOrientation, YAxisPadding } from '@/types/axis'
+import { AxisVueProps } from './AxisProps'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 
@@ -114,42 +114,18 @@ const YAxisImpl = defineComponent({
   },
 })
 
-// Register before deferred geometry renders.
-const YAxisSettingsDispatcher = defineComponent({
+const _YAxis = defineComponent({
+  name: 'YAxis',
   props: {
-    interval: [String, Number],
-    yAxisId: {
-      type: [String, Number],
-      default: 0,
-    },
-    scale: [String, Function],
-    type: String,
-    padding: Object,
-    allowDataOverflow: Boolean,
-    allowDuplicatedCategory: Boolean,
-    allowDecimals: Boolean,
-    tickCount: Number,
-    includeHidden: Boolean,
-    reversed: Boolean,
-    ticks: Array,
-    width: [Number, String] as PropType<number | 'auto'>,
-    orientation: String,
-    mirror: Boolean,
-    hide: Boolean,
-    unit: String,
-    name: String,
-    angle: Number,
-    minTickGap: Number,
-    tick: { type: [Boolean, Object], default: true },
-    tickFormatter: Function as PropType<TickFormatter>,
-    domain: Array as PropType<AxisDomain>,
-    dataKey: {
-      type: [String, Number, Function] as PropType<ChartDataKey>,
-      default: undefined,
-    },
+    ...AxisVueProps,
+    yAxisId: { type: [String, Number], default: 0 },
+    width: { type: [Number, String] as PropType<number | 'auto'>, default: implicitYAxis.width },
+    orientation: { type: String as PropType<YAxisOrientation>, default: implicitYAxis.orientation },
+    padding: { type: [String, Object] as PropType<YAxisPadding>, default: () => ({ top: 0, bottom: 0 }) },
+    type: { ...AxisVueProps.type, default: implicitYAxis.type },
   },
-  setup(props, { slots }) {
-    const { yAxis } = useChart().axes
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
     const measured = shallowRef<{ id: string | number, width: number, history: number[] }>()
 
     function updateWidth(width: number) {
@@ -164,119 +140,16 @@ const YAxisSettingsDispatcher = defineComponent({
       }
       measured.value = { id: props.yAxisId, width, history: [...history, width].slice(-3) }
     }
-    const settings = computed<YAxisSettings>(() => {
-      return {
-        ...props,
-        interval: props.interval ?? 'preserveEnd',
-        id: props.yAxisId,
-        width: props.width === 'auto' && measured.value?.id === props.yAxisId
-          ? measured.value.width
-          : props.width,
-        dataKey: props.dataKey,
-        includeHidden: props.includeHidden ?? false,
-        angle: props.angle ?? 0,
-        minTickGap: props.minTickGap ?? 5,
-        tick: props.tick ?? true,
-      } as YAxisSettings
-    })
-    yAxis.register(settings)
-
+    const settings = computed<YAxisSettings>(() => ({
+      ...props,
+      id: props.yAxisId,
+      width: props.width === 'auto' && measured.value?.id === props.yAxisId
+        ? measured.value.width
+        : props.width,
+    }))
+    useChart().axes.yAxis.register(settings)
     const View = useDeferredView(YAxisImpl)
-    return () => (
-      <View {...props} onMeasure-width={updateWidth} v-slots={slots} />
-    )
-  },
-})
-
-const _YAxis = defineComponent({
-  name: 'YAxis',
-  props: {
-    allowDataOverflow: {
-      type: Boolean,
-      default: implicitYAxis.allowDataOverflow,
-    },
-    allowDecimals: {
-      type: Boolean,
-      default: implicitYAxis.allowDecimals,
-    },
-    allowDuplicatedCategory: {
-      type: Boolean,
-      default: implicitYAxis.allowDuplicatedCategory,
-    },
-    width: {
-      type: [Number, String] as PropType<number | 'auto'>,
-      default: implicitYAxis.width,
-    },
-    hide: {
-      type: Boolean,
-      default: false,
-    },
-    mirror: {
-      type: Boolean,
-      default: implicitYAxis.mirror,
-    },
-    orientation: {
-      type: String,
-      default: implicitYAxis.orientation,
-    },
-    padding: {
-      type: Object,
-      default: implicitYAxis.padding,
-    },
-    reversed: {
-      type: Boolean,
-      default: implicitYAxis.reversed,
-    },
-    scale: {
-      type: [String, Function],
-      default: implicitYAxis.scale,
-    },
-    tickCount: {
-      type: Number,
-      default: implicitYAxis.tickCount,
-    },
-    type: {
-      type: String,
-      default: implicitYAxis.type,
-    },
-    yAxisId: {
-      type: [String, Number],
-    },
-    dataKey: {
-      type: [String, Number, Function] as PropType<ChartDataKey>,
-      default: undefined,
-    },
-    tickFormatter: {
-      type: Function as PropType<TickFormatter>,
-      default: undefined,
-    },
-    unit: {
-      type: String,
-      default: undefined,
-    },
-    interval: {
-      type: [String, Number] as PropType<AxisInterval>,
-    },
-    domain: {
-      type: Array as PropType<AxisDomain>,
-      default: undefined,
-    },
-    axisLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    tickLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    tickMargin: Number,
-    minTickGap: {
-      type: Number,
-      default: 5,
-    },
-  },
-  setup(props, { attrs, slots }) {
-    return () => <YAxisSettingsDispatcher {...props} {...attrs} v-slots={slots} />
+    return () => <View {...props} {...attrs} onMeasure-width={updateWidth} v-slots={slots} />
   },
 })
 

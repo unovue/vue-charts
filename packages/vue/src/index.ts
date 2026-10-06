@@ -217,3 +217,5 @@ export type {
   ZAxisProps,
 } from './publicProps'
 export type { TooltipPayloadEntry, TooltipPayload } from './types/tooltip'
+
+export type { AxisProps } from './cartesian/axis/AxisProps'

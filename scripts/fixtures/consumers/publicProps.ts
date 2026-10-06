@@ -1,6 +1,7 @@
 import type {
   AreaChartProps,
   AreaProps,
+  AxisProps,
   BarChartProps,
   BarListProps,
   BarProps,
@@ -127,3 +128,18 @@ export type FunnelPolarProp = FunnelChartProps['cx']
 // @ts-expect-error Funnel charts do not accept bar sizing.
 export type FunnelBarProp = FunnelChartProps['barSize']
 export type RadialBarSizing = RadialBarChartProps['barSize']
+
+export type SharedAxisProps = AxisProps
+export const axisPresentation: AxisProps = { tick: false, angle: -45, label: 'Day', name: 'Visits', stroke: 'red', tickSize: 8 }
+export const horizontalAxis: XAxisProps = { orientation: 'top', type: 'number', padding: 'gap', scale: 'linear' }
+export const verticalAxis: YAxisProps = { orientation: 'right', type: 'category', padding: { top: 4, bottom: 8 } }
+// @ts-expect-error X axis orientation is top or bottom.
+export const invalidHorizontalAxis: XAxisProps = { orientation: 'sideways' }
+// @ts-expect-error Y axis orientation is left or right.
+export const invalidVerticalAxis: YAxisProps = { orientation: 'top' }
+// @ts-expect-error Axis type is numeric or categorical.
+export const invalidAxisType: XAxisProps = { type: 'date' }
+// @ts-expect-error Padding strings have two supported values.
+export const invalidAxisPadding: YAxisProps = { padding: 'wide' }
+// @ts-expect-error Scale names must be supported.
+export const invalidAxisScale: XAxisProps = { scale: 'made-up' }

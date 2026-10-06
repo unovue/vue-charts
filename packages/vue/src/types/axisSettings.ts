@@ -28,5 +28,5 @@ export type YAxisSettings = CartesianAxisSettings &
 export type AngleAxisSettings = BaseCartesianAxis & TicksSettings
 export type RadiusAxisSettings = BaseCartesianAxis & TicksSettings
 export type AxisWithTicksSettings = XAxisSettings | YAxisSettings | AngleAxisSettings | RadiusAxisSettings
-export type BaseAxisWithScale = BaseCartesianAxis & { scale: import('./scale').RechartsScale }
+export type BaseAxisWithScale = Omit<BaseCartesianAxis, 'scale'> & { scale: import('./scale').RechartsScale }
 export type ZAxisWithScale = ZAxisSettings & { scale: import('./scale').RechartsScale }

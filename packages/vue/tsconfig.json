@@ -1,4 +1,7 @@
 {
+  "vueCompilerOptions": {
+    "strictTemplates": true
+  },
   "compilerOptions": {
     "incremental": true,
     "composite": true,

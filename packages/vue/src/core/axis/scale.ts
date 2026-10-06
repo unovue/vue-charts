@@ -89,8 +89,9 @@ export function scaleFunction(
     return undefined
   }
   if (typeof axis.scale === 'function') {
-    // @ts-expect-error we're going to assume here that if axis.scale is a function then it is a d3Scale function
-    return guardScale(axis.scale.copy().domain(axisDomain).range(axisRange))
+    // The custom scale boundary accepts typed domains; the assigned numeric range is used internally.
+    const customScale = axis.scale.copy() as unknown as RechartsScale
+    return guardScale(customScale.domain(axisDomain).range(axisRange))
   }
   const d3ScaleFunction = getD3ScaleFromType(realScaleType)
   if (d3ScaleFunction == null) {

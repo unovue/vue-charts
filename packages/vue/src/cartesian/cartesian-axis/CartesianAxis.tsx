@@ -59,7 +59,7 @@ export const CartesianAxis = defineComponent({
     unit: [String, Number],
     orientation: { type: String as PropType<Orientation>, default: 'bottom' },
     viewBox: { type: Object as PropType<CartesianViewBoxRequired>, default: () => ({ x: 0, y: 0, width: 0, height: 0 }) },
-    tick: { type: Boolean, default: true },
+    tick: { type: [Boolean, Object] as PropType<boolean | SVGAttributes>, default: true },
     axisLine: { type: [Boolean, Object] as PropType<boolean | SVGAttributes>, default: () => true },
     tickLine: { type: [Boolean, Object], default: () => true },
     mirror: { type: Boolean, default: false },

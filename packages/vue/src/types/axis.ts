@@ -1,5 +1,5 @@
 import type { ChartDataKey } from '@/types/base'
-import type { RechartsScale, ScaleType } from './scale'
+import type { AxisScale } from './scale'
 import type { TickFormatter, TicksSettings } from './tick'
 
 export type AxisId = string | number
@@ -34,7 +34,7 @@ export type AxisDomain =
  */
 export type BaseCartesianAxis = {
   id?: AxisId
-  scale: ScaleType | RechartsScale | undefined
+  scale: AxisScale | undefined
   type: AxisDomainType
   /**
    * The axis functionality is severely restricted without a dataKey

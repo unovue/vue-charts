@@ -469,7 +469,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 
 ## Phase 3 part A
 
-### 3.1 Strict declarations — done
+### 3.1 Strict declarations — done (731c327)
 - Supersedes deferred entry in 94d517b; packed consumers and nullable-coordinate probe pass.
 - Gate: typecheck/build/lint/code pass; Vitest 130 files / 1310 tests (`3.1-*.log`).
 - Strict packed guard: 294 declarations, zero vccs errors; reports 100 third-party diagnostics.
@@ -478,7 +478,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-a/` (`3.1-guard-*.log`, `3.1-consumers.log`).
 - Assumptions: template skipLibCheck defaults; guard runs in Nuxt to supply optional Nuxt types.
 
-### 3.2 Export surface — done
+### 3.2 Export surface — done (5894e4d)
 - Explicit root/barrel exports; removed D-12a internals and obsolete exports.
 - Every component Props type and TooltipPayloadEntry compile in both packed fixtures.
 - Gate: typecheck/lint/code pass; Vitest 130 files / 1310 tests (`3.2-*.log`).
@@ -487,7 +487,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-a/3.2-*.log`.
 - Assumption: infer missing Props types from public constructors; useOffset removal follows D-12a now.
 
-### 3.3 Internal props — done
+### 3.3 Internal props — done (c0aeeb3)
 - Removed public internal props; LabelList uses internal LabelView geometry.
 - Public Label blocks removed attrs from becoming internal view props; migration rows added.
 - Gate: typecheck/lint/code pass; Vitest 131 files / 1316 tests (`part-a/3.3-*.log`).
@@ -496,7 +496,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/3.3/` and `.evidence/release-1.0/part-a/3.3-*.log`.
 - Assumptions: Bar keeps D-13 model; Area default unclipped rendering and Line/Area id retained.
 
-### 3.4 Chart prop sets and animation — done
+### 3.4 Chart prop sets and animation — done (f12c12a)
 - Concrete cartesian, polar, radial and funnel props; dead props removed; migration rows added.
 - Chart animation defaults inherit into series; explicit item overrides remain authoritative.
 - Gate: typecheck/lint/code pass; Vitest 132 files / 1331 tests (`3.4-*.log`).
@@ -504,3 +504,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Negative packed prop probes pass; reverse production patch fails 11 focused assertions.
 - Evidence: `.evidence/release-1.0/part-a/3.4-*.log` and `3.4-fix.patch`.
 - Assumptions: retain polar layout/angle defaults; radial charts combine polar and bar sizing props.
+
+### 3.5 Axis props — done
+- Shared typed AxisProps; concrete orientations/padding/defaults; portable custom scales.
+- Strict template and packed positive/negative probes pass; docs and migration rows updated.
+- Gate: typecheck/lint/code pass; Vitest 133 files / 1333 tests (`3.5-*.log`).
+- Packed consumers pass; strict guard 299 files / zero vccs errors / 100 external diagnostics.
+- Object-tick warning regression fails both rows without fix; restored focused checks pass.
+- Evidence: `.evidence/release-1.0/3.5/` and `.evidence/release-1.0/part-a/3.5-*.log`.
+- Assumptions: explicit forwarding preserves Vue fallthrough; custom scales keep numeric math boundary.
