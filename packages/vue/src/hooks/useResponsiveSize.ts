@@ -55,7 +55,7 @@ export function useResponsiveSize(props: ChartSizeProps) {
   const boxStyle = computed<CSSProperties>(() => ({
     position: 'relative',
     cursor: 'default',
-    ...(isResponsive.value && !shown.value ? { visibility: 'hidden' as const } : {}),
+    ...(isResponsive.value && !shown.value ? { visibility: 'hidden' as const, overflow: 'hidden' } : {}),
     width: fixedWidth.value === undefined ? '100%' : `${fixedWidth.value}px`,
     height: fixedHeight.value === undefined ? (props.aspect ? 'auto' : '100%') : `${fixedHeight.value}px`,
     aspectRatio: fixedHeight.value === undefined ? props.aspect : undefined,

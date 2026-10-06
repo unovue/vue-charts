@@ -263,6 +263,9 @@ export function useKeyedTransition<T>(
     }
     let skip = skipEntrance && !hasEntered
     if (skip && (options.entranceAfterHydration ?? !options.followsSeries) && active && nextItems.length) {
+      // An unseen hydration start must follow the current layout, not retain the server's
+      // fallback coordinates as the starting values of a later measurement.
+      items.value = []
       const start = plan(nextItems, options.reveal?.()).map(({ key, from }) => ({ key, value: from, phase: 'enter' as const, progress: 0 }))
       if (onServer) {
         // The server sends the entrance's start; the client plays it after hydration.

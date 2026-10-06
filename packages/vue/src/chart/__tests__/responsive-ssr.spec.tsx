@@ -203,3 +203,38 @@ describe('one fixed dimension', () => {
     container.remove()
   })
 })
+
+// A measured chart below the viewport retained its server-width entrance geometry until
+// intersection. Even hidden fallback SVGs must not enlarge the page's scrollable area.
+it('relays out an unseen hydrated entrance before revealing its measured box', async () => {
+  class DeferredObserver extends MockResizeObserver {
+    observe() {}
+  }
+  vi.stubGlobal('ResizeObserver', DeferredObserver)
+  vi.stubGlobal('IntersectionObserver', class {
+    observe() {}
+    disconnect() {}
+  })
+  const render = () => <LineChart data={data}><Line dataKey="value" /></LineChart>
+  const container = document.createElement('div')
+  container.innerHTML = await renderToString(createSSRApp({ render }))
+  document.body.append(container)
+  const app = createSSRApp({ render })
+  app.mount(container)
+  await flushPromises()
+  const box = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+  expect(box.style.visibility).toBe('hidden')
+  expect(box.style.overflow).toBe('hidden')
+  MockResizeObserver.instances.at(-1)!.trigger(320, 250)
+  await nextTick()
+  await new Promise(resolve => requestAnimationFrame(resolve))
+  await nextTick()
+  expect(box.style.visibility).toBe('')
+  expect(box.style.overflow).toBe('')
+  const curve = container.querySelector('.v-charts-line-curve')!
+  expect(curve.getAttribute('d')).toBe('M5,125L315,5')
+  expect(curve.getAttribute('stroke-dasharray')).toBe('0 1')
+  app.unmount()
+  container.remove()
+  vi.unstubAllGlobals()
+})
