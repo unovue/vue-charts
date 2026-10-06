@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from 'vccs'
+import ChartLegendContent from '~/components/ui/chart/ChartLegendContent.vue'
 
 // #region Sample data
 const data = [
@@ -74,6 +75,10 @@ const data = [
       width="auto"
       :label="{ value: 'UV', position: 'insideLeft', angle: -90 }"
     />
-    <Legend position="insideBottomRight" />
+    <Legend position="insideBottomRight">
+      <template #content="legendProps">
+        <ChartLegendContent v-bind="legendProps" />
+      </template>
+    </Legend>
   </LineChart>
 </template>

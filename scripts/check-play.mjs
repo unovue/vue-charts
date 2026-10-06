@@ -482,7 +482,8 @@ try {
           if (sampledChart?.tooltip === false)
             result.scenarios.at(-1).flags.push({ flag: 'tooltip', chart: sampledChart.id, shape: 'tooltip', t: last.t, numbers: { visible: false, pointer: last.pointer, hit: last.hit, chartBox: sampledChart.box, seriesTypes: sampledChart.seriesTypes } })
         }
-        const legends = page.locator('.v-charts-legend-item,.v-charts-legend-wrapper > div > div')
+        // Exercise controls, not presentational keys that have no activation contract.
+        const legends = page.locator('button.v-charts-legend-item,.v-charts-legend-item:has(button),.v-charts-legend-wrapper [role="button"]')
         const count = await legends.count()
         for (let i = 0; i < count; i++) {
           const before = await legends.nth(i).evaluate(el => el.textContent)

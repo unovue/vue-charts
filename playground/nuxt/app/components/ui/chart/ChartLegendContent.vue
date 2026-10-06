@@ -22,7 +22,7 @@ function getItemConfig(item: Record<string, any>, nameKey?: string) {
 <template>
   <div
     v-if="payload?.length"
-    class="flex items-center justify-center gap-4"
+    class="flex cursor-default items-center justify-center gap-4"
   >
     <div
       v-for="(item, index) in payload"

@@ -171,12 +171,13 @@ const funnel = computed(() => steps.value.map((row, i) => ({
               :key="row.name"
               :fill="row.fill"
             />
-            <Label
-              position="center"
-              :value="total.toLocaleString('en-US')"
-              class="fill-foreground text-2xl font-semibold"
-            />
           </Pie>
+          <Label
+            position="center"
+            :value="total.toLocaleString('en-US')"
+            class="fill-foreground text-2xl font-semibold"
+            pointer-events="none"
+          />
           <Tooltip :cursor="false" />
         </PieChart>
       </section>
