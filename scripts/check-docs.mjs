@@ -185,6 +185,7 @@ try {
     }
     catch (error) {
       errors.push({ browser: engine, text: error.stack ?? String(error) })
+      console.error(`${engine} engine failed:`, error)
     }
     finally {
       await browser?.close()

@@ -8,7 +8,7 @@ import { test } from 'node:test'
 // A visible native HTML chart must not fail the same geometry gate as SVG charts.
 test('the docs checker accepts the real BarList demo at both widths', () => {
   const root = fileURLToPath(new URL('../', import.meta.url))
-  const out = '.evidence/release-1.0/docs-native-list-regression'
+  const out = '.evidence/tooling/docs-native-list-regression'
   const result = spawnSync(process.execPath, [
     'scripts/check-docs.mjs',
     '--browser=chromium',
