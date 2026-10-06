@@ -2,7 +2,7 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp, createSSRApp, nextTick } from 'vue'
 import type { VNode } from 'vue'
-import { Area, Bar, Brush, CartesianGrid, ComposedChart, ErrorBar, Funnel, FunnelChart, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
+import { Area, Bar, BarChart, Brush, CartesianGrid, ComposedChart, ErrorBar, Funnel, FunnelChart, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
 
 const data = [{ name: 'Alpha', value: 10, other: 15 }, { name: 'Beta', value: 20, other: 5 }, { name: 'Gamma', value: 15, other: 10 }]
 const attributes = ['d', 'x', 'y', 'width', 'height', 'cx', 'cy', 'points', 'transform', 'x1', 'x2', 'y1', 'y2', 'r']
@@ -173,7 +173,18 @@ describe('first-render geometry is independent of declaration order', () => {
 
 // Catches real-font hydration mismatches hidden by JSDOM's default zero bounds.
 describe('hydration with non-zero text measurements', () => {
-  for (const chart of charts) {
+  for (const chart of charts.concat({
+    name: 'BarChart with auto-width labels',
+    render() {
+      return (
+        <BarChart width={400} height={300} data={data}>
+          <XAxis dataKey="name" />
+          <YAxis width="auto" />
+          <Bar dataKey="value" isAnimationActive={false} />
+        </BarChart>
+      )
+    },
+  })) {
     it(`${chart.name}: defers measured layout until the first frame`, async () => {
       const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => {
         return { x: 0, y: 0, top: 0, left: 0, right: 80, bottom: 20, width: 80, height: 20, toJSON: () => ({}) }

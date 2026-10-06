@@ -361,3 +361,13 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Geometry PASS: 2,736 exact settled frames at 720/360px; evidence `.evidence/release-1.0/step-2.12/checks.md`.
 - Anomalies: 23 raw captures / 1,095 frames differ, 19 entrances; 96 faster throttled intervals; no conclusion, servers closed.
 - Assumptions: retain scoped keys and public ErrorBar fallback signatures; direct private-path cutover; two workers, six frozen fixtures, Chromium only.
+
+## Step 2.13: remaining architecture findings and elegance
+- Done: `005aa28`, `962f465`, `1b70eae`, `8874d7c`, this commit; ownership, modules, names, native defaults and VueUse cleanup complete.
+- Gate PASS: 130 files / 1,302 tests with README timeout retry (64/64); typecheck, build and 109-file lint with zero warnings.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; curve counts unchanged; geometry 2,736 exact frames.
+- Package/bundle/SSR PASS: 545 files, three exports, zero runtime cycles/reselect; BarList 7,652 gzip below 8,947; Nuxt 1/1.
+- Hydration fallback: uniform gate changed barMany curves 0 → 182 and off-screen shapes 0 → 2, beyond the permitted one-frame offset.
+- Original gate retained; public auto-width hydration regression reverse-proved. Evidence `.evidence/release-1.0/step-2.13/checks.md`; servers closed.
+- Anomalies: 22 raw captures / 983 frames / 18 entrances differ; 84 faster throttled intervals; timeout 36.79s; BarList +238 bytes; no conclusion.
+- Assumptions: native defaults now (3.4 not run), preserve ID equivalence and public geometry; Node 22, two workers, six frozen sources, Chromium only.
