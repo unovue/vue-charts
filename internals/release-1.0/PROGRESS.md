@@ -35,7 +35,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.9 | Slice 3f: polar series | yes | 2.8 | done | `a6b7c9d`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
 | 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | done | `7300c14`, this log commit | Step gate, bundle assertion and 285 motion transitions PASS; evidence below. |
 | 2.10 | Slice 4: delete the store shell | yes | 2.11 | done | 30bec72 | 131 files / 1,300 tests; motion 285/285 |
-| 2.12 | Slice 6: context ownership | yes | 2.10 | todo | | |
+| 2.12 | Slice 6: context ownership | yes | 2.10 | done | ae90b23 | 131 files / 1,300 tests; motion 285/285 |
 | 2.13 | Remaining architecture findings | assess | 2.12 | todo | | |
 | 2.14 | Code health gates | yes | 2.13 | todo | | |
 | 3.1 | Recheck strict public declarations | yes | phase 2 | todo | | |
@@ -352,3 +352,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Geometry PASS: 2,736 exact settled frames across 720/360px; evidence `.evidence/release-1.0/step-2.10/checks.md`.
 - Anomalies: 26 raw captures / 1,262 frames differ, 22 entrances; 100 faster throttled intervals; no conclusion, servers closed.
 - Assumptions: preserve public types and existing Brush range contract; canonical computed owners; two workers, six frozen fixtures, Chromium only.
+
+## Step 2.12: context ownership
+- Done: `ae90b23`; lightweight ChartRuntime and typed keys own contexts; factories/forwarders gone; motion types from motion-v.
+- Gate PASS: 131 files / 1,300 tests (131.31 s), typecheck/build and 47-file lint with zero warnings.
+- Package/bundle/SSR PASS: 540 files, three exports, zero reselect bytes; BarList 7,414 gzip below 8,947; Nuxt 1/1, public fallback proof PASS.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; resize/narrow curves 6 → 0, others unchanged.
+- Geometry PASS: 2,736 exact settled frames at 720/360px; evidence `.evidence/release-1.0/step-2.12/checks.md`.
+- Anomalies: 23 raw captures / 1,095 frames differ, 19 entrances; 96 faster throttled intervals; no conclusion, servers closed.
+- Assumptions: retain scoped keys and public ErrorBar fallback signatures; direct private-path cutover; two workers, six frozen fixtures, Chromium only.
