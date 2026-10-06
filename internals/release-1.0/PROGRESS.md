@@ -501,7 +501,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Chart animation defaults inherit into series; explicit item overrides remain authoritative.
 - Gate: typecheck/lint/code pass; Vitest 132 files / 1331 tests (`3.4-*.log`).
 - Packed consumers pass; strict guard 298 files / zero vccs errors / 100 external diagnostics.
-- Negative packed prop probes pass; reverse production patch fails 11 focused assertions.
+- Negative packed prop probes pass; reverse production patch fails 11 focused tests.
 - Evidence: `.evidence/release-1.0/part-a/3.4-*.log` and `3.4-fix.patch`.
 - Assumptions: retain polar layout/angle defaults; radial charts combine polar and bar sizing props.
 
@@ -514,7 +514,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/3.5/` and `.evidence/release-1.0/part-a/3.5-*.log`.
 - Assumptions: explicit forwarding preserves Vue fallthrough; custom scales keep numeric math boundary.
 
-### 3.6 Active state and Brush range — done
+### 3.6 Active state and Brush range — done (3e3916d)
 - Standalone roots own active models; conflicting Tooltips warn once and use the first controller.
 - Brush has one normalized nullable range; controlled sync requests preserve source and rejected geometry.
 - Gate: typecheck/lint/code pass; Vitest 134 files / 1371 tests (`3.6-*.log`).
@@ -522,3 +522,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Active and Brush reverse proofs fail without fixes; restored focused checks pass; migration/docs updated.
 - Evidence: `.evidence/release-1.0/3.6-active-*.log` and `.evidence/release-1.0/part-a/3.6-*.log`.
 - Assumptions: primitive Sparkline identity is positional; supplied models control without listeners; private transport stays for 3.10.
+
+### Part A final verification — done
+- Steps 3.1–3.6 committed; per-step gates and packed consumers pass (`part-a/gate-summary.json`).
+- Numeric comparison: 285 captures / 16245 frames, zero changes/errors (`numeric-all-comparison.json`).
+- Motion lab: 285/285 transitions clean; seven accepted Journey flags unchanged, zero page errors (`motion-comparison.json`).
+- Playground: exit 0; 22 page/view runs / 211 recordings, zero product flags; baseline coverage unchanged (`play-comparison.json`).
+- Evidence: `.evidence/release-1.0/part-a/`; browser checks ran after Vitest and sequentially.
+- Limits: machine load was not equal across runs, so timings were not compared; check:seen remains environment-limited.
+- Next: Opus review, then Part B and its phase gate; private Tooltip transport remains for 3.10.
