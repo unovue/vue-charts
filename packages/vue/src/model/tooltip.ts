@@ -4,7 +4,7 @@ import { computed, inject, provide, shallowRef, toRaw, watch } from 'vue'
 import type { AxisLookup } from './axis'
 import type { Registry } from './registry'
 import { createRegistry } from './registry'
-import { combineTicksOfTooltipAxis, combineTooltipCoordinate, combineTooltipPayload, parseTooltipIndex, sliceTooltipData } from '@/core/tooltip'
+import { parseTooltipIndex, sliceTooltipData, tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
 import type { ChartDataState } from '@/types/chartData'
@@ -133,7 +133,7 @@ export function createTooltip(inputs: TooltipInputs) {
     const model = axis.value
     if (!model)
       return undefined
-    return combineTicksOfTooltipAxis(
+    return tooltipTicks(
       inputs.layout(),
       model.settings.value,
       model.realScaleType.value,
@@ -265,7 +265,7 @@ export function createTooltip(inputs: TooltipInputs) {
   function coordinateFor(candidate: Target | undefined, fallback?: Coordinate) {
     if (!candidate)
       return undefined
-    return combineTooltipCoordinate(
+    return tooltipCoordinate(
       eventType.value,
       inputs.layout(),
       ticks.value?.[candidate.localIndex],
@@ -279,7 +279,7 @@ export function createTooltip(inputs: TooltipInputs) {
     target.value,
     controlled.value !== undefined ? undefined : selection.value?.coordinate,
   ))
-  const payload = computed(() => combineTooltipPayload(
+  const payload = computed(() => tooltipPayload(
     eventType.value === 'item' ? target.value?.entry?.value ? [target.value.entry.value] : [] : inputs.entries.entries.value,
     target.value?.index ?? null,
     inputs.data.value,

@@ -6,10 +6,10 @@ import { useDeferredView } from '@/hooks/deferredView'
 import { useChart } from '@/model/chart'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
 import { getBaseValueOfBar } from '@/core/coordinates'
-import { combineAllBarPositions, combineBarSizeList, combineStackedData } from '@/core/barSizing'
+import { barPositions, barSizeList, stackedData as getStackedData } from '@/core/barSizing'
 import type { RadialBarDataItem } from '@/types/radialBar'
 import type { RadialBarSettings } from '@/core/radialBar'
-import { combineRadialBarLegend, computeRadialBarDataItems } from '@/core/radialBar'
+import { computeRadialBarDataItems, radialBarLegend } from '@/core/radialBar'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -58,19 +58,19 @@ const RadialBarView = defineComponent({
       categoricalAxis.value.withScale.value,
       categoricalTicks.value,
       true,
-    ) ?? props.maxBarSize ?? chart.rootProps.value.maxBarSize ?? 0)
+    ) ?? props.maxBarSize ?? chart.options.value.maxBarSize ?? 0)
     const visibleBars = computed(() => chart.items.polar.entries.value.filter(item =>
       item.type === 'radialBar' && !item.hide && (chart.inputs.layout() === 'centric'
         ? item.angleAxisId === props.angleAxisId
         : item.radiusAxisId === props.radiusAxisId),
     ))
     // Polar charts retain their existing percentage-size fallback (no total category size).
-    const sizeList = computed(() => combineBarSizeList(visibleBars.value, chart.rootProps.value.barSize))
-    const positions = computed(() => combineAllBarPositions(
+    const sizeList = computed(() => barSizeList(visibleBars.value, chart.options.value.barSize))
+    const positions = computed(() => barPositions(
       sizeList.value,
-      chart.rootProps.value.maxBarSize!,
-      chart.rootProps.value.barGap,
-      chart.rootProps.value.barCategoryGap,
+      chart.options.value.maxBarSize!,
+      chart.options.value.barGap,
+      chart.options.value.barCategoryGap,
       barBandSize.value,
       bandSize.value,
       props.maxBarSize,
@@ -78,7 +78,7 @@ const RadialBarView = defineComponent({
     const position = computed(() => positions.value?.find(item =>
       item.stackId === props.stackId && item.dataKeys.includes(props.dataKey!),
     )?.position)
-    const stackedData = computed(() => combineStackedData(numericAxis.value.stackGroups.value, radialBarSettings.value))
+    const stackedData = computed(() => getStackedData(numericAxis.value.stackGroups.value, radialBarSettings.value))
     const sectors = computed(() => {
       const radius = radiusAxis.value.withScale.value
       const angle = angleAxis.value.withScale.value
@@ -298,7 +298,7 @@ export const RadialBar = defineComponent({
     })))
 
     const chart = useChart()
-    const legendPayload = computed(() => combineRadialBarLegend(chart.data.value, props.legendType))
+    const legendPayload = computed(() => radialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
     useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
 

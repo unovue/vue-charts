@@ -76,8 +76,8 @@ it.each([
 
 // Output alone cannot detect independent repeated calculations in sibling consumers.
 it('shares the domain after the first consumer unmounts and stops work on chart teardown', async () => {
-  const combine = vi.spyOn(domainMath, 'combineAxisDomain')
-  const scale = vi.spyOn(scaleMath, 'combineScaleFunction')
+  const combine = vi.spyOn(domainMath, 'axisDomain')
+  const scale = vi.spyOn(scaleMath, 'scaleFunction')
   const first = ref(true)
   const rows = ref([{ first: 20, second: 100 }])
   const { container, unmount } = render(() => (

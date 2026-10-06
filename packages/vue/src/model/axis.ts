@@ -3,7 +3,7 @@ import { createAxisScale } from './axisScale'
 import type { AxisScaleModel, AxisScaleSources } from './axisScale'
 import { createPolarAxis } from './polarAxis'
 import type { PolarLayout } from './polar'
-import { combineCalculatedPadding, combineSmallestDistance, combineXAxisRange, combineYAxisRange } from '@/core/axis/range'
+import { calculatedPadding, smallestDistance, xAxisRange, yAxisRange } from '@/core/axis/range'
 import type { CategoricalDomain } from '@/types/categorical'
 import type { ComputedRef, EffectScope } from 'vue'
 import { computed, onScopeDispose } from 'vue'
@@ -13,27 +13,27 @@ import type { AppliedChartData, ChartData, ChartDataState } from '@/types/chartD
 import type { LayoutType, StackOffsetType } from '@/types/common'
 import type { StackGroup } from '@/core/axis/stacks'
 import {
-  combineAppliedNumericalValuesIncludingErrorValues,
-  combineAppliedValues,
-  combineDisplayedData,
-  combineGraphicalItemsData,
-  combineGraphicalItemsSettings,
   filterGraphicalNotStackedItems,
+  appliedValues as getAppliedValues,
+  displayedData as getDisplayedData,
+  graphicalItemsData,
+  graphicalItemsSettings,
   itemAxisPredicate,
+  numericalValuesWithErrors,
 } from '@/core/axis/data'
 import {
-  combineAxisDomain,
-  combineNumericalDomain,
+  axisDomain,
   getDomainDefinition,
+  numericalDomain as getNumericalDomain,
   mergeDomains,
 } from '@/core/axis/domain'
 import {
-  combineAreasDomain,
-  combineDotsDomain,
-  combineLinesDomain,
+  areasDomain,
+  dotsDomain,
   filterReferenceElements,
+  linesDomain,
 } from '@/core/axis/references'
-import { combineDomainOfStackGroups, combineStackGroups } from '@/core/axis/stacks'
+import { stackDomain as getStackDomain, stackGroups as getStackGroups } from '@/core/axis/stacks'
 import { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
 import type { AxisRegistry, ChartRegistries } from './registries'
 
@@ -74,20 +74,20 @@ function createAxis<S extends BaseCartesianAxis>(
   readRange: (settings: S, applied: AppliedChartData) => AxisRange,
 ): AxisModel<S> {
   const settings = computed(() => registry.byId.value.get(String(id)) ?? implicit)
-  const items = computed(() => combineGraphicalItemsSettings(
+  const items = computed(() => graphicalItemsSettings(
     sources.items.cartesian.entries.value,
     settings.value,
     itemAxisPredicate(type, id),
   ))
   const unstacked = computed(() => filterGraphicalNotStackedItems(items.value))
   const dataWithIndexes = sources.dataWithIndexes
-  const graphicalData = computed(() => combineGraphicalItemsData(items.value))
-  const displayedData = computed(() => combineDisplayedData(graphicalData.value, dataWithIndexes.value))
-  const appliedValues = computed(() => combineAppliedValues(displayedData.value, settings.value, items.value))
+  const graphicalData = computed(() => graphicalItemsData(items.value))
+  const displayedData = computed(() => getDisplayedData(graphicalData.value, dataWithIndexes.value))
+  const appliedValues = computed(() => getAppliedValues(displayedData.value, settings.value, items.value))
   const domainDefinition = computed(() => getDomainDefinition(settings.value))
-  const stackGroups = computed(() => combineStackGroups(displayedData.value, items.value, sources.stackOffset()))
-  const stackDomain = computed(() => combineDomainOfStackGroups(stackGroups.value, dataWithIndexes.value, type))
-  const numericalValues = computed(() => combineAppliedNumericalValuesIncludingErrorValues(
+  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))
+  const stackDomain = computed(() => getStackDomain(stackGroups.value, dataWithIndexes.value, type))
+  const numericalValues = computed(() => numericalValuesWithErrors(
     displayedData.value,
     settings.value,
     unstacked.value,
@@ -97,18 +97,18 @@ function createAxis<S extends BaseCartesianAxis>(
   const lines = computed(() => filterReferenceElements(sources.references.lines.entries.value, type, id))
   const areas = computed(() => filterReferenceElements(sources.references.areas.entries.value, type, id))
   const referencesDomain = computed(() => mergeDomains(
-    combineDotsDomain(dots.value, type),
-    combineAreasDomain(areas.value, type),
-    combineLinesDomain(lines.value, type),
+    dotsDomain(dots.value, type),
+    areasDomain(areas.value, type),
+    linesDomain(lines.value, type),
   ))
-  const numericalDomain = computed(() => combineNumericalDomain(
+  const numericalDomain = computed(() => getNumericalDomain(
     settings.value,
     domainDefinition.value,
     stackDomain.value,
     numericalValues.value,
     referencesDomain.value,
   ))
-  const domain = computed(() => combineAxisDomain(
+  const domain = computed(() => axisDomain(
     settings.value,
     sources.layout(),
     displayedData.value,
@@ -149,15 +149,15 @@ export function createAxes(scope: EffectScope, sources: AxisSources): AxisLookup
       const model = createAxis(sources, 'xAxis', id, sources.axes.xAxis, implicitXAxis, (axis, values) => {
         const offset = sources.offset()
         const calculated = typeof axis.padding === 'string'
-          ? combineCalculatedPadding(
-              combineSmallestDistance(values, axis),
+          ? calculatedPadding(
+              smallestDistance(values, axis),
               sources.layout(),
               sources.barCategoryGap(),
               offset,
               axis.padding,
             )
           : 0
-        return combineXAxisRange(offset, axis.padding, calculated)
+        return xAxisRange(offset, axis.padding, calculated)
       })
       return { ...model, ...createAxisLayout(sources, model, 'xAxis', id) }
     }),
@@ -165,15 +165,15 @@ export function createAxes(scope: EffectScope, sources: AxisSources): AxisLookup
       const model = createAxis(sources, 'yAxis', id, sources.axes.yAxis, implicitYAxis, (axis, values) => {
         const offset = sources.offset()
         const calculated = typeof axis.padding === 'string'
-          ? combineCalculatedPadding(
-              combineSmallestDistance(values, axis),
+          ? calculatedPadding(
+              smallestDistance(values, axis),
               sources.layout(),
               sources.barCategoryGap(),
               offset,
               axis.padding,
             )
           : 0
-        return combineYAxisRange(offset, sources.layout(), axis.padding, calculated)
+        return yAxisRange(offset, sources.layout(), axis.padding, calculated)
       })
       return { ...model, ...createAxisLayout(sources, model, 'yAxis', id) }
     }),

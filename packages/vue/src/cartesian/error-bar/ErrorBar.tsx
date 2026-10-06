@@ -4,7 +4,7 @@ import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
 import { useErrorBarContext, useErrorBarRegistry } from './ErrorBarContext'
 import { useChart } from '@/model/chart'
-import { combineErrorBarLines } from '@/core/errorBar'
+import { errorBarLines } from '@/core/errorBar'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { ErrorBarsSettings } from '@/types/graphical'
@@ -39,7 +39,7 @@ const ErrorBarView = defineComponent({
         return undefined
       return context.data.value.map((entry, index) => {
         const point = context.dataPointFormatter(entry, props.dataKey!, direction)
-        const lines = combineErrorBarLines(point, axis, direction, context.errorBarOffset.value, props.width)
+        const lines = errorBarLines(point, axis, direction, context.errorBarOffset.value, props.width)
         return { point, lines, index }
       })
     })

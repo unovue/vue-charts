@@ -1,17 +1,17 @@
-import { combineRegisteredAxes } from '@/core/layout'
+import { registeredAxes } from '@/core/layout'
 import type { AxisId } from '@/types/axis'
 import type { XAxisSettings, YAxisSettings } from '@/types/axisSettings'
 import type { ChartOffsetRequired } from '@/types/common'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 
-export function combineXAxisPosition(
+export function xAxisPosition(
   axes: readonly XAxisSettings[],
   axis: XAxisSettings,
   offset: ChartOffsetRequired,
   height: number,
   id: AxisId,
 ) {
-  const peers = combineRegisteredAxes(axes).filter(a => a.orientation === axis.orientation && a.mirror === axis.mirror)
+  const peers = registeredAxes(axes).filter(a => a.orientation === axis.orientation && a.mirror === axis.mirror)
     .sort((a, b) => a.id! < b.id! ? -1 : a.id! > b.id! ? 1 : 0)
   let position = axis.orientation === 'top' ? offset.top : height - offset.bottom
   const before = (axis.orientation === 'top' && !axis.mirror) || (axis.orientation === 'bottom' && axis.mirror)
@@ -23,14 +23,14 @@ export function combineXAxisPosition(
   return { x: offset.left, y: 0 }
 }
 
-export function combineYAxisPosition(
+export function yAxisPosition(
   axes: readonly YAxisSettings[],
   axis: YAxisSettings,
   offset: ChartOffsetRequired,
   width: number,
   id: AxisId,
 ) {
-  const peers = combineRegisteredAxes(axes).filter(a => a.orientation === axis.orientation && a.mirror === axis.mirror)
+  const peers = registeredAxes(axes).filter(a => a.orientation === axis.orientation && a.mirror === axis.mirror)
     .sort((a, b) => a.id! < b.id! ? -1 : a.id! > b.id! ? 1 : 0)
   let position = axis.orientation === 'left' ? offset.left : width - offset.right
   const before = (axis.orientation === 'left' && !axis.mirror) || (axis.orientation === 'right' && axis.mirror)
@@ -43,7 +43,7 @@ export function combineYAxisPosition(
   return { x: 0, y: offset.top }
 }
 
-export function combineGridAxis(
+export function gridAxis(
   axis: XAxisSettings | YAxisSettings,
   layout: import('@/types/common').LayoutType,
   type: 'xAxis' | 'yAxis',

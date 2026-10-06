@@ -2,7 +2,7 @@ import type { LayoutType, Size } from '@/types/common'
 import type { PolarChartOptions } from '@/types/polarOptions'
 import { getPercentValue } from '@/utils/data'
 
-export function combinePolarViewBox(
+export function polarViewBox(
   layout: LayoutType,
   options: PolarChartOptions | null,
   innerRadius: number | undefined,

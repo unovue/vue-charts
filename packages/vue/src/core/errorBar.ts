@@ -15,7 +15,7 @@ export interface LineCoordinate {
   y2: number
 }
 
-export function combineErrorBarLines(
+export function errorBarLines(
   { x, y, value, errorVal }: ErrorBarDataItem,
   axis: BaseAxisWithScale,
   direction: ErrorBarDirection,

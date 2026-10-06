@@ -172,7 +172,7 @@ export function computePieSectors({
   return sectors
 }
 
-export function combinePieLegend(
+export function pieLegend(
   displayedData: ChartData | undefined,
   settings: ResolvedPieSettings,
 ): readonly LegendPayload[] | undefined {

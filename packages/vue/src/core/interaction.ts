@@ -6,7 +6,7 @@ import { mathSign } from '@/utils/data'
 import { formatAngleOfSector, getAngleOfPoint, polarToCartesian, reverseFormatAngleOfSector } from '@/utils/polar'
 import type { ChartCoordinate, Coordinate } from '@/types/common'
 
-export function combineActiveProps(chartEvent: ChartPointer | undefined, layout: LayoutType | undefined, polarViewBox: PolarViewBoxRequired | undefined, tooltipAxisType: AxisType | undefined, tooltipAxisRange: AxisRange | undefined, tooltipTicks: ReadonlyArray<TickItem> | undefined | null, orderedTooltipTicks: ReadonlyArray<TickItem> | undefined, offset: ChartOffsetRequired): ActiveTooltipProps | undefined {
+export function activeProps(chartEvent: ChartPointer | undefined, layout: LayoutType | undefined, polarViewBox: PolarViewBoxRequired | undefined, tooltipAxisType: AxisType | undefined, tooltipAxisRange: AxisRange | undefined, tooltipTicks: ReadonlyArray<TickItem> | undefined | null, orderedTooltipTicks: ReadonlyArray<TickItem> | undefined, offset: ChartOffsetRequired): ActiveTooltipProps | undefined {
   if (!chartEvent || !layout || !tooltipAxisType || !tooltipAxisRange || !tooltipTicks) {
     return undefined
   }

@@ -1,4 +1,4 @@
-import { combineLegendArea, combineRegisteredAxes } from '@/core/layout'
+import { legendArea as getLegendArea, registeredAxes } from '@/core/layout'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
 import { provideChartPresentation } from './presentation'
 import { createTooltip, provideTooltipController } from './tooltip'
@@ -43,9 +43,9 @@ export interface Chart extends ChartRegistries, ChartGeometry {
   readonly inputs: ChartInputs
   readonly data: ComputedRef<ChartData | undefined>
   readonly layout: ComputedRef<ChartLayoutState>
-  readonly rootProps: ComputedRef<UpdatableChartOptions>
-  readonly polarOptions: ComputedRef<PolarChartOptions | null>
-  readonly options: ComputedRef<ChartOptions>
+  readonly options: ComputedRef<UpdatableChartOptions>
+  readonly polar: ComputedRef<PolarChartOptions | null>
+  readonly tooltipOptions: ComputedRef<ChartOptions>
   readonly brush: ReturnType<typeof createChartBrush>
   readonly legend: ReturnType<typeof createChartLegend>
   setScale: (scale: number) => void
@@ -62,14 +62,14 @@ export function createChart(inputs: ChartInputs): Chart {
   const eventEmitter = Symbol('vccs-chart-emitter')
   const data = useTrackedData(inputs.data)
   const layout = computed(() => ({
-    layoutType: inputs.layout(),
+    layout: inputs.layout(),
     ...inputs.size(),
     margin: { ...inputs.margin() },
     scale: scale.value,
   }))
-  const rootProps = computed(inputs.options)
-  const polarOptions = computed(inputs.polar)
-  const options = computed(() => ({ ...inputs.tooltip(), eventEmitter }))
+  const options = computed(inputs.options)
+  const polar = computed(inputs.polar)
+  const tooltipOptions = computed(() => ({ ...inputs.tooltip(), eventEmitter }))
 
   function setScale(value: number) {
     scale.value = value
@@ -91,14 +91,14 @@ export function createChart(inputs: ChartInputs): Chart {
     polarLayout,
     size: inputs.size,
     offset: () => geometry.offset.value,
-    name: () => options.value.chartName,
+    name: () => tooltipOptions.value.chartName,
     hasBar: () => registries.items.cartesian.entries.value.some(item => item.type === 'bar')
       || registries.items.polar.entries.value.some(item => item.type === 'radialBar'),
-    barCategoryGap: () => rootProps.value.barCategoryGap,
+    barCategoryGap: () => options.value.barCategoryGap,
     ...registries,
     dataWithIndexes: dataRange.state,
     layout: inputs.layout,
-    stackOffset: () => rootProps.value.stackOffset,
+    stackOffset: () => options.value.stackOffset,
   })
   const tooltip = createTooltip({
     axis,
@@ -107,14 +107,14 @@ export function createChart(inputs: ChartInputs): Chart {
     layout: inputs.layout,
     size: inputs.size,
     offset: () => geometry.offset.value,
-    options: () => options.value,
+    options: () => tooltipOptions.value,
   })
-  const legendArea = computed(() => combineLegendArea(inputs.size(), inputs.margin()))
+  const legendArea = computed(() => getLegendArea(inputs.size(), inputs.margin()))
   const direction = computed(() => {
     if (inputs.layout() === 'horizontal')
-      return combineRegisteredAxes(registries.axes.xAxis.entries.value).some(axis => axis.reversed) ? 'right-to-left' : 'left-to-right'
+      return registeredAxes(registries.axes.xAxis.entries.value).some(axis => axis.reversed) ? 'right-to-left' : 'left-to-right'
     if (inputs.layout() === 'vertical')
-      return combineRegisteredAxes(registries.axes.yAxis.entries.value).some(axis => axis.reversed) ? 'bottom-to-top' : 'top-to-bottom'
+      return registeredAxes(registries.axes.yAxis.entries.value).some(axis => axis.reversed) ? 'bottom-to-top' : 'top-to-bottom'
   })
   return {
     legendArea,
@@ -126,9 +126,9 @@ export function createChart(inputs: ChartInputs): Chart {
     inputs,
     data,
     layout,
-    rootProps,
-    polarOptions,
     options,
+    polar,
+    tooltipOptions,
     setScale,
     brush,
     legend,
@@ -141,20 +141,20 @@ export function provideChart(chart: Chart) {
   provide(chartKey, chart)
   provideTooltipController(chart.tooltip)
   provideChartPresentation({
-    name: computed(() => chart.options.value.chartName),
-    layout: computed(() => chart.layout.value.layoutType),
+    name: computed(() => chart.tooltipOptions.value.chartName),
+    layout: computed(() => chart.layout.value.layout),
     width: chart.width,
     height: chart.height,
     margin: chart.margin,
     viewBox: chart.viewBox,
     offset: chart.offset,
-    accessibility: computed(() => chart.rootProps.value.accessibilityLayer !== false),
+    accessibility: computed(() => chart.options.value.accessibilityLayer !== false),
     bandSize: computed(() => {
       const axis = chart.tooltip.axis.value
       return axis ? getBandSizeOfAxis({ ...axis.settings.value, scale: axis.scale.value! }, chart.tooltip.ticks.value ?? undefined) : undefined
     }),
-    syncId: computed(() => chart.rootProps.value.syncId),
-    emitter: computed(() => chart.options.value.eventEmitter),
+    syncId: computed(() => chart.options.value.syncId),
+    emitter: computed(() => chart.tooltipOptions.value.eventEmitter),
   })
 }
 

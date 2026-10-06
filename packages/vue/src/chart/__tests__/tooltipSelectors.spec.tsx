@@ -22,7 +22,7 @@ import { assertNotNull } from '@/test/helper'
  *   - selectActiveTooltipPayload / selectTooltipPayload
  *   - selectActiveLabel
  *   - selectIsTooltipActive
- *   - combineTooltipPayload
+ *   - tooltipPayload
  *   - selectTooltipEventType (axis vs item)
  *   - selectActiveTooltipIndex
  */

@@ -19,11 +19,11 @@ interface BrushSettings {
 }
 
 // Match axis-map semantics: the last registration wins; numeric IDs sort first.
-export function combineRegisteredAxes<T extends { id?: AxisId }>(axes: readonly T[]): T[] {
+export function registeredAxes<T extends { id?: AxisId }>(axes: readonly T[]): T[] {
   return Object.values(Object.fromEntries(axes.map(axis => [axis.id, axis])))
 }
 
-export function combineChartOffset(
+export function chartOffset(
   size: Size,
   margin: Margin | undefined,
   brushHeight: number,
@@ -56,11 +56,11 @@ export function combineChartOffset(
   }
 }
 
-export function combineChartViewBox(offset: ChartOffset) {
+export function chartViewBox(offset: ChartOffset) {
   return { x: offset.left, y: offset.top, width: offset.width, height: offset.height }
 }
 
-export function combineBrushDimensions(brush: BrushSettings, offset: ChartOffset, margin: Margin | undefined) {
+export function brushDimensions(brush: BrushSettings, offset: ChartOffset, margin: Margin | undefined) {
   return {
     height: brush.height,
     x: isNumber(brush.x) ? brush.x : offset.left,
@@ -116,7 +116,7 @@ export function appendOffsetOfLegend(offset: ChartOffset, legendSettings: Layout
 }
 
 /** Outside legends use the margin-inset chart area rather than the axis-inset plot. */
-export function combineLegendArea(size: Size, margin: Margin) {
+export function legendArea(size: Size, margin: Margin) {
   return {
     x: margin.left || 0,
     y: margin.top || 0,

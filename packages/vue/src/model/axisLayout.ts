@@ -5,7 +5,7 @@ import type { XAxisSettings, YAxisSettings } from '@/types/axisSettings'
 import type { AxisModel } from './axis'
 import type { AxisScaleSources } from './axisScale'
 import type { ChartRegistries } from './registries'
-import { combineGridAxis, combineXAxisPosition, combineYAxisPosition } from '@/core/axis/position'
+import { gridAxis, xAxisPosition, yAxisPosition } from '@/core/axis/position'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 
 export function createAxisLayout(
@@ -24,9 +24,9 @@ export function createAxisLayout(
   const position = computed(() => {
     const settings = axis.settings.value
     if ('height' in settings)
-      return combineXAxisPosition(sources.axes.xAxis.entries.value, settings, sources.offset(), sources.size().height, id)
-    return combineYAxisPosition(sources.axes.yAxis.entries.value, settings, sources.offset(), sources.size().width, id)
+      return xAxisPosition(sources.axes.xAxis.entries.value, settings, sources.offset(), sources.size().height, id)
+    return yAxisPosition(sources.axes.yAxis.entries.value, settings, sources.offset(), sources.size().width, id)
   })
-  const grid = computed(() => combineGridAxis(axis.settings.value, sources.layout(), type, axis.categoricalDomain.value, axis.duplicateDomain.value, axis.niceTicks.value, axis.range.value, axis.realScaleType.value, axis.scale.value))
+  const grid = computed(() => gridAxis(axis.settings.value, sources.layout(), type, axis.categoricalDomain.value, axis.duplicateDomain.value, axis.niceTicks.value, axis.range.value, axis.realScaleType.value, axis.scale.value))
   return { size, position, grid }
 }

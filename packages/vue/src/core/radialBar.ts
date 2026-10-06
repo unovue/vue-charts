@@ -157,7 +157,7 @@ export function computeRadialBarDataItems({
   })
 }
 
-export function combineRadialBarLegend(
+export function radialBarLegend(
   data: readonly unknown[] | undefined,
   legendType: LegendType,
 ): readonly LegendPayload[] {

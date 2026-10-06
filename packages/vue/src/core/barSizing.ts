@@ -38,7 +38,7 @@ type BarCategory = {
 
 export type SizeList = ReadonlyArray<BarCategory>
 
-export function combineBarSizeList(
+export function barSizeList(
   allBars: ReadonlyArray<MaybeStackedGraphicalItem>,
   globalSize: string | number | undefined,
   totalSize?: number,
@@ -174,7 +174,7 @@ export type BarWithPosition = {
   position: BarPositionPosition
 }
 
-export function combineAllBarPositions(
+export function barPositions(
   sizeList: SizeList | undefined,
   globalMaxBarSize: number,
   barGap: string | number,
@@ -203,7 +203,7 @@ export function combineAllBarPositions(
   return allBarPositions!
 }
 
-export function combineStackedData(
+export function stackedData(
   stackGroups: Record<StackId, StackGroup> | undefined,
   barSettings: MaybeStackedGraphicalItem | undefined,
 ): Series<unknown, DataKey<unknown>> | undefined {

@@ -22,7 +22,7 @@ export function sliceTooltipData<T>(
   }
   return arr
 }
-function selectFinalData(dataDefinedOnItem: unknown, dataDefinedOnChart: ReadonlyArray<unknown>) {
+function dataForTooltip(dataDefinedOnItem: unknown, dataDefinedOnChart: ReadonlyArray<unknown>) {
   /*
    * If a payload has data specified directly from the graphical item, prefer that.
    * Otherwise, fill in data from the chart level, using the same index.
@@ -33,7 +33,7 @@ function selectFinalData(dataDefinedOnItem: unknown, dataDefinedOnChart: Readonl
   return dataDefinedOnChart
 }
 
-export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
+export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
   if (activeIndex == null || tooltipPayloadSearcher == null) {
     return undefined
   }
@@ -42,7 +42,7 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
   const init: Array<TooltipPayloadEntry> = []
 
   return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values }): Array<TooltipPayloadEntry> => {
-    const finalData = selectFinalData(dataDefinedOnItem, chartData!)
+    const finalData = dataForTooltip(dataDefinedOnItem, chartData!)
 
     const sliced = sliceTooltipData(finalData, dataStartIndex, dataEndIndex)
 
@@ -109,7 +109,7 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
   }, init)
 }
 
-export function combineTicksOfTooltipAxis(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, range: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: Exclude<AxisType, 'zAxis'>): ReadonlyArray<TickItem> | null {
+export function tooltipTicks(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, range: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: Exclude<AxisType, 'zAxis'>): ReadonlyArray<TickItem> | null {
   if (!axis) {
     return null
   }
@@ -180,7 +180,7 @@ export function getTooltipEntry({
   }
 }
 
-export function combineTooltipCoordinate(
+export function tooltipCoordinate(
   type: TooltipEventType,
   layout: LayoutType,
   tick: TickItem | undefined,

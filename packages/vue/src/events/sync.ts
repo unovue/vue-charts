@@ -49,10 +49,10 @@ export function useTooltipChartSynchronisation(source: TooltipSource, enabled: (
 
 function useTooltipSyncEventsListener() {
   const chart = useChart()
-  const mySyncId = computed(() => chart.rootProps.value.syncId)
-  const myEventEmitter = computed(() => chart.options.value.eventEmitter)
+  const mySyncId = computed(() => chart.options.value.syncId)
+  const myEventEmitter = computed(() => chart.tooltipOptions.value.eventEmitter)
   const tooltip = chart.tooltip
-  const syncMethod = computed(() => chart.rootProps.value.syncMethod)
+  const syncMethod = computed(() => chart.options.value.syncMethod)
   const tooltipTicks = computed(() => chart.tooltip.ticks.value)
   const layout = useChartLayout()
   const viewBox = useViewBox()
@@ -145,8 +145,8 @@ function useTooltipSyncEventsListener() {
 
 function useBrushSyncEventsListener() {
   const chart = useChart()
-  const mySyncId = computed(() => chart.rootProps.value.syncId)
-  const myEventEmitter = computed(() => chart.options.value.eventEmitter)
+  const mySyncId = computed(() => chart.options.value.syncId)
+  const myEventEmitter = computed(() => chart.tooltipOptions.value.eventEmitter)
   const data = chart.dataRange
   watch([mySyncId, myEventEmitter], (v, o, onCleanup) => {
     if (mySyncId.value == null) {
@@ -187,8 +187,8 @@ export function useSynchronisedEventsFromOtherCharts() {
 
 export function useBrushChartSynchronisation() {
   const chart = useChart()
-  const syncId = computed(() => chart.rootProps.value.syncId)
-  const eventEmitterSymbol = computed(() => chart.options.value.eventEmitter)
+  const syncId = computed(() => chart.options.value.syncId)
+  const eventEmitterSymbol = computed(() => chart.tooltipOptions.value.eventEmitter)
   const brushStartIndex = computed(() => chart.dataRange.state.value.dataStartIndex)
   const brushEndIndex = computed(() => chart.dataRange.state.value.dataEndIndex)
 

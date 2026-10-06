@@ -22,7 +22,7 @@ export function filterReferenceElements<T extends ReferenceElementSettings>(
     })
 }
 
-export function combineDotsDomain(
+export function dotsDomain(
   dots: ReadonlyArray<ReferenceDotSettings> | undefined,
   axisType: AxisType,
 ): NumberDomain | undefined {
@@ -33,7 +33,7 @@ export function combineDotsDomain(
   return [Math.min(...allCoords), Math.max(...allCoords)]
 }
 
-export function combineAreasDomain(
+export function areasDomain(
   areas: ReadonlyArray<ReferenceAreaSettings> | undefined,
   axisType: AxisType,
 ): NumberDomain | undefined {
@@ -46,7 +46,7 @@ export function combineAreasDomain(
   return [Math.min(...allCoords), Math.max(...allCoords)]
 }
 
-export function combineLinesDomain(
+export function linesDomain(
   lines: ReadonlyArray<ReferenceLineSettings> | undefined,
   axisType: AxisType,
 ): NumberDomain | undefined {

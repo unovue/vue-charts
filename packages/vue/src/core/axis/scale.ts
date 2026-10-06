@@ -17,7 +17,7 @@ import { getDomainDefinition } from './domain'
 type XorYType = Exclude<AxisType, 'zAxis'>
 type XorYorZType = AxisType
 
-export function combineRealScaleType(
+export function realScaleType(
   axisConfig: BaseCartesianAxis | undefined,
   hasBar: boolean,
   chartType: string,
@@ -79,7 +79,7 @@ function guardScale<S extends RechartsScale>(scale: S): S {
   })
 }
 
-export function combineScaleFunction(
+export function scaleFunction(
   axis: BaseCartesianAxis | undefined,
   realScaleType: string | undefined,
   axisDomain: NumberDomain | CategoricalDomain | undefined,
@@ -103,7 +103,7 @@ export function combineScaleFunction(
   return guardScale(scale)
 }
 
-export function combineNiceTicks(
+export function niceTicks(
   axisDomain: NumberDomain | CategoricalDomain | undefined,
   axisSettings: AxisWithTicksSettings,
   realScaleType: string | undefined,
@@ -130,7 +130,7 @@ export function combineNiceTicks(
   return undefined
 }
 
-export function combineAxisDomainWithNiceTicks(
+export function axisDomainWithNiceTicks(
   axisSettings: BaseCartesianAxis,
   domain: NumberDomain | CategoricalDomain | undefined,
   niceTicks: ReadonlyArray<number> | undefined,
@@ -173,7 +173,7 @@ export function sortBy(a: unknown, b: unknown): number {
   return aNum - bNum
 }
 
-export function combineDuplicateDomain(
+export function duplicateDomain(
   chartLayout: LayoutType,
   appliedValues: AppliedChartData,
   axis: BaseCartesianAxis,
@@ -191,7 +191,7 @@ export function combineDuplicateDomain(
   return undefined
 }
 
-export function combineCategoricalDomain(
+export function categoricalDomain(
   layout: LayoutType,
   appliedValues: AppliedChartData,
   axis: AxisWithTicksSettings,
@@ -208,7 +208,7 @@ export function combineCategoricalDomain(
   return undefined
 }
 
-export function combineGraphicalItemTicks(
+export function graphicalItemTicks(
   layout: LayoutType,
   axis: Pick<AxisWithTicksSettings, 'tickCount'> | undefined,
   scale: RechartsScale | undefined,
@@ -260,7 +260,7 @@ export function combineGraphicalItemTicks(
   )
 }
 
-export function combineInverseTickScale(ticks: readonly TickItem[] | undefined) {
+export function inverseTickScale(ticks: readonly TickItem[] | undefined) {
   if (!ticks?.length)
     return undefined
   return function snap(pixel: number) {

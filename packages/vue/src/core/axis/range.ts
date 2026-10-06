@@ -5,7 +5,7 @@ import { onlyAllowNumbers } from './data'
 import { getPercentValue } from '@/utils/data'
 import { isWellBehavedNumber } from '@/utils/validate'
 
-export function combineSmallestDistance(data: AppliedChartData, axis: BaseCartesianAxis) {
+export function smallestDistance(data: AppliedChartData, axis: BaseCartesianAxis) {
   if (axis.type !== 'number')
     return undefined
   const values = [...onlyAllowNumbers(data.map(d => d.value))].sort((a, b) => a - b)
@@ -18,7 +18,7 @@ export function combineSmallestDistance(data: AppliedChartData, axis: BaseCartes
   return distance / span
 }
 
-export function combineCalculatedPadding(
+export function calculatedPadding(
   distance: number | undefined,
   layout: LayoutType,
   gap: number | string,
@@ -38,7 +38,7 @@ export function combineCalculatedPadding(
   return 0
 }
 
-export function combineAxisRangeWithReverse(
+export function axisRangeWithReverse(
   axis: BaseCartesianAxis | undefined,
   range: AxisRange | undefined,
 ): AxisRange | undefined {
@@ -47,7 +47,7 @@ export function combineAxisRangeWithReverse(
   return axis.reversed ? [range[1], range[0]] : range
 }
 
-export function combineXAxisRange(
+export function xAxisRange(
   offset: ChartOffsetRequired,
   padding: import('@/types/axis').XAxisPadding,
   calculated: number,
@@ -56,7 +56,7 @@ export function combineXAxisRange(
   return [offset.left + (sides.left ?? 0), offset.left + offset.width - (sides.right ?? 0)]
 }
 
-export function combineYAxisRange(
+export function yAxisRange(
   offset: ChartOffsetRequired,
   layout: LayoutType,
   padding: import('@/types/axis').YAxisPadding,

@@ -10,7 +10,7 @@ import { Trapezoid } from '@/shape/Trapezoid'
 import { getValueByDataKey } from '@/utils/chart'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
-import { type ResolvedFunnelSettings, combineFunnelTrapezoids } from '@/core/funnel'
+import { type ResolvedFunnelSettings, funnelTrapezoids } from '@/core/funnel'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
@@ -229,7 +229,7 @@ const _Funnel = defineComponent({
     })))
 
     const chart = useChart()
-    const composedData = computed(() => combineFunnelTrapezoids(
+    const composedData = computed(() => funnelTrapezoids(
       chart.offset.value,
       funnelSettings.value,
       chart.data.value,

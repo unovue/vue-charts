@@ -89,7 +89,7 @@ const ScatterView = defineComponent({
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
     // arrayTooltipSearcher returns the tooltipPayload array for the active index,
-    // which combineTooltipPayload processes into per-axis tooltip entries.
+    // which tooltipPayload processes into per-axis tooltip entries.
     const tooltipConfiguration = computed(() => ({
       // This owned array contains payloads that reference caller-owned rows.
       dataDefinedOnItem: points.value?.map(point => point.tooltipPayload),

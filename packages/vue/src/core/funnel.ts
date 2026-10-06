@@ -148,7 +148,7 @@ export function computeFunnelTrapezoids({
   }
 }
 
-export function combineFunnelTrapezoids(
+export function funnelTrapezoids(
   offset: ChartOffset,
   settings: ResolvedFunnelSettings,
   chartData: unknown[] | undefined,

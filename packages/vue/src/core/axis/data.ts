@@ -29,7 +29,7 @@ export function itemAxisPredicate(axisType: AxisType, axisId: AxisId) {
   }
 }
 
-export function combineGraphicalItemsSettings<T extends GraphicalItemSettings>(
+export function graphicalItemsSettings<T extends GraphicalItemSettings>(
   graphicalItems: ReadonlyArray<T>,
   axisSettings: BaseCartesianAxis,
   axisPredicate: (item: T) => boolean | AxisType,
@@ -48,14 +48,14 @@ export function filterGraphicalNotStackedItems<T extends { stackId?: StackId }>(
   return cartesianItems.filter(item => item.stackId === undefined)
 }
 
-export function combineGraphicalItemsData(cartesianItems: ReadonlyArray<GraphicalItemSettings>) {
+export function graphicalItemsData(cartesianItems: ReadonlyArray<GraphicalItemSettings>) {
   return cartesianItems
     .map(item => item.data)
     .filter(Boolean)
     .flat(1)
 }
 
-export function combineDisplayedData(
+export function displayedData(
   graphicalItemsData: ChartData,
   { chartData = [], dataStartIndex, dataEndIndex }: ChartDataState,
 ): ChartData {
@@ -66,7 +66,7 @@ export function combineDisplayedData(
   return chartData.slice(dataStartIndex, dataEndIndex + 1)
 }
 
-export function combineAppliedValues(
+export function appliedValues(
   data: ChartData,
   axisSettings: BaseCartesianAxis,
   items: ReadonlyArray<GraphicalItemSettings>,
@@ -149,7 +149,7 @@ export function getErrorDomainByDataKey(
   )
 }
 
-export function combineAppliedNumericalValuesIncludingErrorValues(
+export function numericalValuesWithErrors(
   data: ChartData,
   axisSettings: BaseCartesianAxis,
   items: ReadonlyArray<GraphicalItemSettings & { errorBars?: ReadonlyArray<ErrorBarsSettings> }>,

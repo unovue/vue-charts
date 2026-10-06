@@ -1,5 +1,5 @@
 import { useChart } from '@/model/chart'
-import { combineActiveProps } from '@/core/interaction'
+import { activeProps as getActiveProps } from '@/core/interaction'
 import { useItemInteractions } from './useItemInteractions'
 import { getChartPointer } from '@/utils/pointer'
 import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
@@ -10,7 +10,7 @@ export function useChartInteractions() {
   const tooltip = chart.tooltip
 
   function selectionAtPointer(pointer: ChartPointer | undefined) {
-    return combineActiveProps(
+    return getActiveProps(
       pointer,
       chart.inputs.layout(),
       chart.polarLayout.viewBox.value,
@@ -61,7 +61,7 @@ export function useChartInteractions() {
 
   function keyDown(event: KeyboardEvent) {
     const { key } = event
-    const accessibilityLayerIsActive = chart.rootProps.value.accessibilityLayer !== false
+    const accessibilityLayerIsActive = chart.options.value.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
       return
     }
@@ -109,7 +109,7 @@ export function useChartInteractions() {
   }
 
   function focus() {
-    const accessibilityLayerIsActive = chart.rootProps.value.accessibilityLayer !== false
+    const accessibilityLayerIsActive = chart.options.value.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
       return
     }

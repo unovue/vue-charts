@@ -4,7 +4,7 @@ import type { BrushSettings } from '@/model/brush'
 import type { LegendSettings } from '@/model/legend'
 import type { Size } from '@/types/common'
 import type { ChartRegistries } from './registries'
-import { combineBrushDimensions, combineChartOffset, combineChartViewBox, combineRegisteredAxes } from '@/core/layout'
+import { chartOffset, chartViewBox, brushDimensions as getBrushDimensions, registeredAxes } from '@/core/layout'
 
 interface LayoutSources {
   layout: () => ChartLayoutState
@@ -18,12 +18,12 @@ export function createLayout(sources: LayoutSources) {
   const width = computed(() => sources.layout().width)
   const height = computed(() => sources.layout().height)
   const margin = computed(() => sources.layout().margin)
-  const xAxes = computed(() => combineRegisteredAxes(sources.axes.xAxis.entries.value))
-  const yAxes = computed(() => combineRegisteredAxes(sources.axes.yAxis.entries.value))
+  const xAxes = computed(() => registeredAxes(sources.axes.xAxis.entries.value))
+  const yAxes = computed(() => registeredAxes(sources.axes.yAxis.entries.value))
   const brushHeight = computed(() => sources.brush().height)
   const legendSettings = computed(sources.legendSettings)
   const legendSize = computed(sources.legendSize)
-  const offset = computed(() => combineChartOffset(
+  const offset = computed(() => chartOffset(
     { width: width.value, height: height.value },
     margin.value,
     brushHeight.value,
@@ -32,9 +32,9 @@ export function createLayout(sources: LayoutSources) {
     legendSettings.value,
     legendSize.value,
   ))
-  const viewBox = computed(() => combineChartViewBox(offset.value))
+  const viewBox = computed(() => chartViewBox(offset.value))
   const axisViewBox = computed(() => ({ x: 0, y: 0, width: width.value, height: height.value }))
-  const brushDimensions = computed(() => combineBrushDimensions(sources.brush(), offset.value, margin.value))
+  const brushDimensions = computed(() => getBrushDimensions(sources.brush(), offset.value, margin.value))
   return { width, height, margin, offset, viewBox, axisViewBox, brushDimensions }
 }
 

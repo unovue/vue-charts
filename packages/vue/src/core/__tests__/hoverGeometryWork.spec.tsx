@@ -4,7 +4,7 @@ import { nextTick } from 'vue'
 import { Bar, ComposedChart, Line, Tooltip, XAxis, YAxis } from '@/index'
 import { computeBarRectangles } from '@/core/bar'
 import { computeLinePoints } from '@/core/line'
-import { combineAxisTicks } from '@/core/axis/ticks'
+import { axisTicks } from '@/core/axis/ticks'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 // Instrument the real math, independently of selector wiring and rendered equality.
@@ -18,7 +18,7 @@ vi.mock('@/core/line', async (importOriginal) => {
 })
 vi.mock('@/core/axis/ticks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/core/axis/ticks')>()
-  return { ...actual, combineAxisTicks: vi.fn(actual.combineAxisTicks) }
+  return { ...actual, axisTicks: vi.fn(actual.axisTicks) }
 })
 
 it('runs zero geometry combiners while five hovers change the tooltip', async () => {
@@ -44,7 +44,7 @@ it('runs zero geometry combiners while five hovers change the tooltip', async ()
   ))
   await nextTick()
   await nextTick()
-  for (const combine of [computeBarRectangles, computeLinePoints, combineAxisTicks]) {
+  for (const combine of [computeBarRectangles, computeLinePoints, axisTicks]) {
     expect(combine).toHaveBeenCalled()
     vi.mocked(combine).mockClear()
   }
@@ -58,5 +58,5 @@ it('runs zero geometry combiners while five hovers change the tooltip', async ()
   }
   expect(computeBarRectangles).not.toHaveBeenCalled()
   expect(computeLinePoints).not.toHaveBeenCalled()
-  expect(combineAxisTicks).not.toHaveBeenCalled()
+  expect(axisTicks).not.toHaveBeenCalled()
 })

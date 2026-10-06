@@ -141,7 +141,7 @@ export type StackGroup = {
   readonly graphicalItems: ReadonlyArray<MaybeStackedGraphicalItem>
 }
 
-export function combineStackGroups(
+export function stackGroups(
   displayedData: ChartData | undefined,
   items: ReadonlyArray<MaybeStackedGraphicalItem>,
   stackOffsetType: StackOffsetType,
@@ -174,7 +174,7 @@ export function combineStackGroups(
   )
 }
 
-export function combineDomainOfStackGroups(
+export function stackDomain(
   stackGroups: Record<StackId, StackGroup> | undefined,
   { dataStartIndex, dataEndIndex }: ChartDataState,
   axisType: AxisType,

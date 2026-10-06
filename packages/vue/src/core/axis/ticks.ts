@@ -12,7 +12,7 @@ interface TickAxis {
   tickCount: number | undefined
 }
 
-export function combineAxisTicks(
+export function axisTicks(
   layout: LayoutType,
   axis: TickAxis | undefined,
   realScaleType: string | undefined,

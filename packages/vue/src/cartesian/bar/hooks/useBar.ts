@@ -7,7 +7,7 @@ import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useChart } from '@/model/chart'
 import { computeBarRectangles } from '@/core/bar'
-import { combineAllBarPositions, combineBarSizeList, combineStackedData } from '@/core/barSizing'
+import { barPositions, barSizeList, stackedData as getStackedData } from '@/core/barSizing'
 import type { BarRectangleItem } from '@/types/bar'
 
 export interface BarContext {
@@ -73,19 +73,19 @@ export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?
       ? item.xAxisId === props.xAxisId
       : item.yAxisId === props.yAxisId),
   ))
-  const sizeList = computed(() => combineBarSizeList(
+  const sizeList = computed(() => barSizeList(
     visibleBars.value,
-    chart.rootProps.value.barSize,
+    chart.options.value.barSize,
     layout.value === 'horizontal' ? categoricalAxis.value.size.value.width : categoricalAxis.value.size.value.height,
   ))
   const bandSize = computed(() => categoricalAxis.value.bandSize.value)
   const barBandSize = computed(() => categoricalAxis.value.barBandSize.value
-    ?? props.maxBarSize ?? chart.rootProps.value.maxBarSize ?? 0)
-  const positions = computed(() => combineAllBarPositions(
+    ?? props.maxBarSize ?? chart.options.value.maxBarSize ?? 0)
+  const positions = computed(() => barPositions(
     sizeList.value,
-    chart.rootProps.value.maxBarSize!,
-    chart.rootProps.value.barGap,
-    chart.rootProps.value.barCategoryGap,
+    chart.options.value.maxBarSize!,
+    chart.options.value.barGap,
+    chart.options.value.barCategoryGap,
     barBandSize.value,
     bandSize.value,
     props.maxBarSize,
@@ -93,7 +93,7 @@ export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?
   const position = computed(() => positions.value?.find(item =>
     item.stackId === barSettings.value.stackId && item.dataKeys.includes(props.dataKey),
   )?.position)
-  const stackedData = computed(() => combineStackedData(numericAxis.value.stackGroups.value, barSettings.value))
+  const stackedData = computed(() => getStackedData(numericAxis.value.stackGroups.value, barSettings.value))
   const rects = computed(() => {
     const x = xAxis.value.withScale.value
     const y = yAxis.value.withScale.value

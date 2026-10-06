@@ -12,7 +12,7 @@ import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/core/pie'
-import { combinePieLegend, computePieSectors } from '@/core/pie'
+import { computePieSectors, pieLegend } from '@/core/pie'
 import { polarToCartesian } from '@/utils/polar'
 import type { PieProps } from './type'
 import { PieVueProps } from './type'
@@ -261,7 +261,7 @@ const _Pie = defineComponent({
     })))
 
     const chart = useChart()
-    const legendPayload = computed(() => combinePieLegend(
+    const legendPayload = computed(() => pieLegend(
       data.value?.length ? data.value : chart.data.value,
       pieSettings.value,
     ))

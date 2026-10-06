@@ -101,7 +101,7 @@ export function mergeDomains(
   return [min, max]
 }
 
-export function combineNumericalDomain(
+export function numericalDomain(
   axisSettings: BaseCartesianAxis,
   domainDefinition: AxisDomain | undefined,
   domainOfStackGroups: NumberDomain | undefined,
@@ -127,7 +127,7 @@ export function combineNumericalDomain(
 
 const expandDomain: NumberDomain = [0, 1]
 
-export function combineAxisDomain(
+export function axisDomain(
   axisSettings: BaseCartesianAxis,
   layout: LayoutType,
   displayedData: ChartData | undefined,

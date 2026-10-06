@@ -1,4 +1,4 @@
-import { combinePolarViewBox } from '@/core/axis/polar'
+import { polarViewBox } from '@/core/axis/polar'
 import { computed } from 'vue'
 import type { ChartOffsetRequired, LayoutType, Size } from '@/types/common'
 import type { PolarChartOptions } from '@/types/polarOptions'
@@ -24,7 +24,7 @@ export function createPolarLayout(sources: {
   })
   const radiusRange = computed<readonly [number, number] | undefined>(() =>
     innerRadius.value == null || outerRadius.value == null ? undefined : [innerRadius.value, outerRadius.value])
-  const viewBox = computed(() => combinePolarViewBox(sources.layout(), sources.polar(), innerRadius.value, outerRadius.value, sources.size()))
+  const viewBox = computed(() => polarViewBox(sources.layout(), sources.polar(), innerRadius.value, outerRadius.value, sources.size()))
   return { maxRadius, innerRadius, outerRadius, angleRange, radiusRange, viewBox }
 }
 
