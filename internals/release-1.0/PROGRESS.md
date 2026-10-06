@@ -31,7 +31,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | done | `efad585`, this log commit | Shared Cartesian axis models, step gate and 285/285 motion PASS; evidence below. |
 | 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | done | `2f271f0`, `dd5feaf` | 131 files / 1,283 tests; typing, lint and 285 motion transitions PASS. |
 | 2.7 | Slice 3d: tooltip model | yes | 2.6 | done | `2c627f4`, this log | 132 files / 1,294 tests; typing, lint and 285 motion transitions PASS. |
-| 2.8 | Slice 3e: cartesian series | yes | 2.7 | todo | | |
+| 2.8 | Slice 3e: cartesian series | yes | 2.7 | done | `b41413e`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
 | 2.9 | Slice 3f: polar series | yes | 2.8 | todo | | |
 | 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | todo | | |
 | 2.10 | Slice 4: delete the store shell | yes | 2.11 | todo | | |
@@ -310,3 +310,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Area: 114/114 frames match pre-2.3; SSR: 1/1 and four byte-identical sections; Chromium 900/390px PASS, servers closed.
 - Evidence: `.evidence/release-1.0/step-2.7/checks.md`; resize differs from 2.5; 120 throttled intervals faster; no conclusion.
 - Assumptions: Node 22, two workers, six frozen snapshots; preserve legacy callback strings and private pointer-only link handles.
+
+## Step 2.8: Cartesian series geometry
+- Done: `b41413e`; item computeds read shared axes, pure series/sizing math lives in core; one tracked adapter remains.
+- Gate PASS: 132 files / 1,296 tests (85.88 s), typecheck, build, 37-file lint with zero warnings; two reverse proofs fail.
+- Motion PASS: 285/285 transitions, nine unchanged accepted flags, zero errors, 570 videos; curve counts unchanged.
+- Geometry PASS: 285 Cartesian and 114 Area frames match exactly; evidence: `.evidence/release-1.0/step-2.8/checks.md`.
+- Anomalies: 115 throttled intervals faster; 22 raw captures / 1,088 frames differ, mainly entrances; no conclusion.
+- Assumptions: Node 22, two workers, six frozen fixtures; keep inline Funnel/ErrorBar computeds and utility re-exports; servers closed.
