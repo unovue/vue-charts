@@ -115,6 +115,12 @@ step covers only part of an item, the step is named. Items marked ✓ were check
 - **P3 Built-ins:** watcher in `onMounted` around `useResizeObserver` (`ChartWrapper.tsx:66`) →
   `useResizeObserver(() => responsive ? el : null)`; per-chart emitter in computeds (`sync.ts:33`)
   → a plain const or VueUse `useEventBus`; `useReportScale` measures only on mount. S.
+- **P3 Three real `any` left** (the 25 in PROGRESS is a text count; 22 are the word "any" in
+  comments): `types/base.ts:5` `DataKey<any>` → `DataKey<Row>` in 3.9 typed rows;
+  `types/tooltip.ts:93` searcher `T = any` → drop with the Redux-shaped tooltip API (3.6/3.10);
+  `ErrorBarContext.ts:24` → `unknown` narrowed at the call. Also delete the dead comment
+  `funnel/type.ts:18` and the JSDoc `@param {any}` in `utils/validate.ts:88`, and make
+  `check:code` count `any` types, not the word. Done when: 0 `any`.
 - **P3 Types:** Sparkline stores `null` gaps through a double cast into a numeric type
   (`Sparkline.tsx:22`, `:109`); `core/tooltip.ts:13` generic erased by `| unknown`. S.
 - **P3 Bundle:** BarList grew 7,414 → 7,652 B gzip in 2.13 (still under 8,947). Find the 238 B in 4.3.
