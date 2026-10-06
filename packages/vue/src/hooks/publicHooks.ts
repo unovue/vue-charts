@@ -2,7 +2,7 @@ import { type ComputedRef, computed } from 'vue'
 import { useAppSelector } from '@/state/chartContext'
 import { selectActiveLabel, selectActiveTooltipCoordinate, selectIsTooltipActive } from '@/state/selectors/tooltipSelectors'
 import { selectAxisDomain, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis } from '@/state/selectors/axisSelectors'
-import { useChartHeight, useChartWidth, useMargin, useOffset } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth, useMargin, useOffset, useViewBox } from '@/context/chartLayoutContext'
 import type { AxisId } from '@/state/chartCartesianAxis'
 import type { Coordinate } from '@/types/common'
 
@@ -60,18 +60,7 @@ export function useActiveTooltipLabel() {
  * @returns A reactive object with x, y, width, height or undefined if offset is not yet available
  */
 export function usePlotArea() {
-  const offset = useOffset()
-  return computed(() => {
-    const o = offset.value
-    if (o == null)
-      return undefined
-    return {
-      x: o.left,
-      y: o.top,
-      width: o.width,
-      height: o.height,
-    }
-  })
+  return useViewBox()
 }
 
 /**

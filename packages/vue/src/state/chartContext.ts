@@ -1,3 +1,5 @@
+import { createLayout } from '@/model/layout'
+import type { ChartGeometry } from '@/model/layout'
 import { createRegistries } from '@/model/registries'
 import type { ChartRegistries } from '@/model/registries'
 import type { Registry } from '@/model/registry'
@@ -14,6 +16,7 @@ import { createChartData } from './chartData'
 import { createChartTooltip } from './chartTooltip'
 
 interface ChartContext {
+  geometry: ChartGeometry
   view: RechartsRootState
   layout: { setScale: (scale: number) => void }
   data: ReturnType<typeof createChartData>
@@ -37,12 +40,23 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   const zAxis = axisSettings(axes.zAxis)
   const angleAxis = axisSettings(axes.angleAxis)
   const radiusAxis = axisSettings(axes.radiusAxis)
-  const brush = createChartBrush()
-  const legend = createChartLegend(registries.legendEntries)
+  const brush = chart?.brush ?? createChartBrush()
+  const legend = chart?.legend ?? createChartLegend(registries.legendEntries)
   const data = createChartData(() => chart?.data.value)
   const tooltip = createChartTooltip(registries.tooltipEntries)
+  const geometry = chart ?? createLayout({
+    layout: () => root.layout.value,
+    brush: () => brush.state.value,
+    legendSettings: () => legend.state.value.settings,
+    legendSize: () => legend.state.value.size,
+    axes,
+  })
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
+    get offset() { return geometry.offset.value },
+    get viewBox() { return geometry.viewBox.value },
+    get axisViewBox() { return geometry.axisViewBox.value },
+    get brushDimensions() { return geometry.brushDimensions.value },
     cartesianAxis: {
       get xAxis() { return xAxis.value },
       get yAxis() { return yAxis.value },
@@ -77,6 +91,7 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   })
   provide(chartContextKey, {
     view,
+    geometry,
     layout: root,
     data,
     brush,
@@ -95,6 +110,10 @@ function useChartContext() {
     throw new Error('Chart state must be used inside a chart component.')
   }
   return context
+}
+
+export function useChartGeometry() {
+  return useChartContext().geometry
 }
 
 export function useChartLayoutActions() {

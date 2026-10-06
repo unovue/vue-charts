@@ -200,6 +200,8 @@ describe('layout public hooks', () => {
       const width = Number(spy.getAttribute('data-width'))
       const height = Number(spy.getAttribute('data-height'))
 
+      expect([x, y, width, height]).toEqual([65, 5, 430, 260])
+
       // x > 0 because YAxis takes space on the left
       expect(x).toBeGreaterThan(0)
       // width should be positive but less than chart width

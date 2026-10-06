@@ -1,3 +1,7 @@
+import { createLayout } from './layout'
+import type { ChartGeometry } from './layout'
+import { createChartBrush } from '@/state/chartBrush'
+import { createChartLegend } from '@/state/chartLegend'
 import type { ChartRegistries } from './registries'
 import { createRegistries } from './registries'
 import type { ComputedRef, EffectScope, InjectionKey } from 'vue'
@@ -20,7 +24,7 @@ export interface ChartInputs {
   tooltip: Omit<ChartOptions, 'eventEmitter'>
 }
 
-export interface Chart extends ChartRegistries {
+export interface Chart extends ChartRegistries, ChartGeometry {
   readonly inputs: ChartInputs
   readonly scope: EffectScope
   readonly data: ComputedRef<ChartData | undefined>
@@ -28,6 +32,8 @@ export interface Chart extends ChartRegistries {
   readonly rootProps: ComputedRef<UpdatableChartOptions>
   readonly polarOptions: ComputedRef<PolarChartOptions | null>
   readonly options: ComputedRef<ChartOptions>
+  readonly brush: ReturnType<typeof createChartBrush>
+  readonly legend: ReturnType<typeof createChartLegend>
   setScale: (scale: number) => void
 }
 
@@ -55,7 +61,30 @@ export function createChart(inputs: ChartInputs): Chart {
     scale.value = value
   }
 
-  return { inputs, scope, data, layout, rootProps, polarOptions, options, setScale, ...createRegistries() }
+  const registries = createRegistries()
+  const brush = createChartBrush()
+  const legend = createChartLegend(registries.legendEntries)
+  const geometry = createLayout({
+    layout: () => layout.value,
+    brush: () => brush.state.value,
+    legendSettings: () => legend.state.value.settings,
+    legendSize: () => legend.state.value.size,
+    axes: registries.axes,
+  })
+  return {
+    inputs,
+    scope,
+    data,
+    layout,
+    rootProps,
+    polarOptions,
+    options,
+    setScale,
+    brush,
+    legend,
+    ...registries,
+    ...geometry,
+  }
 }
 
 export function provideChart(chart: Chart) {

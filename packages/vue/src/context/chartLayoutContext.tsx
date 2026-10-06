@@ -1,38 +1,27 @@
+import { useChartGeometry } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
 import { selectChartLayout } from '@/state/selectors/common'
-import { selectChartHeight, selectChartWidth } from '@/state/selectors/containerSelectors'
-import { selectChartOffset, selectChartViewBox } from '@/state/selectors/selectChartOffset'
-import { selectChartOffsetInternal } from '@/state/selectors/selectChartOffsetInternal'
-import type { Margin } from '@/types'
 
 export function useOffset() {
-  return useAppSelector(selectChartOffset)
+  return useChartGeometry().offset
 }
 
 export const useChartLayout = () => useAppSelector(selectChartLayout)
 
 export function useViewBox() {
-  return useAppSelector(selectChartViewBox)
+  return useChartGeometry().viewBox
 }
 
 export function useChartWidth() {
-  return useAppSelector(selectChartWidth)
+  return useChartGeometry().width
 }
 
 export function useChartHeight() {
-  return useAppSelector(selectChartHeight)
+  return useChartGeometry().height
 }
 
-export function useOffsetInternal() {
-  return useAppSelector(selectChartOffsetInternal)
-}
+export const useOffsetInternal = useOffset
 
-const manyComponentsThrowErrorsIfMarginIsUndefined: Margin = {
-  top: 0,
-  right: 0,
-  bottom: 0,
-  left: 0,
-}
 export function useMargin() {
-  return useAppSelector(state => state.layout.margin ?? manyComponentsThrowErrorsIfMarginIsUndefined)
+  return useChartGeometry().margin
 }
