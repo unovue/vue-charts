@@ -1,6 +1,6 @@
 import type { AxisSlots, AxisTick, TickFormatter } from '@/types/tick'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartCartesianAxis } from '@/state/chartContext'
+import { selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize, useChartCartesianAxis } from '@/state/chartContext'
 /**
  * @fileOverview X Axis
  */
@@ -8,7 +8,7 @@ import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import type { XAxisSettings } from '@/state/chartCartesianAxis'
-import { implicitXAxis, selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize } from '@/state/selectors/axisSelectors'
+import { implicitXAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'

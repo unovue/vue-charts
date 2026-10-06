@@ -24,8 +24,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.13 | Lab: current curve, list height, accepted flags | yes | 1.10–1.12 | done | `660f4d8`, `456dab2` | 285/285 lab; 1,280 tests; 6 metrics tests |
 | 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | done | `bbde4b8`, `1995171` | 126/126 docs; 1,280 tests; 1 CLI regression |
 | 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | done | `4f8b072`, `a6ab90a`, `51a8664` and this log commit | Strict typing, packed probe, public rewrites and gap cases pass; 1,275 tests; 285/285 motion transitions. |
-| 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
-| 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
+| 2.1 | Slice 0: delete dead paths | yes | 2.0 | done | `315aed3` | 1,275 tests; typing, lint, motion and Brush parity PASS. |
+| 2.2 | Slice 1: root inputs as getters | yes | 2.1 | done | `1f0aa71`, `b676450` | 1,273 tests; typing, lint, motion, packed consumers and SSR PASS. |
 | 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
 | 2.4 | Slice 3a: layout math | yes | 2.3 | done | `49a7c42`, this log commit | Shared layout, step gate and 285/285 motion PASS; evidence below. |
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | done | `efad585`, this log commit | Shared Cartesian axis models, step gate and 285/285 motion PASS; evidence below. |
@@ -286,3 +286,9 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - SSR PASS: 1/1 test, four byte-identical HTML comparisons; Bar 57/57 frames match; servers closed.
 - Evidence: `.evidence/release-1.0/step-2.5/`; anomalies: Area 56/57 frames differ, max 0.733 px; 105 throttled intervals faster.
 - Assumptions: Node 22, two workers; polar/scales/ticks in 2.6; retain strict IDs and the single tracked adapter.
+
+## Area auxiliary comparison resolved
+- Production lab builds of `9b7130d`, `2a2ff0a` and `4d36cf3`: all 114 Area/stacked-Area frames match exactly after the same complete entrance wait.
+- The auxiliary sampler excludes clip paths; three unchanged shape snapshots can falsely report a sweeping Area as settled.
+- Its next action interrupts that unfinished entrance; even one extra metadata read changes the same registry build in 56/57 frames; this capture mixes in unfinished entrance scheduling.
+- No steady-state geometry regression: `.evidence/release-1.0/area-investigation/settled-comparison.json`; raw captures and screenshots retained alongside.

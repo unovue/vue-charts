@@ -47,3 +47,30 @@ it.each(['x', 'y'] as const)('updates ticks after changing the %s axis ID and se
   expect(ticks()).toEqual(['0', '25', '50', '75', '100'])
   expect(container.querySelectorAll('.v-charts-line-curve')).toHaveLength(1)
 })
+
+// Duplicate IDs resolve to the last registration, including its placement size.
+it.each(['x', 'y'] as const)('keeps duplicate %s axes at the last registration position', async (type) => {
+  const { container } = render(() => (
+    <LineChart width={500} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+      {type === 'x'
+        ? (
+            <>
+              <XAxis xAxisId="shared" orientation="top" height={20} />
+              <XAxis xAxisId="shared" orientation="top" height={40} />
+            </>
+          )
+        : (
+            <>
+              <YAxis yAxisId="shared" orientation="left" width={20} />
+              <YAxis yAxisId="shared" orientation="left" width={40} />
+            </>
+          )}
+      <Line dataKey="value" xAxisId={type === 'x' ? 'shared' : 0} yAxisId={type === 'y' ? 'shared' : 0} isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  await nextTick()
+  const attr = type === 'x' ? 'y1' : 'x1'
+  expect([...container.querySelectorAll(`.v-charts-${type}-axis .v-charts-cartesian-axis-line`)]
+    .map(line => line.getAttribute(attr))).toEqual(['45', '45'])
+})

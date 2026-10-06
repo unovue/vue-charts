@@ -2,10 +2,9 @@ import { useChartCartesianAxis } from '@/state/chartContext'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { ZAxisSettings } from '@/state/chartCartesianAxis'
-import { implicitZAxis } from '@/state/selectors/axisSelectors'
-import type { AxisRange } from '@/state/selectors/axisSelectors'
+import { implicitZAxis } from '@/core/axis/settings'
+import type { AxisDomain, AxisRange } from '@/types/axis'
 import type { DataKey } from '@/types'
-import type { AxisDomain } from '@/types/axis'
 import type { ScaleType } from '@/types/scale'
 
 export const ZAxis = defineComponent({

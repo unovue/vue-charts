@@ -3,7 +3,7 @@ import type { RechartsRootState } from '../chartState'
 import { selectTooltipAxisRangeWithReverse, selectTooltipAxisTicks, selectTooltipAxisType } from './tooltipSelectors'
 import { selectChartOffset } from './selectChartOffset'
 import { combineActiveProps, selectOrderedTooltipTicks } from './selectors'
-import { selectPolarViewBox } from './polarAxisSelectors'
+import { selectPolarViewBox } from '@/state/chartContext'
 import type { ChartPointer } from '@/types'
 import { selectChartLayout } from '@/state/selectors/common'
 

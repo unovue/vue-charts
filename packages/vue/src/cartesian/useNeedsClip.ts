@@ -1,5 +1,5 @@
 import { useAppSelector } from '@/state/hooks'
-import { selectXAxisSettings, selectYAxisSettings } from '@/state/selectors/axisSelectors'
+import { selectXAxisSettings, selectYAxisSettings } from '@/state/chartContext'
 import type { AxisId } from '@/types/axis'
 import { computed } from 'vue'
 

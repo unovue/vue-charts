@@ -1,7 +1,7 @@
 import type { SlotsType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import { useAppSelector } from '@/state/hooks'
-import { selectUnfilteredCartesianItems } from '@/state/selectors/axisSelectors'
+import { selectUnfilteredCartesianItems } from '@/state/chartContext'
 import { selectChartOffset } from '@/state/selectors/selectChartOffset'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/chartGraphicalItems'

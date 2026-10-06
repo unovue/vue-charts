@@ -1,7 +1,7 @@
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
-import { selectPolarAxisTicks } from './polarScaleSelectors'
+import { selectPolarAxisTicks } from '@/state/chartContext'
 import type { CartesianTickItem } from '@/types/tick'
 
 export type PolarAngles = Array<number>

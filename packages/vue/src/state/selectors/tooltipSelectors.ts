@@ -1,50 +1,23 @@
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
-import type {
-  AppliedChartDataWithErrorDomain,
-  AxisRange,
-  AxisWithTicksSettings,
-  StackGroup,
-  XorYType,
-} from './axisSelectors'
-import {
-  combineAppliedNumericalValuesIncludingErrorValues,
-  combineAppliedValues,
-  combineAreasDomain,
-  combineAxisDomain,
-  combineAxisDomainWithNiceTicks,
-  combineCategoricalDomain,
-  combineDisplayedData,
-  combineDomainOfStackGroups,
-  combineDotsDomain,
-  combineDuplicateDomain,
-  combineGraphicalItemsData,
-  combineGraphicalItemsSettings,
-  combineLinesDomain,
-  combineNiceTicks,
-  combineNumericalDomain,
-  combineRealScaleType,
-  combineScaleFunction,
-  combineStackGroups,
-  filterGraphicalNotStackedItems,
-  filterReferenceElements,
-  getDomainDefinition,
-  itemAxisPredicate,
-  mergeDomains,
-  selectAxisRange,
-  selectAxisSettings,
-  selectHasBar,
-  selectReferenceAreas,
-  selectReferenceDots,
-  selectReferenceLines,
-} from './axisSelectors'
+import type { AppliedChartDataWithErrorDomain } from '@/core/axis/data'
+import type { AxisDomain, AxisRange, NumberDomain } from '@/types/axis'
+import type { AxisWithTicksSettings } from '@/types/axisSettings'
+import type { StackGroup } from '@/core/axis/stacks'
+import type { XorYType } from '@/state/chartContext'
+import { combineAppliedNumericalValuesIncludingErrorValues, combineAppliedValues, combineDisplayedData, combineGraphicalItemsData, combineGraphicalItemsSettings, filterGraphicalNotStackedItems, itemAxisPredicate } from '@/core/axis/data'
+import { combineAreasDomain, combineDotsDomain, combineLinesDomain, filterReferenceElements } from '@/core/axis/references'
+import { combineAxisDomain, combineNumericalDomain, getDomainDefinition, mergeDomains } from '@/core/axis/domain'
+import { combineAxisDomainWithNiceTicks, combineCategoricalDomain, combineDuplicateDomain, combineNiceTicks, combineRealScaleType, combineScaleFunction } from '@/core/axis/scale'
+import { combineDomainOfStackGroups, combineStackGroups } from '@/core/axis/stacks'
+import { selectAxisRange, selectAxisSettings, selectHasBar, selectReferenceAreas, selectReferenceDots, selectReferenceLines } from '@/state/chartContext'
 import type { AxisId } from '../chartCartesianAxis'
 import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '../chartReferenceElements'
 import { selectChartName, selectStackOffsetType } from './rootPropsSelectors'
 // import { mathSign } from '../../util/DataUtils'
-import { combineAxisRangeWithReverse } from './combiners/combineAxisRangeWithReverse'
+import { combineAxisRangeWithReverse } from '@/core/axis/range'
 import type { TooltipEntrySettings, TooltipIndex, TooltipInteractionState, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher, TooltipSettingsState } from '../chartTooltip'
 
 import {
@@ -65,7 +38,6 @@ import { selectChartOffset } from './selectChartOffset'
 import { combineTooltipPayloadConfigurations } from './combiners/combineTooltipPayloadConfigurations'
 import { selectTooltipPayloadSearcher } from './selectTooltipPayloadSearcher'
 import { selectTooltipState } from './selectTooltipState'
-import type { AxisDomain, NumberDomain } from '@/types/axis'
 import type { StackId } from '@/types/tick'
 import type { CategoricalDomain, Coordinate, DataKey, LayoutType, TickItem, TooltipEventType } from '@/types'
 import type { RechartsScale } from '@/types/scale'

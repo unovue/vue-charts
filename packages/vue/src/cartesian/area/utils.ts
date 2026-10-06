@@ -1,6 +1,6 @@
 import type { ChartData } from '@/state/chartData'
 import type { AreaPointItem, AreaSettings, ComputedArea } from '@/state/selectors/areaSelectors'
-import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { Coordinate, TickItem } from '@/types'
 import type { BaseValue } from '@/types/area'
 import { isNumber, toFiniteNumber } from '@/utils'

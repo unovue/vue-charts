@@ -1,12 +1,11 @@
 import { barEvents } from '@/events/itemEvents'
 import { defineComponent, watch } from 'vue'
-import { useChartTooltip } from '@/state/chartContext'
+import { selectAxisSettings, useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
 import {
   selectActiveTooltipDataKey,
   selectActiveTooltipIndex,
 } from '@/state/selectors/tooltipSelectors'
-import { selectAxisSettings } from '@/state/selectors/axisSelectors'
 import { filterProps, svgAttrs } from '@/utils/VueUtils'
 import { getValueByDataKey } from '@/utils/chart'
 import { interpolate } from '@/utils'

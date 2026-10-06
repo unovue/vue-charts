@@ -1,4 +1,4 @@
-import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { TickItem } from '@/types'
 import type { LinePointItem, LineProps } from './type'
 import { toFiniteNumber } from '@/utils'

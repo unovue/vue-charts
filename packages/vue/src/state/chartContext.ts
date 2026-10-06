@@ -1,3 +1,4 @@
+import { createPolarLayout } from '@/model/polar'
 import { createAxes } from '@/model/axis'
 import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
 import { createLayout } from '@/model/layout'
@@ -55,7 +56,20 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   const scope = getCurrentScope()
   if (!scope)
     throw new Error('vccs: chart context requires an active scope.')
+  const polarLayout = chart?.polarLayout ?? createPolarLayout({
+    layout: () => root.layout.value.layoutType,
+    size: () => root.layout.value,
+    offset: () => geometry.offset.value,
+    polar: () => root.polarOptions.value,
+  })
   const axis = chart?.axis ?? createAxes(scope, {
+    polarLayout,
+    size: () => root.layout.value,
+    offset: () => geometry.offset.value,
+    name: () => root.options.value.chartName,
+    hasBar: () => items.cartesian.entries.value.some(item => item.type === 'bar')
+      || items.polar.entries.value.some(item => item.type === 'radialBar'),
+    barCategoryGap: () => root.rootProps.value.barCategoryGap,
     ...registries,
     dataWithIndexes: data.state,
     layout: () => root.layout.value.layoutType,
@@ -64,6 +78,7 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
     axis,
+    polarLayout,
     get offset() { return geometry.offset.value },
     get viewBox() { return geometry.viewBox.value },
     get axisViewBox() { return geometry.axisViewBox.value },
@@ -198,4 +213,123 @@ function createStandaloneInputs(initialOptions?: ChartOptions) {
 
 function axisSettings<T extends { id?: AxisId }>(registry: Registry<T>) {
   return computed(() => Object.fromEntries(registry.entries.value.map(axis => [axis.id, axis])))
+}
+
+import type { AxisType } from '@/types/axis'
+
+export function selectXAxisSettings(state: RechartsRootState, id: AxisId) {
+  return state.axis('xAxis', id).settings.value
+}
+
+export function selectYAxisSettings(state: RechartsRootState, id: AxisId) {
+  return state.axis('yAxis', id).settings.value
+}
+
+export function selectAngleAxis(state: RechartsRootState, id: AxisId) {
+  return state.axis('angleAxis', id).settings.value
+}
+
+export function selectRadiusAxis(state: RechartsRootState, id: AxisId) {
+  return state.axis('radiusAxis', id).settings.value
+}
+
+export function selectAxisSettings(state: RechartsRootState, type: Exclude<AxisType, 'zAxis'>, id: AxisId = 0) {
+  return state.axis(type, id).settings.value
+}
+
+export function selectAxisScale(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).scale.value
+}
+
+export function selectTicksOfAxis(state: RechartsRootState, type: Exclude<AxisType, 'zAxis'>, id: AxisId = 0) {
+  return state.axis(type, id).ticks.value
+}
+
+export function selectTicksOfGraphicalItem(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).graphicalTicks.value
+}
+
+export function selectAxisWithScale(state: RechartsRootState, type: Exclude<AxisType, 'zAxis'>, id: AxisId = 0) {
+  return state.axis(type, id).withScale.value
+}
+
+export function selectZAxisWithScale(state: RechartsRootState, type: 'zAxis', id: AxisId = 0) {
+  return state.axis(type, id).withScale.value
+}
+
+export function selectAxisInverseScale(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).inverseScale.value
+}
+
+export function selectAxisInverseDataSnapScale(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).inverseDataScale.value
+}
+
+export function selectAxisInverseTickSnapScale(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).inverseTickScale.value
+}
+
+export function selectDisplayedData(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).displayedData.value
+}
+
+export function selectStackGroups(state: RechartsRootState, type: AxisType, id: AxisId = 0) {
+  return state.axis(type, id).stackGroups.value
+}
+
+export function selectPolarAxisScale(state: RechartsRootState, type: 'angleAxis' | 'radiusAxis', id: AxisId = 0) {
+  return state.axis(type, id).scale.value
+}
+
+export function selectPolarAxisTicks(state: RechartsRootState, type: 'angleAxis' | 'radiusAxis', id: AxisId = 0) {
+  return state.axis(type, id).ticks.value
+}
+
+export function selectPolarGraphicalItemAxisTicks(state: RechartsRootState, type: 'angleAxis' | 'radiusAxis', id: AxisId = 0) {
+  return state.axis(type, id).graphicalTicks.value
+}
+
+export function selectPolarItemsSettings(state: RechartsRootState, type: 'angleAxis' | 'radiusAxis', id: AxisId = 0) {
+  return state.axis(type, id).items.value
+}
+
+export function selectPolarDisplayedData(state: RechartsRootState, type: 'angleAxis' | 'radiusAxis', id: AxisId = 0) {
+  return state.axis(type, id).displayedData.value
+}
+
+export function selectUnfilteredCartesianItems(state: RechartsRootState) { return state.graphicalItems.cartesianItems }
+export function selectUnfilteredPolarItems(state: RechartsRootState) { return state.graphicalItems.polarItems }
+export function selectPolarViewBox(state: RechartsRootState) { return state.polarLayout.viewBox.value }
+export function selectChartDirection(state: RechartsRootState) {
+  const layout = state.layout.layoutType
+  if (layout === 'horizontal')
+    return Object.values(state.cartesianAxis.xAxis).some(axis => axis.reversed) ? 'right-to-left' : 'left-to-right'
+  if (layout === 'vertical')
+    return Object.values(state.cartesianAxis.yAxis).some(axis => axis.reversed) ? 'bottom-to-top' : 'top-to-bottom'
+}
+export function selectXAxisSize(state: RechartsRootState, id: AxisId) { return state.axis('xAxis', id).size.value }
+export function selectYAxisSize(state: RechartsRootState, id: AxisId) { return state.axis('yAxis', id).size.value }
+export function selectXAxisPosition(state: RechartsRootState, id: AxisId) { return state.axis('xAxis', id).position.value }
+export function selectYAxisPosition(state: RechartsRootState, id: AxisId) { return state.axis('yAxis', id).position.value }
+export function selectAxisPropsNeededForCartesianGridTicksGenerator(state: RechartsRootState, type: 'xAxis' | 'yAxis', id: AxisId) {
+  return state.axis(type, id).grid.value
+}
+
+export type XorYType = Exclude<AxisType, 'zAxis'>
+export type PolarAxisType = 'angleAxis' | 'radiusAxis'
+export function selectAxisRange(state: RechartsRootState, type: AxisType, id: AxisId) {
+  return state.axis(type, id).range.value
+}
+export function selectHasBar(state: RechartsRootState) {
+  return state.graphicalItems.cartesianItems.some(item => item.type === 'bar')
+    || state.graphicalItems.polarItems.some(item => item.type === 'radialBar')
+}
+export function selectReferenceAreas(state: RechartsRootState) { return state.referenceElements.areas }
+export function selectReferenceDots(state: RechartsRootState) { return state.referenceElements.dots }
+export function selectReferenceLines(state: RechartsRootState) { return state.referenceElements.lines }
+export function selectCartesianAxisSize(state: RechartsRootState, type: XorYType, id: AxisId) {
+  if (type === 'xAxis')
+    return selectXAxisSize(state, id).width
+  if (type === 'yAxis')
+    return selectYAxisSize(state, id).height
 }

@@ -11,7 +11,7 @@ import type {
 } from '../chartTooltip'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import { combineTooltipPayload, selectTooltipAxis, selectTooltipAxisDomain, selectTooltipAxisTicks, selectTooltipDisplayedData } from './tooltipSelectors'
-import type { AxisRange } from './axisSelectors'
+import type { AxisRange, AxisType } from '@/types/axis'
 import { selectChartName } from './rootPropsSelectors'
 import { selectChartOffset } from './selectChartOffset'
 import { selectChartHeight, selectChartWidth } from './containerSelectors'
@@ -25,7 +25,6 @@ import { selectTooltipState } from './selectTooltipState'
 import type { ChartOffsetRequired, ChartPointer, Coordinate, DataKey, LayoutType, TickItem, TooltipEventType, TooltipTrigger } from '@/types'
 import { calculateActiveTickIndex, calculateTooltipPos, getActiveCoordinate, inRange } from '@/utils/chart'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
-import type { AxisType } from '@/types/axis'
 import { selectChartLayout } from '@/state/selectors/common'
 
 export function useChartName() {

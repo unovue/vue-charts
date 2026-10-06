@@ -4,17 +4,9 @@ export type { MaybeStackedGraphicalItem } from '@/types/graphical'
 import { createSelector } from '../createSelector'
 import type { Series } from 'd3-shape'
 import type { RechartsRootState } from '../chartState'
-import type {
-  BaseAxisWithScale,
-  StackGroup,
-} from './axisSelectors'
-import {
-  selectAxisWithScale,
-  selectCartesianAxisSize,
-  selectStackGroups,
-  selectTicksOfGraphicalItem,
-  selectUnfilteredCartesianItems,
-} from './axisSelectors'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
+import type { StackGroup } from '@/core/axis/stacks'
+import { selectAxisWithScale, selectCartesianAxisSize, selectStackGroups, selectTicksOfGraphicalItem, selectUnfilteredCartesianItems } from '@/state/chartContext'
 import type { AxisId } from '../chartCartesianAxis'
 import type { ChartData } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
@@ -204,17 +196,9 @@ export function selectBarBandSize(
 }
 
 export function selectAxisBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId) {
-  const layout = selectChartLayout(state)
-  let axis: BaseAxisWithScale, ticks: ReadonlyArray<TickItem>
-  if (layout === 'horizontal') {
-    axis = selectAxisWithScale(state, 'xAxis', xAxisId)!
-    ticks = selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)!
-  }
-  else {
-    axis = selectAxisWithScale(state, 'yAxis', yAxisId)!
-    ticks = selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)!
-  }
-  return getBandSizeOfAxis(axis, ticks)
+  return state.layout.layoutType === 'horizontal'
+    ? state.axis('xAxis', xAxisId).bandSize.value
+    : state.axis('yAxis', yAxisId).bandSize.value
 }
 
 function getBarPositions(

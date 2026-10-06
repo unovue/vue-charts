@@ -2,7 +2,7 @@ import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useAppSelector } from '@/state/hooks'
-import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
+import { selectPolarViewBox } from '@/state/chartContext'
 import { selectPolarGridAngles, selectPolarGridRadii } from '@/state/selectors/polarGridSelectors'
 import { polarToCartesian } from '@/utils/polar'
 

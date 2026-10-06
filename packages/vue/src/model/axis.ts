@@ -1,7 +1,13 @@
+import { createAxisLayout } from './axisLayout'
+import { createAxisScale } from './axisScale'
+import type { AxisScaleModel, AxisScaleSources } from './axisScale'
+import { createPolarAxis } from './polarAxis'
+import type { PolarLayout } from './polar'
+import { combineCalculatedPadding, combineSmallestDistance, combineXAxisRange, combineYAxisRange } from '@/core/axis/range'
 import type { CategoricalDomain } from '@/types/categorical'
 import type { ComputedRef, EffectScope } from 'vue'
 import { computed, onScopeDispose } from 'vue'
-import type { AxisDomain, AxisId, BaseCartesianAxis, NumberDomain } from '@/types/axis'
+import type { AxisDomain, AxisId, AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/types/axis'
 import type { XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
 import type { AppliedChartData, ChartData, ChartDataState } from '@/types/chartData'
 import type { LayoutType, StackOffsetType } from '@/types/common'
@@ -35,7 +41,7 @@ import type { Registry } from './registry'
 
 export type CartesianAxisType = 'xAxis' | 'yAxis' | 'zAxis'
 
-export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> {
+export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> extends AxisScaleModel<S> {
   readonly settings: ComputedRef<S>
   readonly dataWithIndexes: ComputedRef<ChartDataState>
   readonly graphicalData: ComputedRef<ChartData>
@@ -49,18 +55,23 @@ export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> {
 }
 
 interface AxisModels {
-  xAxis: AxisModel<XAxisSettings>
-  yAxis: AxisModel<YAxisSettings>
+  angleAxis: ReturnType<typeof createPolarAxis>
+  radiusAxis: ReturnType<typeof createPolarAxis>
+  xAxis: AxisModel<XAxisSettings> & ReturnType<typeof createAxisLayout>
+  yAxis: AxisModel<YAxisSettings> & ReturnType<typeof createAxisLayout>
   zAxis: AxisModel<ZAxisSettings>
 }
 
-interface AxisSources extends Pick<ChartRegistries, 'items' | 'axes' | 'references'> {
+interface AxisSources extends AxisScaleSources, Pick<ChartRegistries, 'items' | 'axes' | 'references'> {
+  size: () => import('@/types/common').Size
+  barCategoryGap: () => number | string
+  polarLayout: PolarLayout
   dataWithIndexes: ComputedRef<ChartDataState>
   layout: () => LayoutType
   stackOffset: () => StackOffsetType
 }
 
-export type AxisLookup = <T extends CartesianAxisType>(type: T, id: AxisId) => AxisModels[T]
+export type AxisLookup = <T extends AxisType>(type: T, id: AxisId) => AxisModels[T]
 
 function createAxis<S extends BaseCartesianAxis>(
   sources: AxisSources,
@@ -68,6 +79,7 @@ function createAxis<S extends BaseCartesianAxis>(
   id: AxisId,
   registry: Registry<S>,
   implicit: S,
+  readRange: (settings: S, applied: AppliedChartData) => AxisRange,
 ): AxisModel<S> {
   const settings = computed(() => {
     const entries = registry.entries.value
@@ -120,7 +132,9 @@ function createAxis<S extends BaseCartesianAxis>(
     type,
     numericalDomain.value,
   ))
+  const range = computed(() => readRange(settings.value, appliedValues.value))
   return {
+    ...createAxisScale(sources, type, settings, domain, appliedValues, range),
     settings,
     dataWithIndexes,
     graphicalData,
@@ -151,12 +165,44 @@ function keyed<V>(scope: EffectScope, build: (id: AxisId) => V) {
 }
 
 export function createAxes(scope: EffectScope, sources: AxisSources): AxisLookup {
-  const lookup: { [T in CartesianAxisType]: (id: AxisId) => AxisModels[T] } = {
-    xAxis: keyed(scope, id => createAxis(sources, 'xAxis', id, sources.axes.xAxis, implicitXAxis)),
-    yAxis: keyed(scope, id => createAxis(sources, 'yAxis', id, sources.axes.yAxis, implicitYAxis)),
-    zAxis: keyed(scope, id => createAxis(sources, 'zAxis', id, sources.axes.zAxis, implicitZAxis)),
+  const lookup: { [T in AxisType]: (id: AxisId) => AxisModels[T] } = {
+    xAxis: keyed(scope, (id) => {
+      const model = createAxis(sources, 'xAxis', id, sources.axes.xAxis, implicitXAxis, (axis, values) => {
+        const offset = sources.offset()
+        const calculated = typeof axis.padding === 'string'
+          ? combineCalculatedPadding(
+              combineSmallestDistance(values, axis),
+              sources.layout(),
+              sources.barCategoryGap(),
+              offset,
+              axis.padding,
+            )
+          : 0
+        return combineXAxisRange(offset, axis.padding, calculated)
+      })
+      return { ...model, ...createAxisLayout(sources, model, 'xAxis', id) }
+    }),
+    yAxis: keyed(scope, (id) => {
+      const model = createAxis(sources, 'yAxis', id, sources.axes.yAxis, implicitYAxis, (axis, values) => {
+        const offset = sources.offset()
+        const calculated = typeof axis.padding === 'string'
+          ? combineCalculatedPadding(
+              combineSmallestDistance(values, axis),
+              sources.layout(),
+              sources.barCategoryGap(),
+              offset,
+              axis.padding,
+            )
+          : 0
+        return combineYAxisRange(offset, sources.layout(), axis.padding, calculated)
+      })
+      return { ...model, ...createAxisLayout(sources, model, 'yAxis', id) }
+    }),
+    zAxis: keyed(scope, id => createAxis(sources, 'zAxis', id, sources.axes.zAxis, implicitZAxis, axis => axis.range)),
+    angleAxis: keyed(scope, id => createPolarAxis(sources, 'angleAxis', id)),
+    radiusAxis: keyed(scope, id => createPolarAxis(sources, 'radiusAxis', id)),
   }
-  return function axis<T extends CartesianAxisType>(type: T, id: AxisId): AxisModels[T] {
+  return function axis<T extends AxisType>(type: T, id: AxisId): AxisModels[T] {
     return lookup[type](id)
   }
 }

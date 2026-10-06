@@ -1,10 +1,11 @@
+export { getBandSizeOfAxis, checkDomainOfScale } from '@/core/axis/scale'
 export { getDomainOfStackGroups, getStackedData } from '@/core/axis/stacks'
 export { MIN_VALUE_REG, MAX_VALUE_REG } from '@/core/axis/userDomain'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { BaseAxisProps } from '@/cartesian/axis/type'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
 import type { NormalizedStackId } from '@/shape'
-import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { TooltipEntrySettings, TooltipPayloadEntry } from '@/state/chartTooltip'
 import type {
   ChartCoordinate,
@@ -26,7 +27,7 @@ import {
   reverseFormatAngleOfSector,
 } from '@/utils/polar'
 import { isNullish, isNumber, toFiniteNumber } from '@/utils/validate'
-import { isNaN, sortBy } from 'es-toolkit/compat'
+import { isNaN } from 'es-toolkit/compat'
 import type { SeriesPoint } from 'd3-shape'
 import { toRaw } from 'vue'
 
@@ -115,43 +116,6 @@ export function getTicksOfAxis(
       offset,
     }),
   )
-}
-
-/**
- * Calculate the size between two category
- * @param  {object} axis  The options of axis
- * @param  {Array}  ticks The ticks of axis
- * @param  {boolean} isBar if items in axis are bars
- * @return {number} Size
- */
-export function getBandSizeOfAxis(
-  axis?: BaseAxisWithScale,
-  ticks?: ReadonlyArray<TickItem>,
-  isBar?: boolean,
-): number | undefined {
-  if (axis && axis.scale && axis.scale.bandwidth) {
-    const bandWidth = axis.scale.bandwidth()
-
-    if (!isBar || bandWidth > 0) {
-      return bandWidth
-    }
-  }
-
-  if (axis && ticks && ticks.length >= 2) {
-    const orderedTicks = sortBy(ticks, o => o.coordinate)
-    let bandSize = Infinity
-
-    for (let i = 1, len = orderedTicks.length; i < len; i++) {
-      const cur = orderedTicks[i]
-      const prev = orderedTicks[i - 1]
-
-      bandSize = Math.min((cur.coordinate || 0) - (prev.coordinate || 0), bandSize)
-    }
-
-    return bandSize === Infinity ? 0 : bandSize
-  }
-
-  return isBar ? undefined : 0
 }
 
 /**
@@ -495,27 +459,6 @@ export function getActiveCoordinate(
   }
 
   return { x: 0, y: 0 }
-}
-
-const EPS = 1e-4
-
-export function checkDomainOfScale(scale: any) {
-  const domain = scale.domain()
-
-  if (!domain || domain.length <= 2) {
-    return
-  }
-
-  const len = domain.length
-  const range = scale.range()
-  const minValue = Math.min(range[0], range[1]) - EPS
-  const maxValue = Math.max(range[0], range[1]) + EPS
-  const first = scale(domain[0])
-  const last = scale(domain[len - 1])
-
-  if (first < minValue || first > maxValue || last < minValue || last > maxValue) {
-    scale.domain([domain[0], domain[len - 1]])
-  }
 }
 
 export function getTooltipNameProp(

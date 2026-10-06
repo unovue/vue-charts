@@ -1,13 +1,6 @@
 import { createSelector } from '../createSelector'
-import type {
-  StackGroup,
-} from './axisSelectors'
-import {
-  selectAxisWithScale,
-  selectStackGroups,
-  selectTicksOfGraphicalItem,
-  selectUnfilteredCartesianItems,
-} from './axisSelectors'
+import type { StackGroup } from '@/core/axis/stacks'
+import { selectAxisWithScale, selectStackGroups, selectTicksOfGraphicalItem, selectUnfilteredCartesianItems } from '@/state/chartContext'
 import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
 import { selectChartDataWithIndexes } from './dataSelectors'

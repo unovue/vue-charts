@@ -15,7 +15,7 @@ import { labelOpacity, lengthShares, polylineLength, sweptLabels } from '@/anima
 import { drawTiming } from '@/animation/motion'
 import { SweepClip } from '@/animation/SweepClip'
 import { useAppSelector } from '@/state/hooks'
-import { selectAxisSettings } from '@/state/selectors/axisSelectors'
+import { selectAxisSettings } from '@/state/chartContext'
 import { getValueByDataKey } from '@/utils/chart'
 // Dots component
 export const Dots = defineComponent({

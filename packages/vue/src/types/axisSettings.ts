@@ -1,6 +1,7 @@
 import type { SVGAttributes } from 'vue'
 import type {
   AxisId,
+  BaseCartesianAxis,
   CartesianAxisSettings as PublicCartesianAxisSettings,
   XAxisSettings as PublicXAxisSettings,
   YAxisSettings as PublicYAxisSettings,
@@ -38,3 +39,9 @@ export type CartesianAxisState = {
   yAxis: Record<AxisId, YAxisSettings>
   zAxis: Record<AxisId, ZAxisSettings>
 }
+
+export type AngleAxisSettings = BaseCartesianAxis & TicksSettings
+export type RadiusAxisSettings = BaseCartesianAxis & TicksSettings
+export type AxisWithTicksSettings = XAxisSettings | YAxisSettings | AngleAxisSettings | RadiusAxisSettings
+export type BaseAxisWithScale = BaseCartesianAxis & { scale: import('./scale').RechartsScale }
+export type ZAxisWithScale = ZAxisSettings & { scale: import('./scale').RechartsScale }

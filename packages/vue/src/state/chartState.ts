@@ -14,6 +14,7 @@ import type { CartesianAxisState } from './chartCartesianAxis'
 import type { GraphicalItemsState } from './chartGraphicalItems'
 
 export type RechartsRootState = Readonly<{
+  polarLayout: import('@/model/polar').PolarLayout
   axis: AxisLookup
   offset: ChartGeometry['offset']['value']
   viewBox: ChartGeometry['viewBox']['value']

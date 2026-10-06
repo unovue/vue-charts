@@ -4,10 +4,10 @@ import { selectChartDataAndAlwaysIgnoreIndexes, selectChartDataWithIndexes } fro
 import type { RechartsRootState } from '../chartState'
 import type { ChartDataState } from '../chartData'
 import type { AxisId } from '../chartCartesianAxis'
-import { selectPolarAxisScale, selectPolarAxisTicks, selectPolarGraphicalItemAxisTicks } from './polarScaleSelectors'
-import type { BaseAxisWithScale, StackGroup } from './axisSelectors'
-import { combineStackGroups } from './axisSelectors'
-import { selectAngleAxis, selectPolarViewBox, selectRadiusAxis } from './polarAxisSelectors'
+import { selectAngleAxis, selectPolarAxisScale, selectPolarAxisTicks, selectPolarDisplayedData, selectPolarGraphicalItemAxisTicks, selectPolarItemsSettings, selectPolarViewBox, selectRadiusAxis, selectUnfilteredPolarItems } from '@/state/chartContext'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
+import type { StackGroup } from '@/core/axis/stacks'
+import { combineStackGroups } from '@/core/axis/stacks'
 import type {
   BarWithPosition,
   MaybeStackedGraphicalItem,
@@ -26,14 +26,7 @@ import {
   selectStackOffsetType,
 } from './rootPropsSelectors'
 import type { PolarGraphicalItemSettings } from '../chartGraphicalItems'
-import type {
-  PolarAxisType,
-} from './polarSelectors'
-import {
-  selectPolarDisplayedData,
-  selectPolarItemsSettings,
-  selectUnfilteredPolarItems,
-} from './polarSelectors'
+import type { PolarAxisType } from '@/state/chartContext'
 import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import type { DataKey, LayoutType, TickItem } from '@/types'
 import type { StackId } from '@/types/tick'

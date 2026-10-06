@@ -1,7 +1,7 @@
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
 import type { BarSettings, Rectangle, ResolvedBarProps } from './type'
 import type { BarPositionPosition, BarRectangleItem } from '@/types/bar'
-import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
+import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { DataKey, TickItem } from '@/types'
 import type { Series } from 'd3-shape'
 import type { ChartOffsetInternal } from '@/utils/types'

@@ -1,8 +1,6 @@
-import type { AxisId, BaseCartesianAxis, TicksSettings } from './chartCartesianAxis'
+import type { AngleAxisSettings, AxisId, RadiusAxisSettings } from '@/types/axisSettings'
 
-export type RadiusAxisSettings = BaseCartesianAxis & TicksSettings
-
-export type AngleAxisSettings = BaseCartesianAxis & TicksSettings
+export type { AngleAxisSettings, RadiusAxisSettings } from '@/types/axisSettings'
 
 export type PolarAxisState = {
   radiusAxis: Record<AxisId, RadiusAxisSettings>

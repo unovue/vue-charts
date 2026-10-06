@@ -11,9 +11,12 @@ import {
   XAxis,
   YAxis,
   useXAxisDomain,
+  useXAxisScale,
   useYAxisDomain,
+  useYAxisScale,
 } from '@/index'
 import type { AxisDomain } from '@/types/axis'
+import * as scaleMath from '@/core/axis/scale'
 import * as domainMath from '@/core/axis/domain'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -26,7 +29,12 @@ const DomainProbe = defineComponent({
   },
   setup(props) {
     const domain = props.kind === 'x' ? useXAxisDomain() : useYAxisDomain()
-    return () => <text data-domain={props.name}>{JSON.stringify(domain.value)}</text>
+    const scale = props.kind === 'x' ? useXAxisScale() : useYAxisScale()
+    return () => (
+      <text data-domain={props.name} data-upper={scale.value?.(domain.value?.at(-1))}>
+        {JSON.stringify(domain.value)}
+      </text>
+    )
   },
 })
 
@@ -69,6 +77,7 @@ it.each([
 // Output alone cannot detect independent repeated calculations in sibling consumers.
 it('shares the domain after the first consumer unmounts and stops work on chart teardown', async () => {
   const combine = vi.spyOn(domainMath, 'combineAxisDomain')
+  const scale = vi.spyOn(scaleMath, 'combineScaleFunction')
   const first = ref(true)
   const rows = ref([{ first: 20, second: 100 }])
   const { container, unmount } = render(() => (
@@ -84,26 +93,34 @@ it('shares the domain after the first consumer unmounts and stops work on chart 
   await nextTick()
   expect([...container.querySelectorAll('[data-domain]')].map(node => node.textContent)).toEqual(['[10,110]', '[10,110]'])
   combine.mockClear()
+  scale.mockClear()
   rows.value = [{ first: 30, second: 200 }]
   await nextTick()
   await nextTick()
   expect([...container.querySelectorAll('[data-domain]')].map(node => node.textContent)).toEqual(['[20,210]', '[20,210]'])
   expect(combine.mock.calls.filter(call => call[5] === 'yAxis')).toHaveLength(1)
+  expect(scale.mock.calls.filter(call => call[0]?.type === 'number')).toHaveLength(1)
+  expect(container.querySelector('[data-domain="second"]')?.getAttribute('data-upper')).toBe('5')
   first.value = false
   await nextTick()
   await nextTick()
   expect(container.querySelectorAll('[data-domain]')).toHaveLength(1)
   expect(container.querySelector('[data-domain="second"]')?.textContent).toBe('[190,210]')
   combine.mockClear()
+  scale.mockClear()
   rows.value[0].second = 300
   await nextTick()
   await nextTick()
   expect(container.querySelector('[data-domain="second"]')?.textContent).toBe('[290,310]')
   expect(combine.mock.calls.filter(call => call[5] === 'yAxis')).toHaveLength(1)
+  expect(scale.mock.calls.filter(call => call[0]?.type === 'number')).toHaveLength(1)
+  expect(container.querySelector('[data-domain="second"]')?.getAttribute('data-upper')).toBe('5')
   unmount()
   combine.mockClear()
+  scale.mockClear()
   rows.value[0].second = 400
   await nextTick()
   await nextTick()
   expect(combine).not.toHaveBeenCalled()
+  expect(scale).not.toHaveBeenCalled()
 })

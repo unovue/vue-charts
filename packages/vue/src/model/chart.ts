@@ -1,3 +1,4 @@
+import { createPolarLayout } from '@/model/polar'
 import { createAxes } from './axis'
 import type { AxisLookup } from './axis'
 import { createChartData } from '@/state/chartData'
@@ -28,6 +29,7 @@ export interface ChartInputs {
 }
 
 export interface Chart extends ChartRegistries, ChartGeometry {
+  readonly polarLayout: ReturnType<typeof createPolarLayout>
   readonly axis: AxisLookup
   readonly dataRange: ReturnType<typeof createChartData>
   readonly inputs: ChartInputs
@@ -77,13 +79,22 @@ export function createChart(inputs: ChartInputs): Chart {
     legendSize: () => legend.state.value.size,
     axes: registries.axes,
   })
+  const polarLayout = createPolarLayout({ layout: inputs.layout, size: inputs.size, offset: () => geometry.offset.value, polar: inputs.polar })
   const axis = createAxes(scope, {
+    polarLayout,
+    size: inputs.size,
+    offset: () => geometry.offset.value,
+    name: () => options.value.chartName,
+    hasBar: () => registries.items.cartesian.entries.value.some(item => item.type === 'bar')
+      || registries.items.polar.entries.value.some(item => item.type === 'radialBar'),
+    barCategoryGap: () => rootProps.value.barCategoryGap,
     ...registries,
     dataWithIndexes: dataRange.state,
     layout: inputs.layout,
     stackOffset: () => rootProps.value.stackOffset,
   })
   return {
+    polarLayout,
     axis,
     dataRange,
     inputs,

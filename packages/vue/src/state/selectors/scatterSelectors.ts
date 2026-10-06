@@ -5,15 +5,9 @@ import type { AxisId } from '../chartCartesianAxis'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import type { ChartData, ChartDataState } from '../chartData'
 
-import {
-  type BaseAxisWithScale,
-  type ZAxisWithScale,
-  implicitZAxis,
-  selectAxisWithScale,
-  selectTicksOfGraphicalItem,
-  selectUnfilteredCartesianItems,
-  selectZAxisWithScale,
-} from './axisSelectors'
+import type { BaseAxisWithScale, ZAxisWithScale } from '@/types/axisSettings'
+import { implicitZAxis } from '@/core/axis/settings'
+import { selectAxisWithScale, selectTicksOfGraphicalItem, selectUnfilteredCartesianItems, selectZAxisWithScale } from '@/state/chartContext'
 import type { Coordinate, DataKey, ScatterPointItem, ScatterPointNode, TickItem, TooltipType } from '@/types'
 import type { TooltipPayloadEntry } from '@/state/chartTooltip'
 import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
