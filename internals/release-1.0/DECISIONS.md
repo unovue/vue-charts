@@ -407,3 +407,6 @@ with shadcn-vue / Nuxt UI components (`Tooltip`, `Legend`, `Label`, …) and sho
   `top8`: four backwards samples, a 7 px jump and a 78 px² overlap; `top15`: two jumps (15/14 px) and an 83 px² overlap.
   These predate this run and are accepted under D-25, by scenario, kind and element.
   [Baseline and HEAD comparison](../../../.evidence/release-1.0/true-baseline-comparison.json); [baseline report](../../../.evidence/release-1.0/true-baseline-journey/report.json).
+- **D-25d (Phase 1 playground gate):** 0.1 and freshly built `31da149` both exit 1 for inherited playground flags.
+  Gate on zero new scenario/kind/element flags against the same corrected recorder at baseline; retain raw failures and thresholds.
+  [130 matching flags and baseline causes](../../../.evidence/release-1.0/play-flags.md).

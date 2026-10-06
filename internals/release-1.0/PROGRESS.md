@@ -17,7 +17,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.6 | Keyboard for item charts | yes | 1.4 | done | `f8484c3`, `d245f27` | 127 files / 1,258 tests; typing and changed-file lint PASS. |
 | 1.7 | Treemap, Sankey, SunburstChart: attributes, names, keyboard | yes | 1.6 | done | `f3528ef`, `43bb297` | 128 files / 1,261 tests; typing and changed-file lint PASS. |
 | 1.8 | Reduced motion hydrates cleanly | yes | phase 0 | done | `5de7aba` | 129 files / 1,265 tests; typing and changed-file lint PASS. |
-| 1.9 | Contrast, Legend and Brush semantics, and an a11y check | yes | 1.6–1.8 | done | `7176d44` | Existing step evidence: 1,270 tests; 100 a11y cases PASS |
+| 1.9 | Contrast, Legend and Brush semantics, and an a11y check | yes | 1.6–1.8 | done | `7176d44`, `916a00f` | 1,280 tests; 100 a11y cases; painted controls and zero-new-flags comparison PASS |
 | 1.10 | BarList: height, index and per-frame cost | yes | phase 0 | done | `38e5e17` | Existing step evidence: 1,272 tests; browser height checks PASS |
 | 1.11 | Engine: equal data, cascades, springs, events, one clock | yes | phase 0 | done | `a920bd6`, `e7daf33`, `dd12465`, `8a15c6c` | Existing step evidence: combined 1,280 tests; six reverse proofs |
 | 1.12 | Motion tokens, shared cascade, moving labels | yes | 1.11 | done | `54ee9cf` | Existing step evidence: 1,280 tests; two reverse proofs |
@@ -64,7 +64,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | Phase | Date | `pnpm verify` | bench vs baseline | Other | Verdict |
 | --- | --- | --- | --- | --- | --- |
 | 0 | 2026-10-05 | Baseline FAIL retained (0.1) | A/A PASS; CPU control verified | 0.1–0.3 done; baseline metrics/report retained | PASS: setup/recording criteria; no claim of a green release verifier |
-| 1 | 2026-10-06 | FAIL: 8 PASS / 2 FAIL; Chromium/WebKit | PASS: 21 rounds / 18 metrics | 1.13–1.14 done; Firefox unavailable | FAIL: playground flags and visitor capture crash |
+| 1 | 2026-10-06 | Prior full run FAIL; repaired checks below | Prior PASS: 21 rounds / 18 metrics | Playground comparison PASS; visitor capture completes | DEFERRED: visitor timing remains unreliable |
 | 2 | | | | | |
 | 3 | | | | | |
 | 4 | | | | | |
@@ -146,13 +146,13 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Assumptions: detached effect scopes have no hydration phase; unit SSR disables matchMedia before client reduce; Node 22.23.1, two workers. Chromium only; no screen-reader certification.
 
 ## Step 1.9 evidence
-- Done: `7176d44` adds D-20 contrast, native Legend / BarList controls, D-16 Brush semantics and `check:a11y` in verify.
-- Gate PASS: 129 files / 1,270 tests (75.70 s), typecheck, build and changed-file eslint with zero warnings.
-- Browser PASS: 100 cases / 780 text samples; minimum 4.83:1; zero serious / critical axe violations, hydration warnings or page errors; 25 SSR cases render.
-- Six public regressions fail under reverse patches and pass restored. Tooltip positive control exits 1 with 34 contrast failures (minimum 3.53:1); restored full check exits 0.
-- [Commands, proofs and limits](../../../.evidence/release-1.0/step-1.9-checks.md); screenshots / final results in `.evidence/release-1.0/a11y/`.
-- Assumptions: retain 18% BarList tint; buttons when a row-click listener exists; preserve links / slots. Variable fills use explicit D-20 foregrounds; opaque fixture tests automatic choice.
-- Limits: semantic fixtures disable animation; both motion preferences hydrate. Chromium at 900px, Node 22.23.1, two workers; no screen-reader application exercised.
+
+- Done: `7176d44` retains contrast/semantics; `916a00f` completes D-25b painted visibility.
+- Gate PASS: 129 files / 1,280 tests; typecheck and changed-file lint zero warnings; one recorder regression, reverse proof FAIL.
+- A11y PASS: 100 cases / 780 samples, minimum 4.83:1; opaque/stroke controls positive, seven zero-paint cases ignored.
+- Playground PASS under D-25d: HEAD/baseline each 130 real flags, zero new; raw exits 1, each 169 including 39 fixture flags.
+- Evidence: [checks](../../../.evidence/release-1.0/gate-repair-checks.md), [baseline causes](../../../.evidence/release-1.0/play-flags.md).
+- Assumptions: same corrected recorder on fresh `31da149`, local baseline library/dependencies; temporary worktree removed.
 
 ## Step 1.10 evidence
 - Done: `38e5e17` carries occurrence indexes and displayed presence; height shares the row clock and frame indexing is linear.
@@ -201,24 +201,34 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/step-1.14-checks.md`; initial eight docs failures retained there.
 - Assumptions: normal docs build; Node 22; `verify --docs-browser=chromium,webkit`; thresholds unchanged.
 
+## Visitor checker repair
+
+- Done: `c79cfcb` streams capture; `5f48f6c` resets paused captures from live charts; verifier runs all three recorder regressions.
+- Gate PASS: 129 files / 1,280 tests; typecheck/lint zero warnings; two visitor regressions PASS, both reverse proofs FAIL.
+- Full summary: 322 rows / 4 flags / 135 unreliable / 0 errors. Isolated 63/63: 299 rows / 8 flags / 130 unreliable / 0 errors.
+- Fixture PASS: six reliable rows, five expected flags; ten real landing tab clicks PASS at both widths. Phase 1 remains deferred.
+- Evidence: [checks](../../../.evidence/release-1.0/gate-repair-checks.md), [row explanations](../../../.evidence/release-1.0/seen-unreliable.md).
+- Assumptions: four-frame transfers, one snapshot per transfer; raw data preserved, exact geometry shared only for analysis; thresholds unchanged.
+
 ## Phase 1 gate evidence
 
 | Check | Verdict | Observed result |
 | --- | --- | --- |
-| Unit and regression tests | PASS | 129 files / 1,280 tests |
-| Root lint | PASS | Zero errors; 27 existing warnings; changed-file lint zero warnings |
-| Library build | PASS | Production build completes |
-| Package exports and types | PASS | 589 files / three exports; strict publint and attw |
-| Accessibility, contrast and hydration | PASS | 100 cases / 780 samples; minimum contrast 4.83 |
-| Production motion lab | PASS | 285/285 transitions; nine accepted baseline Journey flags |
-| Playground browser sweep | FAIL | 773 flags: 81 artifacts, 692 labelled product bugs; fixture PASS |
-| Docs in Chromium and WebKit | PASS | 126 visits; zero failures or engine errors |
-| Docs checker regression | PASS | One public CLI regression |
-| Visitor-seen entrances | FAIL | 66 logged rows: 45 PASS, 21 unreliable; calendar tab crash, then string-size error; no final summary |
-| Benchmark vs baseline | PASS | 21 rounds / 18 metrics; zero errors; B/A 0.901–1.052 |
+| Typecheck | PASS | Current Node 22 run; zero diagnostics |
+| Unit and recorder regressions | PASS | 129 files / 1,280 tests; three recorder tests; reverse proofs fail |
+| Root lint | PASS, retained | Prior full lint: 27 existing warnings; current changed-file lint: zero warnings |
+| Library build | PASS | Fresh full visitor and accessibility builds complete |
+| Package exports and types | PASS, retained | 589 files / three exports; strict publint and attw |
+| Accessibility, contrast and hydration | PASS | Fresh 100 cases / 780 samples; minimum contrast 4.83 |
+| Production motion lab | PASS, retained | 285/285 transitions; nine accepted baseline Journey flags |
+| Playground browser sweep | PASS, D-25d | HEAD and fresh `31da149`: 130 real flags each; zero new scenario/kind/element flags; both raw exits 1 |
+| Docs in Chromium and WebKit | PASS, retained | 126 visits; zero failures or engine errors |
+| Docs checker regression | PASS, retained | One public CLI regression |
+| Visitor-seen entrances | FAIL | Full: 322 rows, 4 flagged, 135 unreliable, 0 errors. Isolated: 299 rows, 8 flagged, 130 unreliable, 0 errors |
+| Benchmark vs baseline | PASS, retained | 21 rounds / 18 metrics; zero errors; B/A 0.901–1.052 |
 
-- Commands: `VITEST_MAX_WORKERS=2 pnpm verify --docs-browser=chromium,webkit` exits 1; `pnpm bench --compare=.evidence/baseline/dist` exits 0. Node 22.23.3 / pnpm 9.15.0; no quick mode or threshold changes.
-- Evidence: [.evidence/release-1.0/phase-1-checks.md](../../../.evidence/release-1.0/phase-1-checks.md), full logs, archived browser reports and benchmark JSON. Firefox launch unavailable; full visitor sweep unverified after Playwright `ERR_STRING_TOO_LONG`.
-- Anomaly: 773 playground flags versus baseline 679; a zero-fill-opacity rectangle is wrongly marked visible, contradicting D-25b. [Frames and flag](../../../.evidence/release-1.0/phase-1-transparent-geometry.json). Other product labels remain unreviewed; no regression conclusion.
-- Anomaly: 67 throttled worst intervals are smaller than 1x; largest 41.7 → 9.4 ms. Replay state, cadence and load differ; no speed conclusion. [Timing evidence](../../../.evidence/release-1.0/phase-1-timing-anomalies.json).
-- Assumption: record failed gates without expanding this slice into playground or visitor-recorder repairs. Phase 1 remains incomplete; thresholds and accepted Journey identities are unchanged. Temporary baseline worktree and verification processes are cleaned up. Stale 1.9–1.12 table rows reconciled with their existing done evidence; no new claim of rerunning those steps.
+- DEFERRED: full sweep, 63 isolated reruns and startup profiling retain timing failures. All flags are unreliable; no product-regression conclusion or threshold exception.
+- [Current commands and proofs](../../../.evidence/release-1.0/gate-repair-checks.md), [playground comparison](../../../.evidence/release-1.0/play-comparison.md), [visitor explanations](../../../.evidence/release-1.0/seen-unreliable.md).
+- Assumption: retain unchanged product/package/docs/lab/benchmark results from `23dacb7`; [source diff is empty](../../../.evidence/release-1.0/unchanged-product.json). Full `pnpm verify` and benchmark were not rerun; prior Firefox launch limit remains.
+- Anomalies: one playground allocation ID differs but movement/role match; visitor flags vary 4 → 8. Initial row-order matching falsely resolved two charts; physical matching confirms five resolved and 130 still unreliable.
+- [Prior failed verifier and timing anomalies](../../../.evidence/release-1.0/phase-1-checks.md), [prior verdict snapshot](../../../.evidence/release-1.0/phase-1-progress-before-repair.md). Completed fixes are retained; no partial product changes require reverting.

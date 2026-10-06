@@ -20,9 +20,11 @@ const checks = [
         ['accessibility, contrast and hydration', 'pnpm check:a11y'],
         ['frame-exact motion (lab)', 'pnpm motion:report --prod --check'],
         ['playground pages in a browser', 'pnpm check:play'],
+        ['playground recorder regression', 'node --test scripts/check-play.test.mjs'],
         ['docs pages in selected browsers', docsCommand],
         ['docs checker regression', 'node --test scripts/check-docs.test.mjs'],
         ['entrances visitors actually see', 'pnpm check:seen'],
+        ['visitor recorder regression', 'node --test scripts/check-seen.test.mjs'],
       ]),
 ]
 

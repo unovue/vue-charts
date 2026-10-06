@@ -6,7 +6,7 @@ headless Chromium at 1440×900 and 390×844, one page at a time. Set
 Playwright is resolved through the existing @nuxt/test-utils installation.
 Only ports 4690–4699 are used; servers and browsers are stopped on completion.
 
-Options: `--fixture` runs just the five synthetic controls; `--only=docs|landing|play`
+Options: `--fixture` runs just the six synthetic controls; `--only=docs|landing|play`
 selects a site/scenario; `--route=/charts/area-chart,/bar-charts` filters exact routes (comma list);
 `--width=390` selects one width; `--skip-build` uses existing builds.
 `--out=.evidence/path` selects a git-ignored evidence directory.
@@ -60,13 +60,16 @@ pattern from check:play. Static axes do not cancel that exemption.
 
 Every recording reports its largest sample gap. A gap > 50 ms intersecting
 seenAt − 100 through seenAt + 1200 ms marks the row unreliable; unreliable rows
-cannot pass the real release gate. The fixture requires exactly charts a–d to
-be flagged and chart e to pass, with all five rows reliable. A never-animated
-chart necessarily also meets the short-motion unseen threshold.
+cannot pass the real release gate. The fixture requires exactly charts a–d and
+the HTML BarList control f to be flagged and chart e to pass, with all six
+rows reliable. A never-animated chart necessarily also meets the short-motion
+unseen threshold.
 
 Frames drain in batches during recording and stream to disk. Identical geometry
 is shared in memory for analysis; raw evidence retains every frame and attribute.
 Snapshots transfer one at a time, avoiding a recording-sized transport string.
+Sampling pauses during analysis. Tab resets use live chart identities and replace
+the pending frame callback, so rotation cannot leave stale outgoing IDs or two samplers.
 
 Evidence is git-ignored in `.evidence/seen/`: raw frames, summary with full sorted
 progress and duration distributions, flagged-first HTML, and ten-frame PNG
@@ -83,3 +86,6 @@ or an empty run; real product failures are expected on the initial baseline.
 Legacy check:play and check:docs keep their analysis and default report paths.
 Their server ports also use 4690–4699. check:play now accepts the same `--out=`
 option as check:docs so the verification reports can live under `.evidence/seen/`.
+
+Recorder regressions run in `pnpm verify`. Run them directly with
+`node --test scripts/check-play.test.mjs scripts/check-seen.test.mjs`.

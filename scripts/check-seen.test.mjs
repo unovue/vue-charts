@@ -13,7 +13,7 @@ test('visitor capture streams a recording larger than one transport string', asy
   const root = fileURLToPath(new URL('../', import.meta.url))
   const require = createRequire(await realpath(`${root}packages/vue/node_modules/@nuxt/test-utils/package.json`))
   const { chromium } = require('playwright-core')
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.MOTION_EXECUTABLE_PATH })
   const out = `${root}.evidence/release-1.0/seen-stream-regression`
   await mkdir(out, { recursive: true })
   try {
@@ -47,7 +47,7 @@ test('tab reset returns live chart identities after a paused replacement', async
   const root = fileURLToPath(new URL('../', import.meta.url))
   const require = createRequire(await realpath(`${root}packages/vue/node_modules/@nuxt/test-utils/package.json`))
   const { chromium } = require('playwright-core')
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.MOTION_EXECUTABLE_PATH })
   try {
     const page = await browser.newPage()
     await page.evaluate(installSeenRecorder)
