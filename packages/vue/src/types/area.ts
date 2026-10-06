@@ -8,3 +8,10 @@ export interface AreaChartData extends DataPoint {
   value: number
   date?: Date | string
 }
+
+export interface AreaPointItem {
+  x: number
+  y: number
+  value?: number | number[]
+  payload?: any
+}

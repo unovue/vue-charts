@@ -1,12 +1,10 @@
+export { truncateByDomain, getNormalizedStackId, getCateCoordinateOfLine, getBaseValueOfBar, getCateCoordinateOfBar } from '@/core/coordinates'
 export { getTooltipEntry } from '@/core/tooltip'
 export { getBandSizeOfAxis, checkDomainOfScale } from '@/core/axis/scale'
 export { getDomainOfStackGroups, getStackedData } from '@/core/axis/stacks'
 export { MIN_VALUE_REG, MAX_VALUE_REG } from '@/core/axis/userDomain'
 import { getValueByDataKey as readDataKey } from '@/core/data'
-import type { BaseAxisProps } from '@/cartesian/axis/type'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
-import type { NormalizedStackId } from '@/shape'
-import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type {
   ChartCoordinate,
   ChartOffsetRequired,
@@ -17,17 +15,15 @@ import type {
   TickItem,
 } from '@/types'
 import type { AxisRange, AxisType } from '@/types/axis'
-import type { AxisPropsNeededForTicksGenerator, AxisTick, StackId } from '@/types/tick'
-import { findEntryInArray, mathSign } from '@/utils/data'
+import type { AxisPropsNeededForTicksGenerator, AxisTick } from '@/types/tick'
+import { mathSign } from '@/utils/data'
 import {
   formatAngleOfSector,
   getAngleOfPoint,
   polarToCartesian,
   reverseFormatAngleOfSector,
 } from '@/utils/polar'
-import { isNullish, isNumber, toFiniteNumber } from '@/utils/validate'
 import { isNaN } from 'es-toolkit/compat'
-import type { SeriesPoint } from 'd3-shape'
 import { toRaw } from 'vue'
 
 /**
@@ -115,91 +111,6 @@ export function getTicksOfAxis(
       offset,
     }),
   )
-}
-
-/**
- * Both value and domain are tuples of two numbers
- * - but the type stays as array of numbers until we have better support in rest of the app
- * @param value input that will be truncated
- * @param domain boundaries
- * @returns tuple of two numbers
- */
-export function truncateByDomain(
-  value: SeriesPoint<Record<number, number>>,
-  domain: ReadonlyArray<number>,
-): [number, number] | SeriesPoint<Record<number, number>> {
-  if (!domain || domain.length !== 2 || !isNumber(domain[0]) || !isNumber(domain[1])) {
-    return value
-  }
-
-  const minValue = Math.min(domain[0], domain[1])
-  const maxValue = Math.max(domain[0], domain[1])
-
-  const result: [number, number] = [value[0], value[1]]
-  if (!isNumber(value[0]) || value[0] < minValue) {
-    result[0] = minValue
-  }
-
-  if (!isNumber(value[1]) || value[1] > maxValue) {
-    result[1] = maxValue
-  }
-
-  if (result[0] > maxValue) {
-    result[0] = maxValue
-  }
-
-  if (result[1] < minValue) {
-    result[1] = minValue
-  }
-
-  return result
-}
-
-export function getNormalizedStackId(
-  publicStackId: StackId | undefined,
-): NormalizedStackId | undefined {
-  return publicStackId == null ? undefined : String(publicStackId)
-}
-
-export function getCateCoordinateOfLine<T extends Record<string, unknown>>({
-  axis,
-  ticks,
-  bandSize,
-  entry,
-  index,
-  dataKey,
-}: {
-  axis: {
-    dataKey?: DataKey<T>
-    allowDuplicatedCategory?: boolean
-    type?: BaseAxisProps['type']
-    scale: (v: number) => number
-  }
-  ticks: Array<TickItem>
-  bandSize: number
-  entry: T
-  index: number
-  dataKey?: DataKey<T>
-}): number | null {
-  if (axis.type === 'category') {
-    // find coordinate of category axis by the value of category
-    // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
-    if (!axis.allowDuplicatedCategory && axis.dataKey && !isNullish(entry[axis.dataKey])) {
-      // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
-      const matchedTick = findEntryInArray(ticks, 'value', entry[axis.dataKey])
-
-      if (matchedTick) {
-        return matchedTick.coordinate + bandSize / 2
-      }
-    }
-
-    return ticks[index] ? ticks[index].coordinate + bandSize / 2 : null
-  }
-
-  const value = getValueByDataKey(entry, !isNullish(dataKey) ? dataKey! : axis.dataKey!)
-
-  const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
-  return number != null ? axis.scale(number) : null
 }
 
 export function getChartPointer(
@@ -456,54 +367,6 @@ export function isClipDot(dot: any): boolean {
     return Boolean(dot.clipDot)
   }
   return true
-}
-
-export function getBaseValueOfBar(
-  { numericAxis }: { numericAxis: BaseAxisWithScale },
-): number | unknown {
-  const domain = numericAxis.scale.domain()
-
-  if (numericAxis.type === 'number') {
-    // @ts-expect-error type number means the domain has numbers in it but this relationship is not known to typescript
-    const minValue = Math.min(domain[0], domain[1])
-    // @ts-expect-error type number means the domain has numbers in it but this relationship is not known to typescript
-    const maxValue = Math.max(domain[0], domain[1])
-
-    if (minValue <= 0 && maxValue >= 0) {
-      return 0
-    }
-    if (maxValue < 0) {
-      return maxValue
-    }
-
-    return minValue
-  }
-
-  return domain[0]
-}
-
-export function getCateCoordinateOfBar({
-  axis,
-  ticks,
-  offset,
-  bandSize,
-  entry,
-  index,
-}: {
-  axis: BaseAxisWithScale
-  ticks: ReadonlyArray<TickItem>
-  offset: number
-  bandSize: number
-  entry: any
-  index: number
-}): number | null {
-  if (axis.type === 'category') {
-    return ticks[index] ? ticks[index].coordinate + offset : null
-  }
-  const value = getValueByDataKey(entry, axis.dataKey, axis.scale.domain()[index])
-
-  const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
-  return number != null ? axis.scale(number) - bandSize / 2 + offset : null
 }
 
 export function getValueByDataKey<T>(

@@ -14,8 +14,7 @@ import { usePointTransition } from '@/animation/usePointTransition'
 import { labelOpacity, lengthShares, polylineLength, sweptLabels } from '@/animation/ridingLabels'
 import { drawTiming } from '@/animation/motion'
 import { SweepClip } from '@/animation/SweepClip'
-import { useAppSelector } from '@/state/hooks'
-import { selectAxisSettings } from '@/state/chartContext'
+import { useChart } from '@/model/chart'
 import { getValueByDataKey } from '@/utils/chart'
 // Dots component
 export const Dots = defineComponent({
@@ -78,9 +77,10 @@ export const StaticLine = defineComponent({
     const { points, clipPathId, layout, attrs, props, isAnimating, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
     const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
-    const categoryAxis = useAppSelector(state => layout.value === 'vertical'
-      ? selectAxisSettings(state, 'yAxis', props.yAxisId)
-      : selectAxisSettings(state, 'xAxis', props.xAxisId))
+    const chart = useChart()
+    const categoryAxis = computed(() => layout.value === 'vertical'
+      ? chart.axis('yAxis', props.yAxisId).settings.value
+      : chart.axis('xAxis', props.xAxisId).settings.value)
     // A series hidden from the legend sweeps out instead of vanishing.
     const display = usePointTransition(() => props.hide ? [] : points.value, {
       key: (point, index) => {

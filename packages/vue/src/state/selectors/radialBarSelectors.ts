@@ -12,12 +12,12 @@ import type {
   BarWithPosition,
   MaybeStackedGraphicalItem,
   SizeList,
-} from './barSelectors'
+} from '@/core/barSizing'
 import {
   combineAllBarPositions,
   combineBarSizeList,
   combineStackedData,
-} from './barSelectors'
+} from '@/core/barSizing'
 import {
   selectBarCategoryGap,
   selectBarGap,
@@ -310,7 +310,7 @@ const selectPolarStackedData: (
   radiusAxisId: AxisId,
   angleAxisId: AxisId,
   radialBarSettings: RadialBarSettings,
-) => Series<Record<number, number>, DataKey<any>> | undefined = createSelector(
+) => Series<unknown, DataKey<unknown>> | undefined = createSelector(
   [selectRadialBarStackGroups, selectSynchronisedRadialBarSettings],
   combineStackedData,
 )
@@ -349,7 +349,7 @@ export function computeRadialBarDataItems({
   endAngle: rootEndAngle,
 }: {
   displayedData: ReadonlyArray<any>
-  stackedData: Series<Record<number, number>, DataKey<any>> | undefined
+  stackedData: Series<unknown, DataKey<unknown>> | undefined
   dataStartIndex: number
   stackedDomain: ReadonlyArray<unknown> | null
   dataKey: DataKey<any> | undefined
@@ -501,7 +501,7 @@ export const selectRadialBarSectors: (
     baseValue: number | unknown,
     polarViewBox: PolarViewBoxRequired | undefined,
     pos: BarPositionPosition | undefined,
-    stackedData: Series<Record<number, number>, DataKey<any>> | undefined,
+    stackedData: Series<unknown, DataKey<unknown>> | undefined,
   ) => {
     if (
       radialBarSettings == null

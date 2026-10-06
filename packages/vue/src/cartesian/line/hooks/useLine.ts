@@ -4,8 +4,8 @@ import { useChartName } from '@/state/chartContext'
 import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import { selectLinePoints } from '@/state/selectors/lineSelectors'
+import { useChart } from '@/model/chart'
+import { computeLinePoints } from '@/core/line'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { isClipDot } from '@/utils/chart'
 import { filterProps } from '@/utils/VueUtils'
@@ -49,29 +49,42 @@ export function useLineContext() {
 }
 
 export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
+  const chart = useChart()
   const layout = useChartLayout()
   const chartName = useChartName()
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
 
   const isAnimating = useIsAnimating(() => props.isAnimationActive)
-  const { needClip } = useNeedsClip(props.xAxisId!, props.yAxisId!)
+  const { needClip } = useNeedsClip(() => props.xAxisId!, () => props.yAxisId!)
 
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
     && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart'),
   )
 
-  const lineSettings = computed(
-    () => ({
-      data: props.data,
-      dataKey: props.dataKey!,
-    }),
-  )
-
-  const lineData = useAppSelector(state =>
-    selectLinePoints(state, props.xAxisId!, props.yAxisId!, lineSettings.value),
-  )
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId!))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId!))
+  const lineData = computed(() => {
+    const x = xAxis.value.withScale.value
+    const y = yAxis.value.withScale.value
+    const xTicks = xAxis.value.graphicalTicks.value
+    const yTicks = yAxis.value.graphicalTicks.value
+    const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
+    const displayedData = props.data?.length ? props.data : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+    if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData)
+      return undefined
+    return computeLinePoints({
+      layout: layout.value,
+      xAxis: x,
+      yAxis: y,
+      xAxisTicks: xTicks,
+      yAxisTicks: yTicks,
+      dataKey: props.dataKey,
+      bandSize: (layout.value === 'horizontal' ? xAxis.value : yAxis.value).bandSize.value!,
+      displayedData,
+    })
+  })
 
   // Dot related logic
   const dot = props.dot

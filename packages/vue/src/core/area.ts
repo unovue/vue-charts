@@ -1,10 +1,28 @@
-import type { ChartData } from '@/state/chartData'
-import type { AreaPointItem, AreaSettings, ComputedArea } from '@/state/selectors/areaSelectors'
+import type { ChartData } from '@/types/chartData'
+import type { DataKey } from '@/types/common'
 import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { Coordinate, TickItem } from '@/types'
-import type { BaseValue } from '@/types/area'
-import { isNumber, toFiniteNumber } from '@/utils'
-import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
+import type { AreaPointItem, BaseValue } from '@/types/area'
+import { isNumber, toFiniteNumber } from '@/utils/validate'
+import { getCateCoordinateOfLine } from '@/core/coordinates'
+import { getValueByDataKey } from '@/core/data'
+import type { StackId } from '@/types/tick'
+
+export type { AreaPointItem } from '@/types/area'
+
+export type AreaSettings = {
+  connectNulls: boolean
+  baseValue: BaseValue | undefined
+  dataKey: DataKey<unknown>
+  stackId: StackId | undefined
+  data: ChartData | undefined
+}
+
+export type ComputedArea = {
+  points: ReadonlyArray<AreaPointItem>
+  baseLine: number | Coordinate[]
+  isRange: boolean
+}
 
 export function getBaseValue(layout: 'horizontal' | 'vertical', chartBaseValue: BaseValue | undefined, itemBaseValue: BaseValue | undefined, xAxis: BaseAxisWithScale, yAxis: BaseAxisWithScale): number {
   // The baseValue can be defined both on the AreaChart, and on the Area.
@@ -79,7 +97,7 @@ export function computeArea({
       value = stackedData[dataStartIndex + index]
     }
     else {
-      value = getValueByDataKey(entry, dataKey)
+      value = getValueByDataKey(entry, dataKey) as number | number[]
 
       if (!Array.isArray(value)) {
         value = [baseValue, value]

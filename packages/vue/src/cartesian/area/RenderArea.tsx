@@ -5,15 +5,14 @@ import { Fragment, computed, defineComponent, watch } from 'vue'
 import { Layer } from '@/container/Layer'
 import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
-import type { AreaPointItem } from '@/state/selectors/areaSelectors'
+import type { AreaPointItem } from '@/core/area'
 import { getValueByDataKey, isClipDot } from '@/utils/chart'
 import { Dot } from '@/shape/Dot'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
 import { labelOpacity, polylineLength, sweepShare, sweptLabels } from '@/animation/ridingLabels'
 import { drawTiming } from '@/animation/motion'
-import { useAppSelector } from '@/state/hooks'
-import { selectAxisSettings } from '@/state/chartContext'
+import { useChart } from '@/model/chart'
 import { useAreaContext } from './hooks/useArea'
 import { useOffset } from '@/context/chartLayoutContext'
 import { LabelList } from '@/components/label/LabelList'
@@ -78,9 +77,10 @@ export const StaticArea = defineComponent({
     const { points, clipPathId, layout, attrs, areaData, props, isAnimating } = useAreaContext()
     const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
-    const categoryAxis = useAppSelector(state => layout.value === 'vertical'
-      ? selectAxisSettings(state, 'yAxis', props.yAxisId)
-      : selectAxisSettings(state, 'xAxis', props.xAxisId))
+    const chart = useChart()
+    const categoryAxis = computed(() => layout.value === 'vertical'
+      ? chart.axis('yAxis', props.yAxisId).settings.value
+      : chart.axis('xAxis', props.xAxisId).settings.value)
     const display = usePointTransition(() => points.value, {
       key: (point, index) => {
         const dataKey = categoryAxis.value?.dataKey

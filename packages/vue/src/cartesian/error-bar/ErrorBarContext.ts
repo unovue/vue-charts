@@ -7,12 +7,9 @@ import type { DataKey } from '@/types'
 import type { AxisId } from '@/state/chartCartesianAxis'
 import type { ErrorBarsSettings } from '@/state/chartGraphicalItems'
 
-export interface ErrorBarDataItem {
-  x: number | null | undefined
-  y: number | null | undefined
-  value: number
-  errorVal?: number[] | number
-}
+import type { ErrorBarDataItem } from '@/core/errorBar'
+
+export type { ErrorBarDataItem } from '@/core/errorBar'
 
 export type ErrorBarDataPointFormatter<T> = (
   entry: T,

@@ -1,7 +1,19 @@
 import type { ChartOffset, Coordinate, TooltipType } from '@/types'
-import type { FunnelComposedData, FunnelProps, FunnelTrapezoidItem } from './type'
-import { isNumber, toFiniteNumber } from '@/utils'
-import { getValueByDataKey } from '@/utils/chart'
+import type { FunnelComposedData, FunnelTrapezoidItem } from '@/types/funnel'
+import type { DataKey } from '@/types/common'
+import { isNumber, toFiniteNumber } from '@/utils/validate'
+import { getValueByDataKey } from '@/core/data'
+
+export type ResolvedFunnelSettings = {
+  dataKey: DataKey<unknown>
+  data: unknown[] | undefined
+  nameKey: DataKey<unknown>
+  tooltipType?: TooltipType
+  lastShapeType?: 'triangle' | 'rectangle'
+  reversed?: boolean
+  customWidth?: string | number
+  presentationProps: Record<string, unknown> | null
+}
 
 function getRealWidthHeight({ customWidth }: { customWidth?: number | string }, offset: ChartOffset) {
   const { width, height, left, right, top, bottom } = offset
@@ -33,12 +45,12 @@ export function computeFunnelTrapezoids({
   offset,
   customWidth,
 }: {
-  dataKey: FunnelProps['dataKey']
-  nameKey: FunnelProps['nameKey']
+  dataKey: DataKey<unknown>
+  nameKey: DataKey<unknown> | undefined
   offset: ChartOffset
-  displayedData: any[]
+  displayedData: unknown[]
   tooltipType?: TooltipType
-  lastShapeType?: FunnelProps['lastShapeType']
+  lastShapeType?: 'triangle' | 'rectangle'
   reversed?: boolean
   customWidth?: number | string
 }): FunnelComposedData {
@@ -54,7 +66,7 @@ export function computeFunnelTrapezoids({
   const parentViewBox = { x: offset.left, y: offset.top, width: offset.width, height: offset.height }
 
   let trapezoids: ReadonlyArray<FunnelTrapezoidItem> = displayedData.map(
-    (entry: any, i: number): FunnelTrapezoidItem => {
+    (entry, i: number): FunnelTrapezoidItem => {
       const rawVal = values[i]
       const name = getValueByDataKey(entry, nameKey!, i)
       let val = Array.isArray(rawVal) ? rawVal[0] : rawVal
@@ -89,7 +101,7 @@ export function computeFunnelTrapezoids({
       }
 
       return {
-        ...entry,
+        ...Object(entry),
         x,
         y,
         width: Math.max(upperWidth, lowerWidth),
@@ -108,15 +120,15 @@ export function computeFunnelTrapezoids({
           width: Math.abs(upperWidth - lowerWidth) / 2 + Math.min(upperWidth, lowerWidth),
           height: rowHeight,
         },
-      } as any
+      }
     },
   )
 
   if (reversed) {
-    trapezoids = trapezoids.map((entry: any, index: number) => {
+    trapezoids = trapezoids.map((entry, index: number) => {
       const newY = entry.y - index * rowHeight + (len - 1 - index) * rowHeight
       return {
-        ...entry,
+        ...Object(entry),
         upperWidth: entry.lowerWidth,
         lowerWidth: entry.upperWidth,
         x: entry.x - (entry.lowerWidth - entry.upperWidth) / 2,
@@ -134,4 +146,20 @@ export function computeFunnelTrapezoids({
     trapezoids,
     data: displayedData,
   }
+}
+
+export function combineFunnelTrapezoids(
+  offset: ChartOffset,
+  settings: ResolvedFunnelSettings,
+  chartData: unknown[] | undefined,
+) {
+  const { data, presentationProps, ...geometry } = settings
+  const displayedData = data?.length ? data : chartData
+  if (!displayedData?.length)
+    return { trapezoids: [], data: displayedData }
+  return computeFunnelTrapezoids({
+    ...geometry,
+    displayedData: displayedData.map(entry => ({ payload: entry, ...presentationProps, ...Object(entry) })),
+    offset,
+  })
 }

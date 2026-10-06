@@ -22,7 +22,7 @@ export type { JourneyHeaderSlotProps, JourneyLabelSlotProps } from './chart/Jour
 export type { CellSlotProps } from './chart/CellGridLayer'
 export type { BarRectangleItem } from './types/bar'
 export type { LinePointItem } from './cartesian/line/type'
-export type { AreaPointItem } from './state/selectors/areaSelectors'
+export type { AreaPointItem } from './core/area'
 export type { ScatterPointItem } from './types/common'
 export type { PieSectorDataItem } from './state/selectors/pieSelectors'
 export type { RadarPoint } from './types/radar'

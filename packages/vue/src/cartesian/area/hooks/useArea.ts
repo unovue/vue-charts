@@ -4,12 +4,13 @@ import { useChartName } from '@/state/chartContext'
 import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import { selectArea } from '@/state/selectors/areaSelectors'
+import { useChart } from '@/model/chart'
+import { computeArea } from '@/core/area'
+import { getNormalizedStackId } from '@/core/coordinates'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
 import { isClipDot } from '@/utils/chart'
 import { filterProps } from '@/utils/VueUtils'
-import type { AreaPointItem, ComputedArea } from '@/state/selectors/areaSelectors'
+import type { AreaPointItem, ComputedArea } from '@/core/area'
 
 // Area Context 类型定义
 export interface AreaContext {
@@ -54,6 +55,7 @@ export function useAreaContext() {
 }
 
 export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => any) {
+  const chart = useChart()
   const layout = useChartLayout()
   const chartName = useChartName()
   const localId = useChartId('v-charts-area')
@@ -80,7 +82,42 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
       dataKey: props.dataKey!,
     }),
   )
-  const areaData = useAppSelector(state => selectArea(state, props.xAxisId!, props.yAxisId!, areaSettings.value))
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId!))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId!))
+  const stackedData = computed(() => {
+    const numericAxis = layout.value === 'horizontal' ? yAxis.value : xAxis.value
+    const stackId = getNormalizedStackId(props.stackId)
+    return stackId == null
+      ? undefined
+      : numericAxis.stackGroups.value[stackId]?.stackedData
+        .find(stack => stack.key === props.dataKey)
+  })
+  const areaData = computed(() => {
+    const x = xAxis.value.withScale.value
+    const y = yAxis.value.withScale.value
+    const xTicks = xAxis.value.graphicalTicks.value
+    const yTicks = yAxis.value.graphicalTicks.value
+    const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
+    const displayedData = props.data?.length ? props.data : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+    const type = layout.value
+    if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData
+      || (type !== 'horizontal' && type !== 'vertical')) {
+      return undefined
+    }
+    return computeArea({
+      layout: type,
+      xAxis: x,
+      yAxis: y,
+      xAxisTicks: xTicks,
+      yAxisTicks: yTicks,
+      dataStartIndex,
+      areaSettings: areaSettings.value,
+      stackedData: stackedData.value!,
+      displayedData,
+      chartBaseValue: undefined,
+      bandSize: (type === 'horizontal' ? xAxis.value : yAxis.value).bandSize.value!,
+    })
+  })
   // Dot related logic
   const dot = props.dot
   const clipDot = isClipDot(dot)

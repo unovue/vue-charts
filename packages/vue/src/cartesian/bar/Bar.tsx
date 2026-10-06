@@ -63,7 +63,7 @@ const BarView = defineComponent({
       index: () => props.activeIndex,
       request: index => emit('update:activeIndex', index),
     }, attrs)
-    const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
+    const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
     const layout = useChartLayout()
 
     const errorBarOffset = computed(() => {
@@ -75,8 +75,8 @@ const BarView = defineComponent({
 
     provideErrorBarContext({
       data: barData,
-      xAxisId: props.xAxisId ?? 'xAxis-0',
-      yAxisId: props.yAxisId ?? 'yAxis-0',
+      get xAxisId() { return props.xAxisId ?? 'xAxis-0' },
+      get yAxisId() { return props.yAxisId ?? 'yAxis-0' },
       dataPointFormatter: errorBarDataPointFormatter,
       errorBarOffset,
     })

@@ -1,4 +1,6 @@
-import type { Coordinate, VueClassValue } from '@/types/common'
+import type { Coordinate, DataKey, VueClassValue } from '@/types/common'
+import type { ChartData } from '@/types/chartData'
+import type { MinPointSize } from '@/shape'
 import type { CartesianViewBox } from '@/cartesian/type'
 
 export type BarPositionPosition = {
@@ -49,3 +51,12 @@ export interface BarRectangleItem extends RectangleProps {
 }
 
 export type ErrorBarDirection = 'x' | 'y'
+
+export interface BarSettings {
+  barSize?: string | number
+  data?: ChartData
+  dataKey: DataKey<unknown>
+  maxBarSize?: number
+  minPointSize: MinPointSize
+  stackId?: string | number
+}

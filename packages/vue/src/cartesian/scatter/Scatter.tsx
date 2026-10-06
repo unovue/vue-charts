@@ -110,8 +110,8 @@ const ScatterView = defineComponent({
 
     provideErrorBarContext({
       data: points,
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
+      get xAxisId() { return props.xAxisId },
+      get yAxisId() { return props.yAxisId },
       dataPointFormatter: errorBarDataPointFormatter,
       errorBarOffset: computed(() => 0),
     })

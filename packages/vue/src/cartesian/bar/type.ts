@@ -85,13 +85,6 @@ export const BarVueProps = {
 export type BarProps = VuePropsToType<typeof BarVueProps>
 export type BarPropsWithSVG = WithSVGProps<typeof BarVueProps>
 
-export type BarSettings = {
-  barSize?: string | number
-  data?: ChartData
-  dataKey: DataKey<any>
-  maxBarSize?: number
-  minPointSize: MinPointSize
-  stackId?: string | number
-}
+export type { BarSettings } from '@/types/bar'
 
 export type ResolvedBarProps = ExtractPropTypes<typeof BarVueProps>

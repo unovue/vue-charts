@@ -3,15 +3,12 @@ import type { AxisId } from '@/types/axis'
 import type { ValueAnimationTransition } from 'motion-dom'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
-import type { CurveType, Point } from '@/shape/Curve'
+import type { CurveType } from '@/shape/Curve'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
-export interface LinePointItem extends Point {
-  readonly value?: number
-  readonly payload?: any
-}
+export type { LinePointItem } from '@/types/line'
 
 // Complete LineProps interface
 export interface LineProps {

@@ -2,18 +2,18 @@ import { fireEvent, render } from '@testing-library/vue'
 import { expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { Bar, ComposedChart, Line, Tooltip, XAxis, YAxis } from '@/index'
-import { computeBarRectangles } from '@/cartesian/bar/utils'
-import { computeLinePoints } from '@/cartesian/line/utils'
+import { computeBarRectangles } from '@/core/bar'
+import { computeLinePoints } from '@/core/line'
 import { combineAxisTicks } from '@/core/axis/ticks'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 // Instrument the real math, independently of selector wiring and rendered equality.
-vi.mock('@/cartesian/bar/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/cartesian/bar/utils')>()
+vi.mock('@/core/bar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/core/bar')>()
   return { ...actual, computeBarRectangles: vi.fn(actual.computeBarRectangles) }
 })
-vi.mock('@/cartesian/line/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/cartesian/line/utils')>()
+vi.mock('@/core/line', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/core/line')>()
   return { ...actual, computeLinePoints: vi.fn(actual.computeLinePoints) }
 })
 vi.mock('@/core/axis/ticks', async (importOriginal) => {

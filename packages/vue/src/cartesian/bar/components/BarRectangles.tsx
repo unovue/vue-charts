@@ -1,8 +1,8 @@
 import { useTooltipEntry } from '@/model/tooltip'
 import { barEvents } from '@/events/itemEvents'
-import { defineComponent, watch } from 'vue'
-import { selectAxisSettings, useChartTooltip } from '@/state/chartContext'
-import { useAppSelector } from '@/state/hooks'
+import { computed, defineComponent, watch } from 'vue'
+import { useChartTooltip } from '@/state/chartContext'
+import { useChart } from '@/model/chart'
 import { filterProps, svgAttrs } from '@/utils/VueUtils'
 import { getValueByDataKey } from '@/utils/chart'
 import { interpolate } from '@/utils'
@@ -31,9 +31,10 @@ export const BarRectangles = defineComponent({
 
     // Bars are matched across data changes by their category, so a shifted or extended
     // series slides instead of every bar morphing into its neighbour.
-    const categoryAxis = useAppSelector(state => layout.value === 'vertical'
-      ? selectAxisSettings(state, 'yAxis', props.yAxisId)
-      : selectAxisSettings(state, 'xAxis', props.xAxisId))
+    const chart = useChart()
+    const categoryAxis = computed(() => layout.value === 'vertical'
+      ? chart.axis('yAxis', props.yAxisId).settings.value
+      : chart.axis('xAxis', props.xAxisId).settings.value)
 
     const bandOf = (bar: BarRectangleItem): IndexedBar['band'] => {
       const position = layout.value === 'vertical' ? bar.y : bar.x

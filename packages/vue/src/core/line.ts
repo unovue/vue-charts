@@ -1,8 +1,11 @@
+import { getValueByDataKey } from '@/core/data'
 import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { TickItem } from '@/types'
-import type { LinePointItem, LineProps } from './type'
-import { toFiniteNumber } from '@/utils'
-import { getCateCoordinateOfLine, getValueByDataKey } from '@/utils/chart'
+import type { DataKey, LayoutType } from '@/types/common'
+
+import type { LinePointItem } from '@/types/line'
+import { toFiniteNumber } from '@/utils/validate'
+import { getCateCoordinateOfLine } from '@/core/coordinates'
 
 export function computeLinePoints({
   layout,
@@ -14,14 +17,14 @@ export function computeLinePoints({
   bandSize,
   displayedData,
 }: {
-  layout: LineProps['layout']
+  layout: LayoutType | undefined
   xAxis: BaseAxisWithScale
   yAxis: BaseAxisWithScale
   xAxisTicks: TickItem[]
   yAxisTicks: TickItem[]
-  dataKey: LineProps['dataKey'] | undefined
+  dataKey: DataKey<unknown> | undefined
   bandSize: number
-  displayedData: any[]
+  displayedData: readonly unknown[]
 }): ReadonlyArray<LinePointItem> {
   return displayedData.map((entry, index): LinePointItem => {
     const value = toFiniteNumber(getValueByDataKey(entry, dataKey))

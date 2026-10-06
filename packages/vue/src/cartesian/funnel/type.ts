@@ -1,24 +1,10 @@
 import type { ValueAnimationTransition } from 'motion-dom'
 import type { PropType } from 'vue'
 import { classProp } from '@/types'
-import type { ViewBox } from '@/cartesian/type'
-import type { TrapezoidProps } from '@/shape'
-import type { Coordinate, DataKey, TooltipType, WithSVGProps } from '@/types'
+import type { DataKey, TooltipType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 
-export interface FunnelTrapezoidItem extends TrapezoidProps {
-  x: number
-  y: number
-  upperWidth: number
-  lowerWidth: number
-  height: number
-  value?: number | string
-  payload?: any
-  isActive: boolean
-  tooltipPosition: Coordinate
-  parentViewBox?: ViewBox
-  labelViewBox?: ViewBox
-}
+export type { FunnelTrapezoidItem, FunnelComposedData } from '@/types/funnel'
 
 export interface FunnelProps {
   // activeShape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
@@ -58,10 +44,3 @@ export const FunnelVueProps = {
 }
 
 export type FunnelPropsWithSVG = WithSVGProps<typeof FunnelVueProps>
-
-type RealFunnelData = any
-
-export type FunnelComposedData = {
-  trapezoids: ReadonlyArray<FunnelTrapezoidItem>
-  data: RealFunnelData[]
-}

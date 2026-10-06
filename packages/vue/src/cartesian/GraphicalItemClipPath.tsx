@@ -21,7 +21,7 @@ export const GraphicalItemClipPath = defineComponent({
   },
   setup(props) {
     const offset = useOffset()
-    const { needClipX, needClipY, needClip } = useNeedsClip(props.xAxisId!, props.yAxisId!)
+    const { needClipX, needClipY, needClip } = useNeedsClip(() => props.xAxisId!, () => props.yAxisId!)
 
     return () => {
       if (!needClip)

@@ -5,13 +5,13 @@ import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { useAppSelector } from '@/state/hooks'
+import { useChart } from '@/model/chart'
 import { Layer } from '@/container/Layer'
 import { Trapezoid } from '@/shape/Trapezoid'
 import { getValueByDataKey } from '@/utils/chart'
 import { type Neighbors, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
-import { type ResolvedFunnelSettings, selectFunnelTrapezoids } from '@/state/selectors/funnelSelectors'
+import { type ResolvedFunnelSettings, combineFunnelTrapezoids } from '@/core/funnel'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
@@ -229,7 +229,12 @@ const _Funnel = defineComponent({
       radiusAxisId: 0,
     })))
 
-    const composedData = useAppSelector(state => selectFunnelTrapezoids(state, funnelSettings.value))
+    const chart = useChart()
+    const composedData = computed(() => combineFunnelTrapezoids(
+      chart.offset.value,
+      funnelSettings.value,
+      chart.data.value,
+    ))
 
     const trapezoids = computed(() => composedData.value?.trapezoids ?? [])
     // Legend payload: built from trapezoids, with Cell fill overrides applied

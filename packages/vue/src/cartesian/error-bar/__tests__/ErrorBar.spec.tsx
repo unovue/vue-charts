@@ -1,5 +1,6 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { nextTick, ref } from 'vue'
 import { Bar, BarChart, ErrorBar, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -199,4 +200,44 @@ describe('<ErrorBar />', () => {
       expect(lines).toHaveLength(9)
     })
   })
+})
+
+// A series can change axes without remounting; its error ranges must use the same new scale.
+it.each(['bar', 'scatter'] as const)('follows the live %s axis when drawing error ranges', async (kind) => {
+  mockGetBoundingClientRect({ width: 500, height: 300 })
+  const axisId = ref('first')
+  const rows = [{ name: 'A', x: 50, value: 50, error: 10 }]
+  const { container } = render(() => {
+    const axes = [
+      <XAxis hide type="number" dataKey="x" domain={[0, 100]} />,
+      <YAxis hide yAxisId="first" domain={[0, 100]} allowDataOverflow />,
+      <YAxis hide yAxisId="second" domain={[0, 200]} />,
+    ]
+    const error = { default: () => <ErrorBar dataKey="error" direction="y" /> }
+    return kind === 'bar'
+      ? (
+          <BarChart width={500} height={300} data={rows}>
+            {axes}
+            <Bar dataKey="value" yAxisId={axisId.value} isAnimationActive={false}>{error}</Bar>
+          </BarChart>
+        )
+      : (
+          <ScatterChart width={500} height={300}>
+            {axes}
+            <Scatter data={rows} dataKey="value" yAxisId={axisId.value} isAnimationActive={false}>{error}</Scatter>
+          </ScatterChart>
+        )
+  })
+  await nextTick()
+  expect(getErrorBarLines(container).map(({ y1, y2 }) => [y1, y2]))
+    .toEqual([['121', '121'], ['179', '121'], ['179', '179']])
+  if (kind === 'bar')
+    expect(container.querySelector('.v-charts-bar-rectangles')?.hasAttribute('clip-path')).toBe(true)
+  axisId.value = 'second'
+  await nextTick()
+  await nextTick()
+  expect(getErrorBarLines(container).map(({ y1, y2 }) => [y1, y2]))
+    .toEqual([['208', '208'], ['237', '208'], ['237', '237']])
+  if (kind === 'bar')
+    expect(container.querySelector('.v-charts-bar-rectangles')?.hasAttribute('clip-path')).toBe(false)
 })
