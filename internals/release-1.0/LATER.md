@@ -55,11 +55,12 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
   series, so D-22a needs our own fix), lazy hydration (Nuxt 3.16+, and it delays interactivity),
   useElementVisibility (wrong predicate), numeric `watch` deep (misses nested edits D-7 needs).
 - **P3 Hydration detection reads `vnode.el`, a Vue internal** (`animation/renderPhase.ts`).
-  Scheduled in 2.13: replace it with the standard pattern (same first frame on every client
-  mount, open the gate one frame after mount). Fallback if the motion lab objects: keep it with
-  a regression test that fails when Vue changes the internal.
+  2.13 tried the standard pattern (open the gate one frame after mount): it changed entrance
+  geometry (barMany curves 0 → 182, off-screen shapes 0 → 2), so the fallback applies: kept, with
+  a public auto-width hydration test that fails without it (53eed3f). Revisit with Vue's own
+  hydration hook if one becomes public.
 
-- **Elegance pass, scheduled inside the run (step 2.13), not later:** model surfaces expose
+- **Done in 2.13 (005aa28 … 8874d7c), kept for the record. Elegance pass:** model surfaces expose
   only what consumers read (5 of 10 AxisModel computeds have no outside reader); domain names
   instead of store names (`rootProps`, `layoutType`, `polarOptions`, 30 `combine*` functions);
   no `@/state` imports in `model/` or `core/` (18 today); every `ChartInputs` field a getter;
