@@ -243,3 +243,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Packed Vite/Nuxt and nullability PASS; both reverse proofs fail as expected, restored checks PASS.
 - Motion PASS: 285/285, nine accepted flags, zero errors; resize recheck 3/3; three frames match baseline pixels.
 - Evidence: `.evidence/release-1.0/step-2.0/`. Assumptions: reuse installed types and panorama test; no adapter.
+
+## Step 2.1 evidence
+- Done: `315aed3`; delete panorama plumbing, dead files/state and listed dead exports.
+- Gate PASS: 131 files / 1,275 tests; typecheck; lint on 44 changed files, zero warnings.
+- Motion PASS: 285/285 transitions, nine unchanged accepted flags, zero errors; 570 videos exist.
+- Brush PASS: two viewport cases, range 10–30 → 14–34; three settled frames match step 2.0 pixels.
+- Evidence: `.evidence/release-1.0/step-2.1/`; verification server closed.
+- Anomalies: resize/narrow curves 0 → 6; 109 throttled intervals faster; suite 73.57 → 97.54 s. No performance conclusion.
+- Assumptions: Node 22.23.3, two workers; retain locally used calculations as private; fixed-size Brush fixture.
