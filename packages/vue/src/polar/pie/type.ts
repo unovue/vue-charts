@@ -22,7 +22,7 @@ export const PieVueProps = {
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   hide: { type: Boolean, default: false },
-  activeIndex: { type: Number, default: -1 },
+  activeIndex: { type: Number as PropType<number | null>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,

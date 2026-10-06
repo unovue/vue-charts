@@ -233,6 +233,7 @@ const TreemapInner = defineComponent({
           a.y + a.height / 2 - b.y - b.height / 2
           || a.x + a.width / 2 - b.x - b.width / 2,
         ).map(node => ({
+          identity: node.payload,
           index: getTooltipIndex(node)!,
           coordinate: { x: node.x + node.width / 2, y: node.y + node.height / 2 },
           onClick: event => handleNodeClick(node, nodes.value.indexOf(node), event),

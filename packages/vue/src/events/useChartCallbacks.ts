@@ -5,7 +5,7 @@ import {
   selectActiveTooltipDataKey,
   selectActiveTooltipIndex,
   selectIsTooltipActive,
-} from '@/state/selectors/tooltipSelectors'
+} from '@/state/chartContext'
 import type { CategoricalChartFunc, MouseHandlerDataParam } from '@/types'
 
 export function useChartCallbacks() {

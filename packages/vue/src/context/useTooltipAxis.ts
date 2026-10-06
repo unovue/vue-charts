@@ -1,5 +1,5 @@
 import { useAppSelector } from '@/state/hooks'
-import { selectTooltipAxis, selectTooltipAxisScale, selectTooltipAxisTicks } from '@/state/selectors/tooltipSelectors'
+import { selectTooltipAxis, selectTooltipAxisScale, selectTooltipAxisTicks } from '@/state/chartContext'
 import { getBandSizeOfAxis } from '@/utils/chart'
 import { computed } from 'vue'
 

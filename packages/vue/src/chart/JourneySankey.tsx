@@ -260,6 +260,18 @@ const JourneySankeyInner = defineComponent({
           links: layout.value.links.map(link => ({ ...linkDescription(link), payload: link })),
         },
         positions: undefined,
+        pointerItems: [
+          ...layout.value.nodes.map((node, index) => ({
+            index: `nodes[${index}]`,
+            identity: node.id,
+            coordinate: { x: node.x + props.nodeWidth, y: node.y },
+          })),
+          ...layout.value.links.map((link, index) => ({
+            index: `links[${index}]`,
+            identity: `${link.source}→${link.target}`,
+            coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 },
+          })),
+        ],
         settings: { stroke: undefined, strokeWidth: undefined, fill: undefined, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: undefined, unit: '' },
       }
       return settings

@@ -1,5 +1,5 @@
 import { useAppSelector } from './chartContext'
-import { selectActiveTooltipDataPoints } from '@/state/selectors/tooltipSelectors'
+import { selectActiveTooltipDataPoints } from '@/state/chartContext'
 
 export { useAppSelector } from './chartContext'
 

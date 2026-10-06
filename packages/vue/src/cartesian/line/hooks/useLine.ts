@@ -1,6 +1,6 @@
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
-import { useChartName } from '@/state/selectors/selectors'
+import { useChartName } from '@/state/chartContext'
 import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'

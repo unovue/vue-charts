@@ -1,6 +1,6 @@
+import { parseTooltipIndex } from '@/core/tooltip'
 import type { TooltipIndex, TooltipPayloadSearcher } from './chartTooltip'
 import type { TooltipEventType } from '@/types'
-import { isNan } from '@/utils'
 
 /**
  * These chart options are decided internally, by Recharts,
@@ -29,8 +29,8 @@ export type ChartOptions = {
 export function arrayTooltipSearcher<T>(data: ReadonlyArray<T>, strIndex: TooltipIndex): T | undefined {
   if (!strIndex)
     return undefined
-  const numIndex = Number.parseInt(strIndex, 10)
-  if (isNan(numIndex)) {
+  const numIndex = parseTooltipIndex(strIndex)
+  if (numIndex === null) {
     return undefined
   }
   return data?.[numIndex]

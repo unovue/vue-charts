@@ -1,22 +1,14 @@
+import { useTooltipSource } from '@/model/tooltip'
 import { type ChartTransition, motionTokens } from '@/animation/motion'
-import { useChartTooltip } from '@/state/chartContext'
+import { useChartName, useChartTooltip } from '@/state/chartContext'
 import { Fragment, Teleport, computed, defineComponent, isVNode, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
-import { useAppSelector } from '@/state/hooks'
 import { useChartLayout, useOffsetInternal, useViewBox } from '@/context/chartLayoutContext'
 import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
-import { useTooltipEventType } from '@/state/selectors/selectTooltipEventType'
 import { animate, useSpring } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-dom'
-import type { TooltipActiveIndex, TooltipIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
-import {
-  selectActiveCoordinate,
-  selectActiveLabel,
-  selectIsTooltipActive,
-  selectTooltipPayload,
-  useChartName,
-} from '@/state/selectors/selectors'
+import type { TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
 import { useMagicKeys } from '@vueuse/core'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import type { AxisId } from '@/state/chartCartesianAxis'
@@ -579,7 +571,7 @@ const TooltipVueProps = {
     default: true,
   },
   activeIndex: { type: Number as PropType<TooltipActiveIndex>, default: undefined },
-  defaultIndex: [Number, String] as PropType<number | TooltipIndex>,
+  defaultIndex: Number,
   isAnimationActive: {
     type: Boolean,
     default: true,
@@ -666,57 +658,33 @@ const _Tooltip = defineComponent({
   setup(props, { slots, emit }) {
     const tooltip = useChartTooltip()
 
-    tooltip.setActiveIndexListener(index => emit('update:activeIndex', index))
-    onScopeDispose(() => tooltip.setActiveIndexListener(undefined))
-
-    const defaultIndexAsString = computed(() =>
-      props.activeIndex !== undefined
-        ? props.activeIndex === null ? null : String(props.activeIndex)
-        : typeof props.defaultIndex === 'number' ? String(props.defaultIndex) : props.defaultIndex,
-    )
-
-    // Register tooltip settings in store
-    watch(computed(() => ({
-      activeIndex: props.activeIndex,
-      shared: props.shared,
-      trigger: props.trigger,
-      axisId: props.axisId,
-      active: props.active,
-      defaultIndex: defaultIndexAsString.value,
-    })), tooltip.setTooltipSettingsState, { immediate: true })
-
-    // Context hooks
+    const source = useTooltipSource()
+    const binding = computed(() => ({
+      settings: {
+        activeIndex: props.activeIndex,
+        shared: props.shared,
+        trigger: props.trigger,
+        axisId: props.axisId,
+        active: props.active,
+        defaultIndex: props.defaultIndex === undefined ? undefined : String(props.defaultIndex),
+      },
+      request: (index: TooltipActiveIndex) => emit('update:activeIndex', index),
+    }))
+    tooltip.bindings.register(binding)
+    const ownsInteraction = computed(() => tooltip.bindings.registrations.value[0] === binding)
     const viewBox = useViewBox()
     const accessibilityLayer = useAccessibilityLayer()
-    const tooltipEventType = useTooltipEventType(() => props.shared)
-
-    // Selectors
-    const tooltipState = useAppSelector(state =>
-      selectIsTooltipActive(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
-    )
-    const selectedPayload = useAppSelector(state =>
-      selectTooltipPayload(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
-    )
-
-    const selectedLabel = useAppSelector(state =>
-      selectActiveLabel(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
-    )
-
-    const coordinate = useAppSelector(state =>
-      selectActiveCoordinate(state, tooltipEventType.value, props.trigger, defaultIndexAsString.value),
-    )
-
-    const payload = computed(() => selectedPayload.value ?? [])
+    const tooltipEventType = tooltip.eventType
+    const coordinate = source.coordinate
+    const payload = source.payload
 
     // Portal
     const tooltipPortalFromContext = usePortal()
     const tooltipPortal = computed(() => props.portal ?? tooltipPortalFromContext?.value)
 
     // Final states
-    const finalIsActive = computed(() => props.activeIndex !== undefined ? props.activeIndex !== null : props.active ?? tooltipState.value?.isActive)
-    const finalLabel = computed(() =>
-      tooltipEventType.value === 'axis' ? selectedLabel.value : undefined,
-    )
+    const finalIsActive = source.active
+    const finalLabel = source.label
 
     // Payload processing
     const emptyPayload: TooltipPayload = []
@@ -743,18 +711,19 @@ const _Tooltip = defineComponent({
 
     // Listen to keyboard state only: pointer updates must never trigger announcements.
     watch([
+      ownsInteraction,
       () => tooltip.state.value.keyboardInteraction.active,
       () => tooltip.state.value.settings.activeIndex !== undefined
         ? tooltip.state.value.settings.activeIndex
         : tooltip.state.value.keyboardInteraction.index,
       () => tooltip.state.value.keyboardInteraction.index,
       () => tooltip.state.value.keyboardInteraction.configuration,
-    ], ([active, index], _, cleanup) => {
-      if (!accessibilityLayer.value || !active || index == null)
+    ], ([owner, active, index], _, cleanup) => {
+      if (!owner || !accessibilityLayer.value || !active || index == null)
         return
       const timer = setTimeout(() => {
         // A controlled Tooltip announces only after its owner accepts the keyboard index.
-        if (props.activeIndex !== undefined && String(props.activeIndex) !== tooltip.state.value.keyboardInteraction.index)
+        if (tooltip.controlled.value !== undefined && source.index.value !== tooltip.requestedIndex.value)
           return
         const entries = finalPayload.value.flatMap((entry, position, payload) => {
           const formatter = entry.formatter ?? props.formatter
@@ -776,7 +745,6 @@ const _Tooltip = defineComponent({
       }, 150)
       cleanup(() => clearTimeout(timer))
     }, { flush: 'post' })
-    onScopeDispose(() => { tooltip.announcement.value = '' })
 
     const hasPayload = computed(() => finalPayload.value.length > 0)
 
@@ -799,14 +767,7 @@ const _Tooltip = defineComponent({
 
     const hasContentSlot = computed(() => !!slots.content || !!slots.default)
 
-    useTooltipChartSynchronisation({
-      tooltipEventType,
-      trigger: props.trigger,
-      activeCoordinate: coordinate,
-      activeLabel: finalLabel,
-      activeIndex: computed(() => tooltipState.value?.activeIndex),
-      isTooltipActive: finalIsActive,
-    })
+    useTooltipChartSynchronisation(source, () => ownsInteraction.value)
     return () => {
       if (!tooltipPortal.value) {
         return null
@@ -842,7 +803,7 @@ const _Tooltip = defineComponent({
               tooltipEventType={tooltipEventType.value}
               coordinate={coordinate.value}
               payload={payload.value}
-              index={tooltipState.value?.activeIndex ?? undefined}
+              index={tooltip.target.value?.index}
             />
           )}
         </Fragment>

@@ -1,3 +1,4 @@
+export { getTooltipEntry } from '@/core/tooltip'
 export { getBandSizeOfAxis, checkDomainOfScale } from '@/core/axis/scale'
 export { getDomainOfStackGroups, getStackedData } from '@/core/axis/stacks'
 export { MIN_VALUE_REG, MAX_VALUE_REG } from '@/core/axis/userDomain'
@@ -6,7 +7,6 @@ import type { BaseAxisProps } from '@/cartesian/axis/type'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
 import type { NormalizedStackId } from '@/shape'
 import type { BaseAxisWithScale } from '@/types/axisSettings'
-import type { TooltipEntrySettings, TooltipPayloadEntry } from '@/state/chartTooltip'
 import type {
   ChartCoordinate,
   ChartOffsetRequired,
@@ -15,7 +15,6 @@ import type {
   DataKey,
   LayoutType,
   TickItem,
-  ValueType,
 } from '@/types'
 import type { AxisRange, AxisType } from '@/types/axis'
 import type { AxisPropsNeededForTicksGenerator, AxisTick, StackId } from '@/types/tick'
@@ -223,28 +222,6 @@ export function getChartPointer(
      */
     chartX: Math.round((event.clientX - rect.left) / scaleX),
     chartY: Math.round((event.clientY - rect.top) / scaleY),
-  }
-}
-
-export function getTooltipEntry({
-  tooltipEntrySettings,
-  dataKey,
-  payload,
-  value,
-  name,
-}: {
-  tooltipEntrySettings: TooltipEntrySettings
-  dataKey: DataKey<any>
-  payload: any
-  value: ValueType
-  name: string | undefined
-}): TooltipPayloadEntry {
-  return {
-    ...tooltipEntrySettings,
-    dataKey,
-    payload,
-    value,
-    name,
   }
 }
 

@@ -1,7 +1,7 @@
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { pieEvents } from '@/events/itemEvents'
 import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
-import { computed, defineComponent, h, ref, watch } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -47,12 +47,6 @@ const PieView = defineComponent({
     const data = view.data
     const pieSettings = view.pieSettings
     const tooltip = useChartTooltip()
-    const isControlled = computed(() => props.activeIndex !== -1)
-    const activeIndex = ref(props.activeIndex)
-    watch(() => props.activeIndex, (val) => {
-      activeIndex.value = val
-    })
-
     const displayedData = useAppSelector(state => selectDisplayedData(state, pieSettings.value))
     const synchronisedSettings = useAppSelector(state => selectSynchronisedPieSettings(state, pieSettings.value))
     const offset = useAppSelector(state => selectChartOffset(state))
@@ -95,6 +89,7 @@ const PieView = defineComponent({
     })
 
     const tooltipConfiguration = computed(() => ({
+      model: { index: () => props.activeIndex, request: (index: number | null) => emit('update:activeIndex', index) },
       dataDefinedOnItem: displayedData.value ?? [],
       positions: sectors.value?.map(s => s.tooltipPosition),
       settings: {
@@ -109,14 +104,13 @@ const PieView = defineComponent({
         unit: '',
       },
     }))
-    useChartTooltip().entries.register(tooltipConfiguration)
+    tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
 
     // Hoisted event handlers — stable closures, not recreated per animation frame
     function handleSectorEnter(sector: PieSectorDataItem, index: number) {
-      if (!isControlled.value) {
-        activeIndex.value = index
-      }
       tooltip.setActiveMouseOverItemIndex({
+        configuration: tooltipConfiguration.value,
         activeIndex: String(index),
         activeDataKey: props.dataKey,
         activeCoordinate: sector.tooltipPosition,
@@ -124,9 +118,6 @@ const PieView = defineComponent({
     }
 
     function handleSectorLeave() {
-      if (!isControlled.value) {
-        activeIndex.value = -1
-      }
       tooltip.mouseLeaveItem()
     }
 
@@ -193,10 +184,7 @@ const PieView = defineComponent({
           {sectorList.map(({ key, value: sector }) => {
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
-            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: tooltip.state.value.keyboardInteraction.active
-              ? tooltip.state.value.keyboardInteraction.configuration === tooltipConfiguration.value
-              && tooltip.state.value.keyboardInteraction.index === String(sector.index)
-              : activeIndex.value === sector.index }
+            const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === sector.index }
             const shapeSlot = shapeProps.isActive && slots.activeShape ? slots.activeShape : slots.shape
             const content = shapeSlot
               ? shapeSlot(shapeProps)
@@ -219,7 +207,7 @@ const PieView = defineComponent({
                 key={key}
                 onMouseenter={(event: MouseEvent) => { handleSectorEnter(sector, sector.index); emit('mouseenter', sector, sector.index, event) }}
                 onMouseleave={(event: MouseEvent) => { handleSectorLeave(); emit('mouseleave', sector, sector.index, event) }}
-                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(sector.index), activeDataKey: props.dataKey, activeCoordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ configuration: tooltipConfiguration.value, activeIndex: String(sector.index), activeDataKey: props.dataKey, activeCoordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
               >
                 {content}
               </g>

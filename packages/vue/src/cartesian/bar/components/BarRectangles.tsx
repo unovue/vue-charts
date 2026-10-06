@@ -1,11 +1,8 @@
+import { useTooltipEntry } from '@/model/tooltip'
 import { barEvents } from '@/events/itemEvents'
 import { defineComponent, watch } from 'vue'
 import { selectAxisSettings, useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
-import {
-  selectActiveTooltipDataKey,
-  selectActiveTooltipIndex,
-} from '@/state/selectors/tooltipSelectors'
 import { filterProps, svgAttrs } from '@/utils/VueUtils'
 import { getValueByDataKey } from '@/utils/chart'
 import { interpolate } from '@/utils'
@@ -26,8 +23,10 @@ export const BarRectangles = defineComponent({
   setup() {
     const emit = barEvents.use()
     const tooltip = useChartTooltip()
-    const activeIndex = useAppSelector(selectActiveTooltipIndex)
-    const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
+    const entry = useTooltipEntry()
+    if (!entry)
+      throw new Error('vccs: Bar requires its tooltip entry.')
+    const activeIndex = tooltip.activeIndexFor(entry)
     const { props, data: barData, layout, isAnimating, shapeSlot, activeBarSlot, cellProps, band, drawn } = useBarContext()
 
     // Bars are matched across data changes by their category, so a shifted or extended
@@ -123,6 +122,7 @@ export const BarRectangles = defineComponent({
 
     const activate = (kind: 'hover' | 'click', bar: BarRectangleItem, index: number) => {
       const payload = {
+        configuration: entry.value,
         activeDataKey: props.dataKey,
         activeIndex: String(index),
         activeCoordinate: { x: bar.tooltipPosition.x, y: bar.tooltipPosition.y },
@@ -143,10 +143,7 @@ export const BarRectangles = defineComponent({
       return (
         <g>
           {items.value.map(({ key, value: { bar, index, opacity }, phase }) => {
-            // The activeIndex prop takes priority over tooltip interaction.
-            const isActive = phase !== 'exit' && activeEnabled && (props.activeIndex != null
-              ? index === props.activeIndex
-              : String(index) === activeIndex.value && (activeDataKey.value == null || props.dataKey === activeDataKey.value))
+            const isActive = phase !== 'exit' && activeEnabled && index === activeIndex.value
             const activeBarProps = isActive && typeof props.activeBar === 'object' ? props.activeBar : {}
             // A per-row `fill` in the data and Cell props apply without a #shape slot, as in Recharts.
             const entryFill = bar.payload?.fill

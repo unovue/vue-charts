@@ -1,10 +1,13 @@
+import { provideTooltipEntry } from '@/model/tooltip'
+import type { Coordinate } from '@/types'
+import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { Ref, SVGAttributes, ShallowRef } from 'vue'
 import type { MinPointSize } from '@/shape'
 import type { AreaProps } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/chartGraphicalItems'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { getNormalizedStackId, getTooltipNameProp } from '@/utils/chart'
-import type { SVGAttributes, ShallowRef } from 'vue'
 import { computed, useAttrs } from 'vue'
 import { useTrackedData } from './useTrackedData'
 import type { AxisId } from '@/state/chartCartesianAxis'
@@ -70,23 +73,38 @@ export function useSetupGraphicalItem(
   }))
 
   useChartLegend().entries.register(legendPayload)
-  if (!options?.skipTooltip) {
-    useChartTooltip().entries.register(computed(() => ({
-      dataDefinedOnItem: data.value,
-      positions: undefined,
-      settings: {
-        stroke: attrs.stroke ?? props.stroke,
-        strokeWidth: attrs['stroke-width'],
-        fill: attrs.fill ?? props.fill,
-        dataKey: props.dataKey,
-        nameKey: undefined,
-        name: getTooltipNameProp(props.name, props.dataKey),
-        hide: props.hide,
-        type: props.tooltipType,
-        color: getItemColor(type, attrs.stroke ?? props.stroke, attrs.fill ?? props.fill),
-        unit: props.unit,
-      },
-    })))
-  }
+  if (!options?.skipTooltip)
+    useSetupTooltipEntry(props, type, data)
   return data
+}
+
+export function useSetupTooltipEntry(
+  props: GraphicalItemProps,
+  type: CartesianGraphicalItemType,
+  data: Readonly<Ref<readonly unknown[] | undefined>>,
+  positions?: () => readonly Coordinate[] | undefined,
+  model?: TooltipPayloadConfiguration['model'],
+  svgAttrs?: SVGAttributes,
+) {
+  const attrs = svgAttrs ?? useAttrs() as SVGAttributes
+  const entry = computed<TooltipPayloadConfiguration>(() => ({
+    dataDefinedOnItem: data.value,
+    positions: positions?.(),
+    model,
+    settings: {
+      stroke: attrs.stroke ?? props.stroke,
+      strokeWidth: attrs['stroke-width'],
+      fill: attrs.fill ?? props.fill,
+      dataKey: props.dataKey,
+      nameKey: undefined,
+      name: getTooltipNameProp(props.name, props.dataKey),
+      hide: props.hide,
+      type: props.tooltipType,
+      color: getItemColor(type, attrs.stroke ?? props.stroke, attrs.fill ?? props.fill),
+      unit: props.unit,
+    },
+  }))
+  useChartTooltip().entries.register(entry)
+  provideTooltipEntry(entry)
+  return entry
 }

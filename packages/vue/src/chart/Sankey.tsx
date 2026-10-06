@@ -220,9 +220,18 @@ const SankeyInner = defineComponent({
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: payloadTree.value,
         positions: undefined,
+        pointerItems: layout.value.links.map((link, index) => ({
+          index: `links[${index}]`,
+          identity: data.value?.[0]?.links[index],
+          coordinate: {
+            x: ((link.source as SankeyLayoutNode).x1! + (link.target as SankeyLayoutNode).x0!) / 2,
+            y: ((link.y0 ?? 0) + (link.y1 ?? 0)) / 2,
+          },
+        })),
         keyboardItems: [...layout.value.nodes].sort((a, b) =>
           (a.x0 ?? 0) - (b.x0 ?? 0) || (a.y0 ?? 0) - (b.y0 ?? 0),
         ).map(node => ({
+          identity: data.value?.[0]?.nodes[node.index!],
           index: `nodes[${node.index}]`,
           coordinate: {
             x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,

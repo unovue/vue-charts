@@ -1,10 +1,5 @@
 import { type ComputedRef, computed } from 'vue'
-import { selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis, useAppSelector, useChartAxes } from '@/state/chartContext'
-import {
-  selectActiveLabel,
-  selectActiveTooltipCoordinate,
-  selectIsTooltipActive,
-} from '@/state/selectors/tooltipSelectors'
+import { selectActiveLabel, selectActiveTooltipCoordinate, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectIsTooltipActive, selectTicksOfAxis, useAppSelector, useChartAxes } from '@/state/chartContext'
 import {
   useChartHeight,
   useChartWidth,

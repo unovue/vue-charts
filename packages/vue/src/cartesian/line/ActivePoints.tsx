@@ -1,8 +1,9 @@
+import { parseTooltipIndex } from '@/core/tooltip'
 import { defineComponent } from 'vue'
 import type { PropType, SlotsType, VNode } from 'vue'
 import type { DataKey, VuePropsToType } from '@/types'
 import { useAppSelector } from '@/state/hooks'
-import { selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
+import { selectActiveTooltipIndex } from '@/state/chartContext'
 import type { LinePointItem } from './type'
 import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
@@ -56,14 +57,14 @@ export const ActivePoints = defineComponent({
       if (!points?.length || isNullish(activeTooltipIndex.value))
         return null
 
-      const activePoint = points[Number(activeTooltipIndex.value)]
+      const activePoint = points[parseTooltipIndex(activeTooltipIndex.value) ?? -1]
       if (isNullish(activePoint)) {
         return null
       }
 
       return renderActivePoint({
         point: activePoint!,
-        childIndex: Number(activeTooltipIndex.value),
+        childIndex: parseTooltipIndex(activeTooltipIndex.value) ?? -1,
         mainColor: props.mainColor!,
         dataKey: props.itemDataKey!,
         activeDot: props.activeDot,

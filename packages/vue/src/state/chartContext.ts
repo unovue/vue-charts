@@ -15,7 +15,7 @@ import { chartDefaults } from '@/model/defaults'
 import type { InjectionKey } from 'vue'
 import type { RechartsRootState } from './chartState'
 import { createChartData } from './chartData'
-import { createChartTooltip } from './chartTooltip'
+import { createTooltip, provideTooltipSource } from '@/model/tooltip'
 
 interface ChartContext {
   geometry: ChartGeometry
@@ -28,7 +28,7 @@ interface ChartContext {
   referenceElements: ChartRegistries['references']
   cartesianAxis: ChartRegistries['axes']
   graphicalItems: ChartRegistries['items']
-  tooltip: ReturnType<typeof createChartTooltip>
+  tooltip: ReturnType<typeof createTooltip>
 }
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
@@ -45,7 +45,6 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   const brush = chart?.brush ?? createChartBrush()
   const legend = chart?.legend ?? createChartLegend(registries.legendEntries)
   const data = chart?.dataRange ?? createChartData(() => undefined)
-  const tooltip = createChartTooltip(registries.tooltipEntries)
   const geometry = chart ?? createLayout({
     layout: () => root.layout.value,
     brush: () => brush.state.value,
@@ -75,8 +74,19 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
     layout: () => root.layout.value.layoutType,
     stackOffset: () => root.rootProps.value.stackOffset,
   })
+  const tooltip = chart?.tooltip ?? createTooltip({
+    axis,
+    entries: registries.tooltipEntries,
+    data: data.state,
+    layout: () => root.layout.value.layoutType,
+    size: () => root.layout.value,
+    offset: () => geometry.offset.value,
+    options: () => root.options.value,
+  })
+  provideTooltipSource(tooltip.source)
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
+    tooltipModel: tooltip,
     axis,
     polarLayout,
     get offset() { return geometry.offset.value },
@@ -332,4 +342,26 @@ export function selectCartesianAxisSize(state: RechartsRootState, type: XorYType
     return selectXAxisSize(state, id).width
   if (type === 'yAxis')
     return selectYAxisSize(state, id).height
+}
+
+export function selectTooltipAxisType(state: RechartsRootState) { return state.tooltipModel.axisType.value }
+export function selectTooltipAxis(state: RechartsRootState) { return state.tooltipModel.axis.value.settings.value }
+export function selectTooltipAxisTicks(state: RechartsRootState) { return state.tooltipModel.ticks.value }
+export function selectTooltipAxisScale(state: RechartsRootState) { return state.tooltipModel.axis.value.scale.value }
+export function selectTooltipAxisRangeWithReverse(state: RechartsRootState) { return state.tooltipModel.axis.value.reversedRange.value }
+export function selectTooltipDisplayedData(state: RechartsRootState) { return state.tooltipModel.displayedData.value }
+export function selectActiveTooltipIndex(state: RechartsRootState) { return state.tooltipModel.source.active.value ? state.tooltipModel.target.value?.index ?? null : null }
+export function selectActiveTooltipDataKey(state: RechartsRootState) { return state.tooltipModel.target.value?.entry?.value?.settings.dataKey }
+export function selectActiveTooltipCoordinate(state: RechartsRootState) { return state.tooltipModel.source.coordinate.value }
+export function selectIsTooltipActive(state: RechartsRootState) { return state.tooltipModel.source.active.value }
+export function selectActiveLabel(state: RechartsRootState) { return state.tooltipModel.source.label.value }
+export function selectActiveTooltipDataPoints(state: RechartsRootState) {
+  return Array.from(new Set(state.tooltipModel.source.payload.value.map(entry => entry.payload).filter(entry => entry != null)))
+}
+
+export function useChartName() { return useAppSelector(state => state.options.chartName) }
+export function selectOrderedTooltipTicks(state: RechartsRootState) { return state.tooltipModel.orderedTicks.value }
+export function selectTooltipDataKey(state: RechartsRootState) { return state.tooltipModel.target.value?.entry?.value?.settings.dataKey }
+export function selectCoordinateForDefaultIndex(state: RechartsRootState, index: import('./chartTooltip').TooltipIndex | undefined) {
+  return state.tooltipModel.coordinateFor(state.tooltipModel.targets.value.find(target => target.index === index))
 }

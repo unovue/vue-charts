@@ -1,3 +1,4 @@
+import type { TooltipSource } from '@/model/tooltip'
 /**
  * Emits tooltip sync events to other charts (Vue version).
  * No events if syncId is undefined.
@@ -6,36 +7,18 @@
  * @param tooltipParams computed object containing tooltip parameters
  * @returns void
  */
-import type { Ref } from 'vue'
 import { computed, watchEffect } from 'vue'
 import { useAppSelector } from '@/state/hooks'
-import { selectTooltipDataKey } from '@/state/selectors/selectors'
+import { selectTooltipDataKey } from '@/state/chartContext'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { selectSynchronisedTooltipState } from '@/synchronisation/syncSelectors'
 import { selectEventEmitter, selectSyncId } from '@/state/selectors/rootPropsSelectors'
-import type { ChartCoordinate, TooltipEventType, TooltipIndex, TooltipTrigger } from '@/types'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { BrushStartEndIndex } from '@/state/chartData'
 
-export function useTooltipChartSynchronisation(
-  {
-    tooltipEventType,
-    trigger,
-    activeCoordinate,
-    activeLabel,
-    activeIndex,
-    isTooltipActive,
-  }: {
-    tooltipEventType: Ref<TooltipEventType | undefined>
-    trigger: TooltipTrigger
-    activeCoordinate: Ref<ChartCoordinate | undefined>
-    activeLabel: Ref<string | number | undefined>
-    activeIndex: Ref<TooltipIndex | undefined>
-    isTooltipActive: Ref<boolean>
-  },
-) {
+export function useTooltipChartSynchronisation(source: TooltipSource, enabled: () => boolean) {
   // selectors as computed for reactivity
-  const activeDataKey = useAppSelector(state => selectTooltipDataKey(state, tooltipEventType.value!, trigger))
+  const activeDataKey = useAppSelector(state => selectTooltipDataKey(state))
   const eventEmitterSymbol = useAppSelector(selectEventEmitter)
   const syncId = useAppSelector(selectSyncId)
   // const syncMethod = useAppSelector(selectSyncMethod)
@@ -43,6 +26,8 @@ export function useTooltipChartSynchronisation(
   const isReceivingSynchronisation = computed(() => tooltipState.value?.active)
 
   watchEffect(() => {
+    if (!enabled())
+      return
     if (isReceivingSynchronisation.value)
     /*
        * This chart currently has active tooltip, synchronised from another chart.
@@ -57,11 +42,11 @@ export function useTooltipChartSynchronisation(
 
     const message: TooltipSyncMessage = {
       kind: 'tooltip',
-      active: isTooltipActive.value,
-      coordinate: activeCoordinate.value,
+      active: source.active.value,
+      coordinate: source.coordinate.value,
       dataKey: activeDataKey.value,
-      index: activeIndex.value!,
-      label: typeof activeLabel.value === 'number' ? String(activeLabel.value) : activeLabel.value,
+      index: source.index.value === null ? null : String(source.index.value),
+      label: source.label.value,
     }
     eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId.value, message, eventEmitterSymbol.value)
   })

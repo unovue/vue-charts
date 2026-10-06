@@ -1,6 +1,6 @@
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
-import { useChartName } from '@/state/selectors/selectors'
+import { useChartName } from '@/state/chartContext'
 import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'

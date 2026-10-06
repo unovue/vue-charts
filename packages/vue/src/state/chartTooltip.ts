@@ -1,5 +1,3 @@
-import { computed, shallowRef } from 'vue'
-import type { Registry } from '@/model/registry'
 import type { AxisId } from './chartCartesianAxis'
 import type { ChartCoordinate, Coordinate, DataKey, NameType, Payload, TooltipTrigger, ValueType } from '@/types'
 
@@ -48,13 +46,21 @@ export type TooltipPayloadSearcher<T = any, R = T> = (
 ) => R | undefined
 
 export type TooltipKeyboardItem = {
+  /** Stable identity, independent of the current payload lookup path. */
+  identity?: unknown
   index: string
   coordinate: Coordinate
   onClick?: (event: KeyboardEvent) => void
 }
 
 export type TooltipPayloadConfiguration = {
+  model?: {
+    index: () => TooltipActiveIndex | undefined
+    request: (index: TooltipActiveIndex) => void
+  }
   keyboardItems?: ReadonlyArray<TooltipKeyboardItem>
+  /** Pointer-only targets do not enter keyboard order. */
+  pointerItems?: ReadonlyArray<TooltipKeyboardItem>
   /** Hierarchy totals come from layout; parent rows need not store a value. */
   values?: Readonly<Record<string, number>>
 
@@ -174,54 +180,13 @@ export type TooltipSyncState = TooltipInteractionState & {
   label: string | undefined
 }
 
-/**
- * The tooltip interaction state stores:
- *
- * - Which graphical item is user interacting with at the moment,
- * - which axis (or, which part of chart background) is user interacting with at the moment
- * - The data that individual graphical items wish to be displayed in case the tooltip gets activated
- */
+/** Read-only selector view derived from the chart's selection controller. */
 export type TooltipState = {
-  /**
-   * This is the state of interactions with individual graphical items.
-   */
-  itemInteraction: {
-    click: TooltipInteractionState
-    /**
-     * Why is hover activation separate from click activation? Because they are independent:
-     * If a click is set, then mouseLeave should not clear it.
-     * - the opposite is technically true too - but it's difficult to click on things without also hovering.
-     */
-    hover: TooltipInteractionState
-  }
-  /**
-   * This is the state of interaction with the bar background - which will get mapped
-   * to the axis index.
-   *
-   * Axis interaction is independent of item interaction so the state must also be independent.
-   */
-  axisInteraction: {
-    click: TooltipInteractionState
-    hover: TooltipInteractionState
-  }
+  itemInteraction: { click: TooltipInteractionState, hover: TooltipInteractionState }
+  axisInteraction: { click: TooltipInteractionState, hover: TooltipInteractionState }
   keyboardInteraction: TooltipInteractionState
-  /**
-   * This part of the state is the information coming from other charts.
-   * If there are two charts with the same syncId, events from one chart will be transferred
-   * to other charts. So this is what the other charts are reporting.
-   */
   syncInteraction: TooltipSyncState
-  /**
-   * One graphical item will have one configuration;
-   * hovering over multiple of them (for example with tooltipEventType===axis)
-   * may render multiple tooltip payloads.
-   */
   tooltipItemPayloads: ReadonlyArray<TooltipPayloadConfiguration>
-  /**
-   * Tooltip props or other settings used by selectors.
-   * This assumes that there is always only one Tooltip. In case we want to start supporting multiple Tooltips,
-   * we have to change this to an array - and update all the places reading this state too.
-   */
   settings: TooltipSettingsState
 }
 
@@ -239,152 +204,3 @@ export const noInteraction: TooltipInteractionState = Object.freeze({
   dataKey: undefined,
   coordinate: undefined,
 })
-
-export function createChartTooltip(entries: Registry<TooltipPayloadConfiguration>) {
-  const announcement = shallowRef('')
-  const state = shallowRef<Omit<TooltipState, 'tooltipItemPayloads'>>({
-    itemInteraction: {
-      click: { ...noInteraction },
-      hover: { ...noInteraction },
-    },
-    axisInteraction: {
-      click: { ...noInteraction },
-      hover: { ...noInteraction },
-    },
-    keyboardInteraction: { ...noInteraction },
-    syncInteraction: {
-      active: false,
-      index: null,
-      dataKey: undefined,
-      label: undefined,
-      coordinate: undefined,
-    },
-    settings: {
-      shared: undefined,
-      trigger: 'hover',
-      axisId: 0,
-      active: false,
-      defaultIndex: undefined,
-    },
-  })
-
-  let onActiveIndexChange: ((index: TooltipActiveIndex) => void) | undefined
-
-  function setActiveIndexListener(listener: typeof onActiveIndexChange) {
-    onActiveIndexChange = listener
-  }
-
-  function proposeIndex(index: TooltipIndex) {
-    onActiveIndexChange?.(index == null ? null : Number(index))
-    return state.value.settings.activeIndex !== undefined
-  }
-
-  function sameInteraction(a: TooltipInteractionState, b: TooltipInteractionState) {
-    return a.active === b.active && a.index === b.index && a.dataKey === b.dataKey && a.coordinate === b.coordinate && a.configuration === b.configuration
-  }
-
-  function setTooltipSettingsState(settings: TooltipSettingsState) {
-    const previous = state.value.settings
-    if (previous.shared === settings.shared && previous.trigger === settings.trigger && previous.axisId === settings.axisId
-      && previous.active === settings.active && previous.defaultIndex === settings.defaultIndex && previous.activeIndex === settings.activeIndex) {
-      return
-    }
-    state.value = { ...state.value, settings }
-  }
-
-  function activate(channel: 'itemInteraction' | 'axisInteraction', trigger: 'hover' | 'click', payload: TooltipActionPayload) {
-    if (proposeIndex(payload.activeIndex)) {
-      if (state.value.keyboardInteraction.active)
-        state.value = { ...state.value, keyboardInteraction: { ...state.value.keyboardInteraction, active: false } }
-      return
-    }
-    const current = state.value
-    const interaction: TooltipInteractionState = {
-      active: true,
-      index: payload.activeIndex,
-      dataKey: payload.activeDataKey,
-      coordinate: payload.activeCoordinate,
-    }
-    const previous = current[channel][trigger]
-    if (sameInteraction(previous, interaction) && !current.syncInteraction.active && !current.keyboardInteraction.active)
-      return
-    state.value = {
-      ...current,
-      [channel]: sameInteraction(previous, interaction) ? current[channel] : { ...current[channel], [trigger]: interaction },
-      syncInteraction: current.syncInteraction.active ? { ...current.syncInteraction, active: false } : current.syncInteraction,
-      keyboardInteraction: current.keyboardInteraction.active ? { ...current.keyboardInteraction, active: false } : current.keyboardInteraction,
-    }
-  }
-
-  function setActiveMouseOverItemIndex(payload: TooltipActionPayload) { activate('itemInteraction', 'hover', payload) }
-  function setActiveClickItemIndex(payload: TooltipActionPayload) { activate('itemInteraction', 'click', payload) }
-  function setMouseOverAxisIndex(payload: TooltipActionPayload) { activate('axisInteraction', 'hover', payload) }
-  function setMouseClickAxisIndex(payload: TooltipActionPayload) { activate('axisInteraction', 'click', payload) }
-
-  function mouseLeaveItem() {
-    if (proposeIndex(null))
-      return
-    const current = state.value
-    if (!current.itemInteraction.hover.active)
-      return
-    state.value = { ...current, itemInteraction: { ...current.itemInteraction, hover: { ...current.itemInteraction.hover, active: false } } }
-  }
-
-  function mouseLeaveChart() {
-    if (proposeIndex(null))
-      return
-    const current = state.value
-    if (!current.itemInteraction.hover.active && !current.axisInteraction.hover.active)
-      return
-    // Keep the last index and coordinate for animation and the Tooltip active prop.
-    state.value = {
-      ...current,
-      itemInteraction: current.itemInteraction.hover.active ? { ...current.itemInteraction, hover: { ...current.itemInteraction.hover, active: false } } : current.itemInteraction,
-      axisInteraction: current.axisInteraction.hover.active ? { ...current.axisInteraction, hover: { ...current.axisInteraction.hover, active: false } } : current.axisInteraction,
-    }
-  }
-
-  function setSyncInteraction(interaction: TooltipSyncState) {
-    const previous = state.value.syncInteraction
-    if (sameInteraction(previous, interaction) && previous.label === interaction.label)
-      return
-    state.value = { ...state.value, syncInteraction: interaction }
-  }
-
-  function setKeyboardInteraction(payload: TooltipActionPayload & { active: boolean }) {
-    proposeIndex(payload.active ? payload.activeIndex : null)
-    const interaction: TooltipInteractionState = {
-      configuration: payload.configuration,
-      active: payload.active,
-      index: payload.activeIndex,
-      dataKey: payload.activeDataKey,
-      coordinate: payload.activeCoordinate,
-    }
-    if (sameInteraction(state.value.keyboardInteraction, interaction))
-      return
-    // Keyboard navigation takes ownership from a previous pointer hover.
-    const current = state.value
-    state.value = {
-      ...current,
-      keyboardInteraction: interaction,
-      itemInteraction: { click: { ...current.itemInteraction.click, active: false }, hover: { ...current.itemInteraction.hover, active: false } },
-      axisInteraction: { click: { ...current.axisInteraction.click, active: false }, hover: { ...current.axisInteraction.hover, active: false } },
-    }
-  }
-
-  return {
-    announcement,
-    state: computed(() => ({ ...state.value, tooltipItemPayloads: entries.entries.value })),
-    entries,
-    setTooltipSettingsState,
-    setActiveIndexListener,
-    setActiveMouseOverItemIndex,
-    setActiveClickItemIndex,
-    setMouseOverAxisIndex,
-    setMouseClickAxisIndex,
-    mouseLeaveItem,
-    mouseLeaveChart,
-    setSyncInteraction,
-    setKeyboardInteraction,
-  }
-}

@@ -1,12 +1,12 @@
+import { parseTooltipIndex } from '@/core/tooltip'
 import { useAppSelector } from '@/state/hooks'
 import { onMounted, watch } from 'vue'
 import { selectEventEmitter, selectSyncId, selectSyncMethod } from '@/state/selectors/rootPropsSelectors'
 import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
-import { selectTooltipAxisTicks } from '@/state/selectors/tooltipSelectors'
+import { selectTooltipAxisTicks, useChartDataActions, useChartTooltip } from '@/state/chartContext'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
-import { useChartDataActions, useChartTooltip } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
 
 function useTooltipSyncEventsListener() {
@@ -55,9 +55,9 @@ function useTooltipSyncEventsListener() {
          * In 3.x we store things differently but let's try to keep the old shape for compatibility.
          */
         const syncMethodParam: MouseHandlerDataParam = {
-          activeTooltipIndex: message.index == null ? undefined : Number(message.index),
+          activeTooltipIndex: parseTooltipIndex(message.index) ?? undefined,
           isTooltipActive: message.active,
-          activeIndex: message.index == null ? undefined : Number(message.index),
+          activeIndex: parseTooltipIndex(message.index) ?? undefined,
           activeLabel: message.label,
           activeDataKey: message.dataKey,
           activeCoordinate: message.coordinate,

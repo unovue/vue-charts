@@ -8,7 +8,7 @@ import type { ResolvedBarProps } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
 import { Layer } from '@/container/Layer'
-import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
+import { useSetupGraphicalItem, useSetupTooltipEntry } from '@/hooks/useSetupGraphicalItem'
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { BarBackground } from '@/cartesian/bar/components/BarBackground'
 import { BarRectangles } from '@/cartesian/bar/components/BarRectangles'
@@ -58,6 +58,11 @@ const BarView = defineComponent({
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, attrs, slots.shape, slots.activeBar)
+    const emit = barEvents.use()
+    useSetupTooltipEntry(props, 'bar', data, () => barData.value?.map(bar => bar.tooltipPosition), {
+      index: () => props.activeIndex,
+      request: index => emit('update:activeIndex', index),
+    }, attrs)
     const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
     const layout = useChartLayout()
 
@@ -162,7 +167,7 @@ const _Bar = defineComponent({
     barEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
+    const data = useSetupGraphicalItem(props, 'bar', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
     return () => h(BarView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })

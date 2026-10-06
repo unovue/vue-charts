@@ -10,9 +10,10 @@ import type { RadialBarDataItem } from '@/state/selectors/radialBarSelectors'
 import type { FunnelTrapezoidItem } from '@/cartesian/funnel/type'
 
 // Views are deferred descendants of the public item; the emitter stays with its owner.
-function createItemEvents<Entry>() {
+function createItemEvents<Entry, Extra extends Record<string, (...args: never[]) => boolean> = Record<never, never>>(extra: Extra) {
   const itemEvent = (_entry: Entry, _index: number, _event: MouseEvent) => true
   const emits = {
+    ...extra,
     'click': itemEvent,
     'mouseenter': itemEvent,
     'mouseleave': itemEvent,
@@ -32,11 +33,13 @@ function createItemEvents<Entry>() {
   }
 }
 
-export const barEvents = createItemEvents<BarRectangleItem>()
-export const lineEvents = createItemEvents<LinePointItem>()
-export const areaEvents = createItemEvents<AreaPointItem>()
-export const scatterEvents = createItemEvents<ScatterPointItem>()
-export const pieEvents = createItemEvents<PieSectorDataItem>()
-export const radarEvents = createItemEvents<RadarPoint>()
-export const radialBarEvents = createItemEvents<RadialBarDataItem>()
-export const funnelEvents = createItemEvents<FunnelTrapezoidItem>()
+const modelEvent = { 'update:activeIndex': (_index: number | null) => true }
+
+export const barEvents = createItemEvents<BarRectangleItem, typeof modelEvent>(modelEvent)
+export const lineEvents = createItemEvents<LinePointItem>({})
+export const areaEvents = createItemEvents<AreaPointItem>({})
+export const scatterEvents = createItemEvents<ScatterPointItem>({})
+export const pieEvents = createItemEvents<PieSectorDataItem, typeof modelEvent>(modelEvent)
+export const radarEvents = createItemEvents<RadarPoint>({})
+export const radialBarEvents = createItemEvents<RadialBarDataItem>({})
+export const funnelEvents = createItemEvents<FunnelTrapezoidItem>({})

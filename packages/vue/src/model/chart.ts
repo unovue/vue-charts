@@ -1,3 +1,4 @@
+import { createTooltip } from './tooltip'
 import { createPolarLayout } from '@/model/polar'
 import { createAxes } from './axis'
 import type { AxisLookup } from './axis'
@@ -29,6 +30,7 @@ export interface ChartInputs {
 }
 
 export interface Chart extends ChartRegistries, ChartGeometry {
+  readonly tooltip: ReturnType<typeof createTooltip>
   readonly polarLayout: ReturnType<typeof createPolarLayout>
   readonly axis: AxisLookup
   readonly dataRange: ReturnType<typeof createChartData>
@@ -93,7 +95,17 @@ export function createChart(inputs: ChartInputs): Chart {
     layout: inputs.layout,
     stackOffset: () => rootProps.value.stackOffset,
   })
+  const tooltip = createTooltip({
+    axis,
+    entries: registries.tooltipEntries,
+    data: dataRange.state,
+    layout: inputs.layout,
+    size: inputs.size,
+    offset: () => geometry.offset.value,
+    options: () => options.value,
+  })
   return {
+    tooltip,
     polarLayout,
     axis,
     dataRange,

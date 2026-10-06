@@ -27,14 +27,15 @@ it.each([
 ])('%s exposes its root and navigates nodes', async (_, Chart, title, first, second, last) => {
   mockGetBoundingClientRect({ width: 500, height: 300 })
   const click = vi.fn()
+  const update = vi.fn()
   const customTitle = ref<string>()
   const attrs = { 'class': 'custom-chart', 'style': { backgroundColor: 'red' }, 'data-owner': 'caller', 'aria-details': 'details', 'onNode-click': click }
   // The table contains three distinct public data types; select each chart without casting them.
   const { container } = render(() => Chart === Treemap
-    ? <Treemap data={tree} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} /></Treemap>
+    ? <Treemap data={tree} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} {...{ 'onUpdate:activeIndex': update }} /></Treemap>
     : Chart === Sankey
-      ? <Sankey data={flow} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} /></Sankey>
-      : <SunburstChart data={radial} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} /></SunburstChart>)
+      ? <Sankey data={flow} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} {...{ 'onUpdate:activeIndex': update }} /></Sankey>
+      : <SunburstChart data={radial} width={500} height={300} title={customTitle.value} desc="Chart details" isAnimationActive={false} {...attrs}><Tooltip isAnimationActive={false} {...{ 'onUpdate:activeIndex': update }} /></SunburstChart>)
   await nextTick()
   const root = container.querySelector<HTMLElement>('.v-charts-wrapper')!
   expect(root.classList.contains('custom-chart')).toBe(true)
@@ -50,6 +51,8 @@ it.each([
   expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain(`${first} : 10`)
   await fireEvent.keyDown(root, { key: 'ArrowRight' })
   expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain(`${second} : 10`)
+  expect(update.mock.calls).toEqual([[0], [1]])
+  expect(update.mock.calls.every(([index]) => typeof index === 'number' && Number.isFinite(index))).toBe(true)
   expect(root.style.outline).toBe('2px solid var(--v-charts-focus, Highlight)')
   await fireEvent.keyDown(root, { key: 'Enter' })
   expect(click).toHaveBeenCalledTimes(1)

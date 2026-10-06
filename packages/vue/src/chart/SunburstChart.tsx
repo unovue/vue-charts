@@ -158,6 +158,7 @@ const SunburstInner = defineComponent({
             return -1
           return a.startAngle - b.startAngle || a.depth - b.depth
         }).map(node => ({
+          identity: node.payload,
           index: node.tooltipIndex,
           coordinate: getTooltipCoordinate(node),
           onClick: event => handleClick(node, event),

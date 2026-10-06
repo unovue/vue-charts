@@ -221,7 +221,7 @@ it.each([true, false])('keeps tooltip ownership when controlled=%s', async (cont
       <YAxis />
       <Bar dataKey="value" isAnimationActive={false} />
       <Tooltip isAnimationActive={false} activeIndex={activeIndex.value} defaultIndex={0} {...{ 'onUpdate:activeIndex': update }}>
-        {{ content: ({ active, payload }) => <div data-testid="model-tooltip">{active ? payload.map(item => item.value).join(',') : 'hidden'}</div> }}
+        {{ content: ({ active, payload, coordinate }) => <div data-testid="model-tooltip" data-coordinate={`${coordinate?.x},${coordinate?.y}`}>{active ? payload.map(item => item.value).join(',') : 'hidden'}</div> }}
       </Tooltip>
     </BarChart>
   ))
@@ -232,9 +232,12 @@ it.each([true, false])('keeps tooltip ownership when controlled=%s', async (cont
   }
   const wrapper = container.querySelector('.v-charts-wrapper')!
   expect(content()).toBe(controlled ? '20' : '10')
+  const coordinate = container.querySelector('[data-testid="model-tooltip"]')?.getAttribute('data-coordinate')
   await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
   expect(update.mock.calls).toEqual([[0]])
   expect(content()).toBe(controlled ? '20' : '10')
+  if (controlled)
+    expect(container.querySelector('[data-testid="model-tooltip"]')?.getAttribute('data-coordinate')).toBe(coordinate)
   await fireEvent.mouseLeave(wrapper)
   await nextTick()
   expect(update.mock.calls.at(-1)).toEqual([null])

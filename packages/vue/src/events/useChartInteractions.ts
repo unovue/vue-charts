@@ -1,10 +1,7 @@
-import { selectChartDirection, useChartTooltip } from '@/state/chartContext'
+import { selectChartDirection, selectCoordinateForDefaultIndex, selectTooltipAxisTicks, useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
 import { selectActivePropsFromChartPointer } from '@/state/selectors/selectActivePropsFromChartPointer'
 import { selectTooltipEventType } from '@/state/selectors/selectTooltipEventType'
-import { selectTooltipAxisTicks, selectTooltipDisplayedData } from '@/state/selectors/tooltipSelectors'
-import { selectCoordinateForDefaultIndex } from '@/state/selectors/selectors'
-import { combineActiveTooltipIndex } from '@/state/selectors/combiners/combineActiveTooltipIndex'
 import { selectTooltipCoordinate } from '@/state/selectors/touchSelectors'
 import { getChartPointer } from '@/utils/chart'
 import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
@@ -49,30 +46,12 @@ export function useChartInteractions() {
 
   function itemKeyDown(event: KeyboardEvent) {
     const { key } = event
-    const state = chartState.value
-    const targets = state.tooltip.tooltipItemPayloads.flatMap((configuration) => {
-      if (configuration.settings.hide)
-        return []
-      if (configuration.keyboardItems)
-        return configuration.keyboardItems.map(item => ({ ...item, configuration }))
-      if (!Array.isArray(configuration.dataDefinedOnItem))
-        return []
-      return configuration.dataDefinedOnItem.map((_, index) => ({
-        configuration,
-        index: String(index),
-        coordinate: Array.isArray(configuration.positions)
-          ? configuration.positions[index]
-          : configuration.positions?.[String(index) as keyof typeof configuration.positions],
-        onClick: undefined,
-      }))
-    })
-    const current = state.tooltip.keyboardInteraction
+    const targets = tooltip.targets.value
     if (key === 'Escape') {
       tooltip.setKeyboardInteraction({ active: false, activeIndex: null, activeDataKey: undefined })
       return
     }
-    const position = targets.findIndex(target => target.configuration === current.configuration
-      && target.index === current.index)
+    const position = tooltip.source.index.value ?? -1
     if (key === 'Enter') {
       targets[position]?.onClick?.(event)
       return
@@ -94,9 +73,9 @@ export function useChartInteractions() {
     tooltip.setKeyboardInteraction({
       active: true,
       activeIndex: target.index,
-      activeDataKey: target.configuration.settings.dataKey,
+      activeDataKey: target.entry?.value?.settings.dataKey,
       activeCoordinate: target.coordinate,
-      configuration: target.configuration,
+      configuration: target.entry?.value,
     })
   }
 
@@ -111,21 +90,19 @@ export function useChartInteractions() {
       itemKeyDown(event)
       return
     }
-    const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
-      ? { ...state.tooltip.keyboardInteraction, index: state.tooltip.settings.activeIndex === null ? null : String(state.tooltip.settings.activeIndex), active: state.tooltip.settings.activeIndex !== null }
-      : state.tooltip.keyboardInteraction
-    if (key !== 'ArrowRight' && key !== 'ArrowLeft' && key !== 'Enter') {
-      return
+    const keyboardInteraction = {
+      index: tooltip.target.value?.index ?? null,
+      active: tooltip.source.active.value,
+      dataKey: tooltip.target.value?.entry?.value?.settings.dataKey,
     }
-
-    const currentIndex: number = Number(
-      combineActiveTooltipIndex(keyboardInteraction, selectTooltipDisplayedData(state)),
-    )
+    if (key !== 'ArrowRight' && key !== 'ArrowLeft' && key !== 'Enter')
+      return
+    const currentIndex = tooltip.source.index.value ?? 0
     const tooltipTicks = selectTooltipAxisTicks(state)
     if (!tooltipTicks?.length)
       return
     if (key === 'Enter') {
-      const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(keyboardInteraction.index))
+      const coordinate = selectCoordinateForDefaultIndex(state, String(keyboardInteraction.index))
       tooltip.setKeyboardInteraction({
         active: !keyboardInteraction.active,
         activeIndex: keyboardInteraction.index,
@@ -142,7 +119,7 @@ export function useChartInteractions() {
     if (nextIndex >= tooltipTicks.length || nextIndex < 0) {
       return
     }
-    const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(nextIndex))
+    const coordinate = selectCoordinateForDefaultIndex(state, String(nextIndex))
 
     tooltip.setKeyboardInteraction({
       active: true,
@@ -160,15 +137,13 @@ export function useChartInteractions() {
     }
     if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item')
       return
-    const keyboardInteraction = state.tooltip.settings.activeIndex !== undefined
-      ? { ...state.tooltip.keyboardInteraction, index: state.tooltip.settings.activeIndex === null ? null : String(state.tooltip.settings.activeIndex), active: state.tooltip.settings.activeIndex !== null }
-      : state.tooltip.keyboardInteraction
+    const keyboardInteraction = { index: tooltip.target.value?.index ?? null, active: tooltip.source.active.value }
     if (keyboardInteraction.active) {
       return
     }
     if (keyboardInteraction.index == null) {
       const nextIndex = '0'
-      const coordinate = selectCoordinateForDefaultIndex(state, 'axis', 'hover', String(nextIndex))
+      const coordinate = selectCoordinateForDefaultIndex(state, String(nextIndex))
       tooltip.setKeyboardInteraction({
         activeDataKey: undefined,
         active: true,

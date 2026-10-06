@@ -2,6 +2,7 @@ import type { ComputedRef, Ref } from 'vue'
 import { computed, onScopeDispose, shallowReactive } from 'vue'
 
 export interface Registry<T> {
+  readonly registrations: ComputedRef<readonly Readonly<Ref<T | undefined>>[]>
   readonly entries: ComputedRef<readonly T[]>
   register: (entry: Readonly<Ref<T | undefined>>) => void
 }
@@ -18,5 +19,5 @@ export function createRegistry<T>(): Registry<T> {
     onScopeDispose(() => registrations.delete(entry))
   }
 
-  return { entries, register }
+  return { entries, registrations: computed(() => [...registrations]), register }
 }

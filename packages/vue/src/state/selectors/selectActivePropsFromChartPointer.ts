@@ -1,9 +1,8 @@
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
-import { selectTooltipAxisRangeWithReverse, selectTooltipAxisTicks, selectTooltipAxisType } from './tooltipSelectors'
+import { selectOrderedTooltipTicks, selectPolarViewBox, selectTooltipAxisRangeWithReverse, selectTooltipAxisTicks, selectTooltipAxisType } from '@/state/chartContext'
 import { selectChartOffset } from './selectChartOffset'
-import { combineActiveProps, selectOrderedTooltipTicks } from './selectors'
-import { selectPolarViewBox } from '@/state/chartContext'
+import { combineActiveProps } from '@/core/interaction'
 import type { ChartPointer } from '@/types'
 import { selectChartLayout } from '@/state/selectors/common'
 
