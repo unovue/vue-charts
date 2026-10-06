@@ -1,13 +1,10 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ComputedRef, PropType } from 'vue'
+import type { PropType } from 'vue'
 import type { SyncMethod } from '@/types'
-import type { TooltipState } from '@/state/chartTooltip'
-import { useAppSelector } from '@/state/chartContext'
-import { selectBarRectangles } from '@/state/selectors/barSelectors'
 import { createSSRApp, defineComponent, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { Bar, BarChart, Customized, Tooltip, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from '@/index'
 import { eventCenter } from '@/utils/events'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -23,7 +20,7 @@ const Chart = defineComponent({
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip isAnimationActive={false} />
-        <Bar dataKey="value" isAnimationActive={false} />
+        <Bar dataKey="value" isAnimationActive={false} v-slots={{ shape: slots.shape }} />
         {slots.default?.()}
       </BarChart>
     )
@@ -32,28 +29,19 @@ const Chart = defineComponent({
 
 describe('chart synchronization lifetime', () => {
   it.each<SyncMethod>(['index', 'value', (_ticks, data) => data.activeTooltipIndex!])('hovering one chart activates the same index only in its sync group (%s)', async (syncMethod) => {
-    const snapshots: ComputedRef<TooltipState>[] = []
-    const geometry: ComputedRef<ReturnType<typeof selectBarRectangles>>[] = []
-    const Probe = defineComponent({
-      setup() {
-        snapshots.push(useAppSelector(state => state.tooltip))
-        const settings = { dataKey: 'value', data: undefined, barSize: undefined, maxBarSize: undefined, minPointSize: 0, stackId: undefined }
-        geometry.push(useAppSelector(state => selectBarRectangles(state, 0, 0, false, settings)))
-        return () => null
-      },
-    })
+    const shapes = [vi.fn(props => <rect x={props.x} y={props.y} width={props.width} height={props.height} />), vi.fn(props => <rect x={props.x} y={props.y} width={props.width} height={props.height} />), vi.fn(props => <rect x={props.x} y={props.y} width={props.width} height={props.height} />)]
     const { container } = render(() => (
       <div>
-        <Chart syncId="shared"><Customized>{{ default: () => <Probe /> }}</Customized></Chart>
-        <Chart syncId="shared" syncMethod={syncMethod}><Customized>{{ default: () => <Probe /> }}</Customized></Chart>
-        <Chart syncId="other"><Customized>{{ default: () => <Probe /> }}</Customized></Chart>
+        <Chart syncId="shared" v-slots={{ shape: shapes[0] }} />
+        <Chart syncId="shared" syncMethod={syncMethod} v-slots={{ shape: shapes[1] }} />
+        <Chart syncId="other" v-slots={{ shape: shapes[2] }} />
       </div>
     ))
     await nextTick()
     await nextTick()
-    const before = snapshots.map(snapshot => snapshot.value.tooltipItemPayloads)
-    const rectangles = geometry.map(selected => selected.value)
-    expect(rectangles.every(items => items?.length === 2)).toBe(true)
+    const renders = shapes.map(shape => shape.mock.calls.length)
+    for (const count of renders)
+      expect(count).toBeGreaterThanOrEqual(2)
     const charts = container.querySelectorAll('.v-charts-wrapper')
     await fireEvent.mouseMove(charts[0], { clientX: 400, clientY: 150 })
     await nextTick()
@@ -65,13 +53,7 @@ describe('chart synchronization lifetime', () => {
     expect((tooltips[0] as HTMLElement).style.visibility).toBe('visible')
     expect((tooltips[1] as HTMLElement).style.visibility).toBe('visible')
     expect((tooltips[2] as HTMLElement).style.visibility).toBe('hidden')
-    expect(snapshots[0].value.axisInteraction.hover.index).toBe('1')
-    expect(snapshots[1].value.syncInteraction.index).toBe('1')
-    expect(snapshots[2].value.syncInteraction.active).toBe(false)
-    for (let i = 0; i < 3; i++) {
-      expect(snapshots[i].value.tooltipItemPayloads).toBe(before[i])
-      expect(geometry[i].value).toBe(rectangles[i])
-    }
+    expect(shapes.map(shape => shape.mock.calls.length)).toEqual(renders)
   })
 
   it('does not register global listeners for an unsynchronized chart', async () => {

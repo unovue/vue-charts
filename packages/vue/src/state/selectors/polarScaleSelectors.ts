@@ -1,8 +1,8 @@
+import { combineAxisTicks } from '@/core/axis/ticks'
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
 import {
-  combineAxisTicks,
   combineCategoricalDomain,
   combineGraphicalItemTicks,
   combineScaleFunction,
@@ -58,7 +58,6 @@ export const selectPolarAxisScale: (
   state: RechartsRootState,
   axisType: 'angleAxis' | 'radiusAxis',
   polarAxisId: AxisId,
-  // @ts-ignore
 ) => RechartsScale | undefined = createSelector(
   [selectPolarAxis, selectRealScaleType, selectPolarAxisDomainIncludingNiceTicks, selectPolarAxisRangeWithReversed],
   combineScaleFunction,
@@ -78,7 +77,6 @@ export const selectPolarAxisTicks: (
   axisType: 'angleAxis' | 'radiusAxis',
   polarAxisId: AxisId,
   isPanorama: boolean,
-  // @ts-ignore
 ) => ReadonlyArray<CartesianTickItem> | undefined = createSelector(
   [
     selectChartLayout,
@@ -94,14 +92,12 @@ export const selectPolarAxisTicks: (
   combineAxisTicks,
 )
 
-// @ts-ignore
 export const selectPolarGraphicalItemAxisTicks: (
   state: RechartsRootState,
   axisType: 'angleAxis' | 'radiusAxis',
   polarAxisId: AxisId,
   isPanorama: boolean,
-  // @ts-ignore
-) => ReadonlyArray<CartesianTickItem> | undefined = createSelector(
+) => ReadonlyArray<CartesianTickItem> | null = createSelector(
   [
     selectChartLayout,
     selectPolarAxis,

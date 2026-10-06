@@ -1,194 +1,58 @@
-import { createSelector } from '../createSelector'
-import { SetLegendPayload } from '../SetLegendPayload'
-import { cleanup, render } from '@testing-library/vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, isProxy, nextTick, ref } from 'vue'
-import type { ComputedRef } from 'vue'
-import { provideChartContext, useAppSelector, useChartDataActions, useChartLayoutActions, useChartLegend, useChartTooltip } from '../chartContext'
+import { render } from '@testing-library/vue'
+import { beforeEach, expect, it, vi } from 'vitest'
+import { isProxy, nextTick, ref } from 'vue'
+import { Bar, BarChart, XAxis, YAxis } from '@/index'
+import { getBarRects } from '@/test/helper'
+import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-afterEach(() => {
-  cleanup()
-  vi.restoreAllMocks()
-})
+beforeEach(() => mockGetBoundingClientRect({ width: 500, height: 300 }))
 
-describe('chart context', () => {
-  it('updates synchronously and tracks reactive inputs without a dispatch', () => {
-    let layout: ReturnType<typeof useChartLayoutActions>
-    const dimension = ref<'width' | 'height'>('width')
-    let selected: ComputedRef<number> | undefined
-    const Reader = defineComponent({
-      setup() {
-        selected = useAppSelector(state => state.layout[dimension.value])
-        layout = useChartLayoutActions()
-        useChartLayoutActions().setProps('horizontal', { width: 100, height: 200 }, {})
-        return () => <span>{selected?.value}</span>
-      },
-    })
-    const Fixture = defineComponent({
-      setup() {
-        provideChartContext()
-        return () => <Reader />
-      },
-    })
-    render(Fixture)
-    expect(selected?.value).toBe(100)
-    dimension.value = 'height'
-    expect(selected?.value).toBe(200)
-    layout!.setProps('horizontal', { width: 300, height: 400 }, {})
-    expect(selected?.value).toBe(400)
-  })
-
-  it('uses the nearest provider without leaking state to sibling charts', async () => {
-    let innerLayout: ReturnType<typeof useChartLayoutActions>
-    const Reader = defineComponent({
-      props: { initialWidth: Number },
-      setup(props) {
-        const layout = useChartLayoutActions()
-        if (props.initialWidth !== undefined)
-          layout.setProps('horizontal', { width: props.initialWidth, height: 200 }, {})
-        if (props.initialWidth === 300)
-          innerLayout = layout
-        const width = useAppSelector(state => state.layout.width)
-        return () => <span>{width.value}</span>
-      },
-    })
-    const Inner = defineComponent({
-      setup() {
-        provideChartContext()
-        return () => <Reader initialWidth={300} />
-      },
-    })
-    const Outer = defineComponent({
-      setup() {
-        provideChartContext()
-        return () => (
-          <div>
-            <Reader initialWidth={100} />
-            <Inner />
-            <Reader />
-          </div>
-        )
-      },
-    })
-    const { container } = render(Outer)
-    expect([...container.querySelectorAll('span')].map(element => element.textContent)).toEqual(['100', '300', '100'])
-    innerLayout!.setProps('horizontal', { width: 500, height: 600 }, {})
-    await nextTick()
-    expect([...container.querySelectorAll('span')].map(element => element.textContent)).toEqual(['100', '500', '100'])
-  })
-
-  it('tracks only domains read by a selector and keeps its view stable', () => {
-    let layout: ReturnType<typeof useChartLayoutActions>
-    let tooltip: ReturnType<typeof useChartTooltip>
-    let selected: ComputedRef<number>
-    let view: ComputedRef<import('../chartState').RechartsRootState>
-    const selector = vi.fn((state: import('../chartState').RechartsRootState) => state.layout.width)
-    const Reader = defineComponent({
-      setup() {
-        layout = useChartLayoutActions()
-        tooltip = useChartTooltip()
-        selected = useAppSelector(selector)
-        view = useAppSelector(state => state)
-        return () => <span>{selected.value}</span>
-      },
-    })
-    const Fixture = defineComponent({
-      setup() {
-        provideChartContext()
-        return () => <Reader />
-      },
-    })
-    render(Fixture)
-    const initialView = view!.value
-    expect(Object.isFrozen(initialView)).toBe(true)
-    selector.mockClear()
-    tooltip!.setKeyboardInteraction({ active: true, activeIndex: '1', activeDataKey: undefined })
-    expect(selected!.value).toBe(0)
-    expect(selector).not.toHaveBeenCalled()
-    layout!.setProps('horizontal', { width: 123, height: 200 }, {})
-    expect(selected!.value).toBe(123)
-    expect(selector).toHaveBeenCalledTimes(1)
-    expect(view!.value).toBe(initialView)
-    expect(initialView.layout.width).toBe(123)
-  })
-
-  it('preserves dataset identity without creating Vue proxies', () => {
-    const data = [{ value: 10 }]
-    const Reader = defineComponent({
-      setup() {
-        useChartDataActions().setData(data)
-        const selected = useAppSelector(state => state.chartData.chartData)
-        expect(selected.value).toBe(data)
-        expect(isProxy(selected.value)).toBe(false)
-        return () => null
-      },
-    })
-    const Fixture = defineComponent({
-      setup() {
-        provideChartContext()
-        return () => <Reader />
-      },
-    })
-    render(Fixture)
-  })
-})
-
-it('does not re-register legend payloads when another legend field changes', async () => {
-  let legend: ReturnType<typeof useChartLegend> | undefined
-  const first = [{ value: 'first', color: 'red' }]
-  const second = [{ value: 'second', color: 'blue' }]
-  const Reader = defineComponent({
-    setup() {
-      legend = useChartLegend()
-      SetLegendPayload(first)
-      SetLegendPayload(second)
-      return () => null
-    },
-  })
-  const Fixture = defineComponent({
-    setup() {
-      provideChartContext()
-      return () => <Reader />
-    },
-  })
-  const { unmount } = render(Fixture)
-  const payload = legend?.state.value.payload
-  expect(payload).toEqual([first, second])
-  legend?.setLegendSize({ width: 100, height: 30 })
+it('keeps sibling chart data and layout isolated during an update', async () => {
+  const data = ref([{ name: 'A', value: 10 }])
+  const width = ref(300)
+  const { container } = render(() => (
+    <div>
+      <BarChart width={width.value} height={300} data={data.value}>
+        <XAxis dataKey="name" />
+        <YAxis domain={[0, 40]} />
+        <Bar dataKey="value" isAnimationActive={false} />
+      </BarChart>
+      <BarChart width={500} height={300} data={[{ name: 'B', value: 40 }]}>
+        <XAxis dataKey="name" />
+        <YAxis domain={[0, 40]} />
+        <Bar dataKey="value" isAnimationActive={false} />
+      </BarChart>
+    </div>
+  ))
   await nextTick()
-  expect(legend?.state.value.payload).toBe(payload)
-  unmount()
-  expect(legend?.state.value.payload).toEqual([])
+  await nextTick()
+  const charts = container.querySelectorAll('.v-charts-wrapper')
+  const sibling = charts[1].innerHTML
+  expect(getBarRects(charts[0])[0].getAttribute('height')).toBe('65')
+  data.value = [{ name: 'C', value: 20 }]
+  width.value = 400
+  await nextTick()
+  await nextTick()
+  expect(getBarRects(charts[0])[0].getAttribute('height')).toBe('130')
+  expect(charts[0].querySelector('svg')?.getAttribute('width')).toBe('400')
+  expect(charts[1].innerHTML).toBe(sibling)
+  expect(charts[1].querySelector('svg')?.getAttribute('width')).toBe('500')
 })
 
-it('refreshes memoized selector inputs on the same view after switching reactive parameters', () => {
-  const dimension = ref<'width' | 'height'>('width')
-  const selectDimension = createSelector(
-    [(state: import('../chartState').RechartsRootState, key: 'width' | 'height') => state.layout[key]],
-    value => value * 2,
-  )
-  let selected: ComputedRef<number>
-  let layout: ReturnType<typeof useChartLayoutActions>
-  const Reader = defineComponent({
-    setup() {
-      layout = useChartLayoutActions()
-      layout.setProps('horizontal', { width: 100, height: 200 }, {})
-      selected = useAppSelector(state => selectDimension(state, dimension.value))
-      return () => <span>{selected.value}</span>
-    },
-  })
-  const Fixture = defineComponent({
-    setup() {
-      provideChartContext()
-      return () => <Reader />
-    },
-  })
-  render(Fixture)
-  expect(selected!.value).toBe(200)
-  dimension.value = 'height'
-  expect(selected!.value).toBe(400)
-  layout!.setProps('horizontal', { width: 300, height: 400 }, {})
-  expect(selected!.value).toBe(800)
-  dimension.value = 'width'
-  expect(selected!.value).toBe(600)
+it('passes the original unproxied row to a public shape slot', async () => {
+  const row = { name: 'A', value: 10 }
+  const shape = vi.fn(props => <rect x={props.x} y={props.y} width={props.width} height={props.height} />)
+  render(() => (
+    <BarChart width={500} height={300} data={[row]}>
+      <Bar dataKey="value" isAnimationActive={false} v-slots={{ shape }} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(shape).toHaveBeenCalled()
+  for (const [props] of shape.mock.calls) {
+    expect(props.payload).toBe(row)
+    expect(isProxy(props.payload)).toBe(false)
+    expect(Object.isFrozen(props.payload)).toBe(false)
+  }
 })

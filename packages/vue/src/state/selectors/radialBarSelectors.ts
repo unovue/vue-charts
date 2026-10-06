@@ -75,7 +75,7 @@ export const selectRadiusAxisWithScale: (state: RechartsRootState, radiusAxisId:
   )
 
 export function selectRadiusAxisTicks(state: RechartsRootState, radiusAxisId: AxisId, _angleAxisId: AxisId, isPanorama: boolean): ReadonlyArray<TickItem> | undefined {
-  return selectPolarGraphicalItemAxisTicks(state, 'radiusAxis', radiusAxisId, isPanorama)
+  return selectPolarGraphicalItemAxisTicks(state, 'radiusAxis', radiusAxisId, isPanorama) ?? undefined
 }
 
 function selectAngleAxisForRadialBar(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId): AngleAxisSettings {

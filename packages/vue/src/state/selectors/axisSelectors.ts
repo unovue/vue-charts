@@ -1,3 +1,5 @@
+import { combineAxisTicks } from '@/core/axis/ticks'
+
 import { createSelector } from '../createSelector'
 import { range, upperFirst } from 'es-toolkit/compat'
 import type { Series } from 'd3-shape'
@@ -46,7 +48,7 @@ import { checkDomainOfScale, getDomainOfStackGroups, getStackedData, getValueByD
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 import { flushTiny, isCategoricalAxis, isNan, isNumOrStr, isNumber, isWellBehavedNumber } from '@/utils'
 import type { CategoricalDomain, ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, StackOffsetType, TickItem } from '@/types'
-import type { AxisTick, StackId } from '@/types/tick'
+import type { StackId } from '@/types/tick'
 import { getPercentValue, hasDuplicate, mathSign } from '@/utils/data'
 import { isWellFormedNumberDomain, numericalDomainSpecifiedWithoutRequiringData, parseNumericalUserDomain } from '@/utils/isDomainSpecifiedByUser'
 import type { RechartsScale } from '@/types/scale'
@@ -914,12 +916,12 @@ function guardScale<S extends (value: any) => any>(scale: S): S {
 }
 
 export function combineScaleFunction(
-  axis: BaseCartesianAxis,
+  axis: BaseCartesianAxis | undefined,
   realScaleType: string | undefined,
   axisDomain: NumberDomain | CategoricalDomain | undefined,
   axisRange: AxisRange | undefined,
 ): RechartsScale | undefined {
-  if (axisDomain == null || axisRange == null) {
+  if (axis == null || axisDomain == null || axisRange == null) {
     return undefined
   }
   if (typeof axis.scale === 'function') {
@@ -1545,71 +1547,6 @@ export const selectAxisPropsNeededForCartesianGridTicksGenerator = createSelecto
   },
 )
 
-export function combineAxisTicks(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, niceTicks: ReadonlyArray<number> | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYorZType): ReadonlyArray<TickItem> | undefined {
-  if (axis == null || scale == null) {
-    return undefined
-  }
-
-  const isCategorical = isCategoricalAxis(layout, axisType)
-
-  const { type, ticks, tickCount } = axis
-
-  // This is testing for `scaleBand` but for band axis the type is reported as `band` so this looks like a dead code with a workaround elsewhere?
-  const offsetForBand = realScaleType === 'scaleBand' ? scale.bandwidth!() / 2 : 2
-
-  let offset = type === 'category' && scale.bandwidth ? scale.bandwidth() / offsetForBand : 0
-
-  offset
-    = axisType === 'angleAxis' && axisRange?.length! >= 2 ? mathSign(axisRange![0] - axisRange![1]) * 2 * offset : offset
-
-  const ticksOrNiceTicks = ticks || niceTicks
-  // The ticks set by user should only affect the ticks adjacent to axis line
-  if (ticksOrNiceTicks) {
-    const result = ticksOrNiceTicks.map((entry: AxisTick, index: number): TickItem => {
-      const scaleContent = duplicateDomain ? duplicateDomain.indexOf(entry) : entry
-
-      return {
-        index,
-        // If the scaleContent is not a number, the coordinate will be NaN.
-        // That could be the case for example with a PointScale and a string as domain.
-        coordinate: scale(scaleContent) + offset,
-        value: entry,
-        offset,
-      }
-    })
-    return result.filter((row: TickItem) => !isNan(row.coordinate))
-  }
-
-  // When axis is a categorical axis, but the type of axis is number or the scale of axis is not "auto"
-  if (isCategorical && categoricalDomain) {
-    return categoricalDomain.map(
-      (entry: any, index: number): TickItem => ({
-        coordinate: scale(entry) + offset,
-        value: entry,
-        index,
-        offset,
-      }),
-    )
-  }
-
-  if (scale.ticks) {
-    return (
-      scale
-        .ticks(tickCount)
-        .map((entry: any): TickItem => ({ coordinate: scale(entry) + offset, value: entry, offset }))
-    )
-  }
-
-  // When axis has duplicated text, serial numbers are used to generate scale
-  return scale.domain().map(
-    (entry: any, index: number): TickItem => ({
-      coordinate: scale(entry) + offset,
-      value: duplicateDomain ? duplicateDomain[entry] : entry,
-      index,
-      offset,
-    }),
-  )
-}
 export const selectTicksOfAxis = createSelector(
   [
     selectChartLayout,
@@ -1653,7 +1590,7 @@ export const selectAxisInverseTickSnapScale: (
   },
 )
 
-export function combineGraphicalItemTicks(layout: LayoutType, axis: AxisWithTicksSettings, scale: RechartsScale | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYType): TickItem[] | null {
+export function combineGraphicalItemTicks(layout: LayoutType, axis: Pick<AxisWithTicksSettings, 'tickCount'> | undefined, scale: RechartsScale | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYType): TickItem[] | null {
   if (axis == null || scale == null || axisRange == null || axisRange[0] === axisRange[1]) {
     return null
   }
