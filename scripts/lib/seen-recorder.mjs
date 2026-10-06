@@ -16,11 +16,17 @@ export function installSeenRecorder() {
   const attributes = ['d', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'cx', 'cy', 'r', 'rx', 'ry', 'points', 'transform', 'opacity', 'stroke-dasharray', 'stroke-dashoffset']
   let pointer = [-1, -1]
   document.addEventListener('pointermove', e => pointer = [e.clientX, e.clientY])
+  // HTML charts (BarList) have no SVG surface: the root itself holds the shapes.
+  const isHTMLChart = root => root.matches('.v-charts-bar-list')
+  const surfaceOf = root => isHTMLChart(root) ? root : root.querySelector('svg.v-charts-surface')
+  let scheduledFrame = 0
   const state = { frames: [], shots: {}, seen: {}, evidenceAt: {}, trigger: 'load', done: false, lastFrame: null }
   window.seenRecording = state
   window.seenReset = (trigger) => {
-    if (state.done)
-      requestAnimationFrame(sample)
+    // Rotation can replace a chart while capture is paused for analysis.
+    const previousIds = [...document.querySelectorAll('.v-charts-wrapper, .v-charts-bar-list')]
+      .filter(surfaceOf).map(id)
+    cancelAnimationFrame(scheduledFrame)
     state.done = false
     state.frames = []
     state.lastFrame = null
@@ -28,6 +34,8 @@ export function installSeenRecorder() {
     state.seen = {}
     state.evidenceAt = {}
     state.trigger = trigger
+    scheduledFrame = requestAnimationFrame(sample)
+    return previousIds
   }
   function visibility(node) {
     const box = node.getBoundingClientRect()
@@ -72,9 +80,6 @@ export function installSeenRecorder() {
     walk(document.getElementById('__nuxt')?._vnode)
     return nodes
   }
-  // HTML charts (BarList) have no SVG surface: the root itself holds the shapes.
-  const isHTMLChart = root => root.matches('.v-charts-bar-list')
-  const surfaceOf = root => isHTMLChart(root) ? root : root.querySelector('svg.v-charts-surface')
   const svgStyles = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'visibility', 'display', 'font-size', 'font-family', 'transform', 'transform-origin', 'color', 'filter']
   const htmlStyles = ['position', 'display', 'top', 'left', 'right', 'bottom', 'inset', 'width', 'height', 'transform', 'opacity', 'visibility', 'color', 'background', 'background-color', 'font-size', 'font-family', 'font-weight', 'line-height', 'align-items', 'gap', 'flex', 'padding', 'margin', 'border-radius', 'overflow', 'white-space', 'text-overflow', 'list-style']
   function snapshot(wrapper, info, t) {
@@ -176,9 +181,9 @@ export function installSeenRecorder() {
     if (t - lastShot >= 60)
       lastShot = t
     if (!state.done)
-      requestAnimationFrame(sample)
+      scheduledFrame = requestAnimationFrame(sample)
   }
-  requestAnimationFrame(sample)
+  scheduledFrame = requestAnimationFrame(sample)
 }
 
 const numeric = /[-+]?(?:\d*\.\d+|\d+)(?:e[-+]?\d+)?/gi

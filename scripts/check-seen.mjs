@@ -165,8 +165,7 @@ async function run(base, route, width, tabs = false) {
               buttons.find(el => el.textContent.trim() === (label === 'Area' ? 'Radar' : 'Area')).click()
               return null
             }
-            const ids = window.seenRecording.lastFrame?.charts.map(c => c.id) ?? []
-            window.seenReset(`tab:${label}`)
+            const ids = window.seenReset(`tab:${label}`)
             // Selection check and click share one task, so rotation cannot intervene.
             // DOM click keeps the pointer away throughout the chart entrance.
             target.click()
