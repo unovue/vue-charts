@@ -46,6 +46,12 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Code
 
+- **Elegance pass, scheduled inside the run (step 2.13), not later:** model surfaces expose
+  only what consumers read (5 of 10 AxisModel computeds have no outside reader); domain names
+  instead of store names (`rootProps`, `layoutType`, `polarOptions`, 30 `combine*` functions);
+  no `@/state` imports in `model/` or `core/` (18 today); every `ChartInputs` field a getter;
+  axis settings looked up by id instead of a reverse scan with `String(id)`.
+
 - **P3 CalendarHeatmap parses dates twice** (`range` re-reads rows that `valuesByDay` already
   parsed, fix B3). Fold into one pass.
 - **P3 Non-null assertions added for strict mode** (`pos.size!`, `cx!`/`cy!`, `dataKey!`) in
