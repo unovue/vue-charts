@@ -728,3 +728,12 @@ Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms 
 - BarList remains 8008 B; equivalent reader candidate adds 2 B; unsafe omissions save 39 B and fail key regressions.
 - Evidence: .evidence/release-1.0/phase-4/reader-bytes.json; cached paths/accessor boundary preserved.
 - Assumptions: retain accepted reader cost; size-limit budgets and baseline esbuild comparison use their own measurements.
+
+### 4.6 Release mechanics — done (47d3bdd)
+- Release uses Node 22; prepublishOnly builds; no version change, publish job or workflow execution.
+- PR CI retains SSR/consumers/motion; adds a11y, 15 tooling regressions and motion-token check.
+- Manual release workflow records full motion/browser artifacts; benchmark uses a pinned archive on a separate runner.
+- Gate: typecheck, ESLint zero warnings; 142 files / 1407 tests PASS (4.6-suite-final.log).
+- Cold preparation and subsequent frozen offline Vite/Nuxt consumers PASS; unprepared empty-store control fails.
+- Evidence: .evidence/release-1.0/phase-4/4.6-*.log; fixture locks restored unchanged.
+- Assumptions: two workers; archive install ignores lifecycle hooks; GitHub execution remains unverified locally.

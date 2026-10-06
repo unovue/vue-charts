@@ -151,7 +151,7 @@ step covers only part of an item, the step is named. Items marked ✓ were check
   (`:396`). Fix: `try/finally`, contained output dir, bounded shutdown, readiness polling. S each.
 - ~~P2 Not wired~~ fixed in 61ab6ee: motion-metrics regressions are outside vitest config and `verify.mjs`;
   `update-motion-docs.mjs --check` is not in verify/CI. S.
-- **P2 Consumer CI on a cold store:** `test.yml:66` runs the offline consumer check without
+- ~~P2 Consumer CI on a cold store~~ fixed in 47d3bdd: prepare locked dependencies before the frozen offline run; an empty-store preparation/offline pair passes and the unprepared control fails (`phase-4/4.6-cold-consumers-*.log`). Prior finding: `test.yml:66` runs the offline consumer check without
   prefetching fixture dependencies (`check-consumers.mjs:52`). Validate a cold-cache run (4.6). M.
 - **P3 Motion timing noise:** raw captures differ (2.13: 22 captures / 983 frames), resize/narrow curves flip (6 → 0 in 2.12, 0 → 6 in 2.14), and throttled
   intervals sometimes run faster than unthrottled; settled geometry is exact, cause unproven.
