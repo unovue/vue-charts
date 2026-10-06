@@ -9,30 +9,34 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Product
 
-- **P1 Unmeasured charts draw at the 640×360 server fallback, then jump.** 46 playground flags:
-  when an unvisited chart scrolls into view, Line paths change width (616 → 315 px), Radar
-  centres shift by exactly (640−250)/2 and (360−250)/2, Pie labels move 171–222 px. D-1 says
-  responsive charts stay hidden until measured, so either the hiding fails for charts measured
-  late or the recorder sees them through it. Six more flags: the same fallback shapes overflow
-  their host on load (232–290 px). Evidence: `play-flags.md`, "SSR fallback" sections.
-- **P2 Journey fold flags (9 accepted, D-25 / D-25c).** A re-ranked node folds backwards and
-  briefly overlaps (top8: 7 px jump, 78 px² overlap; top15: two jumps, 83 px² overlap). The fold
-  should split on the eased curve that neighbours use, not on time.
+- ~~P1 Unmeasured charts draw at the server fallback, then jump or overflow~~ done in 8da11ee.
+  An unseen hydration entrance reused its earlier fallback geometry after measurement; refresh
+  that plan and contain the hidden fallback. D-1 stays intact. Public hydration regression and
+  reverse proofs: `product-fix/checks.md`.
+- ~~P2 Journey fold overlaps~~ done in 7d15465. Root cause corrected: the fold already split
+  on shared eased progress; fixed slot anchors collided with moving neighbours. Folding,
+  unfolding, entering and leaving nodes now follow their neighbours' gaps on that same curve.
+  Backwards/jump flags are accepted by design with reasons (D-25e); only overlap entries were
+  removed. Public regression is reverse-proved. Matching before/after frames and analysis:
+  `product-fix/journey-question.md`; full gate: `product-fix/motion-comparison.json`.
 - **P2 Page startup blocks the first frames.** Visitor timing stays unreliable even run alone:
   BarList desktop shows a 120.8 ms gap with 55–95 ms startup long tasks. This is page startup
   cost, not only machine load (correcting the phase 1 note). Evidence: `seen-unreliable.md`,
   `seen-profile-findings.json`.
-- **P1 RadialBar item tooltips fail on hover (new).** With hover probes on real data marks,
-  6 RadialBar sectors show no correct item tooltip. Did not show before because the old probe
-  hovered the SVG centre. Evidence: tooling worktree `.evidence/tooling/remaining-flags.md`.
+  Profiled in the product slice: docs Shiki WASM and mixed Vue/Nuxt hydration dominate, with
+  recorder work also contributing. No small library cause was established, so no code fix.
+  Equal-work profiles and attribution: `product-fix/startup-profile-report.md`.
+- ~~P1 RadialBar item tooltips fail on hover~~ done in eb19d45. Registered sector positions,
+  kept Cartesian pointer coordinates, and selected painted sector hits outside the configured
+  polar viewport. Public hover/click regressions; `product-fix/item2-play` has no flags.
 - ~~P3 Playground demos~~ done on `release/1.0-tooling` (`e390f1a`): display legends are
   non-interactive; the Pie total sits outside the series group.
 
 ## Checks and tooling
 
-- **P2 `check:play` exits 1 at baseline.** Down to 58 flags after the probe fixes and in-view
-  entrance detection (`e862af6`); all 58 are the two P1 product bugs (46 + 6 fallback, 6
-  RadialBar). D-25d gates on "no new flags" until they are fixed; then return to plain pass/fail.
+- ~~P2 `check:play` exits 1 at baseline~~ done in 8da11ee and eb19d45. The full product sweep
+  exits zero with no real flags; detector fixture remains verified. D-25d's temporary baseline
+  allowance is no longer needed. Evidence: `product-fix/play-final/results.json`.
 - **P2 `check:seen` cannot pass on this machine** (see the startup item above).
 - ~~P3 Motion lab rate comparison~~ done: state reset (`e78ed41`) and a discarded warm-up
   replay before timed rates (`9c807fa`) remove the 1×/4× inversion.
@@ -66,12 +70,10 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
   no `@/state` imports in `model/` or `core/` (18 today); every `ChartInputs` field a getter;
   axis settings looked up by id instead of a reverse scan with `String(id)`.
 
-- **P3 CalendarHeatmap parses dates twice** (`range` re-reads rows that `valuesByDay` already
-  parsed, fix B3). Fold into one pass.
-- **P3 Non-null assertions added for strict mode** (`pos.size!`, `cx!`/`cy!`, `dataKey!`) in
-  code the model rewrite should replace; check that none survive 2.14.
-- **P3 `motion.ts` imports the `Reveal` type from `useKeyedTransition.ts`**, which imports
-  `motion.ts`. Type-only, but move `Reveal` next to the tokens.
+- ~~P3 CalendarHeatmap parses dates twice~~ done in c21885f: values and range share one pass.
+- ~~P3 Strict-mode non-null assertions (`pos.size!`, `cx!`/`cy!`, `dataKey!`)~~ done in c21885f:
+  narrow available geometry instead; missing Scatter tooltip positions are documented.
+- ~~P3 `Reveal` type cycle~~ done in 4b885d0 before this slice: the type lives beside motion tokens.
 - **P3 Run hygiene:** the `vue` commit scope in `a6ab90a` is outside the README's scope list.
 
 ## Review of phases 0–2 (2026-10-06)
@@ -82,21 +84,18 @@ step covers only part of an item, the step is named. Items marked ✓ were check
 
 ### Model and API (do in the product slice or with the phase 3 step named)
 
-- **P2 One rule for the rows a series shows** ✓ (code read): written 7 times (`useLine.ts:79`,
-  `useArea.ts:99`, `useBar.ts:108`, `useScatter.ts:39`, `RadialBar.tsx:87`, `core/axis/data.ts:57`,
-  `core/tooltip.ts:40`). Series test `props.data?.length`, axes test "any item has data", so
-  domains and marks can disagree. Fix: one `displayedData(item)` on the model. M.
-- **P2 `isAnimating` mirrored by watchers** (`StaticLine.tsx:100`, `RenderArea.tsx:104`,
-  `BarRectangles.tsx:119`, `useIsAnimating.ts`). The motion engine owns it; pass
-  `display.isAnimating` down and delete `useIsAnimating` (4.7 removes only the docs). S.
+- ~~P2 One rule for the rows a series shows~~ done in 37eded7: model `displayedData` serves
+  marks and axes; adjacent `tooltipData` preserves React's distinct empty-array/brush rule.
+  Source parity and numeric comparison: `product-fix/displayed-rows-investigation.md`.
+- ~~P2 `isAnimating` mirrored by watchers~~ done in c21885f: deleted unused mirrors and
+  `useIsAnimating`; remaining consumers read the motion engine directly.
 - **P2 Behavior keyed on chart-name strings** (`core/axis/scale.ts:33`, `Cursor.tsx:41`,
   `useLine.ts:69`, `useArea.ts:72`). A renamed or wrapped chart changes scale and cursor. Fix:
   typed capabilities in the chart definition (`categoryScale`, `cursor`); extend 3.4. M.
-- **P2 Line `dot` options read once at setup** ✓ (`useLine.ts:96`): changing `:dot` later does not
-  update `clipDot`/dot size. Fix: `computed`. Bug: needs a regression test. S.
-- **P2 Legend size pushed by a watcher, never reset** ✓ (`useLegend.ts:153`): switching a bottom
-  Legend to `portal` likely keeps the old reserved space (traced, not run). Fix: size belongs to the
-  Legend registration. S.
+- ~~P2 Line `dot` options read once at setup~~ done in 785b079: reactive clipping and removal
+  of unused setup size fields; public option-change regression reverse-proved.
+- ~~P2 Legend size pushed by a watcher, never reset~~ done in 24e471c: reproduced portal
+  reservation and moved size into the registration. Public portal/unmount/inside regression.
 - **P2 Standalone charts report 0×0 geometry** (`ChartShell.tsx:28`, `chart.ts:140`):
   `ChartPresentation` repeats `Chart` fields; `usePlotArea`/`useChartWidth` return 0 there. Fix:
   one source per field, a narrower presentation for shell charts. M.

@@ -453,3 +453,16 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - The same report contains 70 intervals where throttled worst-frame time is lower than unthrottled. Cadence and machine load may explain this; timings were not compared with the concurrent predecessor and no performance conclusion is drawn.
 - Full playground report has one 15,500 ms recorder timeout beyond the accepted 58 flags. The isolated line-route retry completes both visits without that timeout; likely a transient capture stall, with moderate confidence. The full report remains unchanged.
 - First benchmark attempt (`step-2.14/bench.log`, `.evidence/bench/2026-10-06T13-28-00.698Z-75755/results.json`) stopped before a verdict because saved-baseline LineChart lacked an intermediate animation sample. The unchanged full retry passes; sampling/load is plausible, with moderate confidence. No timings from the incomplete attempt are used.
+
+## Product-fix slice
+
+- Done: SSR 8da11ee, RadialBar eb19d45, reactive dot 785b079, Legend 24e471c, rows 37eded7.
+- Done: small cleanup c21885f; Reveal already moved in 4b885d0.
+- Journey 7d15465: no overlaps; intentional fold flags documented (Opus, D-25e).
+- Gate: typecheck, lint, code and bundle pass; Vitest 130 files / 1310 tests (`product-fix/gate-final-vitest.log`).
+- Browser: playground zero real flags; motion 285 transitions clean (`product-fix/checks.md`).
+- Numeric: only Journey reranks differ; other step frames exact (`product-fix/numeric-all-comparison.json`).
+- Startup reported; no small library cause proved (`product-fix/startup-profile-report.md`).
+- Evidence: `.evidence/release-1.0/product-fix/` (gates, reverse proofs, profiles, matching frames).
+- Limits: fresh-mount capture varies even on phase 2; unequal-load timings are not compared.
+- Assumptions: profile saved docs assets; full playground sweep plus final Journey route; Reveal already satisfied.

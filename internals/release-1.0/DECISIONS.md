@@ -410,3 +410,6 @@ with shadcn-vue / Nuxt UI components (`Tooltip`, `Legend`, `Label`, …) and sho
 - **D-25d (Phase 1 playground gate):** 0.1 and freshly built `31da149` both exit 1 for inherited playground flags.
   Gate on zero new scenario/kind/element flags against the same corrected recorder at baseline; retain raw failures and thresholds.
   [130 matching flags and baseline causes](../../../.evidence/release-1.0/play-flags.md).
+- **D-25e (Product slice, Opus):** preserve Journey's geometric fold; backwards/jump flags are
+  intended height shrink-and-grow, accepted with reasons. Only overlaps are defects: folding
+  slots follow neighbours on shared eased progress. No recorder change. [Analysis and frames](../../../.evidence/release-1.0/product-fix/journey-question.md).
