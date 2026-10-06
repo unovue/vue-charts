@@ -51,7 +51,7 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Code
 
-- **P3 Typed reader byte target:** the regression follow-up keeps cached dot/numeric paths
+- ~~P3 Typed reader byte target~~ investigated in 9309011: the equivalent property-first candidate adds 2 B; removing bracket support, own-key precedence and the opaque accessor boundary saves 39 B but breaks guarantees. Keep the accepted reader. Evidence: `phase-4/reader-bytes.json`. The prior finding: the regression follow-up keeps cached dot/numeric paths
   and accessors; BarList is 8,008 B gzip. Its estimated feature cost is 193 B against the
   requested ~150 B target. Opus accepted this cost; revisit the remaining ~43 B in phase 4.3
   without per-row parsing or allocations for string/number key reads.
@@ -130,7 +130,7 @@ step covers only part of an item, the step is named. Items marked ✓ were check
   `check:code` count `any` types, not the word. Done when: 0 `any`.
 - **P3 Types:** Sparkline stores `null` gaps through a double cast into a numeric type
   (`Sparkline.tsx:22`, `:109`); `core/tooltip.ts:13` generic erased by `| unknown`. S.
-- **P3 Bundle:** BarList grew 7,414 → 7,652 B gzip in 2.13 (still under 8,947). Find the 238 B in 4.3.
+- ~~P3 Bundle~~ investigated in 9309011: boundary history attributes growth to accessible names, palette defaults and the typed cached reader; final BarList is below 0.2 baseline (see `phase-4/4.3-bundle-comparison.json`). Prior finding: BarList grew 7,414 → 7,652 B gzip in 2.13 (still under 8,947). Find the 238 B in 4.3.
 
 ### Checks and tooling
 

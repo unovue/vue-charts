@@ -719,3 +719,12 @@ Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms 
 - Baseline: exit 0, 16 PASS / 2 Heatmap INCONCLUSIVE / 0 FAIL; spread crosses the unchanged boundary.
 - Injected slowdown: exit 1, selfTestVerified true; evidence .evidence/release-1.0/phase-4/.
 - Assumptions: two workers; native event currentTarget is the series group; payload/index/event identity retained.
+
+### 4.3 Size budgets — done (9309011)
+- All 19 chart-only entries plus 3 presets use measured size +5%, rounded up to 0.1 kB.
+- Gate: typecheck, ESLint zero warnings; 142 files / 1407 tests PASS (4.3-suite-final.log).
+- Size gate 22/22 PASS; one-byte BarList control fails; all 19 gzip exports below 0.2 baseline.
+- Standalone forbidden modules zero; per-chart table: phase-4/4.3-bundle-comparison.json.
+- BarList remains 8008 B; equivalent reader candidate adds 2 B; unsafe omissions save 39 B and fail key regressions.
+- Evidence: .evidence/release-1.0/phase-4/reader-bytes.json; cached paths/accessor boundary preserved.
+- Assumptions: retain accepted reader cost; size-limit budgets and baseline esbuild comparison use their own measurements.
