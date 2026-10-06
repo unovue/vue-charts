@@ -29,8 +29,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
 | 2.4 | Slice 3a: layout math | yes | 2.3 | done | `49a7c42`, this log commit | Shared layout, step gate and 285/285 motion PASS; evidence below. |
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | done | `efad585`, this log commit | Shared Cartesian axis models, step gate and 285/285 motion PASS; evidence below. |
-| 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | done | `2f271f0`, this log | 131 files / 1,283 tests; typing, lint and 285 motion transitions PASS. |
-| 2.7 | Slice 3d: tooltip model | yes | 2.6 | todo | | |
+| 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | done | `2f271f0`, `dd5feaf` | 131 files / 1,283 tests; typing, lint and 285 motion transitions PASS. |
+| 2.7 | Slice 3d: tooltip model | yes | 2.6 | done | `2c627f4`, this log | 132 files / 1,294 tests; typing, lint and 285 motion transitions PASS. |
 | 2.8 | Slice 3e: cartesian series | yes | 2.7 | todo | | |
 | 2.9 | Slice 3f: polar series | yes | 2.8 | todo | | |
 | 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | todo | | |
@@ -294,10 +294,19 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - No steady-state geometry regression: `.evidence/release-1.0/area-investigation/settled-comparison.json`; raw captures and screenshots retained alongside.
 
 ## Step 2.6: axis scales, ticks and polar geometry
-- Done: `2f271f0`; this log commit records verification. Removed axis/polar selectors; one tracked adapter remains.
+- Done: `2f271f0`, `dd5feaf`; axis verification recorded. Removed axis/polar selectors; one tracked adapter remains.
 - Gate PASS: Node 22, 131 files / 1,283 tests (107.10 s), typecheck, build and 52 changed-file lint checks, zero warnings.
 - Public duplicate-ID regression: 6/6 pass; reverse patch fails both placement cases (45 expected, 65 received).
 - Motion PASS: 285/285, nine unchanged accepted flags, zero browser errors, 570 videos.
 - Area: 114/114 frames match pre-2.3 exactly; SSR: 1/1 test and four byte-identical sections.
-- Evidence: `.evidence/release-1.0/step-2.6/checks.md`; resize narrow curves 6 → 0; 103 throttled intervals faster; no conclusion.
+- Evidence: `.evidence/release-1.0/step-2.6/checks.md`; resize narrow curves 6 → 0, focused repeat 6; 103 throttled intervals faster; no conclusion.
 - Assumptions: Node 22, two workers, six immutable source snapshots; preserve last duplicate-axis registration and the single adapter.
+
+## Step 2.7: tooltip model and TooltipSource
+- Done: `2c627f4`; this log commit records verification. One chart controller and read-only TooltipSource; one adapter remains.
+- Gate PASS: 132 files / 1,294 tests (103.64 s), typecheck, build, lint on 39 changed files with zero warnings.
+- Public regressions cover ownership, control, identity, hierarchy and sync; all twelve reverse patches fail as expected.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; curve counts match step 2.6.
+- Area: 114/114 frames match pre-2.3; SSR: 1/1 and four byte-identical sections; Chromium 900/390px PASS, servers closed.
+- Evidence: `.evidence/release-1.0/step-2.7/checks.md`; resize differs from 2.5; 120 throttled intervals faster; no conclusion.
+- Assumptions: Node 22, two workers, six frozen snapshots; preserve legacy callback strings and private pointer-only link handles.
