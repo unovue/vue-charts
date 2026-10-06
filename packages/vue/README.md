@@ -119,7 +119,7 @@ Standalone charts such as `Heatmap` and `BarList` infer the row type from `data`
 
 Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `ReferenceArea`,
 `ReferenceDot`, `ErrorBar`, `Brush`, `PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`, `Tooltip`,
-`Legend`, `Label`, `LabelList`, `Cell`, `ResponsiveContainer`, and the shapes `Rectangle`, `Dot`,
+`Legend`, `Label`, `LabelList`, `Cell`, and the shapes `Rectangle`, `Dot`,
 `Sector`, `Curve`, `Symbols`.
 
 ## What works the Vue way
