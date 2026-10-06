@@ -27,6 +27,14 @@ async function dataMarkPoint(chart) {
       for (const shape of svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')) {
         if (!shape.closest(selector) || shape.closest('defs,clipPath,mask,.v-charts-label-list,.v-charts-pie-labels,.v-charts-active-dot'))
           continue
+        // RadialBar backgrounds share the series group but have no item handlers.
+        if (shape.closest('.v-charts-radial-bar') && !window.playItemSectors.has(shape))
+          continue
+        const radar = shape.closest('.v-charts-radar')
+        if (radar?.querySelector('.v-charts-radar-dots circle') && !shape.closest('.v-charts-radar-dots'))
+          continue
+        // Without dots, Radar's outline carries values; its filled centre is not a datum.
+        const radarOutline = !!radar && shape.tagName === 'path'
         const style = getComputedStyle(shape)
         if (!window.playHasPaint(style.fill, style.fillOpacity) && !(Number.parseFloat(style.strokeWidth) > 0 && window.playHasPaint(style.stroke, style.strokeOpacity)))
           continue
@@ -42,7 +50,7 @@ async function dataMarkPoint(chart) {
           return hit === shape || (cell && hit?.closest('.v-charts-cell') === cell)
         }
         const b = shape.getBoundingClientRect()
-        for (let x = 1; x < 10; x++) {
+        for (let x = 1; x < (radarOutline ? 1 : 10); x++) {
           for (let y = 1; y < 10; y++) {
             const point = { x: b.x + b.width * x / 10, y: b.y + b.height * y / 10 }
             if (receivesPoint(point))
@@ -50,7 +58,7 @@ async function dataMarkPoint(chart) {
           }
         }
         // Thin stroked curves may fall between the fill sampling points.
-        if (typeof shape.getTotalLength === 'function') {
+        if ((style.fill === 'none' || radarOutline) && typeof shape.getTotalLength === 'function') {
           const length = shape.getTotalLength()
           for (let i = 1; i < 20; i++) {
             const local = shape.getPointAtLength(length * i / 20)
@@ -127,9 +135,11 @@ function installRecorder(seriesSelector) {
   }
   window.playHasPaint = hasPaint
   let exemptions = new WeakSet()
+  window.playItemSectors = new WeakSet()
   window.playReadOnlyLegends = new WeakSet()
   function updateExemptions() {
     exemptions = new WeakSet()
+    window.playItemSectors = new WeakSet()
     window.playReadOnlyLegends = new WeakSet()
     const visited = new Map()
     // Production Vue omits __vueParentComponent, but keeps the renderer's root VNode.
@@ -147,6 +157,8 @@ function installRecorder(seriesSelector) {
       visited.set(vnode, states)
       if (readOnlyLegend && vnode.el?.nodeType === 1 && vnode.el.classList.contains('v-charts-legend-wrapper'))
         window.playReadOnlyLegends.add(vnode.el)
+      if (vnode.component?.type.name === 'Sector' && vnode.props?.onMouseenter && vnode.el?.nodeType === 1)
+        window.playItemSectors.add(vnode.el)
       if (off && vnode.el?.nodeType === 1)
         exemptions.add(vnode.el)
       walk(vnode.component?.subTree, off, readOnlyLegend)
@@ -250,7 +262,7 @@ function installRecorder(seriesSelector) {
         state.snapshots.push({ t: Math.round(now - state.start), svgs })
       }
       const target = window.playPointer ? document.elementFromPoint(window.playPointer[0] - scrollX, window.playPointer[1] - scrollY) : null
-      state.frames.push({ pointer: window.playPointer, hit: target ? { tag: target.tagName, class: target.getAttribute('class'), series: target.closest(seriesSelector)?.getAttribute('class') ?? null } : null, t: Math.round(now - state.start), overflow: document.documentElement.scrollWidth - innerWidth, charts })
+      state.frames.push({ pointer: window.playPointer, hit: target ? { tag: target.tagName, class: target.getAttribute('class'), series: target.closest(seriesSelector)?.getAttribute('class') ?? null, itemSector: window.playItemSectors.has(target) } : null, t: Math.round(now - state.start), overflow: document.documentElement.scrollWidth - innerWidth, charts })
       state.done = now - state.start >= state.duration
     }
     requestAnimationFrame(sample)
@@ -472,6 +484,7 @@ try {
           if (!await chart.isVisible())
             continue
           const hoverFrames = await capture(`hover-${i}`, 500, async () => {
+            await page.mouse.move(0, 0)
             const point = await dataMarkPoint(chart)
             if (!point)
               throw new Error(`Chart ${i}: no pointer-receiving data mark found`)
@@ -546,10 +559,13 @@ try {
   if (!fixturePassed)
     throw new Error(`Fixture missed: ${expected.filter(flag => !fixtureFlags.has(flag)).join(', ')}; fade-only and instantaneous clipped entrances must also fail`)
   if (!process.argv.includes('--fixture-only')) {
-    const routes = (await readdir(join(root, 'playground/nuxt/app/pages'))).filter(f => f.endsWith('.vue')).sort().map(f => f === 'index.vue' ? '/' : `/${f.slice(0, -4)}`)
+    const onlyRoute = process.argv.find(arg => arg.startsWith('--route='))?.slice(8)
+    const routes = (await readdir(join(root, 'playground/nuxt/app/pages'))).filter(f => f.endsWith('.vue')).sort().map(f => f === 'index.vue' ? '/' : `/${f.slice(0, -4)}`).filter(route => !onlyRoute || route === onlyRoute)
+    if (!routes.length)
+      throw new Error(`No playground route found for ${onlyRoute}`)
     for (const route of routes)
       await run(route, 1280)
-    for (const route of ['/bar-charts', '/line-charts', '/pie-charts'])
+    for (const route of ['/bar-charts', '/line-charts', '/pie-charts'].filter(route => !onlyRoute || route === onlyRoute))
       await run(route, 390)
   }
 }
