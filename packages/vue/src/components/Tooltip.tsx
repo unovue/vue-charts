@@ -1,10 +1,8 @@
-import { useTooltipSource } from '@/model/tooltip'
+import { useTooltipController, useTooltipSource } from '@/model/tooltip'
 import { type ChartTransition, motionTokens } from '@/animation/motion'
-import { useChartName, useChartTooltip } from '@/state/chartContext'
+import { useChartPresentation } from '@/model/presentation'
 import { Fragment, Teleport, computed, defineComponent, isVNode, onScopeDispose, reactive, ref, watch, watchEffect, watchPostEffect } from 'vue'
 import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
-import { useChartLayout, useOffsetInternal, useViewBox } from '@/context/chartLayoutContext'
-import { useAccessibilityLayer } from '@/context/accessibilityContext'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { animate, useSpring } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-dom'
@@ -30,10 +28,9 @@ import { getCursorPoints } from '@/components/utils'
 import type { RadialCursorPoints } from '@/components/types'
 import type { Point } from '@/shape'
 import { useCursorLayerRef } from '@/context/cursorLayerContext'
-import { useTooltipAxisBandSize } from '@/context/useTooltipAxis'
 import { sortBy, uniqBy } from 'es-toolkit/compat'
 import { isNumOrStr } from '@/utils'
-import { useTooltipChartSynchronisation } from '@/synchronisation/useChartSynchronisation'
+import { useTooltipChartSynchronisation } from '@/events/tooltipSync'
 
 // Types
 export type ContentType =
@@ -437,10 +434,11 @@ const Cursor = defineComponent({
     index: String,
   },
   setup(props) {
-    const offset = useOffsetInternal()
-    const layout = useChartLayout()
-    const chartName = useChartName()
-    const tooltipAxisBandSize = useTooltipAxisBandSize()
+    const presentation = useChartPresentation()
+    const offset = presentation.offset
+    const layout = presentation.layout
+    const chartName = presentation.name
+    const tooltipAxisBandSize = presentation.bandSize
     const cursorLayerRef = useCursorLayerRef(null)
     const points = computed(() => getCursorPoints(layout.value, props.coordinate!, offset.value))
     return () => {
@@ -656,7 +654,7 @@ const _Tooltip = defineComponent({
     default?: () => any
   }>,
   setup(props, { slots, emit }) {
-    const tooltip = useChartTooltip()
+    const tooltip = useTooltipController()
 
     const source = useTooltipSource()
     const binding = computed(() => ({
@@ -672,8 +670,9 @@ const _Tooltip = defineComponent({
     }))
     tooltip.bindings.register(binding)
     const ownsInteraction = computed(() => tooltip.bindings.registrations.value[0] === binding)
-    const viewBox = useViewBox()
-    const accessibilityLayer = useAccessibilityLayer()
+    const presentation = useChartPresentation()
+    const viewBox = presentation.viewBox
+    const accessibilityLayer = presentation.accessibility
     const tooltipEventType = tooltip.eventType
     const coordinate = source.coordinate
     const payload = source.payload

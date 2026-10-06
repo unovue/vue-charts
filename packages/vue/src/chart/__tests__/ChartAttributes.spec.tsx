@@ -1,6 +1,7 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it } from 'vitest'
-import { CalendarHeatmap, CohortChart, Heatmap, JourneySankey, Sparkline, Tracker } from '@/index'
+import { defineComponent } from 'vue'
+import { CalendarHeatmap, CohortChart, Heatmap, JourneySankey, Sparkline, Tracker, useChartHeight, useChartWidth, useMargin, usePlotArea } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 beforeEach(() => {
@@ -19,5 +20,30 @@ it.each([
   const box = container.querySelector<HTMLElement>('.v-charts-wrapper')!
   expect(box.classList.contains('mine')).toBe(true)
   expect(box.style.getPropertyValue('--v-charts-status-up')).toBe('teal')
-  expect(container.querySelector('[data-testid="chart"]')).not.toBeNull()
+  expect(container.querySelectorAll('[data-testid="chart"]')).toHaveLength(1)
+  expect(container.querySelector('[data-testid="chart"]')?.tagName).toBe('svg')
+})
+
+// Catches public layout hooks trying to read the Cartesian adapter in a standalone chart.
+it('preserves the standalone public layout viewport', () => {
+  const Viewport = defineComponent({
+    setup() {
+      const width = useChartWidth()
+      const height = useChartHeight()
+      const margin = useMargin()
+      const area = usePlotArea()
+      return () => <span data-testid="viewport">{JSON.stringify({ width: width.value, height: height.value, margin: margin.value, area: area.value })}</span>
+    },
+  })
+  const { getByTestId } = render(() => (
+    <Tracker width={400} height={32} data={[{ date: 'A', status: 'up' }]}>
+      <Viewport />
+    </Tracker>
+  ))
+  expect(JSON.parse(getByTestId('viewport').textContent!)).toEqual({
+    width: 0,
+    height: 0,
+    margin: { top: 5, right: 5, bottom: 5, left: 5 },
+    area: { x: 5, y: 5, width: 0, height: 0 },
+  })
 })

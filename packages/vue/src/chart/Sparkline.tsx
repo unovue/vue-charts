@@ -1,19 +1,17 @@
 import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, useId, watch } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext, useChartTooltip } from '@/state/chartContext'
+import { useTooltipController } from '@/model/tooltip'
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
-import { provideRenderPhase } from '@/animation/renderPhase'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
 import { drawTiming } from '@/animation/motion'
 import { polylineLength } from '@/animation/ridingLabels'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
-import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, boxAttrs, cellChartOptions, cellGridSharedProps, isFocusVisible, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
+import { CellGridLayer, cellChartOptions, cellGridSharedProps, isFocusVisible } from './CellGridLayer'
 import type { GridCell } from './cellGridUtils'
 
 type SparkValue = number | null | undefined
@@ -65,7 +63,7 @@ const SparklineInner = defineComponent({
   props: { ...SparklineVueProps, width: { type: Number, required: true as const }, height: { type: Number, required: true as const } },
   emits: sparklineEmits,
   setup(props, { emit }) {
-    const tooltip = useChartTooltip()
+    const tooltip = useTooltipController()
     const id = useId()
     const size = { effectiveWidth: computed(() => props.width), effectiveHeight: computed(() => props.height) }
     const rows = useTrackedData(() => props.data)
@@ -246,69 +244,67 @@ const SparklineInner = defineComponent({
       const width = props.width
       const height = props.height
       return (
-        <Surface width={width} height={height} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-          <Layer class="v-charts-sparkline" data-type={props.type}>
-            {props.type === 'bar'
-              ? (
-                  <CellGridLayer
-                    cells={bars.value}
-                    gap={props.gap}
-                    radius={props.radius}
-                    activeStyle="dim"
-                    grow="bottom"
-                    ariaLabel={summary.value}
-                    isAnimationActive={props.isAnimationActive}
-                    transition={props.transition}
-                    activeIndex={active.value}
-                    {...{
-                      'onUpdate:activeIndex': (index: number | null) => setActive(index),
-                      'onAnimation-start': () => emit('animation-start'),
-                      'onAnimation-end': () => emit('animation-end'),
-                    }}
-                  />
-                )
-              : (
-                  <g
-                    role="img"
-                    tabindex={0}
-                    aria-label={activePoint.value ? `${summary.value}. Point ${activePoint.value.index + 1}: ${activePoint.value.value ?? 'no value'}` : summary.value}
-                    style={{ outline: 'none' }}
-                    onMousemove={onPointer}
-                    onMouseleave={() => setActive(null)}
-                    onKeydown={onKeydown}
-                    onFocus={(event: FocusEvent) => {
-                      if (active.value == null && points.value.length && isFocusVisible(event.target as Element))
-                        setActive(points.value.length - 1)
-                    }}
-                    onBlur={() => setActive(null)}
-                  >
-                    <defs>
-                      <SweepClip id={`${id}-sweep`} progress={display.reveal.value} x={-PAD} y={-PAD} width={width + PAD * 2} height={height + PAD * 2} />
-                      {props.type === 'area' && (
-                        <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" style={{ stopColor: props.color, stopOpacity: 0.28 }} />
-                          <stop offset="100%" style={{ stopColor: props.color, stopOpacity: 0 }} />
-                        </linearGradient>
-                      )}
-                    </defs>
-                    <rect x={0} y={0} width={width} height={height} fill="transparent" />
-                    <g clip-path={`url(#${id}-sweep)`}>
-                      {props.type === 'area' && <path class="v-charts-sparkline-area" d={areaPath.value} style={{ fill: `url(#${id}-fill)` }} />}
-                      <path class="v-charts-sparkline-line" d={linePath.value} fill="none" stroke-width={props.strokeWidth} stroke-linejoin="round" stroke-linecap="round" style={{ stroke: props.color }} />
-                    </g>
-                    {props.endDot && !activePoint.value && lastPoint.value && display.reveal.value >= 1 && (
-                      <circle class="v-charts-sparkline-end" cx={lastPoint.value.x} cy={lastPoint.value.y} r={2.5} stroke-width={1.5} style={{ fill: props.color, stroke: 'var(--v-charts-background, #fff)' }} />
+        <Layer class="v-charts-sparkline" data-type={props.type}>
+          {props.type === 'bar'
+            ? (
+                <CellGridLayer
+                  cells={bars.value}
+                  gap={props.gap}
+                  radius={props.radius}
+                  activeStyle="dim"
+                  grow="bottom"
+                  ariaLabel={summary.value}
+                  isAnimationActive={props.isAnimationActive}
+                  transition={props.transition}
+                  activeIndex={active.value}
+                  {...{
+                    'onUpdate:activeIndex': (index: number | null) => setActive(index),
+                    'onAnimation-start': () => emit('animation-start'),
+                    'onAnimation-end': () => emit('animation-end'),
+                  }}
+                />
+              )
+            : (
+                <g
+                  role="img"
+                  tabindex={0}
+                  aria-label={activePoint.value ? `${summary.value}. Point ${activePoint.value.index + 1}: ${activePoint.value.value ?? 'no value'}` : summary.value}
+                  style={{ outline: 'none' }}
+                  onMousemove={onPointer}
+                  onMouseleave={() => setActive(null)}
+                  onKeydown={onKeydown}
+                  onFocus={(event: FocusEvent) => {
+                    if (active.value == null && points.value.length && isFocusVisible(event.target as Element))
+                      setActive(points.value.length - 1)
+                  }}
+                  onBlur={() => setActive(null)}
+                >
+                  <defs>
+                    <SweepClip id={`${id}-sweep`} progress={display.reveal.value} x={-PAD} y={-PAD} width={width + PAD * 2} height={height + PAD * 2} />
+                    {props.type === 'area' && (
+                      <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" style={{ stopColor: props.color, stopOpacity: 0.28 }} />
+                        <stop offset="100%" style={{ stopColor: props.color, stopOpacity: 0 }} />
+                      </linearGradient>
                     )}
-                    {activePoint.value && activePoint.value.value !== null && (
-                      <g class="v-charts-sparkline-active" style={{ pointerEvents: 'none' }}>
-                        <line x1={activePoint.value.x} x2={activePoint.value.x} y1={0} y2={height} stroke-width={1} style={{ stroke: 'var(--v-charts-cursor, #ccc)' }} />
-                        <circle cx={activePoint.value.x} cy={activePoint.value.y} r={3} stroke-width={1.5} style={{ fill: props.color, stroke: 'var(--v-charts-background, #fff)' }} />
-                      </g>
-                    )}
+                  </defs>
+                  <rect x={0} y={0} width={width} height={height} fill="transparent" />
+                  <g clip-path={`url(#${id}-sweep)`}>
+                    {props.type === 'area' && <path class="v-charts-sparkline-area" d={areaPath.value} style={{ fill: `url(#${id}-fill)` }} />}
+                    <path class="v-charts-sparkline-line" d={linePath.value} fill="none" stroke-width={props.strokeWidth} stroke-linejoin="round" stroke-linecap="round" style={{ stroke: props.color }} />
                   </g>
-                )}
-          </Layer>
-        </Surface>
+                  {props.endDot && !activePoint.value && lastPoint.value && display.reveal.value >= 1 && (
+                    <circle class="v-charts-sparkline-end" cx={lastPoint.value.x} cy={lastPoint.value.y} r={2.5} stroke-width={1.5} style={{ fill: props.color, stroke: 'var(--v-charts-background, #fff)' }} />
+                  )}
+                  {activePoint.value && activePoint.value.value !== null && (
+                    <g class="v-charts-sparkline-active" style={{ pointerEvents: 'none' }}>
+                      <line x1={activePoint.value.x} x2={activePoint.value.x} y1={0} y2={height} stroke-width={1} style={{ stroke: 'var(--v-charts-cursor, #ccc)' }} />
+                      <circle cx={activePoint.value.x} cy={activePoint.value.y} r={3} stroke-width={1.5} style={{ fill: props.color, stroke: 'var(--v-charts-background, #fff)' }} />
+                    </g>
+                  )}
+                </g>
+              )}
+        </Layer>
       )
     }
   },
@@ -321,31 +317,29 @@ const _Sparkline = defineComponent({
   emits: { ...chartEmits, ...sparklineEmits },
   slots: Object as SlotsType<{ default?: () => any }>,
   setup(props, { emit, slots, attrs }) {
-    provideChartContext(cellChartOptions('Sparkline'))
-    provideRenderPhase()
-    const size = useResponsiveSize(reactive({
+    const size = useChartShell(reactive({
       width: computed(() => props.width),
       height: computed(() => props.height ?? (props.aspect ? undefined : 32)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }))
+    }), cellChartOptions('Sparkline'))
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-          <SparklineInner
-            {...rootAttrs(attrs)}
-            {...inner}
-            width={size.effectiveWidth.value}
-            height={size.effectiveHeight.value}
-            {...{
-              'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-              'onAnimation-start': () => emit('animation-start'),
-              'onAnimation-end': () => emit('animation-end'),
-            }}
-          />
-          {slots.default?.()}
-        </ChartsWrapper>
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+          {{ svg: () => (
+            <SparklineInner
+              {...inner}
+              width={size.effectiveWidth.value}
+              height={size.effectiveHeight.value}
+              {...{
+                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
+                'onAnimation-start': () => emit('animation-start'),
+                'onAnimation-end': () => emit('animation-end'),
+              }}
+            />
+          ), default: slots.default }}
+        </ChartShell>
       )
     }
   },

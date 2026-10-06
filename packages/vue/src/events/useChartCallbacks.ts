@@ -1,21 +1,17 @@
-import { useAppSelector } from '@/state/hooks'
-import {
-  selectActiveLabel,
-  selectActiveTooltipCoordinate,
-  selectActiveTooltipDataKey,
-  selectActiveTooltipIndex,
-  selectIsTooltipActive,
-} from '@/state/chartContext'
+import { computed } from 'vue'
+import { useTooltipController } from '@/model/tooltip'
 import type { CategoricalChartFunc, MouseHandlerDataParam } from '@/types'
 
 export function useChartCallbacks() {
-  const callbackState = useAppSelector((state): MouseHandlerDataParam => ({
-    activeCoordinate: selectActiveTooltipCoordinate(state),
-    activeDataKey: selectActiveTooltipDataKey(state),
-    activeIndex: selectActiveTooltipIndex(state),
-    activeLabel: selectActiveLabel(state),
-    activeTooltipIndex: selectActiveTooltipIndex(state),
-    isTooltipActive: selectIsTooltipActive(state),
+  const tooltip = useTooltipController()
+  const source = tooltip.source
+  const callbackState = computed((): MouseHandlerDataParam => ({
+    activeCoordinate: source.coordinate.value,
+    activeDataKey: tooltip.target.value?.entry?.value?.settings.dataKey,
+    activeIndex: source.active.value ? tooltip.target.value?.index ?? null : null,
+    activeLabel: source.label.value,
+    activeTooltipIndex: source.active.value ? tooltip.target.value?.index ?? null : null,
+    isTooltipActive: source.active.value,
   }))
 
   return (handler: CategoricalChartFunc | undefined, event: MouseEvent | TouchEvent) => {

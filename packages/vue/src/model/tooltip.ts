@@ -26,7 +26,7 @@ export interface TooltipBinding {
 }
 
 interface TooltipInputs {
-  axis: AxisLookup
+  axis?: AxisLookup
   entries: Registry<TooltipPayloadConfiguration>
   data: ComputedRef<ChartDataState>
   options: () => ChartOptions
@@ -51,6 +51,22 @@ interface Selection {
   channel: Channel
   active: boolean
   coordinate?: Coordinate
+}
+
+const controllerKey: InjectionKey<TooltipController> = Symbol('vccs-tooltip-controller')
+
+export type TooltipController = ReturnType<typeof createTooltip>
+
+export function provideTooltipController(controller: TooltipController) {
+  provide(controllerKey, controller)
+  provideTooltipSource(controller.source)
+}
+
+export function useTooltipController() {
+  const controller = inject(controllerKey)
+  if (!controller)
+    throw new Error('vccs: selection requires a tooltip controller.')
+  return controller
 }
 
 const sourceKey: InjectionKey<TooltipSource> = Symbol('vccs-tooltip-source')
@@ -106,9 +122,11 @@ export function createTooltip(inputs: TooltipInputs) {
     const layout = inputs.layout()
     return layout === 'horizontal' ? 'xAxis' : layout === 'vertical' ? 'yAxis' : layout === 'centric' ? 'angleAxis' : 'radiusAxis'
   })
-  const axis = computed(() => inputs.axis(axisType.value, settings.value.axisId))
+  const axis = computed(() => inputs.axis?.(axisType.value, settings.value.axisId))
   const ticks = computed(() => {
     const model = axis.value
+    if (!model)
+      return undefined
     return combineTicksOfTooltipAxis(
       inputs.layout(),
       model.settings.value,
@@ -121,7 +139,7 @@ export function createTooltip(inputs: TooltipInputs) {
     )
   })
   const orderedTicks = computed(() => sortBy(ticks.value ?? [], tick => tick.coordinate))
-  const displayedData = computed(() => axis.value.displayedData.value)
+  const displayedData = computed(() => axis.value?.displayedData.value ?? [])
 
   function rowIdentity(row: unknown, key: TooltipPayloadConfiguration['settings']['nameKey']): unknown {
     const source = Array.isArray(row) ? row[0]?.payload : row
@@ -141,7 +159,7 @@ export function createTooltip(inputs: TooltipInputs) {
   const axisTargets = computed<readonly Target[]>(() => {
     if (!inputs.entries.entries.value.some(entry => !entry.settings.hide))
       return []
-    const identity = identities(displayedData.value, axis.value.settings.value.dataKey)
+    const identity = identities(displayedData.value, axis.value?.settings.value.dataKey)
     return (ticks.value ?? []).map((tick, index) => ({
       index: String(index),
       localIndex: index,
@@ -169,7 +187,7 @@ export function createTooltip(inputs: TooltipInputs) {
       : sliceTooltipData(configuration.dataDefinedOnItem, range.dataStartIndex, range.dataEndIndex)
     if (!Array.isArray(data))
       return []
-    const identity = identities(data, configuration.settings.nameKey ?? axis.value.settings.value.dataKey)
+    const identity = identities(data, configuration.settings.nameKey ?? axis.value?.settings.value.dataKey)
     return data.map((row, localIndex) => ({
       entry,
       localIndex,
@@ -259,7 +277,7 @@ export function createTooltip(inputs: TooltipInputs) {
     eventType.value === 'item' ? target.value?.entry?.value ? [target.value.entry.value] : [] : inputs.entries.entries.value,
     target.value?.index ?? null,
     inputs.data.value,
-    axis.value.settings.value,
+    axis.value?.settings.value,
     label.value,
     inputs.options().tooltipPayloadSearcher,
     eventType.value,

@@ -1,3 +1,4 @@
+import { useItemInteractions } from './useItemInteractions'
 import { selectChartDirection, selectCoordinateForDefaultIndex, selectTooltipAxisTicks, useChartTooltip } from '@/state/chartContext'
 import { useAppSelector } from '@/state/hooks'
 import { selectActivePropsFromChartPointer } from '@/state/selectors/selectActivePropsFromChartPointer'
@@ -44,40 +45,7 @@ export function useChartInteractions() {
     }
   }
 
-  function itemKeyDown(event: KeyboardEvent) {
-    const { key } = event
-    const targets = tooltip.targets.value
-    if (key === 'Escape') {
-      tooltip.setKeyboardInteraction({ active: false, activeIndex: null, activeDataKey: undefined })
-      return
-    }
-    const position = tooltip.source.index.value ?? -1
-    if (key === 'Enter') {
-      targets[position]?.onClick?.(event)
-      return
-    }
-    let next: number
-    if (key === 'Home')
-      next = 0
-    else if (key === 'End')
-      next = targets.length - 1
-    else if (key === 'ArrowRight' || key === 'ArrowDown')
-      next = Math.min(position + 1, targets.length - 1)
-    else if (key === 'ArrowLeft' || key === 'ArrowUp')
-      next = Math.max(position - 1, 0)
-    else
-      return
-    const target = targets[next]
-    if (!target)
-      return
-    tooltip.setKeyboardInteraction({
-      active: true,
-      activeIndex: target.index,
-      activeDataKey: target.entry?.value?.settings.dataKey,
-      activeCoordinate: target.coordinate,
-      configuration: target.entry?.value,
-    })
-  }
+  const { keyDown: itemKeyDown } = useItemInteractions()
 
   function keyDown(event: KeyboardEvent) {
     const { key } = event

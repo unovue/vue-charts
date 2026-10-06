@@ -1,13 +1,10 @@
 import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext } from '@/state/chartContext'
-import { provideRenderPhase } from '@/animation/renderPhase'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
-import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, type CellGridSlots, boxAttrs, cellChartOptions, cellGridEmits, cellGridSharedProps, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
+import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, formatDay, toDayNumber } from './cellGridUtils'
 
 /** Default fill per status. Every color reads a CSS variable first, so themes can restyle it. */
@@ -54,15 +51,13 @@ const _Tracker = defineComponent({
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<TrackerRow> & { default?: () => any }>,
   setup(props, { emit, slots, attrs }) {
-    provideChartContext(cellChartOptions('Tracker'))
-    provideRenderPhase()
     // A tracker is a strip: without a height or aspect it is 32px tall, not the 360px chart default.
-    const size = useResponsiveSize(reactive({
+    const size = useChartShell(reactive({
       width: computed(() => props.width),
       height: computed(() => props.height ?? (props.aspect ? undefined : 32)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }))
+    }), cellChartOptions('Tracker'))
     const rows = useTrackedData(() => props.data)
 
     // `YYYY-MM-DD` and `Date` names read as dates ("Aug 21, 2026"); anything else as written.
@@ -109,8 +104,8 @@ const _Tracker = defineComponent({
     })
 
     return () => (
-      <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-        <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+        {{ svg: () => (
           <Layer class="v-charts-tracker">
             <CellGridLayer
               cells={cells.value}
@@ -133,9 +128,8 @@ const _Tracker = defineComponent({
               {{ cell: slots.cell }}
             </CellGridLayer>
           </Layer>
-        </Surface>
-        {slots.default?.()}
-      </ChartsWrapper>
+        ), default: slots.default }}
+      </ChartShell>
     )
   },
 })

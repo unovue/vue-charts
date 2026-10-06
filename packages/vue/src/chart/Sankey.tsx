@@ -1,17 +1,14 @@
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext, useChartTooltip } from '@/state/chartContext'
-import { provideRenderPhase } from '@/animation/renderPhase'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { useTooltipController } from '@/model/tooltip'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
+import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, computed, defineComponent, reactive, toRefs } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
-import { ChartsWrapper } from './ChartsWrapper'
-import { boxAttrs, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
@@ -109,32 +106,31 @@ const sankeyEmits = {
   'animation-end': () => true,
 }
 
-const SankeyInner = defineComponent({
-  name: 'SankeyInner',
-  props: SankeyVueProps,
-  emits: sankeyEmits,
-  slots: Object as SlotsType<SankeySlots>,
-  setup(props, { slots, emit }) {
-    const data = useTrackedData(() => [props.data])
-    const tooltip = useChartTooltip()
+function useSankey(
+  props: ExtractPropTypes<typeof SankeyVueProps>,
+  slots: SankeySlots,
+  emit: EmitFn<typeof sankeyEmits>,
+) {
+  const tooltip = useTooltipController()
+  const data = useTrackedData(() => [props.data])
 
-    const layout = computed(() => {
-      const m = props.margin
-      return computeSankeyLayout({
-        data: data.value![0],
-        width: props.width,
-        height: props.height,
-        nodePadding: props.nodePadding,
-        nodeWidth: props.nodeWidth,
-        iterations: props.iterations,
-        margin: {
-          top: m.top ?? 5,
-          right: m.right ?? 5,
-          bottom: m.bottom ?? 5,
-          left: m.left ?? 5,
-        },
-      })
+  const layout = computed(() => {
+    const m = props.margin
+    return computeSankeyLayout({
+      data: data.value![0],
+      width: props.width,
+      height: props.height,
+      nodePadding: props.nodePadding,
+      nodeWidth: props.nodeWidth,
+      iterations: props.iterations,
+      margin: {
+        top: m.top ?? 5,
+        right: m.right ?? 5,
+        bottom: m.bottom ?? 5,
+        left: m.left ?? 5,
+      },
     })
+  })
 
     type Geometry = { kind: 'node', node: SankeyLayoutNode, identity: string } | { kind: 'link', link: SankeyLayoutLink, sourceKey: string, targetKey: string, sourceFraction: number, targetFraction: number }
     const targetGeometry = computed<Geometry[]>(() => {
@@ -414,19 +410,16 @@ const SankeyInner = defineComponent({
     }
 
     return () => (
-      <Surface title={props.title} desc={props.desc} width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
-        <Layer class="v-charts-sankey">
-          <g class="v-charts-sankey-links">
-            {displayLinks.value.map(({ key, link }, i) => renderLink(link, link.index ?? i, 1, key))}
-          </g>
-          <g class="v-charts-sankey-nodes">
-            {displayNodes.value.map(({ key, node }, i) => renderNode(node, node.index ?? i, 1, key))}
-          </g>
-        </Layer>
-      </Surface>
+      <Layer class="v-charts-sankey">
+        <g class="v-charts-sankey-links">
+          {displayLinks.value.map(({ key, link }, i) => renderLink(link, link.index ?? i, 1, key))}
+        </g>
+        <g class="v-charts-sankey-nodes">
+          {displayNodes.value.map(({ key, node }, i) => renderNode(node, node.index ?? i, 1, key))}
+        </g>
+      </Layer>
     )
-  },
-})
+}
 
 /**
  * Sankey diagram — visualizes flows between nodes.
@@ -440,35 +433,24 @@ const _Sankey = defineComponent({
   emits: { ...chartEmits, ...sankeyEmits },
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots, emit, attrs }) {
-    provideChartContext(sankeyOptions)
-    provideRenderPhase()
-    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
+    const size = useChartShell(props, sankeyOptions)
+    function setupContent() {
+      const svg = useSankey(reactive({
+        ...toRefs(props),
+        width: size.effectiveWidth,
+        height: size.effectiveHeight,
+      }), slots, emit)
+      return { svg }
+    }
 
     return () => {
-      const { aspect, initialDimension, ...innerProps } = props
       if (!props.data || !props.data.nodes || props.data.nodes.length === 0)
         return null
 
       return (
-        <ChartsWrapper
-          {...rootAttrs(attrs)}
-          {...boxAttrs(attrs)}
-          accessibilityLayer
-          title={props.title}
-          desc={props.desc}
-          {...chartListeners(emit)}
-          isResponsive={isResponsive.value}
-          boxStyle={boxStyle.value}
-          interactive={!isResponsive.value || measured.value}
-          onResize={handleResize}
-          width={effectiveWidth.value}
-          height={effectiveHeight.value}
-        >
-          <SankeyInner {...{ 'onNode-click': (entry, index, event) => emit('node-click', entry, index, event) }} {...{ 'onNode-mouseenter': (entry, index, event) => emit('node-mouseenter', entry, index, event) }} {...{ 'onNode-mouseleave': (entry, index, event) => emit('node-mouseleave', entry, index, event) }} {...{ 'onLink-click': (entry, index, event) => emit('link-click', entry, index, event) }} {...{ 'onLink-mouseenter': (entry, index, event) => emit('link-mouseenter', entry, index, event) }} {...{ 'onLink-mouseleave': (entry, index, event) => emit('link-mouseleave', entry, index, event) }} {...{ 'onAnimation-start': () => emit('animation-start') }} {...{ 'onAnimation-end': () => emit('animation-end') }} {...innerProps} width={effectiveWidth.value} height={effectiveHeight.value}>
-            {{ node: slots.node, link: slots.link }}
-          </SankeyInner>
-          {slots.default?.()}
-        </ChartsWrapper>
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} root="wrapper" setupContent={setupContent} accessibilityLayer title={props.title} desc={props.desc}>
+          {{ default: slots.default }}
+        </ChartShell>
       )
     }
   },

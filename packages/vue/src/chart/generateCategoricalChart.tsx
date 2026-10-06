@@ -183,7 +183,7 @@ export function generateCategoricalChart({
         tooltip: { chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher },
       })
       provideChart(chart)
-      provideChartContext(undefined, chart)
+      provideChartContext(chart)
       provideRenderPhase()
 
       const clipPathId = provideClipPathId(props)

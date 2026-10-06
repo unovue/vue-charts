@@ -39,6 +39,7 @@ const initial = [{ name: 'B', value: 40 }, { name: 'C', value: 70 }]
 export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel' | 'treemap' | 'sankey') {
   function setup(active = true, override = false) {
     const rows = ref(initial)
+    const width = ref(400)
     const start = vi.fn()
     const end = vi.fn()
     const props = { onAnimationStart: start, onAnimationEnd: end, isAnimationActive: active, transition: override ? { duration: 0.12, ease: 'linear' as const } : undefined }
@@ -54,8 +55,8 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
         )
         case 'radial': return <RadialBarChart width={400} height={300} data={rows.value}><RadialBar dataKey="value" {...props} /></RadialBarChart>
         case 'funnel': return <FunnelChart width={400} height={300}><Funnel data={rows.value} dataKey="value" {...props} v-slots={{ shape: (trap: { x: number, y: number, height: number, upperWidth: number }) => <rect x={trap.x} y={trap.y} height={trap.height} width={trap.upperWidth} /> }} /></FunnelChart>
-        case 'treemap': return <Treemap width={400} height={300} data={rows.value} {...props} v-slots={{ content: (node: { name: string, x: number, y: number, width: number, height: number }) => <rect data-name={node.name} x={node.x} y={node.y} width={node.width} height={node.height} /> }} />
-        case 'sankey': return <Sankey width={400} height={300} data={{ nodes: [...rows.value, { name: 'sink' }], links: rows.value.map((row, index) => ({ source: index, target: rows.value.length, value: row.value })) }} {...props} />
+        case 'treemap': return <Treemap width={width.value} height={300} data={rows.value} {...props} v-slots={{ content: (node: { name: string, x: number, y: number, width: number, height: number }) => <rect data-name={node.name} x={node.x} y={node.y} width={node.width} height={node.height} /> }} />
+        case 'sankey': return <Sankey width={width.value} height={300} data={{ nodes: [...rows.value, { name: 'sink' }], links: rows.value.map((row, index) => ({ source: index, target: rows.value.length, value: row.value })) }} {...props} />
       }
     })
     const selector = { pie: '.v-charts-pie > g', radar: '.v-charts-radar-dots circle', radial: '.v-charts-radial-bar > path', funnel: '.v-charts-funnel > g:has(rect)', treemap: '.v-charts-treemap-node', sankey: '.v-charts-sankey-node' }[kind]
@@ -64,9 +65,35 @@ export function remainingMotionCases(kind: 'pie' | 'radar' | 'radial' | 'funnel'
       const shape = node.matches('circle,path') ? node : node.querySelector('path,rect')!
       return ['d', 'x', 'y', 'width', 'height', 'cx', 'cy'].map(attr => shape?.getAttribute(attr)).join('|')
     }
-    return { rows, container, nodes, geometry, start, end }
+    return { rows, width, container, nodes, geometry, start, end }
   }
   describe(`${kind} public keyed transitions`, () => {
+    if (kind === 'treemap' || kind === 'sankey') {
+      // A lost root size capability would animate a resize as an ordinary data update.
+      it('snaps settled geometry to a new chart width without starting a transition', async () => {
+        const view = setup()
+        await frame()
+        const before = view.nodes().map(view.geometry)
+        view.start.mockClear()
+        view.width.value = 600
+        await nextTick()
+        expect(view.nodes().map(view.geometry)).not.toEqual(before)
+        expect(view.start).not.toHaveBeenCalled()
+      })
+    }
+    if (kind === 'treemap') {
+      // Clearing the chart used to dispose its geometry: refill must replay the first reveal.
+      it('replays the fade entrance when an empty chart is refilled', async () => {
+        const view = setup()
+        await frame()
+        view.rows.value = []
+        await nextTick()
+        expect(view.nodes()).toHaveLength(0)
+        view.rows.value = initial
+        await nextTick()
+        expect(view.nodes().map(node => node.getAttribute('opacity'))).toEqual(['0', '0'])
+      })
+    }
     if (kind === 'sankey') {
       // At the last clock frame, floating interpolation must not make a collapsed rect negative.
       it('lands exiting nodes on exact zero height before completion', async () => {

@@ -1,27 +1,27 @@
-import { useChartGeometry } from '@/state/chartContext'
-import { useAppSelector } from '@/state/hooks'
-import { selectChartLayout } from '@/state/selectors/common'
+import { useChartPresentation } from '@/model/presentation'
 
 export function useOffset() {
-  return useChartGeometry().offset
+  return useChartPresentation().offset
 }
 
-export const useChartLayout = () => useAppSelector(selectChartLayout)
+export function useChartLayout() {
+  return useChartPresentation().layout
+}
 
 export function useViewBox() {
-  return useChartGeometry().viewBox
+  return useChartPresentation().viewBox
 }
 
 export function useChartWidth() {
-  return useChartGeometry().width
+  return useChartPresentation().width
 }
 
 export function useChartHeight() {
-  return useChartGeometry().height
+  return useChartPresentation().height
 }
 
 export const useOffsetInternal = useOffset
 
 export function useMargin() {
-  return useChartGeometry().margin
+  return useChartPresentation().margin
 }

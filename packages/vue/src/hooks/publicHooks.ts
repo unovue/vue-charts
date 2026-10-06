@@ -1,5 +1,6 @@
+import { useTooltipSource } from '@/model/tooltip'
 import { type ComputedRef, computed } from 'vue'
-import { selectActiveLabel, selectActiveTooltipCoordinate, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectIsTooltipActive, selectTicksOfAxis, useAppSelector, useChartAxes } from '@/state/chartContext'
+import { selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis, useAppSelector, useChartAxes } from '@/state/chartContext'
 import {
   useChartHeight,
   useChartWidth,
@@ -30,7 +31,7 @@ export { useChartWidth, useChartHeight, useMargin, useOffset }
  * @returns A reactive boolean indicating tooltip active state
  */
 export function useIsTooltipActive() {
-  return useAppSelector(selectIsTooltipActive)
+  return useTooltipSource().active
 }
 
 /**
@@ -41,7 +42,7 @@ export function useIsTooltipActive() {
  * @returns A reactive Coordinate ({ x, y }) or undefined when no tooltip is active
  */
 export function useActiveTooltipCoordinate() {
-  return useAppSelector(selectActiveTooltipCoordinate)
+  return useTooltipSource().coordinate
 }
 
 /**
@@ -52,7 +53,7 @@ export function useActiveTooltipCoordinate() {
  * @returns A reactive string label or undefined when no tooltip is active
  */
 export function useActiveTooltipLabel() {
-  return useAppSelector(selectActiveLabel)
+  return useTooltipSource().label
 }
 
 /**

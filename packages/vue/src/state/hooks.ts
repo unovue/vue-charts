@@ -1,5 +1,5 @@
-import { useAppSelector } from './chartContext'
-import { selectActiveTooltipDataPoints } from '@/state/chartContext'
+import { computed } from 'vue'
+import { useTooltipSource } from '@/model/tooltip'
 
 export { useAppSelector } from './chartContext'
 
@@ -20,5 +20,6 @@ export { useAppSelector } from './chartContext'
  * @returns Data points that are currently visible in a Tooltip
  */
 export function useActiveTooltipDataPoints() {
-  return useAppSelector(selectActiveTooltipDataPoints)
+  const source = useTooltipSource()
+  return computed(() => Array.from(new Set(source.payload.value.map(entry => entry.payload).filter(entry => entry != null))))
 }

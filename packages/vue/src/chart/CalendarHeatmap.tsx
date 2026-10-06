@@ -1,14 +1,11 @@
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
 import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext } from '@/state/chartContext'
-import { provideRenderPhase } from '@/animation/renderPhase'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
-import { ChartsWrapper } from './ChartsWrapper'
-import { CellGridLayer, type CellGridSlots, boxAttrs, cellChartOptions, cellGridEmits, cellGridSharedProps, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
+import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, dayNumberToIso, formatDay, levelColors, levelOf, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay {
@@ -63,8 +60,6 @@ const _CalendarHeatmap = defineComponent({
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<CalendarDay> & { default?: () => any }>,
   setup(props, { emit, slots, attrs }) {
-    provideChartContext(cellChartOptions('CalendarHeatmap'))
-    provideRenderPhase()
     const rows = useTrackedData(() => props.data)
 
     const valuesByDay = computed(() => {
@@ -105,12 +100,12 @@ const _CalendarHeatmap = defineComponent({
     const top = computed(() => props.monthLabels ? MONTH_BAND : 0)
 
     // Without a height or aspect, keep cells roughly square at any width.
-    const size = useResponsiveSize(reactive({
+    const size = useChartShell(reactive({
       width: computed(() => props.width),
       height: computed(() => props.height),
       aspect: computed(() => props.aspect ?? (props.height === undefined ? (left.value + Math.max(columns.value, 1) * NOMINAL_STEP) / (top.value + 7 * NOMINAL_STEP) : undefined)),
       initialDimension: computed(() => props.initialDimension),
-    }))
+    }), cellChartOptions('CalendarHeatmap'))
 
     const layout = computed(() => {
       const r = range.value
@@ -201,8 +196,8 @@ const _CalendarHeatmap = defineComponent({
     })
 
     return () => (
-      <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-        <Surface {...rootAttrs(attrs)} width={size.effectiveWidth.value} height={size.effectiveHeight.value} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+        {{ svg: () => (
           <Layer class="v-charts-calendar">
             <MovingLabels
               class="v-charts-calendar-months"
@@ -237,9 +232,8 @@ const _CalendarHeatmap = defineComponent({
               {{ cell: slots.cell }}
             </CellGridLayer>
           </Layer>
-        </Surface>
-        {slots.default?.()}
-      </ChartsWrapper>
+        ), default: slots.default }}
+      </ChartShell>
     )
   },
 })

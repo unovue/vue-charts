@@ -1,21 +1,17 @@
-import { createPolarLayout } from '@/model/polar'
-import { createAxes } from '@/model/axis'
-import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
-import { createLayout } from '@/model/layout'
+import { provideChartPresentation } from '@/model/presentation'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { computed, inject, provide } from 'vue'
 import type { ChartGeometry } from '@/model/layout'
-import { createRegistries } from '@/model/registries'
 import type { ChartRegistries } from '@/model/registries'
 import type { Registry } from '@/model/registry'
 import type { AxisId } from './chartCartesianAxis'
-import type { ChartOptions } from './chartOptions'
-import { createChartLegend } from './chartLegend'
-import { createChartBrush } from './chartBrush'
+import type { createChartLegend } from './chartLegend'
+import type { createChartBrush } from './chartBrush'
 import type { Chart } from '@/model/chart'
-import { chartDefaults } from '@/model/defaults'
 import type { InjectionKey } from 'vue'
 import type { RechartsRootState } from './chartState'
-import { createChartData } from './chartData'
-import { createTooltip, provideTooltipSource } from '@/model/tooltip'
+import type { createChartData } from './chartData'
+import { type createTooltip, provideTooltipController } from '@/model/tooltip'
 
 interface ChartContext {
   geometry: ChartGeometry
@@ -33,57 +29,33 @@ interface ChartContext {
 
 const chartContextKey: InjectionKey<ChartContext> = Symbol('chart-state')
 
-export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart) {
-  const root = chart ?? createStandaloneInputs(initialOptions)
-  const registries = chart ?? createRegistries()
-  const { axes, items, references } = registries
+export function provideChartContext(chart: Chart) {
+  const root = chart
+  const { axes, items, references } = chart
   const xAxis = axisSettings(axes.xAxis)
   const yAxis = axisSettings(axes.yAxis)
   const zAxis = axisSettings(axes.zAxis)
   const angleAxis = axisSettings(axes.angleAxis)
   const radiusAxis = axisSettings(axes.radiusAxis)
-  const brush = chart?.brush ?? createChartBrush()
-  const legend = chart?.legend ?? createChartLegend(registries.legendEntries)
-  const data = chart?.dataRange ?? createChartData(() => undefined)
-  const geometry = chart ?? createLayout({
-    layout: () => root.layout.value,
-    brush: () => brush.state.value,
-    legendSettings: () => legend.state.value.settings,
-    legendSize: () => legend.state.value.size,
-    axes,
+  const { brush, legend, dataRange: data, polarLayout, axis, tooltip } = chart
+  const geometry = chart
+  provideTooltipController(tooltip)
+  provideChartPresentation({
+    name: computed(() => root.options.value.chartName),
+    layout: computed(() => root.layout.value.layoutType),
+    width: geometry.width,
+    height: geometry.height,
+    margin: geometry.margin,
+    viewBox: geometry.viewBox,
+    offset: geometry.offset,
+    accessibility: computed(() => root.rootProps.value.accessibilityLayer !== false),
+    bandSize: computed(() => {
+      const axis = tooltip.axis.value
+      return axis ? getBandSizeOfAxis({ ...axis.settings.value, scale: axis.scale.value! }, tooltip.ticks.value ?? undefined) : undefined
+    }),
+    syncId: computed(() => root.rootProps.value.syncId),
+    emitter: computed(() => root.options.value.eventEmitter),
   })
-  const scope = getCurrentScope()
-  if (!scope)
-    throw new Error('vccs: chart context requires an active scope.')
-  const polarLayout = chart?.polarLayout ?? createPolarLayout({
-    layout: () => root.layout.value.layoutType,
-    size: () => root.layout.value,
-    offset: () => geometry.offset.value,
-    polar: () => root.polarOptions.value,
-  })
-  const axis = chart?.axis ?? createAxes(scope, {
-    polarLayout,
-    size: () => root.layout.value,
-    offset: () => geometry.offset.value,
-    name: () => root.options.value.chartName,
-    hasBar: () => items.cartesian.entries.value.some(item => item.type === 'bar')
-      || items.polar.entries.value.some(item => item.type === 'radialBar'),
-    barCategoryGap: () => root.rootProps.value.barCategoryGap,
-    ...registries,
-    dataWithIndexes: data.state,
-    layout: () => root.layout.value.layoutType,
-    stackOffset: () => root.rootProps.value.stackOffset,
-  })
-  const tooltip = chart?.tooltip ?? createTooltip({
-    axis,
-    entries: registries.tooltipEntries,
-    data: data.state,
-    layout: () => root.layout.value.layoutType,
-    size: () => root.layout.value,
-    offset: () => geometry.offset.value,
-    options: () => root.options.value,
-  })
-  provideTooltipSource(tooltip.source)
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
     tooltipModel: tooltip,
@@ -195,30 +167,6 @@ export function useChartCartesianAxis() {
 
 export function useChartGraphicalItems() {
   return useChartContext().graphicalItems
-}
-
-function createStandaloneInputs(initialOptions?: ChartOptions) {
-  const scale = shallowRef(1)
-  const options: ChartOptions = {
-    chartName: '',
-    defaultTooltipEventType: 'axis',
-    tooltipPayloadSearcher: undefined,
-    ...initialOptions,
-    eventEmitter: Symbol('vccs-chart-emitter'),
-  }
-  return {
-    layout: computed(() => ({
-      layoutType: chartDefaults.layout,
-      width: 0,
-      height: 0,
-      margin: chartDefaults.margin,
-      scale: scale.value,
-    })),
-    rootProps: computed(() => chartDefaults),
-    polarOptions: computed(() => null),
-    options: computed(() => options),
-    setScale(value: number) { scale.value = value },
-  }
 }
 
 function axisSettings<T extends { id?: AxisId }>(registry: Registry<T>) {
@@ -345,10 +293,10 @@ export function selectCartesianAxisSize(state: RechartsRootState, type: XorYType
 }
 
 export function selectTooltipAxisType(state: RechartsRootState) { return state.tooltipModel.axisType.value }
-export function selectTooltipAxis(state: RechartsRootState) { return state.tooltipModel.axis.value.settings.value }
+export function selectTooltipAxis(state: RechartsRootState) { return state.tooltipModel.axis.value?.settings.value }
 export function selectTooltipAxisTicks(state: RechartsRootState) { return state.tooltipModel.ticks.value }
-export function selectTooltipAxisScale(state: RechartsRootState) { return state.tooltipModel.axis.value.scale.value }
-export function selectTooltipAxisRangeWithReverse(state: RechartsRootState) { return state.tooltipModel.axis.value.reversedRange.value }
+export function selectTooltipAxisScale(state: RechartsRootState) { return state.tooltipModel.axis.value?.scale.value }
+export function selectTooltipAxisRangeWithReverse(state: RechartsRootState) { return state.tooltipModel.axis.value?.reversedRange.value }
 export function selectTooltipDisplayedData(state: RechartsRootState) { return state.tooltipModel.displayedData.value }
 export function selectActiveTooltipIndex(state: RechartsRootState) { return state.tooltipModel.source.active.value ? state.tooltipModel.target.value?.index ?? null : null }
 export function selectActiveTooltipDataKey(state: RechartsRootState) { return state.tooltipModel.target.value?.entry?.value?.settings.dataKey }

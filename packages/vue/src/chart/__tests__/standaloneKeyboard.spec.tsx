@@ -41,6 +41,7 @@ it.each([
   expect(root.classList.contains('custom-chart')).toBe(true)
   expect(root.style.backgroundColor).toBe('red')
   expect(root.getAttribute('data-owner')).toBe('caller')
+  expect(container.querySelectorAll('[data-owner]')).toHaveLength(1)
   expect(root.getAttribute('aria-details')).toBe('details')
   expect(root.getAttribute('role')).toBe('application')
   expect(root.getAttribute('aria-label')).toBe(title)

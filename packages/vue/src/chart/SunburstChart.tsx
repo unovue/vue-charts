@@ -1,8 +1,7 @@
 import type { Coordinate, DataKey } from '@/types'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext, useChartTooltip } from '@/state/chartContext'
-import { provideRenderPhase } from '@/animation/renderPhase'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { useTooltipController } from '@/model/tooltip'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -10,11 +9,9 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { ChartTransition } from '@/animation/motion'
 import { get } from 'es-toolkit/compat'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
-import { ChartsWrapper } from './ChartsWrapper'
-import { boxAttrs, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/state/chartOptions'
 import type {
   TooltipIndex,
@@ -89,7 +86,7 @@ const SunburstInner = defineComponent({
   setup(props, { slots, emit }) {
     const trackedData = useTrackedData(() => [props.data])
     const data = computed(() => ({ ...trackedData.value![0] }))
-    const tooltip = useChartTooltip()
+    const tooltip = useTooltipController()
 
     const resolvedCx = computed(() => props.cx ?? props.width / 2)
     const resolvedCy = computed(() => props.cy ?? props.height / 2)
@@ -259,11 +256,9 @@ const SunburstInner = defineComponent({
     }
 
     return () => (
-      <Surface title={props.title} desc={props.desc} width={props.width} height={props.height} style={{ width: '100%', height: '100%' }}>
-        <Layer class="v-charts-sunburst">
-          {items.value.map(({ key, value, phase }, index) => renderSector(value, index, key, phase === 'exit'))}
-        </Layer>
-      </Surface>
+      <Layer class="v-charts-sunburst">
+        {items.value.map(({ key, value, phase }, index) => renderSector(value, index, key, phase === 'exit'))}
+      </Layer>
     )
   },
 })
@@ -275,9 +270,7 @@ const _SunburstChart = defineComponent({
   emits: { ...chartEmits, 'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true, 'animation-start': () => true, 'animation-end': () => true },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots, emit, attrs }) {
-    provideChartContext(sunburstOptions)
-    provideRenderPhase()
-    const { effectiveWidth, effectiveHeight, isResponsive, measured, handleResize, boxStyle } = useResponsiveSize(props)
+    const size = useChartShell(props, sunburstOptions)
 
     return () => {
       const { aspect, initialDimension, ...innerProps } = props
@@ -285,32 +278,20 @@ const _SunburstChart = defineComponent({
         return null
 
       return (
-        <ChartsWrapper
-          {...rootAttrs(attrs)}
-          {...boxAttrs(attrs)}
-          accessibilityLayer
-          title={props.title}
-          desc={props.desc}
-          {...chartListeners(emit)}
-          isResponsive={isResponsive.value}
-          boxStyle={boxStyle.value}
-          interactive={!isResponsive.value || measured.value}
-          onResize={handleResize}
-          width={effectiveWidth.value}
-          height={effectiveHeight.value}
-        >
-          <SunburstInner
-            {...innerProps}
-            width={effectiveWidth.value}
-            height={effectiveHeight.value}
-            {...{ 'onNode-click': (node, index, event) => emit('node-click', node, index, event) }}
-            onAnimationStart={() => emit('animation-start')}
-            onAnimationEnd={() => emit('animation-end')}
-          >
-            {{ content: slots.content }}
-          </SunburstInner>
-          {slots.default?.()}
-        </ChartsWrapper>
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} root="wrapper" accessibilityLayer title={props.title} desc={props.desc}>
+          {{ svg: () => (
+            <SunburstInner
+              {...innerProps}
+              width={size.effectiveWidth.value}
+              height={size.effectiveHeight.value}
+              {...{ 'onNode-click': (node, index, event) => emit('node-click', node, index, event) }}
+              onAnimationStart={() => emit('animation-start')}
+              onAnimationEnd={() => emit('animation-end')}
+            >
+              {{ content: slots.content }}
+            </SunburstInner>
+          ), default: slots.default }}
+        </ChartShell>
       )
     }
   },

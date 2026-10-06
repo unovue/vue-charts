@@ -2,7 +2,7 @@ import 'vitest-canvas-mock'
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Bar, BarChart, Pie, PieChart, Tooltip, Treemap, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Pie, PieChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const rows = [{ name: 'A', a: 10, b: 30 }, { name: 'B', a: 20, b: 40 }]
@@ -273,4 +273,19 @@ it('announces accepted Treemap indexes and keeps the announcement when the paren
   finally {
     vi.useRealTimers()
   }
+})
+
+// Catches the wrapper's keyboard setting leaking into the public Tooltip content contract.
+it('preserves standalone tooltip accessibility content settings', async () => {
+  const { getByTestId } = render(() => (
+    <Tracker width={100} height={32} data={[{ date: 'A', status: 'up' }]} isAnimationActive={false}>
+      <Tooltip defaultIndex={0} isAnimationActive={false}>
+        {{ content: ({ accessibilityLayer }) => <span data-testid="tooltip-accessibility">{String(accessibilityLayer)}</span> }}
+      </Tooltip>
+    </Tracker>
+  ))
+  await nextTick()
+  await nextTick()
+  await nextTick()
+  expect(getByTestId('tooltip-accessibility').textContent).toBe('true')
 })

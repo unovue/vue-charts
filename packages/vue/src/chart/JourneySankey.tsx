@@ -2,16 +2,14 @@ import { motionTokens } from '@/animation/motion'
 import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
-import { provideChartContext, useChartTooltip } from '@/state/chartContext'
+import { useTooltipController } from '@/model/tooltip'
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
-import { provideRenderPhase } from '@/animation/renderPhase'
 import { type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import Surface from '@/container/Surface'
-import { ChartsWrapper } from './ChartsWrapper'
-import { boxAttrs, cellChartOptions, cellGridSharedProps, isFocusVisible, rootAttrs } from './CellGridLayer'
+import { ChartShell, useChartShell } from './ChartShell'
+import { cellChartOptions, cellGridSharedProps, isFocusVisible } from './CellGridLayer'
 import {
   type JourneyInput,
   type JourneyLink,
@@ -95,7 +93,7 @@ const JourneySankeyInner = defineComponent({
   emits: journeyEmits,
   slots: Object as SlotsType<JourneySankeySlots>,
   setup(props, { emit, slots }) {
-    const tooltip = useChartTooltip()
+    const tooltip = useTooltipController()
     const reducedMotion = useReducedMotion()
     const rows = useTrackedData(() => props.data)
     const numbers = computed(() => new Intl.NumberFormat(props.locale))
@@ -390,90 +388,88 @@ const JourneySankeyInner = defineComponent({
         : [])
       const labelChars = Math.floor((columnWidth.value - props.nodeWidth - 16) / CHAR_WIDTH)
       return (
-        <Surface width={props.width} height={props.height} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-          <g
-            class="v-charts-journey"
-            role="group"
-            tabindex={0}
-            aria-label={focusedLabel.value}
-            style={{ outline: 'none' }}
-            onKeydown={onKeydown}
-            onFocus={onFocus}
-            onBlur={() => { focused.value = undefined; leave() }}
-          >
-            {props.headers && (
-              <g class="v-charts-journey-headers">
-                {layout.value.steps.map(step => (
-                  <g key={step.step} transform={`translate(${step.x},0)`}>
-                    {slots.header
-                      ? slots.header({ ...step, width: columnWidth.value })
-                      : (
-                          <text y={14} style={{ fontSize: '12px', fill: 'var(--v-charts-text, #666)' }}>
-                            <tspan style={{ fontWeight: 500 }}>{`Step ${step.step + 1}`}</tspan>
-                            <tspan style={{ fill: 'var(--v-charts-text, #666)' }}>
-                              {step.previousTotal == null
-                                ? ` · ${numbers.value.format(step.total)}`
-                                : ` · ${numbers.value.format(step.total)} · ${percent.value.format(step.total / (step.previousTotal || 1) * 100)}% of step ${step.step}`}
-                            </tspan>
-                          </text>
-                        )}
-                  </g>
-                ))}
-              </g>
-            )}
-            <g class="v-charts-journey-links" fill="none">
-              {links.map(({ key, link, shown, moving }) => (
-                <path key={`v${String(key)}`} class="v-charts-journey-link" d={linkPath(link)} stroke-width={Math.max(link.width, 0.5)} style={{ stroke: props.color, opacity: linkOpacity(link) * shown, transition: moving ? undefined : fade.value, pointerEvents: 'none' }} />
+        <g
+          class="v-charts-journey"
+          role="group"
+          tabindex={0}
+          aria-label={focusedLabel.value}
+          style={{ outline: 'none' }}
+          onKeydown={onKeydown}
+          onFocus={onFocus}
+          onBlur={() => { focused.value = undefined; leave() }}
+        >
+          {props.headers && (
+            <g class="v-charts-journey-headers">
+              {layout.value.steps.map(step => (
+                <g key={step.step} transform={`translate(${step.x},0)`}>
+                  {slots.header
+                    ? slots.header({ ...step, width: columnWidth.value })
+                    : (
+                        <text y={14} style={{ fontSize: '12px', fill: 'var(--v-charts-text, #666)' }}>
+                          <tspan style={{ fontWeight: 500 }}>{`Step ${step.step + 1}`}</tspan>
+                          <tspan style={{ fill: 'var(--v-charts-text, #666)' }}>
+                            {step.previousTotal == null
+                              ? ` · ${numbers.value.format(step.total)}`
+                              : ` · ${numbers.value.format(step.total)} · ${percent.value.format(step.total / (step.previousTotal || 1) * 100)}% of step ${step.step}`}
+                          </tspan>
+                        </text>
+                      )}
+                </g>
               ))}
-              {/* Wider invisible bands catch the pointer on thin links. */}
-              {links.map(({ key, link, phase }) => phase === 'exit'
-                ? null
-                : (
-                    <path
-                      key={`h${String(key)}`}
-                      class="v-charts-journey-link-hit"
-                      d={linkPath(link)}
-                      stroke="transparent"
-                      stroke-width={Math.max(link.width, 10)}
-                      style={{ cursor: 'pointer' }}
-                      onMouseenter={() => enterLink(link)}
-                      onMouseleave={leave}
-                      onClick={(event: MouseEvent) => clickLink(link, event)}
-                    />
-                  ))}
             </g>
-            <g class="v-charts-journey-nodes">
-              {nodes.map(({ key, node, phase, shown, moving }) => {
-                const height = node.continueHeight + node.exitHeight
-                const href = props.nodeHref?.(node.name, node)
-                const name = truncateMiddle(node.name, node.step === layout.value.steps.length - 1 ? Math.floor(labelWidth.value / CHAR_WIDTH) : labelChars)
-                const subtitle = subtitleOf(node)
-                const isFocused = focused.value === node.id
-                return (
-                  <g key={String(key)} class="v-charts-journey-node" style={{ opacity: nodeOpacity(node) * shown, transition: moving ? undefined : fade.value, pointerEvents: phase === 'exit' ? 'none' : undefined }}>
-                    <g style={{ cursor: 'pointer' }} onMouseenter={() => enterNode(node)} onMouseleave={leave} onClick={(event: MouseEvent) => clickNode(node, event)}>
-                      <rect x={node.x - 4} y={node.y} width={props.nodeWidth + 8} height={Math.max(height, 4)} fill="transparent" />
-                      {node.continueHeight > 0 && <rect class="v-charts-journey-node-continue" x={node.x} y={node.y} width={props.nodeWidth} height={node.continueHeight} rx={2} style={{ fill: props.color }} />}
-                      {node.exitHeight > 0 && <rect class="v-charts-journey-node-exit" x={node.x} y={node.y + node.continueHeight} width={props.nodeWidth} height={node.exitHeight} rx={2} style={{ fill: props.exitColor }} />}
-                      {isFocused && <rect x={node.x - 2} y={node.y - 2} width={props.nodeWidth + 4} height={height + 4} rx={3} fill="none" stroke-width={1.5} style={{ stroke: 'var(--v-charts-focus, Highlight)' }} />}
-                    </g>
-                    {slots.label
-                      ? <g transform={`translate(${node.x + props.nodeWidth + 8},${node.y})`}>{slots.label({ node, subtitle })}</g>
-                      : (
-                          <g class="v-charts-journey-label">
-                            {href
-                              ? <a href={href}><text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text></a>
-                              : <text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text>}
-                            <text x={node.x + props.nodeWidth + 8} y={node.y + 26} style={{ fontSize: '11px', fill: 'var(--v-charts-text, #666)', ...halo }}>{subtitle}</text>
-                            {name !== node.name && <title>{node.name}</title>}
-                          </g>
-                        )}
-                  </g>
-                )
-              })}
-            </g>
+          )}
+          <g class="v-charts-journey-links" fill="none">
+            {links.map(({ key, link, shown, moving }) => (
+              <path key={`v${String(key)}`} class="v-charts-journey-link" d={linkPath(link)} stroke-width={Math.max(link.width, 0.5)} style={{ stroke: props.color, opacity: linkOpacity(link) * shown, transition: moving ? undefined : fade.value, pointerEvents: 'none' }} />
+            ))}
+            {/* Wider invisible bands catch the pointer on thin links. */}
+            {links.map(({ key, link, phase }) => phase === 'exit'
+              ? null
+              : (
+                  <path
+                    key={`h${String(key)}`}
+                    class="v-charts-journey-link-hit"
+                    d={linkPath(link)}
+                    stroke="transparent"
+                    stroke-width={Math.max(link.width, 10)}
+                    style={{ cursor: 'pointer' }}
+                    onMouseenter={() => enterLink(link)}
+                    onMouseleave={leave}
+                    onClick={(event: MouseEvent) => clickLink(link, event)}
+                  />
+                ))}
           </g>
-        </Surface>
+          <g class="v-charts-journey-nodes">
+            {nodes.map(({ key, node, phase, shown, moving }) => {
+              const height = node.continueHeight + node.exitHeight
+              const href = props.nodeHref?.(node.name, node)
+              const name = truncateMiddle(node.name, node.step === layout.value.steps.length - 1 ? Math.floor(labelWidth.value / CHAR_WIDTH) : labelChars)
+              const subtitle = subtitleOf(node)
+              const isFocused = focused.value === node.id
+              return (
+                <g key={String(key)} class="v-charts-journey-node" style={{ opacity: nodeOpacity(node) * shown, transition: moving ? undefined : fade.value, pointerEvents: phase === 'exit' ? 'none' : undefined }}>
+                  <g style={{ cursor: 'pointer' }} onMouseenter={() => enterNode(node)} onMouseleave={leave} onClick={(event: MouseEvent) => clickNode(node, event)}>
+                    <rect x={node.x - 4} y={node.y} width={props.nodeWidth + 8} height={Math.max(height, 4)} fill="transparent" />
+                    {node.continueHeight > 0 && <rect class="v-charts-journey-node-continue" x={node.x} y={node.y} width={props.nodeWidth} height={node.continueHeight} rx={2} style={{ fill: props.color }} />}
+                    {node.exitHeight > 0 && <rect class="v-charts-journey-node-exit" x={node.x} y={node.y + node.continueHeight} width={props.nodeWidth} height={node.exitHeight} rx={2} style={{ fill: props.exitColor }} />}
+                    {isFocused && <rect x={node.x - 2} y={node.y - 2} width={props.nodeWidth + 4} height={height + 4} rx={3} fill="none" stroke-width={1.5} style={{ stroke: 'var(--v-charts-focus, Highlight)' }} />}
+                  </g>
+                  {slots.label
+                    ? <g transform={`translate(${node.x + props.nodeWidth + 8},${node.y})`}>{slots.label({ node, subtitle })}</g>
+                    : (
+                        <g class="v-charts-journey-label">
+                          {href
+                            ? <a href={href}><text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text></a>
+                            : <text x={node.x + props.nodeWidth + 8} y={node.y + 11} style={{ fontSize: '12px', fontWeight: 500, fill: 'var(--v-charts-text, #666)', ...halo }}>{name}</text>}
+                          <text x={node.x + props.nodeWidth + 8} y={node.y + 26} style={{ fontSize: '11px', fill: 'var(--v-charts-text, #666)', ...halo }}>{subtitle}</text>
+                          {name !== node.name && <title>{node.name}</title>}
+                        </g>
+                      )}
+                </g>
+              )
+            })}
+          </g>
+        </g>
       )
     }
   },
@@ -486,8 +482,6 @@ const _JourneySankey = defineComponent({
   emits: { ...chartEmits, ...journeyEmits },
   slots: Object as SlotsType<JourneySankeySlots>,
   setup(props, { emit, slots, attrs }) {
-    provideChartContext({ ...cellChartOptions('JourneySankey') })
-    provideRenderPhase()
     const naturalHeight = computed(() => {
       const steps = props.steps ?? Infinity
       const perStep = new Map<number, Set<string>>()
@@ -505,34 +499,34 @@ const _JourneySankey = defineComponent({
       // Label room for every node of the busiest column, plus a third for the thick ones.
       return Math.round((props.headers ? HEADER_BAND : 0) + busiest * (LABEL_HEIGHT + props.nodePadding) * 1.33)
     })
-    const size = useResponsiveSize(reactive({
+    const size = useChartShell(reactive({
       width: computed(() => props.width),
       // Without a height or aspect, give each of the busiest column's nodes room for its label.
       height: computed(() => props.height ?? (props.aspect ? undefined : Math.max(200, naturalHeight.value))),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }))
+    }), cellChartOptions('JourneySankey'))
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartsWrapper {...boxAttrs(attrs)} {...chartListeners(emit)} isResponsive={size.isResponsive.value} boxStyle={size.boxStyle.value} interactive={!size.isResponsive.value || size.measured.value} onResize={size.handleResize} width={size.effectiveWidth.value} height={size.effectiveHeight.value}>
-          <JourneySankeyInner
-            {...rootAttrs(attrs)}
-            {...inner}
-            width={size.effectiveWidth.value}
-            height={size.effectiveHeight.value}
-            {...{
-              'onUpdate:pinned': (path: string[] | null) => emit('update:pinned', path),
-              'onNode-click': (node: JourneyNode, event: MouseEvent) => emit('node-click', node, event),
-              'onLink-click': (link: JourneyLink, event: MouseEvent) => emit('link-click', link, event),
-              'onAnimation-start': () => emit('animation-start'),
-              'onAnimation-end': () => emit('animation-end'),
-            }}
-          >
-            {{ header: slots.header, label: slots.label }}
-          </JourneySankeyInner>
-          {slots.default?.()}
-        </ChartsWrapper>
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+          {{ svg: () => (
+            <JourneySankeyInner
+              {...inner}
+              width={size.effectiveWidth.value}
+              height={size.effectiveHeight.value}
+              {...{
+                'onUpdate:pinned': (path: string[] | null) => emit('update:pinned', path),
+                'onNode-click': (node: JourneyNode, event: MouseEvent) => emit('node-click', node, event),
+                'onLink-click': (link: JourneyLink, event: MouseEvent) => emit('link-click', link, event),
+                'onAnimation-start': () => emit('animation-start'),
+                'onAnimation-end': () => emit('animation-end'),
+              }}
+            >
+              {{ header: slots.header, label: slots.label }}
+            </JourneySankeyInner>
+          ), default: slots.default }}
+        </ChartShell>
       )
     }
   },

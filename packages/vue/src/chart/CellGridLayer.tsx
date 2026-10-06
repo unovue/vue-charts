@@ -2,7 +2,7 @@ import { labelColor } from '@/utils/labelColor'
 import { type PropType, type SlotsType, type StyleValue, computed, defineComponent, ref, useId, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { get } from 'es-toolkit/compat'
-import { useChartTooltip } from '@/state/chartContext'
+import { useTooltipController } from '@/model/tooltip'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
 import { type ChartTransition, cascadeReveal, motionTokens } from '@/animation/motion'
@@ -158,7 +158,7 @@ export const CellGridLayer = defineComponent({
   emits: { ...cellGridEmits, 'update:activeIndex': (_index: number | null) => true },
   slots: Object as SlotsType<CellGridSlots>,
   setup(props, { emit, slots }) {
-    const tooltip = useChartTooltip()
+    const tooltip = useTooltipController()
     const reducedMotion = useReducedMotion()
     const baseId = useId()
     const activeKey = ref<string>()
