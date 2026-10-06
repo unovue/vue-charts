@@ -334,3 +334,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Geometry: 513 exact settled frames per width; narrow Journey differs only in 84 faint markers across two frames; servers closed.
 - Evidence and gzip: `.evidence/release-1.0/step-2.11/checks.md`; anomalies: 23 raw captures / 1,089 frames, resize 0 → 6, 105 faster throttled intervals.
 - Assumptions: Node 22, two workers, six frozen sources; preserve legacy viewport and surface-scope geometry lifetime; Chromium only.
+
+## BarList bundle repair after 2.11
+- Done: `9e3e21a`; props-only import removes CellGridLayer, tooltip and d3-color from BarList.
+- Bundle PASS: 13,709 → 7,410 gzip bytes; baseline 8,947; baseline cap rejects the reverse patch.
+- Gate: typecheck/build/lint PASS; full 1,300/1,301, isolated transition file finally 21/21; public BarList/Sparkline 16/16.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; curves unchanged.
+- Evidence: `.evidence/release-1.0/barlist/checks.md`; servers closed, six source copies identical.
+- Anomalies: planning 2,187ms exceeded 1,500ms; separate 5s timeout; 23 raw captures/1,198 frames differ; 67 faster throttled intervals.
+- Assumptions: retain prop defaults, enforce the existing baseline under standalone assertion; established Node 22/two-worker gate.
