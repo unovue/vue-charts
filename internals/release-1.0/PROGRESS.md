@@ -46,7 +46,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 3.6 | Active state and Brush range | yes | phase 2 | todo | | |
 | 3.7 | Accessible names and the markup contract | yes | phase 2 | done | `a164398`, log commit | D-15/D-22 gate PASS. |
 | 3.8 | Series colors | yes | phase 2 | done | `ab9bfc6`, log commit | D-19 palette and contrast PASS. |
-| 3.9 | Typed rows | yes | phase 2, 3.2, 3.4–3.6 | todo | | |
+| 3.9 | Typed rows | yes | phase 2, 3.2, 3.4–3.6 | done | `9eb6655`, `a7915fb` | Typed rows, zero real any, numeric Bar slot and step gate PASS. |
 | 3.10 | Renames, slots, events, deprecations | yes | phase 2, 3.2 | todo | | |
 | 3.11 | Docs, playground and stories on the 1.0 API | yes | 3.1–3.10 | todo | | |
 | 4.1 | Test surgery | assess | phase 2 | todo | | |
@@ -546,7 +546,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Numbered palette follows registration/entry order; default Treemap labels use known palette foregrounds.
 - Gate: typecheck/lint/code/consumers PASS; final Vitest 137 files / 1396 tests; check:a11y exit 0.
 - Reverse proofs fail numbered-token and default-foreground regressions; restored tests pass.
-- Default fill changes: Treemap groups, Sunburst branches, Sankey nodes and Calendar blue; other single colors retain blue.
+- Color changes: Treemap groups/label contrast, Sunburst branches, Sankey nodes/links and Calendar blue; other single colors retain blue.
 - Motion lab explicit series colors stay; final numeric comparison follows at the phase gate.
 - Evidence: `.evidence/release-1.0/part-b/3.8-*.log`, `.evidence/release-1.0/3.8-*-agent.log`.
 - Assumptions: custom Treemap palette precedence stays; explicit teal/orange calendar demos stay; token overrides supply label foreground.
@@ -554,8 +554,16 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 ### 3.9 Typed rows — done (9eb6655, this log commit)
 - Curried selected components; standalone generic keys, slots and events retain source provenance.
 - Gate: typecheck/lint/code/consumers PASS; Vitest 138 files / 1404 tests; real any types zero.
-- Packed guard: 302 declarations, zero vccs errors, 100 external diagnostics; selected bundle excludes hierarchy charts.
-- Reverse proofs fail flat keys, missing provenance, unsafe Bar slot calls and a real any type; restored checks pass.
+- Packed guard: 302 declarations, zero vccs errors, 100 external diagnostics; selected bundle and reverse proofs pass.
 - Opus numeric Bar contract retained: null enter/leave/chase/exit 450 browser frames match geometry/opacity exactly.
 - Bar baseline 39 captures / 2223 frames unchanged; motion 39/39 clean; evidence `.evidence/release-1.0/part-b/3.9-*`, `bar-null/`.
 - Assumptions: deep paths retain runtime tails; raw chart callbacks take unknown; Heatmap example aliases its shadowed active binding.
+
+### 3.10 Renames, slots, events and deprecations — implemented (f1e3264, this log commit)
+- Renamed props without aliases; polar/grid slots, label formatter, indexed hover events and per-app warnings added.
+- Private Tooltip activation uses numeric targets; hierarchy payload keys and public output strings stay at their boundaries.
+- Gate: typecheck/lint/code PASS; Vitest 140 files / 1418 tests; zero cycles/unused/real any.
+- Packed run exposed fixture template laxness; corrected strict Vite/Nuxt focused declaration probes PASS; phase repack pending.
+- Reverse slot/formatter/grid/event/warning/resize proofs fail; restored regressions and SSR checks pass.
+- Evidence: `.evidence/release-1.0/part-b/3.10-*.log`, `3.10-api-*`, `events-*`, `consumers-strict-*`.
+- Assumptions: Recharts 3 slot geometry follows existing guards; Vue resize is an emit; native metadata allowlist is explicit.
