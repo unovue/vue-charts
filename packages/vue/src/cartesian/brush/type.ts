@@ -60,11 +60,9 @@ export const BrushVueProps = {
     type: Array as PropType<unknown[]>,
   },
   dataKey: [String, Function] as PropType<ChartDataKey>,
-  startIndex: {
-    type: Number,
-  },
-  endIndex: {
-    type: Number,
+  range: {
+    type: Object as PropType<BrushStartEndIndex | null>,
+    default: undefined,
   },
   tickFormatter: {
     type: Function as PropType<(value: unknown, index: number) => string>,

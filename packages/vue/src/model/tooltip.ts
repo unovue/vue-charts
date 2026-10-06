@@ -4,6 +4,7 @@ import { computed, inject, provide, shallowRef, toRaw, watch } from 'vue'
 import type { AxisLookup } from './axis'
 import type { Registry } from './registry'
 import { createRegistry } from './registry'
+import { warn } from '@/utils/log'
 import type { createChartData } from './dataRange'
 import { parseTooltipIndex, tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
@@ -112,11 +113,18 @@ export function createTooltip(inputs: TooltipInputs) {
     active: undefined,
     defaultIndex: undefined,
   })
+  const rootModels = computed(() => inputs.entries.entries.value.flatMap(entry => entry.model?.root ? [entry.model] : []))
+  const controlledBindings = computed(() => bindings.entries.value.filter(binding => binding.settings.activeIndex !== undefined))
+  let warnedOwners = false
+  watch(() => controlledBindings.value.length, (count) => {
+    if (count > 1 && !warnedOwners) {
+      warnedOwners = true
+      warn(false, 'vccs: only one Tooltip per chart may control activeIndex; the first controlled Tooltip wins.')
+    }
+  })
   const controlled = computed(() => {
-    const owners = bindings.entries.value.filter(binding => binding.settings.activeIndex !== undefined)
-    if (owners.length > 1)
-      throw new Error('vccs: only one Tooltip per chart may control activeIndex.')
-    return owners[0]?.settings.activeIndex
+    const root = rootModels.value.find(model => model.index() !== undefined)
+    return root ? root.index() : controlledBindings.value[0]?.settings.activeIndex
   })
   const eventType = computed<TooltipEventType>(() => {
     const options = inputs.options()
@@ -296,6 +304,13 @@ export function createTooltip(inputs: TooltipInputs) {
   })
   const source: TooltipSource = { active, index, label, payload, coordinate }
 
+  function notify(index: TooltipActiveIndex) {
+    for (const binding of bindings.entries.value)
+      binding.request(index)
+    for (const model of rootModels.value)
+      model.request(index)
+  }
+
   let lastRequest: { index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target?: Target } | undefined
   function request(next: TooltipActiveIndex, target?: Target) {
     const owner = controlled.value
@@ -304,8 +319,7 @@ export function createTooltip(inputs: TooltipInputs) {
       return
     }
     lastRequest = { index: next, owner, target }
-    for (const binding of bindings.entries.value)
-      binding.request(next)
+    notify(next)
   }
 
   function findTarget(type: TooltipEventType, action: TooltipActionPayload) {
@@ -319,7 +333,7 @@ export function createTooltip(inputs: TooltipInputs) {
   function requestSeries(candidate: Target | undefined, isActive: boolean) {
     const entry = candidate?.entry
     const model = entry?.value?.model
-    if (!entry || !model)
+    if (!entry || !model || model.root)
       return
     const next = isActive ? candidate.localIndex : null
     const owner = model.index()
@@ -394,10 +408,7 @@ export function createTooltip(inputs: TooltipInputs) {
     const owners = inputs.entries.registrations.value.map(entry => ({ entry, index: entry.value?.model?.index() }))
     return { index: controlled.value, targets: targets.value, owners }
   }, ({ index, targets, owners }) => {
-    validate(bindings, index, targets, () => {
-      for (const binding of bindings.entries.value)
-        binding.request(null)
-    })
+    validate(bindings, index, targets, () => notify(null))
     if (index !== undefined)
       return
     for (const owner of owners) {

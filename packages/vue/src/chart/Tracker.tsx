@@ -110,6 +110,7 @@ const _Tracker = defineComponent({
             <CellGridLayer
               cells={cells.value}
               gap={props.gap}
+              activeIndex={props.activeIndex}
               radius={props.radius}
               activeStyle="dim"
               grow="bottom"
@@ -118,6 +119,7 @@ const _Tracker = defineComponent({
               transition={props.transition}
               entrance="slide"
               {...{
+                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
                 'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
                 'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
                 'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),

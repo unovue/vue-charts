@@ -1,13 +1,15 @@
 import type { TooltipSource } from '@/model/tooltip'
 import { useTooltipController } from '@/model/tooltip'
 import { useChartPresentation } from '@/model/presentation'
-import { computed, onMounted, watch, watchEffect } from 'vue'
+import { computed, nextTick, onMounted, watch, watchEffect } from 'vue'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Chart } from '@/model/chart'
 import { parseTooltipIndex } from '@/core/tooltip'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import type { BrushStartEndIndex } from '@/types/chartData'
+
+const receivingBrushSynchronisation = new WeakSet<Chart>()
 
 export function useTooltipChartSynchronisation(source: TooltipSource, enabled: () => boolean) {
   const tooltip = useTooltipController()
@@ -156,7 +158,13 @@ function useBrushSyncEventsListener(chart: Chart) {
         return
       }
       if (mySyncId.value === incomingSyncId) {
-        data.setRange(range)
+        receivingBrushSynchronisation.add(chart)
+        nextTick(() => receivingBrushSynchronisation.delete(chart))
+        const requestRange = chart.brush.state.value.onRangeChange
+        if (requestRange)
+          requestRange(range)
+        else
+          data.setRange(range)
       }
     }
 
@@ -186,6 +194,9 @@ export function useBrushChartSynchronisation(chart: Chart) {
     if (syncId.value == null || brushStartIndex.value == null || brushEndIndex.value == null || eventEmitterSymbol.value == null) {
       return
     }
+    // The original broadcast already reaches every peer; a clamped receiver must not relay it.
+    if (receivingBrushSynchronisation.delete(chart))
+      return
     const range: BrushStartEndIndex = { startIndex: brushStartIndex.value, endIndex: brushEndIndex.value }
     eventCenter.emit(BRUSH_SYNC_EVENT, syncId.value, range, eventEmitterSymbol.value)
   })

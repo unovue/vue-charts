@@ -505,7 +505,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-a/3.4-*.log` and `3.4-fix.patch`.
 - Assumptions: retain polar layout/angle defaults; radial charts combine polar and bar sizing props.
 
-### 3.5 Axis props — done
+### 3.5 Axis props — done (5e48b20)
 - Shared typed AxisProps; concrete orientations/padding/defaults; portable custom scales.
 - Strict template and packed positive/negative probes pass; docs and migration rows updated.
 - Gate: typecheck/lint/code pass; Vitest 133 files / 1333 tests (`3.5-*.log`).
@@ -513,3 +513,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Object-tick warning regression fails both rows without fix; restored focused checks pass.
 - Evidence: `.evidence/release-1.0/3.5/` and `.evidence/release-1.0/part-a/3.5-*.log`.
 - Assumptions: explicit forwarding preserves Vue fallthrough; custom scales keep numeric math boundary.
+
+### 3.6 Active state and Brush range — done
+- Standalone roots own active models; conflicting Tooltips warn once and use the first controller.
+- Brush has one normalized nullable range; controlled sync requests preserve source and rejected geometry.
+- Gate: typecheck/lint/code pass; Vitest 134 files / 1371 tests (`3.6-*.log`).
+- Packed consumers pass; strict guard 299 files / zero vccs errors / 100 external diagnostics.
+- Active and Brush reverse proofs fail without fixes; restored focused checks pass; migration/docs updated.
+- Evidence: `.evidence/release-1.0/3.6-active-*.log` and `.evidence/release-1.0/part-a/3.6-*.log`.
+- Assumptions: primitive Sparkline identity is positional; supplied models control without listeners; private transport stays for 3.10.

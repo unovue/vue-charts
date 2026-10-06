@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
+import type { BrushStartEndIndex } from '@/index'
 import { Bar, BarChart, Brush, LineChart } from '@/index'
 import { Line } from '@/cartesian/line'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -161,11 +162,11 @@ describe('<Brush />', () => {
     })
   })
 
-  describe('startIndex and endIndex', () => {
-    it('accepts startIndex and endIndex props', () => {
+  describe('range', () => {
+    it('accepts the range prop', () => {
       const { container } = render(() => (
         <BarChart width={400} height={100} data={data}>
-          <Brush dataKey="value" startIndex={2} endIndex={8} />
+          <Brush dataKey="value" range={{ startIndex: 2, endIndex: 8 }} />
         </BarChart>
       ))
 
@@ -227,10 +228,8 @@ it('cancels pending leave timers when a drag ends', async () => {
 
 // Catches a rejected controlled proposal leaking into the chart range or traveller position.
 it.each([true, false])('keeps brush ownership when controlled=%s', async (controlled) => {
-  const from = ref<number | undefined>(controlled ? 0 : undefined)
-  const to = ref<number | undefined>(controlled ? 2 : undefined)
-  const updateStart = vi.fn()
-  const updateEnd = vi.fn()
+  const range = ref<BrushStartEndIndex | undefined>(controlled ? { startIndex: 0, endIndex: 2 } : undefined)
+  const update = vi.fn()
   const change = vi.fn()
   const { container } = render(() => (
     <BarChart width={400} height={200} data={[{ value: 10 }, { value: 20 }, { value: 30 }]}>
@@ -240,10 +239,9 @@ it.each([true, false])('keeps brush ownership when controlled=%s', async (contro
         y={0}
         width={100}
         height={40}
-        startIndex={from.value}
-        endIndex={to.value}
+        range={range.value}
         onChange={change}
-        {...{ 'onUpdate:startIndex': updateStart, 'onUpdate:endIndex': updateEnd }}
+        {...{ 'onUpdate:range': update }}
       />
     </BarChart>
   ))
@@ -253,37 +251,38 @@ it.each([true, false])('keeps brush ownership when controlled=%s', async (contro
   expect(bars()).toBe(3)
   await fireEvent.focus(travellers[0])
   await fireEvent.keyDown(travellers[0], { key: 'ArrowRight' })
-  expect(updateStart.mock.calls).toEqual([[1]])
-  expect(updateEnd.mock.calls).toEqual([])
+  expect(update.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
   expect(change.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
   await nextTick()
   expect(travellers[0].getAttribute('aria-valuenow')).toBe(controlled ? '0' : '1')
   expect(bars()).toBe(controlled ? 3 : 2)
   if (controlled) {
-    from.value = 1
-    to.value = 1
+    range.value = { startIndex: 1, endIndex: 1 }
     await nextTick()
     expect(bars()).toBe(1)
     expect(travellers[0].getAttribute('aria-valuenow')).toBe('1')
     expect(travellers[1].getAttribute('aria-valuenow')).toBe('1')
-    to.value = 2
+    range.value = { startIndex: 1, endIndex: 2 }
     await nextTick()
     await fireEvent.mouseDown(travellers[0], { clientX: 47.5 })
     await fireEvent.mouseMove(window, { clientX: 0 })
+    await nextTick()
+    expect(travellers[0].querySelector('rect')!.getAttribute('x')).toBe('47.5')
     await fireEvent.mouseUp(window)
     await nextTick()
-    expect(updateStart.mock.calls).toEqual([[1], [0]])
+    expect(update.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }], [{ startIndex: 0, endIndex: 2 }]])
     expect(travellers[0].getAttribute('aria-valuenow')).toBe('1')
     expect(bars()).toBe(2)
   }
 })
 
-it('treats start/end indexes without v-model as where the brush starts, like defineModel', async () => {
+it('round trips the range model', async () => {
+  const range = ref<BrushStartEndIndex | null>({ startIndex: 0, endIndex: 2 })
   mockGetBoundingClientRect({ width: 100, height: 100 })
   const { container } = render(() => (
     <BarChart width={100} height={100} data={[{ value: 1 }, { value: 2 }, { value: 3 }]}>
       <Bar dataKey="value" isAnimationActive={false} />
-      <Brush x={0} y={0} width={100} height={40} startIndex={0} endIndex={2} />
+      <Brush x={0} y={0} width={100} height={40} range={range.value} {...{ 'onUpdate:range': value => range.value = value }} />
     </BarChart>
   ))
   await nextTick()
@@ -301,6 +300,7 @@ it.each(['mouse slide', 'touch traveller', 'keyboard traveller'] as const)(
     mockGetBoundingClientRect({ width: 400, height: 200 })
     const change = vi.fn()
     const end = vi.fn()
+    const rangeModel = ref<BrushStartEndIndex | null>({ startIndex: 1, endIndex: 3 })
     const { container } = render(() => (
       <BarChart
         width={400}
@@ -319,8 +319,8 @@ it.each(['mouse slide', 'touch traveller', 'keyboard traveller'] as const)(
           y={0}
           width={405}
           height={40}
-          startIndex={1}
-          endIndex={3}
+          range={rangeModel.value}
+          {...{ 'onUpdate:range': value => rangeModel.value = value }}
           onChange={change}
           {...{ 'onDrag-end': end }}
         />
@@ -362,3 +362,130 @@ it.each(['mouse slide', 'touch traveller', 'keyboard traveller'] as const)(
     }
   },
 )
+
+// Invalid parent ranges must select safe rows and request normalization only once.
+it.each([
+  { input: { startIndex: -2.8, endIndex: 3.9 }, expected: { startIndex: 0, endIndex: 3 }, values: ['0', '3'], bars: 4 },
+  { input: { startIndex: 4, endIndex: 1 }, expected: { startIndex: 1, endIndex: 4 }, values: ['1', '4'], bars: 4 },
+  { input: { startIndex: 8, endIndex: 12 }, expected: { startIndex: 4, endIndex: 4 }, values: ['4', '4'], bars: 1 },
+  { input: { startIndex: Number.NaN, endIndex: 2 }, expected: null, values: [], bars: 5 },
+  { input: { startIndex: 1, endIndex: Number.POSITIVE_INFINITY }, expected: null, values: [], bars: 5 },
+  { input: { startIndex: Number.NEGATIVE_INFINITY, endIndex: 2 }, expected: null, values: [], bars: 5 },
+])('normalizes $input to $expected', async ({ input, expected, values, bars }) => {
+  const update = vi.fn()
+  const rows = Array.from({ length: 5 }, (_, index) => ({ name: `Row ${index}`, value: index + 1 }))
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={rows}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush range={input} dataKey="name" {...{ 'onUpdate:range': update }} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(update.mock.calls).toEqual([[expected]])
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(bars)
+  const sliders = [...container.querySelectorAll('[role="slider"]')]
+  expect(sliders.map(slider => slider.getAttribute('aria-valuenow'))).toEqual(values)
+  expect(sliders.map(slider => slider.getAttribute('aria-valuemax'))).toEqual(values.map(() => '4'))
+  expect(sliders.map(slider => slider.getAttribute('aria-valuetext'))).toEqual(values.map(value => `Row ${value}`))
+  await nextTick()
+  expect(update.mock.calls).toEqual([[expected]])
+})
+
+it('normalizes a rejected parent range once for each shrinking data state', async () => {
+  const rows = ref(Array.from({ length: 5 }, (_, index) => ({ value: index + 1 })))
+  const range = { startIndex: 3, endIndex: 4 }
+  const update = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush range={range} {...{ 'onUpdate:range': update }} />
+    </BarChart>
+  ))
+  await nextTick()
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(2)
+  rows.value = [{ value: 1 }]
+  await nextTick()
+  await nextTick()
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(1)
+  expect([...container.querySelectorAll('[role="slider"]')].map(slider => [
+    slider.getAttribute('aria-valuenow'),
+    slider.getAttribute('aria-valuemax'),
+  ])).toEqual([['0', '0'], ['0', '0']])
+  expect(update.mock.calls).toEqual([[{ startIndex: 0, endIndex: 0 }]])
+  rows.value = []
+  await nextTick()
+  await nextTick()
+  expect(container.querySelectorAll('[role="slider"]')).toHaveLength(0)
+  expect(update.mock.calls).toEqual([[{ startIndex: 0, endIndex: 0 }], [null]])
+  expect(range).toEqual({ startIndex: 3, endIndex: 4 })
+})
+
+it.each([undefined, null])('restores empty data without replacing the parent choice %s', async (range) => {
+  const rows = ref<{ value: number }[]>([])
+  const update = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush range={range} {...{ 'onUpdate:range': update }} />
+    </BarChart>
+  ))
+  await nextTick()
+  expect(container.querySelectorAll('[role="slider"]')).toHaveLength(0)
+  rows.value = [{ value: 1 }, { value: 2 }, { value: 3 }]
+  await nextTick()
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(3)
+  expect([...container.querySelectorAll('[role="slider"]')].map(slider => slider.getAttribute('aria-valuenow')))
+    .toEqual(range === null ? [] : ['0', '2'])
+  rows.value = []
+  await nextTick()
+  await nextTick()
+  expect(container.querySelectorAll('[role="slider"]')).toHaveLength(0)
+  expect(update.mock.calls).toEqual(range === null ? [] : [[null]])
+  rows.value = [{ value: 4 }, { value: 5 }]
+  await nextTick()
+  expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(2)
+  expect([...container.querySelectorAll('[role="slider"]')].map(slider => slider.getAttribute('aria-valuenow')))
+    .toEqual(range === null ? [] : ['0', '1'])
+})
+
+// Synchronized requests must respect a peer's parent-owned range without rebroadcast loops.
+it.each([
+  { accept: true, peerRows: 5, initial: { startIndex: 0, endIndex: 4 }, expected: { startIndex: 3, endIndex: 4 }, bars: [2, 2], sliders: ['3', '4'] },
+  { accept: false, peerRows: 5, initial: { startIndex: 0, endIndex: 4 }, expected: { startIndex: 3, endIndex: 4 }, bars: [2, 5], sliders: ['0', '4'] },
+  { accept: true, peerRows: 1, initial: null, expected: { startIndex: 0, endIndex: 0 }, bars: [2, 1], sliders: ['0', '0'] },
+  { accept: false, peerRows: 1, initial: null, expected: { startIndex: 0, endIndex: 0 }, bars: [2, 1], sliders: [] },
+  { accept: true, peerRows: 2, initial: null, expected: { startIndex: 1, endIndex: 1 }, bars: [2, 1], sliders: ['1', '1'] },
+])('requests a safe synchronized peer range with $peerRows rows and acceptance=$accept', async ({ accept, peerRows, initial, expected, bars, sliders }) => {
+  const rows = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }]
+  const peerRange = ref<BrushStartEndIndex | null>(initial)
+  const update = vi.fn((range: BrushStartEndIndex | null) => {
+    if (accept)
+      peerRange.value = range
+  })
+  const { container } = render(() => (
+    <div>
+      <BarChart width={400} height={200} data={rows} syncId="brush-model">
+        <Bar dataKey="value" isAnimationActive={false} />
+        <Brush x={0} y={0} width={405} height={40} />
+      </BarChart>
+      <BarChart width={400} height={200} data={rows.slice(0, peerRows)} syncId="brush-model">
+        <Bar dataKey="value" isAnimationActive={false} />
+        <Brush range={peerRange.value} {...{ 'onUpdate:range': update }} />
+      </BarChart>
+    </div>
+  ))
+  await nextTick()
+  const charts = [...container.querySelectorAll('.v-charts-wrapper')]
+  await fireEvent.mouseDown(charts[0].querySelector('[role="slider"]')!, { clientX: 0 })
+  await fireEvent.mouseMove(window, { clientX: 300 })
+  await fireEvent.mouseUp(window)
+  await nextTick()
+  await nextTick()
+  expect(update.mock.calls).toEqual([[expected]])
+  expect(charts.map(chart => chart.querySelectorAll('.v-charts-bar-rectangle').length)).toEqual(bars)
+  expect([...charts[0].querySelectorAll('[role="slider"]')].map(slider => slider.getAttribute('aria-valuenow'))).toEqual(['3', '4'])
+  const peerSliders = [...charts[1].querySelectorAll('[role="slider"]')]
+  expect(peerSliders.map(slider => slider.getAttribute('aria-valuenow'))).toEqual(sliders)
+  expect(peerSliders.map(slider => slider.getAttribute('aria-valuemax'))).toEqual(sliders.map(() => String(peerRows - 1)))
+})

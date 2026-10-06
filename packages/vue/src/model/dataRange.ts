@@ -4,12 +4,8 @@ import { computed, shallowRef, watch } from 'vue'
 
 export function createChartData(source: () => ChartData | undefined) {
   const range = shallowRef<BrushStartEndIndex>({ startIndex: 0, endIndex: 0 })
-  // Data changes reconcile the uncontrolled Brush range; data itself stays with its owner.
-  watch(source, (data) => {
-    setRange({
-      startIndex: data == null ? 0 : range.value.startIndex,
-      endIndex: data == null ? 0 : data.length > 0 ? data.length - 1 : range.value.endIndex,
-    })
+  watch([source, () => source()?.length], ([data]) => {
+    setRange({ startIndex: range.value.startIndex, endIndex: (data?.length ?? 1) - 1 })
   }, { immediate: true, flush: 'sync' })
 
   const state = computed(() => ({
@@ -20,10 +16,12 @@ export function createChartData(source: () => ChartData | undefined) {
 
   function setRange(value: Partial<BrushStartEndIndex>) {
     const current = range.value
-    const startIndex = value.startIndex ?? current.startIndex
-    const endIndex = value.endIndex ?? current.endIndex
-    if (current.startIndex !== startIndex || current.endIndex !== endIndex)
-      range.value = { startIndex, endIndex }
+    const next = normalizeBrushRange({
+      startIndex: value.startIndex ?? current.startIndex,
+      endIndex: value.endIndex ?? current.endIndex,
+    }, source()?.length ?? 0) ?? { startIndex: 0, endIndex: 0 }
+    if (current.startIndex !== next.startIndex || current.endIndex !== next.endIndex)
+      range.value = next
   }
 
   function displayedData<T extends readonly unknown[]>(
@@ -46,4 +44,14 @@ export function createChartData(source: () => ChartData | undefined) {
   }
 
   return { state, setRange, displayedData, tooltipData }
+}
+
+export function normalizeBrushRange(value: BrushStartEndIndex | null, length: number): BrushStartEndIndex | null {
+  if (value == null || length === 0
+    || !Number.isFinite(value.startIndex) || !Number.isFinite(value.endIndex)) {
+    return null
+  }
+  const start = Math.max(0, Math.min(length - 1, Math.floor(value.startIndex)))
+  const end = Math.max(0, Math.min(length - 1, Math.floor(value.endIndex)))
+  return { startIndex: Math.min(start, end), endIndex: Math.max(start, end) }
 }

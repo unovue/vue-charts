@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, useId } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
@@ -162,41 +162,54 @@ const SparklineInner = defineComponent({
       }))
     })
 
-    // Active point: controlled through v-model:active-index, otherwise local.
-    const localActive = ref<number | null>(null)
-    const active = computed(() => props.activeIndex !== undefined ? props.activeIndex : localActive.value)
-    function setActive(index: number | null) {
-      if (index === active.value)
-        return
-      localActive.value = index
-      emit('update:activeIndex', index)
-    }
-
     // Line and area register their own tooltip entries; bars get theirs from the cell grid.
-    tooltip.entries.register(computed(() => {
+    const positionalIdentities: symbol[] = []
+    const configuration = computed<TooltipPayloadConfiguration | undefined>(() => {
       if (props.type === 'bar')
         return undefined
-      const settings: TooltipPayloadConfiguration = {
+      const identities = points.value.map(point => props.nameKey && point.payload !== null && typeof point.payload === 'object'
+        ? point.payload[props.nameKey] ?? point.payload
+        : point.payload)
+      const counts = new Map<unknown, number>()
+      for (const identity of identities)
+        counts.set(identity, (counts.get(identity) ?? 0) + 1)
+      return {
+        model: {
+          root: true,
+          index: () => props.activeIndex,
+          request: index => emit('update:activeIndex', index),
+        },
+        keyboardItems: points.value.map(point => ({
+          index: String(point.index),
+          identity: point.payload !== null && typeof point.payload === 'object'
+            ? counts.get(identities[point.index]) === 1 ? identities[point.index] : point.payload
+            : positionalIdentities[point.index] ??= Symbol(),
+          coordinate: { x: point.x, y: point.y },
+        })),
         dataDefinedOnItem: points.value.map(point => ({ name: props.nameKey && point.payload !== null && typeof point.payload === 'object' ? String(point.payload[props.nameKey]) : String(point.index + 1), value: point.value, payload: point.payload, color: props.color })),
         positions: undefined,
         settings: { stroke: props.color, strokeWidth: undefined, fill: props.color, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: props.color, unit: '' },
       }
-      return settings
-    }))
-
-    watch(() => active.value == null ? undefined : points.value[active.value], (point) => {
-      if (props.type === 'bar')
-        return
-      if (!point || point.value === null) {
+    })
+    tooltip.entries.register(configuration)
+    const active = tooltip.activeIndexFor(configuration)
+    function setActive(index: number | null, keyboard = false) {
+      const point = index === null ? undefined : points.value[index]
+      if (!point && !keyboard) {
         tooltip.mouseLeaveItem()
         return
       }
-      tooltip.setActiveMouseOverItemIndex({
-        activeIndex: String(point.index),
+      const action = {
+        activeIndex: point ? String(point.index) : null,
+        configuration: configuration.value,
         activeDataKey: 'value',
-        activeCoordinate: { x: point.x, y: point.y },
-      })
-    }, { immediate: true })
+        activeCoordinate: point ? { x: point.x, y: point.y } : undefined,
+      }
+      if (keyboard)
+        tooltip.setKeyboardInteraction({ ...action, active: !!point })
+      else
+        tooltip.setActiveMouseOverItemIndex(action)
+    }
 
     function onPointer(event: MouseEvent) {
       const svg = (event.currentTarget as SVGGElement).ownerSVGElement
@@ -219,11 +232,11 @@ const SparklineInner = defineComponent({
       const current = active.value ?? n
       const next = event.key === 'ArrowLeft' ? Math.max(0, current - 1) : event.key === 'ArrowRight' ? Math.min(n - 1, current + 1) : event.key === 'Home' ? 0 : event.key === 'End' ? n - 1 : undefined
       if (event.key === 'Escape')
-        setActive(null)
+        setActive(null, true)
       if (next === undefined)
         return
       event.preventDefault()
-      setActive(next)
+      setActive(next, true)
     }
 
     const lastPoint = computed(() => {
@@ -256,9 +269,9 @@ const SparklineInner = defineComponent({
                   ariaLabel={summary.value}
                   isAnimationActive={props.isAnimationActive}
                   transition={props.transition}
-                  activeIndex={active.value}
+                  activeIndex={props.activeIndex}
                   {...{
-                    'onUpdate:activeIndex': (index: number | null) => setActive(index),
+                    'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
                     'onAnimation-start': () => emit('animation-start'),
                     'onAnimation-end': () => emit('animation-end'),
                   }}
@@ -275,9 +288,9 @@ const SparklineInner = defineComponent({
                   onKeydown={onKeydown}
                   onFocus={(event: FocusEvent) => {
                     if (active.value == null && points.value.length && isFocusVisible(event.target as Element))
-                      setActive(points.value.length - 1)
+                      setActive(points.value.length - 1, true)
                   }}
-                  onBlur={() => setActive(null)}
+                  onBlur={() => setActive(null, true)}
                 >
                   <defs>
                     <SweepClip id={`${id}-sweep`} progress={display.reveal.value} x={-PAD} y={-PAD} width={width + PAD * 2} height={height + PAD * 2} />

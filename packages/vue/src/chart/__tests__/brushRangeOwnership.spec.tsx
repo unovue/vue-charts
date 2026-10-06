@@ -54,7 +54,7 @@ describe('brush data ownership', () => {
         <XAxis dataKey="name" />
         <YAxis />
         <Bar dataKey="value" isAnimationActive={false} />
-        <Brush startIndex={1} endIndex={2}>
+        <Brush range={{ startIndex: 1, endIndex: 2 }}>
           <BarChart>
             <Bar dataKey="value" isAnimationActive={false} />
           </BarChart>
@@ -95,7 +95,7 @@ describe('brush data ownership', () => {
           <XAxis dataKey="name" />
           <YAxis />
           <Bar dataKey="value" isAnimationActive={false} />
-          <Brush startIndex={startIndex.value} endIndex={endIndex.value} />
+          <Brush range={{ startIndex: startIndex.value, endIndex: endIndex.value }} />
         </BarChart>
         <BarChart width={500} height={300} data={data}>
           <Bar dataKey="value" isAnimationActive={false} />
@@ -125,16 +125,16 @@ it('reconciles the Brush range when root data changes', async () => {
   const { container } = render(() => (
     <BarChart width={500} height={300} data={rows.value}>
       <Bar dataKey="value" isAnimationActive={false} />
-      <Brush startIndex={1} />
+      <Brush />
     </BarChart>
   ))
   await nextTick()
   await nextTick()
-  expect(getBarRects(container)).toHaveLength(3)
+  expect(getBarRects(container)).toHaveLength(4)
   rows.value = [...data, { name: 'E', value: 50 }]
   await nextTick()
   await nextTick()
-  expect(getBarRects(container)).toHaveLength(4)
+  expect(getBarRects(container)).toHaveLength(5)
   rows.value = []
   await nextTick()
   await nextTick()

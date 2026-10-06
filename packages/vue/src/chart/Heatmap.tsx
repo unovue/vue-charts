@@ -227,6 +227,7 @@ const _Heatmap = defineComponent({
             <CellGridLayer
               cells={layout.value.cells}
               gap={layout.value.gap}
+              activeIndex={props.activeIndex}
               radius={props.radius}
               activeStyle="ring"
               grow="center"
@@ -234,6 +235,7 @@ const _Heatmap = defineComponent({
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               {...{
+                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
                 'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
                 'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
                 'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),

@@ -103,8 +103,8 @@ step covers only part of an item, the step is named. Items marked ✓ were check
   scan of all targets on every mousemove. Fix: one computed Map by `(entry, index)`. Not in 4.2. M.
 - **P3 Tooltip API still Redux-shaped** (`tooltip.ts:428`, 49 `parseTooltipIndex`/`String(index)`
   conversions, `tooltipPayloadSearcher`): `activate(channel, target)`/`clear(channel)` with numeric
-  indices. Fits 3.6/3.10; 4.7 changes only docs. M.
-- **P3 Two controlled Tooltips throw inside a computed** (`tooltip.ts:116`): warn in dev, first wins. S.
+  indices. Internal transport remains for part B 3.10; D-13 defines public ownership and indexes, not this private API. M.
+- ~~P3 Two controlled Tooltips throw inside a computed~~ done in 3.6: warn once in development; first controlled binding wins.
 - **P3 Plumbing to fold:** 11 chart events relayed through 3 layers (`ChartWrapper.tsx:78`,
   `componentEvents.ts`) → one handler table; 5 context key pairs (`runtime.ts:141`) → one `layers`
   object; two Surface components (`ChartSurface.vue`, the only SFC, and `Surface.tsx`) → one;

@@ -13,7 +13,7 @@ import { ResponsiveContainer } from '@/index'
 import { getStoryArgsFromArgsTypesObject } from '@/storybook/api/props/utils'
 import { CategoricalChartProps } from '@/storybook/api/props/chart-props'
 import { logData, pageData } from '@/storybook/data'
-import type { ChartData } from '@/types/chartData'
+import type { BrushStartEndIndex, ChartData } from '@/types/chartData'
 
 const meta = {
   title: 'examples/LineChart',
@@ -293,20 +293,25 @@ export const WithBrush: Story = {
     data: pageData,
   },
   render: (args: Record<string, any>) => {
-    return (
-      <ResponsiveContainer>
-        <LineChart {...args}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <CartesianGrid stroke-dasharray="3 3" />
-          <Legend />
-          <Brush dataKey="name" startIndex={2} height={30} stroke="#8884d8" />
-          <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
-          <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-          <Tooltip />
-        </LineChart>
-      </ResponsiveContainer>
-    )
+    return defineComponent({
+      setup() {
+        const range = ref<BrushStartEndIndex | null>({ startIndex: 2, endIndex: pageData.length - 1 })
+        return () => (
+          <ResponsiveContainer>
+            <LineChart {...args}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <CartesianGrid stroke-dasharray="3 3" />
+              <Legend />
+              <Brush dataKey="name" range={range.value} {...{ 'onUpdate:range': value => range.value = value }} height={30} stroke="#8884d8" />
+              <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
+              <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+              <Tooltip />
+            </LineChart>
+          </ResponsiveContainer>
+        )
+      },
+    })
   },
 }
 

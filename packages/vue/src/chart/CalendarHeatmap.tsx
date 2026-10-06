@@ -212,6 +212,7 @@ const _CalendarHeatmap = defineComponent({
             <CellGridLayer
               cells={layout.value.cells}
               gap={Math.min(props.gap, layout.value.step / 3)}
+              activeIndex={props.activeIndex}
               radius={props.radius}
               activeStyle="ring"
               grow="center"
@@ -219,6 +220,7 @@ const _CalendarHeatmap = defineComponent({
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               {...{
+                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
                 'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
                 'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
                 'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),

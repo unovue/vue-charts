@@ -106,6 +106,8 @@ type TooltipKeyboardItem = {
 
 export type TooltipPayloadConfiguration = {
   model?: {
+    /** Standalone selection owns the root rather than a series. */
+    root?: boolean
     index: () => TooltipActiveIndex | undefined
     request: (index: TooltipActiveIndex) => void
   }

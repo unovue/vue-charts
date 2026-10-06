@@ -114,6 +114,7 @@ export function rootAttrs(attrs: Record<string, unknown>) {
 }
 
 export const cellGridEmits = {
+  'update:activeIndex': (_index: number | null) => true,
   'cell-click': (_payload: unknown, _index: number, _event: MouseEvent) => true,
   'cell-mouseenter': (_payload: unknown, _index: number, _event: MouseEvent) => true,
   'cell-mouseleave': (_payload: unknown, _index: number, _event: MouseEvent) => true,
@@ -147,16 +148,13 @@ export const CellGridLayer = defineComponent({
     /** Where cells entering after the first appearance grow from. */
     grow: { type: String as PropType<'center' | 'bottom'>, default: 'center' },
     ariaLabel: { type: String, default: undefined },
-    /** Controlled active cell by position; `undefined` leaves it to pointer and keyboard. */
-    activeIndex: { type: Number as PropType<number | null>, default: undefined },
   },
-  emits: { ...cellGridEmits, 'update:activeIndex': (_index: number | null) => true },
+  emits: cellGridEmits,
   slots: Object as SlotsType<CellGridSlots>,
   setup(props, { emit, slots }) {
     const tooltip = useTooltipController()
     const reducedMotion = useReducedMotion()
     const baseId = useId()
-    const activeKey = ref<string>()
     const keyboard = ref(false)
 
     const indexByKey = computed(() => new Map(props.cells.map((cell, index) => [cell.key, index])))
@@ -267,8 +265,18 @@ export const CellGridLayer = defineComponent({
       onEnd: callbacks.onEnd,
     })
 
-    tooltip.entries.register(computed(() => {
+    const configuration = computed(() => {
       const settings: TooltipPayloadConfiguration = {
+        model: {
+          root: true,
+          index: () => props.activeIndex,
+          request: index => emit('update:activeIndex', index),
+        },
+        keyboardItems: props.cells.map((cell, index) => ({
+          index: String(index),
+          identity: cell.key,
+          coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
+        })),
         dataDefinedOnItem: props.cells.map(cell => ({ name: cell.label, value: cell.value, payload: cell.payload, color: cell.fill })),
         positions: undefined,
         settings: {
@@ -285,49 +293,30 @@ export const CellGridLayer = defineComponent({
         },
       }
       return settings
-    }))
-
-    // A data change can move or remove the active cell; the tooltip follows it or closes. This
-    // only re-syncs and never reports back: a controlled index keeps deciding which cell it is.
-    watch(indexByKey, (map) => {
-      const index = props.activeIndex !== undefined
-        ? (props.activeIndex ?? undefined)
-        : activeKey.value === undefined ? undefined : map.get(activeKey.value)
-      const cell = index === undefined ? undefined : props.cells[index]
-      if (cell)
-        activate(cell, index!, false)
-      else if (activeKey.value !== undefined)
-        clear(false)
     })
+    tooltip.entries.register(configuration)
+    const activeIndex = tooltip.activeIndexFor(configuration)
+    const activeKey = computed(() => activeIndex.value === null ? undefined : props.cells[activeIndex.value]?.key)
 
-    function activate(cell: GridCell, index: number, notify = true) {
-      activeKey.value = cell.key
-      if (notify && props.activeIndex !== index)
-        emit('update:activeIndex', index)
-      tooltip.setActiveMouseOverItemIndex({
+    function activate(cell: GridCell, index: number) {
+      const action = {
         activeIndex: String(index),
+        configuration: configuration.value,
         activeDataKey: 'value',
         activeCoordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
-      })
+      }
+      if (keyboard.value)
+        tooltip.setKeyboardInteraction({ ...action, active: true })
+      else
+        tooltip.setActiveMouseOverItemIndex(action)
     }
 
-    function clear(notify = true) {
-      activeKey.value = undefined
-      tooltip.mouseLeaveItem()
-      if (notify && props.activeIndex != null)
-        emit('update:activeIndex', null)
+    function clear() {
+      if (keyboard.value)
+        tooltip.setKeyboardInteraction({ activeIndex: null, activeDataKey: 'value', activeCoordinate: undefined, active: false })
+      else
+        tooltip.mouseLeaveItem()
     }
-
-    // A controlled index selects its cell like the pointer would.
-    watch(() => props.activeIndex, (index) => {
-      if (index === undefined)
-        return
-      const cell = index === null ? undefined : props.cells[index]
-      if (cell && cell.key !== activeKey.value)
-        activate(cell, index!, false)
-      else if (!cell && activeKey.value !== undefined)
-        clear(false)
-    }, { immediate: true })
 
     function onEnter(cell: GridCell, index: number, event: MouseEvent) {
       keyboard.value = false
@@ -344,6 +333,7 @@ export const CellGridLayer = defineComponent({
     function onClick(cell: GridCell, index: number, event: MouseEvent) {
       tooltip.setActiveClickItemIndex({
         activeIndex: String(index),
+        configuration: configuration.value,
         activeDataKey: 'value',
         activeCoordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
       })
@@ -378,11 +368,12 @@ export const CellGridLayer = defineComponent({
       if (props.cells.length === 0)
         return
       if (event.key === 'Escape') {
+        keyboard.value = true
         clear()
         return
       }
       const current = activeKey.value === undefined ? undefined : props.cells[indexByKey.value.get(activeKey.value)!]
-      const next = current ? neighbour(current, event.key) : (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End') ? props.cells[props.cells.length - 1] : undefined
+      const next = current ? neighbour(current, event.key) : event.key === 'Home' ? props.cells[0] : (event.key.startsWith('Arrow') || event.key === 'End') ? props.cells[props.cells.length - 1] : undefined
       if (!next)
         return
       event.preventDefault()

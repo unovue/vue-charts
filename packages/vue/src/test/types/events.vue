@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Tooltip, Treemap } from '../../index'
-import type { ChartPointerState } from '../../index'
+import type { BrushStartEndIndex, ChartPointerState } from '../../index'
 
 const hidden = ref<string[]>([])
 const wrongLegend = {} as InstanceType<typeof Legend>
@@ -12,11 +12,10 @@ const activePoint = ref<number | null>(null)
 const wrongTooltip = {} as InstanceType<typeof Tooltip>
 // @ts-expect-error Tooltip model values are numeric or null.
 wrongTooltip.$emit('update:activeIndex', '0')
-const from = ref(0)
-const to = ref(2)
+const range = ref<BrushStartEndIndex | null>({ startIndex: 0, endIndex: 2 })
 const wrongBrush = {} as InstanceType<typeof Brush>
-// @ts-expect-error Brush model values are numeric.
-wrongBrush.$emit('update:startIndex', '0')
+// @ts-expect-error Brush model values are a range or null.
+wrongBrush.$emit('update:range', '0')
 
 const data = [{ name: 'A', value: 10 }]
 const state = {} as ChartPointerState
@@ -54,8 +53,7 @@ brush.$emit('change', { startIndex: 0 })
       @animation-start="() => {}"
     />
     <Brush
-      v-model:start-index="from"
-      v-model:end-index="to"
+      v-model:range="range"
       @change="({ startIndex }) => startIndex.toFixed()"
       @drag-end="({ endIndex }) => endIndex.toFixed()"
     />
@@ -88,8 +86,8 @@ brush.$emit('change', { startIndex: 0 })
     :height="300"
     @link-click="(link, index, event) => { link.value.toFixed(); index.toFixed(); event.preventDefault() }"
   />
-  <!-- @vue-expect-error Brush models require numeric refs. -->
-  <Brush v-model:start-index="wrongModel" />
+  <!-- @vue-expect-error Brush models require a range or null ref. -->
+  <Brush v-model:range="wrongModel" />
   <!-- @vue-expect-error Tooltip models require numeric or null refs. -->
   <Tooltip v-model:active-index="wrongModel" />
   <!-- @vue-expect-error Legend models require string array refs. -->

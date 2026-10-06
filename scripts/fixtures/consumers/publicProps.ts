@@ -143,3 +143,17 @@ export const invalidAxisType: XAxisProps = { type: 'date' }
 export const invalidAxisPadding: YAxisProps = { padding: 'wide' }
 // @ts-expect-error Scale names must be supported.
 export const invalidAxisScale: XAxisProps = { scale: 'made-up' }
+
+export const emptyBrushRange: BrushProps['range'] = null
+export const selectedBrushRange: BrushProps['range'] = { startIndex: 0, endIndex: 1 }
+// @ts-expect-error Brush exposes one range model, not a start model.
+export type RemovedBrushStart = BrushProps['startIndex']
+// @ts-expect-error Brush exposes one range model, not an end model.
+export type RemovedBrushEnd = BrushProps['endIndex']
+export type StandaloneSelection = [
+  TrackerProps['activeIndex'],
+  HeatmapProps['activeIndex'],
+  CohortChartProps['activeIndex'],
+  CalendarHeatmapProps['activeIndex'],
+  SparklineProps['activeIndex'],
+]

@@ -1,19 +1,15 @@
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useChart } from '@/model/chart'
-import type { BrushProps } from '../type'
+import type { BrushProps, BrushStartEndIndex } from '../type'
 
-export function useBrushSetting(props: BrushProps) {
+export function useBrushSetting(props: BrushProps, onRangeChange: (range: BrushStartEndIndex) => void) {
   const chart = useChart()
-  const data = chart.dataRange
   chart.brush.register(computed(() => ({
     x: props.x,
     y: props.y,
     width: props.width,
     height: props.height!,
     padding: props.padding!,
+    onRangeChange,
   })))
-
-  watch([() => props.startIndex, () => props.endIndex, () => data.state.value.chartData], ([startIndex, endIndex]) => {
-    data.setRange({ startIndex, endIndex })
-  }, { immediate: true })
 }
