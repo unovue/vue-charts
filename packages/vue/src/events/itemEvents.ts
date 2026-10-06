@@ -4,9 +4,9 @@ import type { BarRectangleItem } from '@/types/bar'
 import type { LinePointItem } from '@/cartesian/line/type'
 import type { AreaPointItem } from '@/core/area'
 import type { ScatterPointItem } from '@/types/common'
-import type { PieSectorDataItem } from '@/state/selectors/pieSelectors'
+import type { PieSectorDataItem } from '@/core/pie'
 import type { RadarPoint } from '@/types/radar'
-import type { RadialBarDataItem } from '@/state/selectors/radialBarSelectors'
+import type { RadialBarDataItem } from '@/types/radialBar'
 import type { FunnelTrapezoidItem } from '@/cartesian/funnel/type'
 
 // Views are deferred descendants of the public item; the emitter stays with its owner.

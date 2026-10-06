@@ -1,8 +1,7 @@
-import { render } from '@testing-library/vue'
+import { fireEvent, render } from '@testing-library/vue'
+import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { RadialBarChart } from '@/chart/RadialBarChart'
-import { RadialBar } from '@/polar/radial-bar/RadialBar'
-import { PolarGrid } from '@/polar/radar/PolarGrid'
+import { PolarGrid, RadialBar, RadialBarChart } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const data = [
@@ -21,14 +20,35 @@ describe('radialBar', () => {
   })
 
   describe('basic rendering', () => {
-    it('renders sectors in a RadialBarChart', () => {
+    // A setup-time size snapshot would leave the sectors at their original thickness.
+    it('renders sectors and updates their thickness with the chart bar size', async () => {
+      const barSize = ref(4)
+      const clicked: { thickness: number, value: unknown, index: number }[] = []
       const { container } = render(() => (
-        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={10} data={data}>
-          <RadialBar dataKey="uv" isAnimationActive={false} />
+        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={barSize.value} data={data}>
+          <RadialBar
+            dataKey="uv"
+            isAnimationActive={false}
+            onClick={(sector, index) => clicked.push({
+              thickness: sector.outerRadius! - sector.innerRadius!,
+              value: sector.value,
+              index,
+            })}
+          />
         </RadialBarChart>
       ))
-      const sectors = container.querySelectorAll('.v-charts-sector')
-      expect(sectors.length).toBe(7)
+      await nextTick()
+      expect(container.querySelectorAll('.v-charts-sector')).toHaveLength(7)
+      await fireEvent.click(container.querySelector('.v-charts-sector')!)
+      barSize.value = 8
+      await nextTick()
+      await nextTick()
+      expect(container.querySelectorAll('.v-charts-sector')).toHaveLength(7)
+      await fireEvent.click(container.querySelector('.v-charts-sector')!)
+      expect(clicked).toEqual([
+        { thickness: 4, value: 31.47, index: 0 },
+        { thickness: 8.000000000000002, value: 31.47, index: 0 },
+      ])
     })
 
     it('accepts custom transition prop', () => {

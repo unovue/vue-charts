@@ -1,14 +1,10 @@
-import { createSelector } from '../createSelector'
-import type { RechartsRootState } from '../chartState'
-import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
-import type { ChartData, ChartDataState } from '../chartData'
-import { selectUnfilteredPolarItems } from '@/state/chartContext'
-import type { ChartOffset, Coordinate, DataKey, TooltipType } from '@/types'
-import type { LegendType } from '@/types/legend'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
+import type { ChartOffset, Coordinate, DataKey } from '@/types/common'
+import type { TooltipType } from '@/types/tooltip'
+import type { ChartData } from '@/types/chartData'
+import type { LegendPayload, LegendType } from '@/types/legend'
 import { getPercentValue, mathSign } from '@/utils/data'
 import { getMaxRadius, polarToCartesian } from '@/utils/polar'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey } from '@/core/data'
 import { toFiniteNumber } from '@/utils/validate'
 
 export type ResolvedPieSettings = {
@@ -58,105 +54,20 @@ export type PieSectorDataItem = ResolvedPieSettings &
     dataKey: DataKey<any>
   }
 
-const pickPieSettings = (_state: RechartsRootState, pieSettings: ResolvedPieSettings) => pieSettings
-
-const EMPTY_CELLS: ReadonlyArray<any> = []
-
-// Keep stable reference to an empty array to prevent re-renders
-function pickCells(_state: RechartsRootState, _pieSettings: ResolvedPieSettings): ReadonlyArray<any> | undefined {
-  return EMPTY_CELLS
-}
-
-export const selectDisplayedData: (
-  state: RechartsRootState,
-  pieSettings: ResolvedPieSettings,
-) => ChartData | undefined = createSelector(
-  [selectChartDataAndAlwaysIgnoreIndexes, pickPieSettings, pickCells],
-  ({ chartData }: ChartDataState, pieSettings: ResolvedPieSettings, cells): ChartData | undefined => {
-    let displayedData: ChartData | undefined
-    if (pieSettings.data != null && pieSettings.data.length > 0) {
-      displayedData = pieSettings.data
-    }
-    else {
-      displayedData = chartData
-    }
-
-    if (!displayedData || !displayedData.length) {
-      // cells-based fallback not yet implemented
-    }
-
-    if (displayedData == null) {
-      return undefined
-    }
-
-    return displayedData
-  },
-)
-
-export const selectPieLegend: (
-  state: RechartsRootState,
-  pieSettings: ResolvedPieSettings,
-) => ReadonlyArray<LegendPayload> | undefined = createSelector(
-  [selectDisplayedData, pickPieSettings],
-  (
-    displayedData,
-    pieSettings: ResolvedPieSettings,
-  ): ReadonlyArray<LegendPayload> | undefined => {
-    if (displayedData == null) {
-      return undefined
-    }
-    return displayedData.map((entry, i): LegendPayload => {
-      const name = getValueByDataKey(entry, pieSettings.nameKey, pieSettings.name)
-      let color: string
-      if (typeof entry === 'object' && entry != null && 'fill' in entry && typeof entry.fill === 'string') {
-        color = entry.fill
-      }
-      else {
-        color = pieSettings.fill
-      }
-      return {
-        value: name ?? String(pieSettings.dataKey ?? i),
-        color,
-        payload: entry as Record<string, unknown>,
-        type: pieSettings.legendType,
-      }
-    })
-  },
-)
-
-export const selectSynchronisedPieSettings: (
-  state: RechartsRootState,
-  pieSettings: ResolvedPieSettings,
-) => ResolvedPieSettings | undefined = createSelector(
-  [selectUnfilteredPolarItems, pickPieSettings],
-  (graphicalItems, pieSettingsFromProps) => {
-    if (
-      graphicalItems.some(
-        pgis =>
-          pgis.type === 'pie'
-          && pieSettingsFromProps.dataKey === pgis.dataKey,
-      )
-    ) {
-      return pieSettingsFromProps
-    }
-    return undefined
-  },
-)
-
 function parseDeltaAngle(startAngle: number, endAngle: number) {
   const sign = mathSign(endAngle - startAngle)
   const deltaAngle = Math.min(Math.abs(endAngle - startAngle), 360)
   return sign * deltaAngle
 }
 
-function getOuterRadius(dataPoint: any, outerRadius: number | string | ((element: any) => number) | undefined, maxPieRadius: number): number {
+function getOuterRadius(dataPoint: unknown, outerRadius: number | string | ((element: any) => number) | undefined, maxPieRadius: number): number {
   if (typeof outerRadius === 'function') {
     return getPercentValue(outerRadius(dataPoint), maxPieRadius, maxPieRadius * 0.8)
   }
   return getPercentValue(outerRadius ?? maxPieRadius * 0.8, maxPieRadius, maxPieRadius * 0.8)
 }
 
-function parseCoordinateOfPie(pieSettings: ResolvedPieSettings, offset: ChartOffset, dataPoint: any): PieCoordinate {
+function parseCoordinateOfPie(pieSettings: ResolvedPieSettings, offset: ChartOffset, dataPoint: unknown): PieCoordinate {
   const { top, left, width, height } = offset
   const maxPieRadius = getMaxRadius(width, height)
   const cx = left + getPercentValue(pieSettings.cx ?? width / 2, width, width / 2)
@@ -215,7 +126,7 @@ export function computePieSectors({
     const coordinate: PieCoordinate = parseCoordinateOfPie(pieSettings, offset, entry)
     const percent = val / sum
 
-    const entryWithInfo: Record<string, any> = { ...(entry as object) }
+    const entryWithInfo: Record<string, unknown> = { ...(entry as object) }
     const sectorColor: string
       = (entryWithInfo != null && 'fill' in entryWithInfo && typeof entryWithInfo.fill === 'string')
         ? entryWithInfo.fill
@@ -259,4 +170,23 @@ export function computePieSectors({
   })
 
   return sectors
+}
+
+export function combinePieLegend(
+  displayedData: ChartData | undefined,
+  settings: ResolvedPieSettings,
+): readonly LegendPayload[] | undefined {
+  return displayedData?.map((entry, index) => {
+    const name = getValueByDataKey(entry, settings.nameKey, settings.name)
+    const color = typeof entry === 'object' && entry != null
+      && 'fill' in entry && typeof entry.fill === 'string'
+      ? entry.fill
+      : settings.fill
+    return {
+      value: (name ?? String(settings.dataKey ?? index)) as string,
+      color,
+      payload: entry as Record<string, unknown>,
+      type: settings.legendType,
+    }
+  })
 }

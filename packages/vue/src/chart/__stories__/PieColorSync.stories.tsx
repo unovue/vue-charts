@@ -5,7 +5,7 @@ import { Pie } from '@/polar/pie/Pie'
 import { Sector } from '@/shape/Sector'
 import { Legend } from '@/components/legend'
 import { Tooltip } from '@/components/Tooltip'
-import type { PieSectorDataItem } from '@/state/selectors/pieSelectors'
+import type { PieSectorDataItem } from '@/core/pie'
 import { ResponsiveContainer } from '@/container'
 
 const meta = {

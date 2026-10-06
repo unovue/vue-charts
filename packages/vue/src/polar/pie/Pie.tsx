@@ -5,16 +5,15 @@ import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { useAppSelector } from '@/state/hooks'
+import { useChart } from '@/model/chart'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { extractCellProps, filterOutCells } from '@/utils/cell'
-import type { PieSectorDataItem, ResolvedPieSettings } from '@/state/selectors/pieSelectors'
-import { computePieSectors, selectDisplayedData, selectPieLegend, selectSynchronisedPieSettings } from '@/state/selectors/pieSelectors'
-import { selectChartOffset } from '@/state/selectors/selectChartOffset'
+import type { PieSectorDataItem, ResolvedPieSettings } from '@/core/pie'
+import { combinePieLegend, computePieSectors } from '@/core/pie'
 import { polarToCartesian } from '@/utils/polar'
 import type { PieProps } from './type'
 import { PieVueProps } from './type'
@@ -47,21 +46,15 @@ const PieView = defineComponent({
     const data = view.data
     const pieSettings = view.pieSettings
     const tooltip = useChartTooltip()
-    const displayedData = useAppSelector(state => selectDisplayedData(state, pieSettings.value))
-    const synchronisedSettings = useAppSelector(state => selectSynchronisedPieSettings(state, pieSettings.value))
-    const offset = useAppSelector(state => selectChartOffset(state))
-
-    const sectors = computed(() => {
-      if (synchronisedSettings.value == null || displayedData.value == null) {
-        return undefined
-      }
-      const result = computePieSectors({
-        offset: offset.value,
-        pieSettings: pieSettings.value,
-        displayedData: displayedData.value,
-      })
-      return result
-    })
+    const chart = useChart()
+    const displayedData = computed(() => data.value?.length ? data.value : chart.data.value)
+    const sectors = computed(() => displayedData.value == null
+      ? undefined
+      : computePieSectors({
+          offset: chart.offset.value,
+          pieSettings: pieSettings.value,
+          displayedData: displayedData.value,
+        }))
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     let appeared = false
@@ -268,7 +261,11 @@ const _Pie = defineComponent({
       radiusAxisId: 0,
     })))
 
-    const legendPayload = useAppSelector(state => selectPieLegend(state, pieSettings.value))
+    const chart = useChart()
+    const legendPayload = computed(() => combinePieLegend(
+      data.value?.length ? data.value : chart.data.value,
+      pieSettings.value,
+    ))
     useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(PieView)

@@ -4,9 +4,13 @@ import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
-import { useAppSelector } from '@/state/hooks'
-import type { RadialBarDataItem, RadialBarSettings } from '@/state/selectors/radialBarSelectors'
-import { selectRadialBarLegendPayload, selectRadialBarSectors } from '@/state/selectors/radialBarSelectors'
+import { useChart } from '@/model/chart'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { getBaseValueOfBar } from '@/core/coordinates'
+import { combineAllBarPositions, combineBarSizeList, combineStackedData } from '@/core/barSizing'
+import type { RadialBarDataItem } from '@/types/radialBar'
+import type { RadialBarSettings } from '@/core/radialBar'
+import { combineRadialBarLegend, computeRadialBarDataItems } from '@/core/radialBar'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -42,14 +46,76 @@ const RadialBarView = defineComponent({
       barSize: props.barSize,
     }))
 
-    const sectors = useAppSelector(state =>
-      selectRadialBarSectors(
-        state,
-        props.radiusAxisId,
-        props.angleAxisId,
-        radialBarSettings.value,
-      ),
-    )
+    const chart = useChart()
+    const radiusAxis = computed(() => chart.axis('radiusAxis', props.radiusAxisId))
+    const angleAxis = computed(() => chart.axis('angleAxis', props.angleAxisId))
+    const radiusTicks = computed(() => radiusAxis.value.graphicalTicks.value ?? undefined)
+    const angleTicks = computed(() => angleAxis.value.ticks.value ?? undefined)
+    const categoricalAxis = computed(() => chart.inputs.layout() === 'centric' ? angleAxis.value : radiusAxis.value)
+    const categoricalTicks = computed(() => chart.inputs.layout() === 'centric' ? angleTicks.value : radiusTicks.value)
+    const numericAxis = computed(() => chart.inputs.layout() === 'centric' ? radiusAxis.value : angleAxis.value)
+    const bandSize = computed(() => getBandSizeOfAxis(categoricalAxis.value.withScale.value, categoricalTicks.value))
+    const barBandSize = computed(() => getBandSizeOfAxis(
+      categoricalAxis.value.withScale.value,
+      categoricalTicks.value,
+      true,
+    ) ?? props.maxBarSize ?? chart.rootProps.value.maxBarSize ?? 0)
+    const visibleBars = computed(() => chart.items.polar.entries.value.filter(item =>
+      item.type === 'radialBar' && !item.hide && (chart.inputs.layout() === 'centric'
+        ? item.angleAxisId === props.angleAxisId
+        : item.radiusAxisId === props.radiusAxisId),
+    ))
+    // Polar charts retain their existing percentage-size fallback (no total category size).
+    const sizeList = computed(() => combineBarSizeList(visibleBars.value, chart.rootProps.value.barSize))
+    const positions = computed(() => combineAllBarPositions(
+      sizeList.value,
+      chart.rootProps.value.maxBarSize!,
+      chart.rootProps.value.barGap,
+      chart.rootProps.value.barCategoryGap,
+      barBandSize.value,
+      bandSize.value,
+      props.maxBarSize,
+    ))
+    const position = computed(() => positions.value?.find(item =>
+      item.stackId === props.stackId && item.dataKeys.includes(props.dataKey!),
+    )?.position)
+    const stackedData = computed(() => combineStackedData(numericAxis.value.stackGroups.value, radialBarSettings.value))
+    const sectors = computed(() => {
+      const radius = radiusAxis.value.withScale.value
+      const angle = angleAxis.value.withScale.value
+      const viewport = chart.polarLayout.viewBox.value
+      const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
+      const band = bandSize.value
+      const pos = position.value
+      const radialTicks = radiusTicks.value
+      const angularTicks = angleTicks.value
+      const layout = chart.inputs.layout()
+      if (!radius || !angle || !chartData || band == null || !pos || !viewport
+        || !radialTicks || !angularTicks || (layout !== 'centric' && layout !== 'radial')) {
+        return undefined
+      }
+      const numeric = layout === 'centric' ? radius : angle
+      return computeRadialBarDataItems({
+        angleAxis: angle,
+        angleAxisTicks: angularTicks,
+        bandSize: band,
+        baseValue: getBaseValueOfBar({ numericAxis: numeric }),
+        cx: viewport.cx,
+        cy: viewport.cy,
+        dataKey: props.dataKey,
+        dataStartIndex,
+        displayedData: chartData.slice(dataStartIndex, dataEndIndex + 1),
+        endAngle: viewport.endAngle,
+        layout,
+        minPointSize: props.minPointSize,
+        pos,
+        radiusAxis: radius,
+        radiusAxisTicks: radialTicks,
+        stackedData: stackedData.value,
+        stackedDomain: stackedData.value ? numeric.scale.domain() : null,
+        startAngle: viewport.startAngle,
+      })
+    })
 
     useChartTooltip().entries.register(computed(() => ({
       dataDefinedOnItem: undefined,
@@ -232,9 +298,8 @@ export const RadialBar = defineComponent({
       maxBarSize: props.maxBarSize,
     })))
 
-    const legendPayload = useAppSelector(state =>
-      selectRadialBarLegendPayload(state, props.legendType),
-    )
+    const chart = useChart()
+    const legendPayload = computed(() => combineRadialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
     useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
 

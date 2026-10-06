@@ -3,7 +3,7 @@ import { defineComponent } from 'vue'
 import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
 import { Sector } from '@/shape/Sector'
-import type { PieSectorDataItem } from '@/state/selectors/pieSelectors'
+import type { PieSectorDataItem } from '@/core/pie'
 
 const meta = {
   title: 'Examples/Pie/CustomActiveShapePieChart',

@@ -6,9 +6,11 @@ import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-dom'
-import { useAppSelector } from '@/state/hooks'
+import { useChart } from '@/model/chart'
 import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
-import { selectRadarPoints } from '@/state/selectors/radarSelectors'
+import { computeRadarPoints, getRangePath, getSinglePolygonPath } from '@/core/radar'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { isCategoricalAxis } from '@/utils/validate'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
@@ -26,27 +28,6 @@ import type { RadarPoint } from '@/types/radar'
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
   return stroke && stroke !== 'none' ? stroke : fill
-}
-
-function getSinglePolygonPath(points: ReadonlyArray<{ x: number, y: number }>): string {
-  if (!points.length)
-    return ''
-  // Repeat first point at end (matching Recharts getParsedPoints behavior) to ensure
-  // explicit close segment for correct SVG fill when used in range paths
-  const pts = [...points, points[0]]
-  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join('')
-  return `${path}Z`
-}
-
-function getRangePath(
-  points: ReadonlyArray<{ x: number, y: number }>,
-  baseLinePoints: ReadonlyArray<{ x: number, y: number }>,
-): string {
-  const outerPath = getSinglePolygonPath(points)
-  const inner = getSinglePolygonPath([...baseLinePoints].reverse())
-  // Join outer (without closing Z) with inner path
-  const outerWithoutZ = outerPath.endsWith('Z') ? outerPath.slice(0, -1) : outerPath
-  return `${outerWithoutZ}L${inner.slice(1)}`
 }
 
 const RadarViewProps = {
@@ -86,9 +67,36 @@ const RadarView = defineComponent({
     const listeners = usePointEvents<RadarPoint>(emit, () => props.dataKey)
     const attrs = view.svgAttrs
 
-    const radarPoints = useAppSelector(state =>
-      selectRadarPoints(state, props.radiusAxisId, props.angleAxisId, props.dataKey),
-    )
+    const chart = useChart()
+    const radiusAxis = computed(() => chart.axis('radiusAxis', props.radiusAxisId))
+    const angleAxis = computed(() => chart.axis('angleAxis', props.angleAxisId))
+    const bandSize = computed(() => {
+      const axis = isCategoricalAxis(chart.inputs.layout(), 'radiusAxis') ? radiusAxis.value : angleAxis.value
+      return getBandSizeOfAxis(axis.withScale.value, axis.ticks.value ?? undefined)
+    })
+    const radarPoints = computed(() => {
+      const radiusScale = radiusAxis.value.scale.value
+      const angleScale = angleAxis.value.scale.value
+      const viewport = chart.polarLayout.viewBox.value
+      const displayedData = chart.data.value
+      const band = bandSize.value
+      if (!radiusScale || !angleScale || !viewport || !displayedData || band == null || props.dataKey == null)
+        return undefined
+      const settings = angleAxis.value.settings.value
+      return computeRadarPoints({
+        radiusAxis: { scale: radiusScale },
+        angleAxis: {
+          scale: angleScale,
+          type: settings.type,
+          dataKey: settings.dataKey,
+          cx: viewport.cx,
+          cy: viewport.cy,
+        },
+        displayedData,
+        dataKey: props.dataKey,
+        bandSize: band,
+      })
+    })
 
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef()
