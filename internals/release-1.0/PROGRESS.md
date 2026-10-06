@@ -23,7 +23,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1.12 | Motion tokens, shared cascade, moving labels | yes | 1.11 | done | `54ee9cf` | Existing step evidence: 1,280 tests; two reverse proofs |
 | 1.13 | Lab: current curve, list height, accepted flags | yes | 1.10–1.12 | done | `660f4d8`, `456dab2` | 285/285 lab; 1,280 tests; 6 metrics tests |
 | 1.14 | Docs facts from phase 1 | yes | 1.8, 1.12–1.13 | done | `bbde4b8`, `1995171` | 126/126 docs; 1,280 tests; 1 CLI regression |
-| 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | todo | | |
+| 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | done | `4f8b072`, `a6ab90a`, `51a8664` and this log commit | Strict typing, packed probe, public rewrites and gap cases pass; 1,275 tests; 285/285 motion transitions. |
 | 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
 | 2.3 | Slice 2: registries | yes | 2.2 | todo | | |
@@ -236,3 +236,10 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 ## Phase 1 decision (orchestrator)
 - Phase 1 is accepted. Visitor timing (`check:seen`) is environment-limited, like D-25a: it never ran at baseline, its unreliable rows trace to machine load (load average 12–13 during the run), and the capture now completes with 0 errors.
 - It must pass on an idle machine in the step 4.8 final verify. The 130 inherited playground flags are listed in play-flags.md and are reviewed in 4.2.
+
+## Step 2.0 evidence
+
+- Gate PASS: strict typing; 131 files / 1,275 tests; lint on 72 changed files, zero warnings.
+- Packed Vite/Nuxt and nullability PASS; both reverse proofs fail as expected, restored checks PASS.
+- Motion PASS: 285/285, nine accepted flags, zero errors; resize recheck 3/3; three frames match baseline pixels.
+- Evidence: `.evidence/release-1.0/step-2.0/`. Assumptions: reuse installed types and panorama test; no adapter.
