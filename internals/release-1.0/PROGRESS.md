@@ -34,7 +34,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.8 | Slice 3e: cartesian series | yes | 2.7 | done | `b41413e`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
 | 2.9 | Slice 3f: polar series | yes | 2.8 | done | `a6b7c9d`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
 | 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | done | `7300c14`, this log commit | Step gate, bundle assertion and 285 motion transitions PASS; evidence below. |
-| 2.10 | Slice 4: delete the store shell | yes | 2.11 | todo | | |
+| 2.10 | Slice 4: delete the store shell | yes | 2.11 | done | 30bec72 | 131 files / 1,300 tests; motion 285/285 |
 | 2.12 | Slice 6: context ownership | yes | 2.10 | todo | | |
 | 2.13 | Remaining architecture findings | assess | 2.12 | todo | | |
 | 2.14 | Code health gates | yes | 2.13 | todo | | |
@@ -343,3 +343,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/barlist/checks.md`; servers closed, six source copies identical.
 - Anomalies: planning 2,187ms exceeded 1,500ms; separate 5s timeout; 23 raw captures/1,198 frames differ; 67 faster throttled intervals.
 - Assumptions: retain prop defaults, enforce the existing baseline under standalone assertion; established Node 22/two-worker gate.
+
+## Step 2.10: delete the store shell
+- Done: `30bec72`; src/state, selector facade, reselect and tracked adapter removed; computed Brush/Legend bindings, pure core boundary.
+- Gate PASS: 131 files / 1,300 tests (142.12 s), typecheck/build, 126-file lint; obsolete private identity test removed.
+- Package/bundle/SSR PASS: 554 tarball files, three exports, zero reselect bytes; BarList 7,410 gzip; Nuxt 1/1.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; curve counts unchanged.
+- Geometry PASS: 2,736 exact settled frames across 720/360px; evidence `.evidence/release-1.0/step-2.10/checks.md`.
+- Anomalies: 26 raw captures / 1,262 frames differ, 22 entrances; 100 faster throttled intervals; no conclusion, servers closed.
+- Assumptions: preserve public types and existing Brush range contract; canonical computed owners; two workers, six frozen fixtures, Chromium only.
