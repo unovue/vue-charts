@@ -293,6 +293,14 @@ for (const s of scenarios.length ? scenarios : all) {
     const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(backSteps[step])
     if (step !== 'entrance' && replayable && flag('browser', 'chromium') === 'chromium') {
       for (const rate of throttle ? [1, 4] : [1]) {
+        // Each rate must start with the same tooltip selection and settled replay state.
+        // Otherwise the second pointer action can be a no-op at the previous endpoint.
+        await actReal('pointer-leave')
+        if (step === 'pointer-move')
+          await actReal('pointer-enter')
+        if (step === 'pointer-leave')
+          await actReal('pointer-move')
+        await timingPage.page.waitForTimeout(900)
         const back = labSteps.includes(backSteps[step]) ? backSteps[step] : undefined
         if (back) {
           await timingPage.page.evaluate(name => window.lab.step(name), back)
@@ -302,6 +310,7 @@ for (const s of scenarios.length ? scenarios : all) {
           await timingPage.page.evaluate(() => window.lab.step('fromOne'))
           await timingPage.page.waitForTimeout(900)
         }
+        const beforeReplay = step.startsWith('pointer') ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
         const cdp = await timingPage.context.newCDPSession(timingPage.page)
         await cdp.send('Emulation.setCPUThrottlingRate', { rate })
         const t = timingPage.page.evaluate(ms => window.__timing(ms), WINDOW)
@@ -309,7 +318,8 @@ for (const s of scenarios.length ? scenarios : all) {
         const r = await t
         await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
         await cdp.detach()
-        timing[`${rate}x`] = { ...stats(r.intervals), longtasks: r.longtasks }
+        const afterReplay = beforeReplay ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
+        timing[`${rate}x`] = { ...stats(r.intervals), longtasks: r.longtasks, ...(beforeReplay ? { replay: { before: beforeReplay, after: afterReplay } } : {}) }
         await timingPage.page.waitForTimeout(300)
       }
     }
