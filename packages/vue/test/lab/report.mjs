@@ -362,7 +362,7 @@ try {
         }
       }
       const kind = step === 'entrance' ? 'enter' : 'update'
-      const errors = [...new Set([...visual.errors, ...timingPage.errors])]
+      const errors = [...new Set([...visual.errors, ...timingPage.errors, ...targetPage.errors])]
       const settlement = issues.filter(issue => issue.startsWith('unsettled ')).map((issue) => {
         const id = issue.slice(10)
         return { id, recorded: recorded.frames.at(-1).shapes[id], target: target[id] }

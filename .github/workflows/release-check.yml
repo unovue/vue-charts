@@ -36,6 +36,7 @@ jobs:
       - run: pnpm check:a11y
       - run: node --test packages/vue/test/lab/report-metrics.test.mjs
       - run: node scripts/update-motion-docs.mjs --check
+      - run: node --test scripts/check-motion-report.test.mjs
       - run: pnpm motion:report --prod --check --frames
       - run: pnpm check:play
       - run: node --test scripts/check-play.test.mjs

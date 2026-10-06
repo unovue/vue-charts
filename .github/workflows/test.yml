@@ -103,6 +103,8 @@ jobs:
 
       - run: pnpm check:motion
 
+      - run: node --test scripts/check-motion-report.test.mjs
+
       - run: pnpm check:a11y
 
       - uses: actions/upload-artifact@v4
