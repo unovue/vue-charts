@@ -1,5 +1,8 @@
+import type { ChartRootAttributes } from './directChartTypes'
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
-import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, useId } from 'vue'
+import { type ExtractPublicPropTypes, type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, useId } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
@@ -34,9 +37,9 @@ const SparklineVueProps = {
   transition: cellGridSharedProps.transition,
   /** Numbers, or rows with `data-key`. `null` leaves a gap. */
   data: { type: Array as PropType<SparkRow[]>, required: true as const },
-  dataKey: { type: String, default: 'value' },
+  dataKey: { type: [String, Number, Function] as PropType<RowDataKey<SparkRow>>, default: 'value' },
   /** Identity of a point across updates, e.g. its date, so a moving window slides. Defaults to the position. */
-  nameKey: { type: String, default: undefined },
+  nameKey: { type: [String, Number, Function] as PropType<RowDataKey<SparkRow>>, default: undefined },
   type: { type: String as PropType<'line' | 'area' | 'bar'>, default: 'line' },
   color: { type: String, default: seriesColor(0) },
   strokeWidth: { type: Number, default: 1.5 },
@@ -71,7 +74,7 @@ const SparklineInner = defineComponent({
     const rows = useTrackedData(() => props.data)
 
     const values = computed(() => (rows.value ?? []).map((row) => {
-      const raw = row !== null && typeof row === 'object' ? row[props.dataKey] : row
+      const raw = row !== null && typeof row === 'object' ? getValueByDataKey(row, props.dataKey) : row
       const value = Number(raw)
       return raw == null || !Number.isFinite(value) ? null : value
     }))
@@ -116,7 +119,7 @@ const SparklineInner = defineComponent({
     })
     const keyOf = (point: SparkPoint) => {
       const row = point.payload
-      const name = props.nameKey && row !== null && typeof row === 'object' ? row[props.nameKey] : undefined
+      const name = props.nameKey && row !== null && typeof row === 'object' ? getValueByDataKey(row, props.nameKey) : undefined
       return name == null ? point.index : String(name)
     }
     const baselineY = computed(() => size.effectiveHeight.value - PAD)
@@ -170,7 +173,7 @@ const SparklineInner = defineComponent({
       if (props.type === 'bar')
         return undefined
       const identities = points.value.map(point => props.nameKey && point.payload !== null && typeof point.payload === 'object'
-        ? point.payload[props.nameKey] ?? point.payload
+        ? getValueByDataKey(point.payload, props.nameKey) ?? point.payload
         : point.payload)
       const counts = new Map<unknown, number>()
       for (const identity of identities)
@@ -188,7 +191,7 @@ const SparklineInner = defineComponent({
             : positionalIdentities[point.index] ??= Symbol(),
           coordinate: { x: point.x, y: point.y },
         })),
-        dataDefinedOnItem: points.value.map(point => ({ name: props.nameKey && point.payload !== null && typeof point.payload === 'object' ? String(point.payload[props.nameKey]) : String(point.index + 1), value: point.value, payload: point.payload, color: props.color })),
+        dataDefinedOnItem: points.value.map(point => ({ name: props.nameKey && point.payload !== null && typeof point.payload === 'object' ? String(getValueByDataKey(point.payload, props.nameKey)) : String(point.index + 1), value: point.value, payload: point.payload, color: props.color })),
         positions: undefined,
         settings: { stroke: props.color, strokeWidth: undefined, fill: props.color, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: props.color, unit: '' },
       }
@@ -325,6 +328,19 @@ const SparklineInner = defineComponent({
   },
 })
 
+export type SparklineSlots<_Row = unknown> = { default?: () => VNode[] }
+export type SparklineProps<Row = unknown> = ChartRootAttributes & Omit<
+  ExtractPublicPropTypes<typeof SparklineVueProps & typeof chartSizeProps>,
+  'data' | 'dataKey' | 'nameKey'
+> & {
+  'data': readonly Row[]
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'nameKey'?: RowDataKey<NoInfer<Row>>
+  'onUpdate:activeIndex'?: (index: number | null) => void
+  'onAnimation-start'?: () => void
+  'onAnimation-end'?: () => void
+}
+
 const _Sparkline = defineComponent({
   name: 'Sparkline',
   props: { ...SparklineVueProps, ...chartSizeProps },
@@ -367,6 +383,7 @@ const _Sparkline = defineComponent({
  * <Sparkline :data="[4, 6, 5, 9, 12]" type="area" v-model:active-index="hovered" />
  * ```
  */
-export const Sparkline = _Sparkline as typeof _Sparkline & {
-  new (): { $slots: { default?: () => VNode[] } }
-}
+export const Sparkline = _Sparkline as unknown as <Row>(
+  props: SparklineProps<Row>,
+  context?: ChartRenderContext<SparklineSlots<Row>>,
+) => ChartVNode<SparklineProps<Row>, SparklineSlots<Row>>

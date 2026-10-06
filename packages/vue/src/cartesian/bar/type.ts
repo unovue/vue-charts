@@ -63,9 +63,19 @@ export const BarVueProps = {
 
 export type ResolvedBarProps = ExtractPropTypes<typeof BarVueProps>
 
+type BarShapeSlotProps = Omit<BarRectangleItem, 'x' | 'y' | 'width' | 'height'> & {
+  x: number
+  y: number
+  width: number
+  height: number
+  fill?: string
+  index: number
+  isActive: boolean
+}
+
 export interface BarSlots {
   label?: (props: LabelListSlotProps) => VNodeChild
   default?: () => VNode[]
-  shape?: (props: BarRectangleItem & { index: number, isActive: boolean }) => VNodeChild
-  activeBar?: (props: BarRectangleItem & { index: number, isActive: boolean }) => VNodeChild
+  shape?: (props: BarShapeSlotProps) => VNodeChild
+  activeBar?: (props: BarShapeSlotProps) => VNodeChild
 }

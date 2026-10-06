@@ -1,4 +1,7 @@
-import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
+import type { ChartRootAttributes } from './directChartTypes'
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import { getValueByDataKey } from '@/utils/chart'
+import { type ExtractPublicPropTypes, type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -31,9 +34,9 @@ const TrackerVueProps = {
   /** One row per bar, oldest first. */
   data: { type: Array as PropType<TrackerRow[]>, required: true as const },
   /** The field holding the status (`up`, `degraded`, `down`, `maintenance` or your own). */
-  dataKey: { type: String, default: 'status' },
+  dataKey: { type: [String, Number, Function] as PropType<RowDataKey<TrackerRow>>, default: 'status' },
   /** The field naming the bar, e.g. its date. It is also the bar's identity across updates. */
-  nameKey: { type: String, default: 'date' },
+  nameKey: { type: [String, Number, Function] as PropType<RowDataKey<TrackerRow>>, default: 'date' },
   /** Fill per status, merged over the defaults. */
   colors: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
   /** Readable text per status for tooltips and screen readers, merged over the defaults. */
@@ -43,6 +46,25 @@ const TrackerVueProps = {
   locale: { type: String, default: 'en-US' },
   desc: String,
   title: { type: String, default: 'Status history' },
+}
+
+export type TrackerSlots<Row = unknown> = CellGridSlots<Row> & { default?: () => VNode[] }
+export type TrackerProps<Row = unknown> = ChartRootAttributes & Omit<
+  ExtractPublicPropTypes<typeof TrackerVueProps & typeof chartSizeProps>,
+  'data' | 'dataKey' | 'nameKey'
+> & {
+  'data': readonly Row[]
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'nameKey'?: RowDataKey<NoInfer<Row>>
+  'onCell-click'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onCellClick'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onCell-mouseenter'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onCellMouseenter'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onCell-mouseleave'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onCellMouseleave'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onUpdate:activeIndex'?: (index: number | null) => void
+  'onAnimation-start'?: () => void
+  'onAnimation-end'?: () => void
 }
 
 const _Tracker = defineComponent({
@@ -83,8 +105,8 @@ const _Tracker = defineComponent({
       const labels = { ...trackerStatusLabels, ...props.labels }
       const seen = new Map<string, number>()
       return data.map((row, index) => {
-        const status = row?.[props.dataKey]
-        const name = row?.[props.nameKey]
+        const status = getValueByDataKey(row, props.dataKey)
+        const name = getValueByDataKey(row, props.nameKey)
         const base = name == null ? `#${index}` : String(name)
         const repeat = seen.get(base) ?? 0
         seen.set(base, repeat + 1)
@@ -144,6 +166,7 @@ const _Tracker = defineComponent({
  * <Tracker :data="days" data-key="status" name-key="date"><Tooltip /></Tracker>
  * ```
  */
-export const Tracker = _Tracker as typeof _Tracker & {
-  new (): { $slots: CellGridSlots<TrackerRow> & { default?: () => VNode[] } }
-}
+export const Tracker = _Tracker as unknown as <Row>(
+  props: TrackerProps<Row>,
+  context?: ChartRenderContext<TrackerSlots<Row>>,
+) => ChartVNode<TrackerProps<Row>, TrackerSlots<Row>>

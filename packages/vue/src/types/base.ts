@@ -1,8 +1,9 @@
+import type { ChartData } from './chartData'
+
 export type DataKey<T> = string | number | ((obj: T) => unknown)
 
 // Charts accept consumer-owned rows, including arrays and typed objects.
-// eslint-disable-next-line ts/no-explicit-any -- Consumer-owned chart rows may be objects, arrays, or other accessor inputs.
-export type ChartDataKey = DataKey<any>
+export type ChartDataKey = DataKey<ChartData[number]>
 
 export interface Coordinate {
   x: number

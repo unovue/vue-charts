@@ -85,7 +85,6 @@ export function isVisible(
 
 /**
  * Checks if the value is null or undefined
- * @param {any} value The value to check
  * @returns {boolean} true if the value is null or undefined
  */
 export function isNullish(value: unknown): boolean {

@@ -16,8 +16,8 @@ export type ChartOptions = {
   eventEmitter: symbol | undefined
 }
 
-export function arrayTooltipSearcher<T>(data: ReadonlyArray<T>, strIndex: TooltipIndex): T | undefined {
-  if (!strIndex)
+export function arrayTooltipSearcher(data: unknown, strIndex: TooltipIndex): unknown {
+  if (!strIndex || !Array.isArray(data))
     return undefined
   const numIndex = parseTooltipIndex(strIndex)
   if (numIndex === null) {

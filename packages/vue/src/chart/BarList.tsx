@@ -1,5 +1,8 @@
+import type { DirectChartAttributes } from './directChartTypes'
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
-import { type ComponentPublicInstance, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
+import { type ComponentPublicInstance, type ExtractPublicPropTypes, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/model/runtime'
@@ -8,8 +11,8 @@ import { cellGridSharedProps } from './cellGridProps'
 
 export type BarListRow = Record<string, unknown>
 
-export interface BarListSlotProps {
-  row: BarListRow
+export interface BarListSlotProps<Row = unknown> {
+  row: Row
   index: number
   name: string
   value: number
@@ -18,9 +21,9 @@ export interface BarListSlotProps {
   formatted: string
 }
 
-export interface BarListSlots {
-  name?: (props: BarListSlotProps) => VNodeChild
-  value?: (props: BarListSlotProps) => VNodeChild
+export interface BarListSlots<Row = unknown> {
+  name?: (props: BarListSlotProps<Row>) => VNodeChild
+  value?: (props: BarListSlotProps<Row>) => VNodeChild
 }
 
 interface RowState {
@@ -42,10 +45,10 @@ const BarListVueProps = {
   transition: cellGridSharedProps.transition,
   data: { type: Array as PropType<BarListRow[]>, required: true as const },
   /** Field with the label. It is also the row's identity, so a row slides to its new rank. */
-  nameKey: { type: String, default: 'name' },
-  dataKey: { type: String, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<RowDataKey<BarListRow>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<RowDataKey<BarListRow>>, default: 'value' },
   /** Field with a link; the label becomes an anchor. */
-  hrefKey: { type: String, default: undefined },
+  hrefKey: { type: [String, Number, Function] as PropType<RowDataKey<BarListRow>>, default: undefined },
   sort: { type: String as PropType<'descending' | 'ascending' | 'none'>, default: 'descending' },
   color: { type: String, default: seriesColor(0) },
   valueFormat: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
@@ -67,15 +70,15 @@ const BarListInner = defineComponent({
   name: 'BarListInner',
   props: { ...BarListVueProps, actionable: Boolean },
   emits: barListEmits,
-  slots: Object as SlotsType<BarListSlots>,
+  slots: Object as SlotsType<BarListSlots<BarListRow>>,
   setup(props, { emit, slots }) {
     const rows = useTrackedData(() => props.data)
     const numbers = computed(() => new Intl.NumberFormat(props.locale))
 
     const target = computed<RowState[]>(() => {
       const list = (rows.value ?? []).flatMap((row) => {
-        const value = Number(row?.[props.dataKey])
-        return row && Number.isFinite(value) ? [{ row, name: String(row[props.nameKey] ?? ''), value }] : []
+        const value = Number(getValueByDataKey(row, props.dataKey))
+        return row && Number.isFinite(value) ? [{ row, name: String(getValueByDataKey(row, props.nameKey) ?? ''), value }] : []
       })
       if (props.sort !== 'none')
         list.sort((a, b) => props.sort === 'descending' ? b.value - a.value : a.value - b.value)
@@ -122,7 +125,7 @@ const BarListInner = defineComponent({
     })
     const format = (state: RowState) => props.valueFormat ? props.valueFormat(state.value, state.row) : numbers.value.format(state.value)
 
-    function renderName(slotProps: BarListSlotProps, href: string | undefined, exiting: boolean) {
+    function renderName(slotProps: BarListSlotProps<BarListRow>, href: string | undefined, exiting: boolean) {
       if (slots.name)
         return slots.name(slotProps)
       if (href) {
@@ -164,8 +167,8 @@ const BarListInner = defineComponent({
       >
         {items.value.map(({ key, value: state, phase }) => {
           const index = state.index
-          const slotProps: BarListSlotProps = { row: state.row, index, name: state.name, value: state.value, ratio: state.ratio, formatted: format(state) }
-          const href = props.hrefKey ? state.row[props.hrefKey] as string | undefined : undefined
+          const slotProps: BarListSlotProps<BarListRow> = { row: state.row, index, name: state.name, value: state.value, ratio: state.ratio, formatted: format(state) }
+          const href = props.hrefKey ? getValueByDataKey(state.row, props.hrefKey) as string | undefined : undefined
           return (
             <li
               key={key as string}
@@ -205,11 +208,26 @@ const BarListInner = defineComponent({
   },
 })
 
+export type BarListProps<Row = unknown> = DirectChartAttributes & Omit<
+  ExtractPublicPropTypes<typeof BarListVueProps>,
+  'data' | 'dataKey' | 'nameKey' | 'hrefKey' | 'valueFormat'
+> & {
+  'data': readonly Row[]
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'nameKey'?: RowDataKey<NoInfer<Row>>
+  'hrefKey'?: RowDataKey<NoInfer<Row>>
+  'valueFormat'?: (value: number, row: NoInfer<Row>) => string
+  'onRow-click'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onRowClick'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
+  'onAnimation-start'?: () => void
+  'onAnimation-end'?: () => void
+}
+
 const _BarList = defineComponent({
   name: 'BarList',
   props: BarListVueProps,
   emits: barListEmits,
-  slots: Object as SlotsType<BarListSlots>,
+  slots: Object as SlotsType<BarListSlots<BarListRow>>,
   setup(props, { emit, slots }) {
     // The render phase and the on-screen state reach children only, so the transition lives one
     // level down.
@@ -241,6 +259,7 @@ const _BarList = defineComponent({
  * <BarList :data="[{ name: '/pricing', value: 820 }]" href-key="url" />
  * ```
  */
-export const BarList = _BarList as typeof _BarList & {
-  new (): { $slots: BarListSlots }
-}
+export const BarList = _BarList as unknown as <Row>(
+  props: BarListProps<Row>,
+  context?: ChartRenderContext<BarListSlots<Row>>,
+) => ChartVNode<BarListProps<Row>, BarListSlots<Row>>

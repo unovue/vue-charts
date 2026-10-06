@@ -1,3 +1,6 @@
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import type { DataKey } from '@/types/common'
+import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
@@ -9,12 +12,13 @@ import { ChartShell, useChartShell } from './ChartShell'
 import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, dayNumberToIso, formatDay, levelColors, levelOf, toDayNumber, weekdayOf } from './cellGridUtils'
 
-export interface CalendarDay {
+export interface CalendarDay<Row = unknown> {
   /** `YYYY-MM-DD`. */
   date: string
   /** Sum of the values on this day; `null` when no row has this date. */
   value: number | null
   level: number
+  rows: readonly Row[]
 }
 
 type DateInput = string | Date
@@ -26,11 +30,11 @@ const NOMINAL_STEP = 14
 
 const CalendarHeatmapVueProps = {
   ...cellGridSharedProps,
-  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
+  data: { type: Array as PropType<readonly unknown[]>, required: true as const },
   /** The field holding the day: a `YYYY-MM-DD` string or a `Date` (its local calendar date). */
-  dateKey: { type: String, default: 'date' },
+  dateKey: { type: [String, Number, Function] as PropType<DataKey<unknown>>, default: 'date' },
   /** The field holding the number to color by. Rows with the same day are summed. */
-  dataKey: { type: String, default: 'value' },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<unknown>>, default: 'value' },
   /** First day shown. Defaults to 52 weeks before `end`. */
   start: { type: [String, Date] as PropType<DateInput>, default: undefined },
   /** Last day shown. Defaults to the latest day in `data`, so server and client agree. */
@@ -66,17 +70,21 @@ const _CalendarHeatmap = defineComponent({
 
     const days = computed(() => {
       const values = new Map<number, number>()
+      const contributing = new Map<number, unknown[]>()
       let latest: number | undefined
       for (const row of rows.value ?? []) {
-        const day = toDayNumber(row?.[props.dateKey] as string | Date | null | undefined)
+        const day = toDayNumber(getValueByDataKey(row, props.dateKey) as string | Date | null | undefined)
         if (day !== undefined && (latest === undefined || day > latest))
           latest = day
-        const value = Number(row?.[props.dataKey])
+        const value = Number(getValueByDataKey(row, props.dataKey))
         if (day === undefined || !Number.isFinite(value))
           continue
         values.set(day, (values.get(day) ?? 0) + value)
+        const sourceRows = contributing.get(day) ?? []
+        sourceRows.push(row)
+        contributing.set(day, sourceRows)
       }
-      return { values, latest }
+      return { values, contributing, latest }
     })
 
     const range = computed(() => {
@@ -154,7 +162,7 @@ const _CalendarHeatmap = defineComponent({
           column,
           label: formatDay(day, props.locale, dateFormat),
           value,
-          payload: { date: iso, value, level },
+          payload: { date: iso, value, level, rows: days.value.contributing.get(day) ?? [] },
         })
         // A month is labelled at the first column whose top cell belongs to it.
         if (iso.endsWith('-01') || day === r.start) {
@@ -246,6 +254,21 @@ const _CalendarHeatmap = defineComponent({
  * <CalendarHeatmap :data="commits" date-key="day" data-key="count"><Tooltip /></CalendarHeatmap>
  * ```
  */
-export const CalendarHeatmap = _CalendarHeatmap as typeof _CalendarHeatmap & {
-  new (): { $slots: CellGridSlots<CalendarDay> & { default?: () => VNode[] } }
+export type CalendarHeatmapSlots<Row = unknown> = CellGridSlots<CalendarDay<Row>> & { default?: () => VNode[] }
+
+export type CalendarHeatmapProps<Row = unknown> = Omit<InstanceType<typeof _CalendarHeatmap>['$props'], 'data' | 'dateKey' | 'dataKey' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
+  'data': readonly Row[]
+  'dateKey'?: RowDataKey<NoInfer<Row>>
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'onCellClick'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-click'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCellMouseenter'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-mouseenter'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCellMouseleave'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-mouseleave'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
 }
+
+export const CalendarHeatmap = _CalendarHeatmap as unknown as <Row>(
+  props: CalendarHeatmapProps<Row>,
+  context?: ChartRenderContext<CalendarHeatmapSlots<Row>>,
+) => ChartVNode<CalendarHeatmapProps<Row>, CalendarHeatmapSlots<Row>>

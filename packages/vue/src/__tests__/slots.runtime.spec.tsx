@@ -162,10 +162,13 @@ describe('declared runtime slots', () => {
     const declared = checker.getExportsOfModule(checker.getSymbolAtLocation(source)!)
       .flatMap((symbol) => {
         const type = checker.getTypeOfSymbolAtLocation(symbol, source)
-        const signatures = type.getConstructSignatures()
-        return signatures.flatMap((signature) => {
-          const instance = signature.getReturnType()
-          const slots = instance.getProperty('$slots')
+        const instances = type.getConstructSignatures().map(signature => signature.getReturnType())
+        const contexts = type.getCallSignatures().flatMap((signature) => {
+          const context = signature.getReturnType().getProperty('__ctx')
+          return context ? [checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(context, source))] : []
+        })
+        return [...instances, ...contexts].flatMap((instance) => {
+          const slots = instance.getProperty('$slots') ?? instance.getProperty('slots')
           if (!slots)
             return []
           const slotType = checker.getTypeOfSymbolAtLocation(slots, source)

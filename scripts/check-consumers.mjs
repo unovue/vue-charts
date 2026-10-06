@@ -1,4 +1,5 @@
 /* eslint-disable no-console -- CLI check results. */
+import { Buffer } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { copyFile, cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
@@ -45,7 +46,7 @@ try {
   for (const name of ['vite', 'nuxt']) {
     const app = join(temporary, name)
     await cp(join(fixtures, name), app, { recursive: true })
-    for (const probe of ['nullability.ts', 'publicProps.ts']) {
+    for (const probe of ['nullability.ts', 'publicProps.ts', 'api-example-0.vue', 'api-example-1.vue', 'standalone.vue']) {
       const directory = name === 'vite' ? 'src' : 'app'
       await copyFile(join(fixtures, probe), join(app, directory, probe))
     }
@@ -63,6 +64,14 @@ try {
     if (name === 'vite') {
       check(app, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
       check(app, ['exec', 'vite', 'build'])
+      check(app, ['exec', 'vite', 'build', '--config', 'selected.config.mjs'])
+      const selected = await readFile(join(app, 'selected-dist/selected.js'), 'utf8')
+      const excluded = ['v-charts-treemap', 'v-charts-sankey', 'v-charts-sunburst']
+      for (const marker of excluded) {
+        if (selected.includes(marker))
+          failures.push(new Error(`Selected LineChart/Line bundle includes ${marker}`))
+      }
+      console.log(`Selected LineChart/Line bundle: ${Buffer.byteLength(selected)} bytes; excluded chart markers: ${excluded.filter(marker => selected.includes(marker)).length}.`)
     }
     else {
       run(app, ['exec', 'nuxi', 'prepare'])

@@ -129,6 +129,34 @@ describe('<Tracker />', () => {
 })
 
 describe('<CalendarHeatmap />', () => {
+  it('exposes contributing rows on summed days and none on missing days', async () => {
+    const data = [
+      { activity: { date: '2026-01-01', value: 2 }, author: 'A' },
+      { activity: { date: '2026-01-01', value: 3 }, author: 'B' },
+    ]
+    const click = vi.fn()
+    const { container } = render(() => (
+      <CalendarHeatmap
+        width={300}
+        height={100}
+        data={data}
+        dateKey="activity.date"
+        dataKey={row => row.activity.value}
+        start="2026-01-01"
+        end="2026-01-02"
+        isAnimationActive={false}
+        {...{ 'onCell-click': click }}
+      />
+    ))
+    const cells = container.querySelectorAll('.v-charts-cell')
+    await fireEvent.click(cells[0])
+    await fireEvent.click(cells[1])
+    expect(click.mock.calls.map(([day]) => day)).toEqual([
+      { date: '2026-01-01', value: 5, level: 4, rows: data },
+      { date: '2026-01-02', value: null, level: 0, rows: [] },
+    ])
+  })
+
   // Position-based keys remounted months on every window shift.
   it('keeps each month label mounted while the window moves one week', async () => {
     const start = ref('2026-01-01')
@@ -257,6 +285,42 @@ describe('<CalendarHeatmap />', () => {
 })
 
 describe('<Heatmap />', () => {
+  it('exposes aggregate and missing-cell provenance through events, slots and formatting', async () => {
+    const data = [
+      { position: { x: 'A', y: 'B' }, amount: 2, author: 'first' },
+      { position: { x: 'A', y: 'B' }, amount: 3, author: 'second' },
+    ]
+    const click = vi.fn()
+    const formatter = vi.fn((value: number) => String(value))
+    const slot = vi.fn((_props: { cell: { payload: unknown } }) => undefined)
+    const { container } = render(() => (
+      <Heatmap
+        width={300}
+        height={100}
+        data={data}
+        xKey="position.x"
+        yKey={row => row.position.y}
+        dataKey="amount"
+        xDomain={['A', 'missing']}
+        valueFormat={formatter}
+        isAnimationActive={false}
+        {...{ 'onCell-click': click }}
+      >
+        {{ cell: slot }}
+      </Heatmap>
+    ))
+    const cells = container.querySelectorAll('.v-charts-cell')
+    await fireEvent.click(cells[0])
+    await fireEvent.click(cells[1])
+    const expected = [
+      { x: 'A', y: 'B', value: 5, rows: data },
+      { x: 'missing', y: 'B', value: null, rows: [] },
+    ]
+    expect(click.mock.calls.map(([cell]) => cell)).toEqual(expected)
+    expect(formatter).toHaveBeenCalledWith(5, expected[0])
+    expect(slot.mock.calls.map(([props]) => props.cell.payload)).toEqual(expect.arrayContaining(expected))
+  })
+
   // A staying row label used to snap ahead of its moving cells.
   it('moves the next row label with its cells when a row is dropped', async () => {
     const data = ref([
@@ -382,6 +446,39 @@ describe('first appearance', () => {
 })
 
 describe('<CohortChart />', () => {
+  it('exposes source rows and periods while duplicate cohort labels keep all provenance', async () => {
+    const data = [
+      { group: { name: 'Jan', counts: [100, 50] }, owner: 'first' },
+      { group: { name: 'Jan', counts: [80, 20] }, owner: 'second' },
+    ]
+    const click = vi.fn()
+    const slot = vi.fn((_props: { cell: { payload: unknown } }) => undefined)
+    const { container } = render(() => (
+      <CohortChart
+        width={400}
+        height={120}
+        data={data}
+        cohortKey="group.name"
+        valuesKey={row => row.group.counts}
+        isAnimationActive={false}
+        {...{ 'onCell-click': click }}
+      >
+        {{ cell: slot }}
+      </CohortChart>
+    ))
+    await fireEvent.click(container.querySelectorAll('.v-charts-cell')[1])
+    const expected = {
+      x: 1,
+      y: 'Jan',
+      value: 75,
+      row: data[0],
+      rows: data,
+      period: 1,
+    }
+    expect(click.mock.calls[0][0]).toEqual(expected)
+    expect(slot.mock.calls.map(([props]) => props.cell.payload)).toContainEqual(expected)
+  })
+
   it.each([
     [null, ['Jan · 100, 0: 100%', 'Jan · 100, 2: 25%']],
     [undefined, ['Jan · 100, 0: 100%', 'Jan · 100, 2: 25%']],

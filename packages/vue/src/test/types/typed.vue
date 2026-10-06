@@ -1,45 +1,30 @@
 <script setup lang="ts">
-import { defineChartComponents } from '../../index'
+import { Area, Bar, BarChart, CartesianGrid, ErrorBar, Funnel, LabelList, Legend, Line, Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, Tooltip, XAxis, YAxis, ZAxis, defineChartComponents } from '../../index'
 
 interface Visit { name: string, desktop: number, mobile: number }
-const {
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-  Legend,
-  Area,
-  Line,
-  Pie,
-  Scatter,
-  Radar,
-  RadialBar,
-  Funnel,
-  YAxis,
-  ZAxis,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  LabelList,
-} = defineChartComponents<Visit>()
+const Chart = defineChartComponents<Visit>()({ BarChart, Bar, XAxis, Tooltip, Legend, Area, Line, Pie, Scatter, Radar, RadialBar, Funnel, YAxis, ZAxis, PolarAngleAxis, PolarRadiusAxis, LabelList, ErrorBar, ReferenceLine, ReferenceDot, ReferenceArea, CartesianGrid })
 const rows: Visit[] = [{ name: 'A', desktop: 10, mobile: 5 }]
 function number<T extends number>(value: T & (0 extends (1 & T) ? never : unknown)) { return value }
 function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | undefined) { return value }
 </script>
 
 <template>
-  <BarChart
+  <Chart.BarChart
     :data="rows"
     :width="400"
     :height="300"
   >
-    <Bar data-key="desktop">
+    <Chart.Bar
+      data-key="desktop"
+      @click="entry => number(entry.payload.desktop)"
+    >
       <template #shape="{ width }">
         {{ number(width ?? 0) }}
       </template>
-    </Bar>
-    <Bar :data-key="row => row.desktop" />
-    <XAxis data-key="name" />
-    <Tooltip>
+    </Chart.Bar>
+    <Chart.Bar :data-key="row => row.desktop" />
+    <Chart.XAxis data-key="name" />
+    <Chart.Tooltip>
       <template #content="{ payload, active }">
         {{ active }} {{ number(payload?.[0]?.payload.desktop) }}
         <!-- @vue-expect-error Row payload does not contain nope. -->
@@ -47,36 +32,36 @@ function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | 
         <!-- @vue-expect-error Desktop is numeric, not string. -->
         {{ payload[0]?.payload.desktop.toUpperCase() }}
       </template>
-    </Tooltip>
-    <Legend>
+    </Chart.Tooltip>
+    <Chart.Legend>
       <template #content="{ payload }">
         {{ key(payload[0]?.dataKey) }} {{ payload[0]?.value?.toUpperCase() }}
       </template>
-    </Legend>
-    <Area data-key="desktop" /><Line data-key="mobile" />
-    <Pie
+    </Chart.Legend>
+    <Chart.Area data-key="desktop" /><Chart.Line data-key="mobile" />
+    <Chart.Pie
       data-key="desktop"
       name-key="name"
-    /><Scatter data-key="desktop" />
-    <Radar data-key="desktop" /><RadialBar data-key="mobile" /><Funnel
+    /><Chart.Scatter data-key="desktop" />
+    <Chart.Radar data-key="desktop" /><Chart.RadialBar data-key="mobile" /><Chart.Funnel
       data-key="desktop"
       name-key="name"
     />
-    <YAxis data-key="desktop" /><ZAxis data-key="mobile" />
-    <PolarAngleAxis data-key="name" /><PolarRadiusAxis data-key="desktop" />
-    <LabelList data-key="desktop" />
+    <Chart.YAxis data-key="desktop" /><Chart.ZAxis data-key="mobile" />
+    <Chart.PolarAngleAxis data-key="name" /><Chart.PolarRadiusAxis data-key="desktop" />
+    <Chart.LabelList data-key="desktop" />
     <!-- @vue-expect-error Invalid row key is rejected. -->
-    <Bar data-key="nope" />
+    <Chart.Bar data-key="nope" />
     <!-- @vue-expect-error Axis keys also come from Visit. -->
-    <XAxis data-key="nope" />
+    <Chart.XAxis data-key="nope" />
     <!-- @vue-expect-error Name keys also come from Visit. -->
-    <Pie
+    <Chart.Pie
       data-key="desktop"
       name-key="nope"
     />
     <!-- @vue-expect-error Key callbacks receive Visit. -->
-    <Bar :data-key="row => row.nope" />
-  </BarChart>
+    <Chart.Bar :data-key="row => row.nope" />
+  </Chart.BarChart>
   <!-- @vue-expect-error Chart data must contain Visit rows. -->
-  <BarChart :data="[{ wrong: 1 }]" />
+  <Chart.BarChart :data="[{ wrong: 1 }]" />
 </template>

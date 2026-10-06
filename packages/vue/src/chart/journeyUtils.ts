@@ -1,10 +1,12 @@
 /** One journey: the steps a group of sessions took, and how many sessions took it. */
-export interface JourneyInput {
+export interface JourneyInput<Row = unknown> {
+  rows?: readonly Row[]
   path: string[]
   count: number
 }
 
-export interface JourneyNode {
+export interface JourneyNode<Row = unknown> {
+  rows: readonly Row[]
   /** `step` and `name`, unique across the chart. */
   id: string
   name: string
@@ -25,7 +27,8 @@ export interface JourneyNode {
   slotHeight: number
 }
 
-export interface JourneyLink {
+export interface JourneyLink<Row = unknown> {
+  rows: readonly Row[]
   id: string
   source: string
   target: string
@@ -48,9 +51,9 @@ export interface JourneyStep {
   previousTotal: number | null
 }
 
-export interface JourneyLayout {
-  nodes: JourneyNode[]
-  links: JourneyLink[]
+export interface JourneyLayout<Row = unknown> {
+  nodes: JourneyNode<Row>[]
+  links: JourneyLink<Row>[]
   steps: JourneyStep[]
   /** Pixels per session. */
   scale: number
@@ -85,10 +88,10 @@ const journeyNodeId = (step: number, name: string) => `${step}${SEPARATOR}${name
  * found by bisection so the tallest column fits the height, with every node keeping room for
  * its label.
  */
-export function computeJourneyLayout(input: readonly JourneyInput[], options: JourneyLayoutOptions): JourneyLayout {
+export function computeJourneyLayout<Row>(input: readonly JourneyInput<Row>[], options: JourneyLayoutOptions): JourneyLayout<Row> {
   const steps = Math.max(1, Math.floor(options.steps))
-  const counts = new Map<string, { name: string, step: number, count: number, exits: number }>()
-  const linkCounts = new Map<string, { source: string, target: string, step: number, count: number }>()
+  const counts = new Map<string, { name: string, step: number, count: number, exits: number, rows: Row[] }>()
+  const linkCounts = new Map<string, { source: string, target: string, step: number, count: number, rows: Row[] }>()
 
   for (const journey of input) {
     const count = Number(journey.count)
@@ -97,16 +100,18 @@ export function computeJourneyLayout(input: readonly JourneyInput[], options: Jo
     const path = journey.path.slice(0, steps).map(String)
     path.forEach((name, step) => {
       const id = journeyNodeId(step, name)
-      const node = counts.get(id) ?? { name, step, count: 0, exits: 0 }
+      const node = counts.get(id) ?? { name, step, count: 0, exits: 0, rows: [] }
       node.count += count
+      node.rows.push(...journey.rows ?? [])
       if (step === path.length - 1 && journey.path.length === path.length)
         node.exits += count
       counts.set(id, node)
       if (step > 0) {
         const source = journeyNodeId(step - 1, path[step - 1])
         const linkId = `${source}${SEPARATOR}${SEPARATOR}${id}`
-        const link = linkCounts.get(linkId) ?? { source, target: id, step: step - 1, count: 0 }
+        const link = linkCounts.get(linkId) ?? { source, target: id, step: step - 1, count: 0, rows: [] }
         link.count += count
+        link.rows.push(...journey.rows ?? [])
         linkCounts.set(linkId, link)
       }
     })
@@ -150,8 +155,8 @@ export function computeJourneyLayout(input: readonly JourneyInput[], options: Jo
   const scale = lo
 
   const columnGap = shownSteps > 1 ? Math.max(0, (options.width - options.nodeWidth - options.labelWidth) / (shownSteps - 1)) : 0
-  const nodes: JourneyNode[] = []
-  const byId = new Map<string, JourneyNode>()
+  const nodes: JourneyNode<Row>[] = []
+  const byId = new Map<string, JourneyNode<Row>>()
   columns.forEach((ids, step) => {
     let y = options.top
     for (const id of ids) {
@@ -160,8 +165,9 @@ export function computeJourneyLayout(input: readonly JourneyInput[], options: Jo
       const exits = options.exitsKnown && !isLast ? data.exits : null
       const height = data.count * scale
       const exitHeight = (exits ?? 0) * scale
-      const node: JourneyNode = {
+      const node: JourneyNode<Row> = {
         id,
+        rows: data.rows,
         name: data.name,
         step,
         count: data.count,
@@ -183,13 +189,13 @@ export function computeJourneyLayout(input: readonly JourneyInput[], options: Jo
   const incoming = new Map<string, number>()
   const sortedLinks = [...linkCounts.entries()].sort(([, a], [, b]) =>
     (order.get(a.source)! - order.get(b.source)!) || (order.get(a.target)! - order.get(b.target)!))
-  const links: JourneyLink[] = []
+  const links: JourneyLink<Row>[] = []
   for (const [id, link] of sortedLinks) {
     const source = byId.get(link.source)!
     const target = byId.get(link.target)!
     const width = link.count * scale
     const out = outgoing.get(link.source) ?? 0
-    links.push({ id, source: link.source, target: link.target, step: link.step, count: link.count, width, x0: source.x + options.nodeWidth, x1: target.x, y0: source.y + out + width / 2, y1: 0 })
+    links.push({ id, rows: link.rows, source: link.source, target: link.target, step: link.step, count: link.count, width, x0: source.x + options.nodeWidth, x1: target.x, y0: source.y + out + width / 2, y1: 0 })
     outgoing.set(link.source, out + width)
   }
   for (const link of [...links].sort((a, b) => (order.get(a.target)! - order.get(b.target)!) || (order.get(a.source)! - order.get(b.source)!))) {

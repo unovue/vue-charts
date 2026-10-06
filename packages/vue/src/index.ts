@@ -219,3 +219,9 @@ export type {
 export type { TooltipPayloadEntry, TooltipPayload } from './types/tooltip'
 
 export type { AxisProps } from './cartesian/axis/AxisProps'
+
+export type { HeatmapSlots } from './chart/Heatmap'
+export type { CalendarHeatmapSlots } from './chart/CalendarHeatmap'
+export type { CohortCell, CohortChartSlots } from './chart/CohortChart'
+export type { TrackerSlots } from './chart/Tracker'
+export type { SparklineSlots } from './chart/Sparkline'

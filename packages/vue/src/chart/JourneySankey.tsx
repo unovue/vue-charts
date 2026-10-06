@@ -1,5 +1,8 @@
+import type { ChartRootAttributes } from './directChartTypes'
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
-import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, watch } from 'vue'
+import { type ExtractPublicPropTypes, type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -16,7 +19,6 @@ import {
   type JourneyInput,
   type JourneyLink,
   type JourneyNode,
-  type JourneyStep,
   computeJourneyLayout,
   connectedLinks,
   journeyLinksOf,
@@ -25,21 +27,9 @@ import {
   truncateMiddle,
 } from './journeyUtils'
 
-export interface JourneyHeaderSlotProps extends JourneyStep {
-  width: number
-}
+import type { JourneySankeySlots } from './journeyTypes'
 
-export interface JourneyLabelSlotProps {
-  node: JourneyNode
-  /** Default second line, e.g. "11 · 55% end here". */
-  subtitle: string
-}
-
-export interface JourneySankeySlots {
-  header?: (props: JourneyHeaderSlotProps) => VNodeChild
-  label?: (props: JourneyLabelSlotProps) => VNodeChild
-  default?: () => VNode[]
-}
+export type { JourneyHeaderSlotProps, JourneyLabelSlotProps, JourneySankeySlots } from './journeyTypes'
 
 const HEADER_BAND = 28
 const LABEL_HEIGHT = 34
@@ -51,8 +41,8 @@ const JourneySankeyVueProps = {
   transition: cellGridSharedProps.transition,
   /** One row per journey: the pages (or events) in order and how many sessions took it. */
   data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
-  pathKey: { type: String, default: 'path' },
-  dataKey: { type: String, default: 'count' },
+  pathKey: { type: [String, Number, Function] as PropType<RowDataKey<Record<string, unknown>>>, default: 'path' },
+  dataKey: { type: [String, Number, Function] as PropType<RowDataKey<Record<string, unknown>>>, default: 'count' },
   /** Columns to show; longer journeys are cut. Defaults to the longest journey. */
   steps: { type: Number, default: undefined },
   /**
@@ -104,10 +94,10 @@ const JourneySankeyInner = defineComponent({
     const wholePercent = computed(() => new Intl.NumberFormat(props.locale, { maximumFractionDigits: 0 }))
 
     const journeys = computed<JourneyInput[]>(() => (rows.value ?? []).flatMap((row) => {
-      const path = row?.[props.pathKey]
-      const count = Number(row?.[props.dataKey])
+      const path = getValueByDataKey(row, props.pathKey)
+      const count = Number(getValueByDataKey(row, props.dataKey))
       return Array.isArray(path) && Number.isFinite(count) && count > 0
-        ? [{ path: path.map(String), count }]
+        ? [{ path: path.map(String), count, rows: [row] }]
         : []
     }))
     const stepCount = computed(() => props.steps ?? Math.max(1, ...journeys.value.map(journey => journey.path.length)))
@@ -507,6 +497,24 @@ const JourneySankeyInner = defineComponent({
   },
 })
 
+export type JourneySankeyProps<Row = unknown> = ChartRootAttributes & Omit<
+  ExtractPublicPropTypes<typeof JourneySankeyVueProps & typeof chartSizeProps>,
+  'data' | 'dataKey' | 'pathKey' | 'nodeHref' | 'formatSubtitle'
+> & {
+  'data': readonly Row[]
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'pathKey'?: RowDataKey<NoInfer<Row>>
+  'nodeHref'?: (name: string, node: JourneyNode<NoInfer<Row>>) => string | undefined
+  'formatSubtitle'?: (node: JourneyNode<NoInfer<Row>>) => string
+  'onNode-click'?: (node: JourneyNode<NoInfer<Row>>, event: MouseEvent) => void
+  'onNodeClick'?: (node: JourneyNode<NoInfer<Row>>, event: MouseEvent) => void
+  'onLink-click'?: (link: JourneyLink<NoInfer<Row>>, event: MouseEvent) => void
+  'onLinkClick'?: (link: JourneyLink<NoInfer<Row>>, event: MouseEvent) => void
+  'onUpdate:pinned'?: (path: string[] | null) => void
+  'onAnimation-start'?: () => void
+  'onAnimation-end'?: () => void
+}
+
 const _JourneySankey = defineComponent({
   name: 'JourneySankey',
   props: { ...JourneySankeyVueProps, ...chartSizeProps },
@@ -518,7 +526,7 @@ const _JourneySankey = defineComponent({
       const steps = props.steps ?? Infinity
       const perStep = new Map<number, Set<string>>()
       for (const row of props.data ?? []) {
-        const path = row?.[props.pathKey]
+        const path = getValueByDataKey(row, props.pathKey)
         if (!Array.isArray(path))
           continue
         path.slice(0, steps).forEach((name: unknown, step: number) => {
@@ -573,6 +581,7 @@ const _JourneySankey = defineComponent({
  * <JourneySankey :data="[{ path: ['/', '/pricing'], count: 11 }]" v-model:pinned="pinned"><Tooltip /></JourneySankey>
  * ```
  */
-export const JourneySankey = _JourneySankey as typeof _JourneySankey & {
-  new (): { $slots: JourneySankeySlots }
-}
+export const JourneySankey = _JourneySankey as unknown as <Row>(
+  props: JourneySankeyProps<Row>,
+  context?: ChartRenderContext<JourneySankeySlots<Row>>,
+) => ChartVNode<JourneySankeyProps<Row>, JourneySankeySlots<Row>>

@@ -1,3 +1,4 @@
+import type { ChartDataKey } from '@/types/base'
 import { seriesColor, seriesForeground } from '@/utils/theme'
 import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, toRaw, toRefs } from 'vue'
 import { useCanMeasureText } from '@/model/runtime'
@@ -106,8 +107,8 @@ const TreemapVueProps = {
   title: { type: String, default: 'Treemap' },
   desc: String,
   data: { type: Array as PropType<TreemapData[]>, required: true as const },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<TreemapData>>, default: 'value' },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<TreemapData>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   aspectRatio: { type: Number, default: 4 / 3 },

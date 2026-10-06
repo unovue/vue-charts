@@ -17,22 +17,28 @@ import { useChartLayout } from '@/context/chartLayoutContext'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import { LabelList } from '@/components/label/LabelList'
 import type { ErrorBarDataItem, ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
-import type { BarRectangleItem } from '@/types/bar'
 import { getValueByDataKey } from '@/utils/chart'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 
-const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> = (
+const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   dataPoint,
   dataKey,
 ): ErrorBarDataItem => {
+  if (dataPoint == null || typeof dataPoint !== 'object'
+    || !('x' in dataPoint) || !('y' in dataPoint) || !('value' in dataPoint)
+    || (dataPoint.x != null && typeof dataPoint.x !== 'number')
+    || (dataPoint.y != null && typeof dataPoint.y !== 'number')) {
+    throw new Error('vccs: ErrorBar requires Bar geometry.')
+  }
+  // Keep the source scalar and its existing arithmetic coercion in errorBarLines.
   const value = Array.isArray(dataPoint.value) ? dataPoint.value[1] : dataPoint.value
   return {
     x: dataPoint.x,
     y: dataPoint.y,
     value: value as number,
-    errorVal: getValueByDataKey(dataPoint.payload ?? dataPoint, dataKey),
+    errorVal: getValueByDataKey('payload' in dataPoint ? dataPoint.payload ?? dataPoint : dataPoint, dataKey),
   }
 }
 

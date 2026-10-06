@@ -1,6 +1,7 @@
+import type { ChartDataKey } from '@/types/base'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent } from 'vue'
-import type { Coordinate, DataKey } from '@/types'
+import type { Coordinate } from '@/types'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
@@ -57,8 +58,8 @@ const SunburstChartVueProps = {
   title: { type: String, default: 'Sunburst chart' },
   desc: String,
   data: { type: Object as PropType<SunburstData>, required: true as const },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, unknown>>>, default: 'value' },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, unknown>>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   cx: { type: Number, default: undefined },

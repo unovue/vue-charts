@@ -88,9 +88,8 @@ export type TooltipActiveIndex = number | null
  * the only requirement is that the chart also provides a searcher function
  * that accepts the data, and a key, and returns whatever the payload in Tooltip should be.
  */
-// Payload searchers form a runtime boundary for array and hierarchy data.
-// eslint-disable-next-line ts/no-explicit-any -- Searcher providers accept either arrays or hierarchy data at this runtime boundary.
-export type TooltipPayloadSearcher<T = any, R = T> = (
+// Payload searchers narrow array and hierarchy data at this runtime boundary.
+export type TooltipPayloadSearcher<T = unknown, R = T> = (
   data: T,
   index: TooltipIndex,
   nameKey?: ChartDataKey,
@@ -132,7 +131,7 @@ export type TooltipPayloadConfiguration = {
    * If undefined, then Recharts will use mouse interaction coordinates, or the axis coordinates,
    * with some defaults (like, top/left of the chart).
    */
-  positions: Record<NonNullable<TooltipIndex>, Coordinate> | ReadonlyArray<Coordinate | undefined> | undefined
+  positions: Readonly<Partial<Record<number, Coordinate>>> | ReadonlyArray<Coordinate | undefined> | undefined
 }
 
 export type ActiveTooltipProps = {

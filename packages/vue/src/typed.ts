@@ -1,5 +1,13 @@
 import type { VNodeChild } from 'vue'
-import {
+import type { RowDataKey } from './types/typed'
+import type { HeatmapProps, HeatmapSlots } from './chart/Heatmap'
+import type { CalendarHeatmapProps, CalendarHeatmapSlots } from './chart/CalendarHeatmap'
+import type { CohortChartProps, CohortChartSlots } from './chart/CohortChart'
+import type { TrackerProps, TrackerSlots } from './chart/Tracker'
+import type { BarListProps, BarListSlots } from './chart/BarList'
+import type { SparklineProps, SparklineSlots } from './chart/Sparkline'
+import type { JourneySankeyProps, JourneySankeySlots } from './chart/JourneySankey'
+import type {
   AreaChart,
   BarChart,
   ComposedChart,
@@ -13,10 +21,11 @@ import {
   SunburstChart,
   Treemap,
 } from './chart'
-import {
+import type {
   Area,
   Bar,
   Brush,
+  ErrorBar,
   Funnel,
   Line,
   ReferenceArea,
@@ -27,21 +36,45 @@ import {
   YAxis,
   ZAxis,
 } from './cartesian'
-import { Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar } from './polar'
-import { Cell, LabelList, Legend, Tooltip } from './components'
+import type { Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar } from './polar'
+import type { Cell, LabelList, Legend, Tooltip } from './components'
 import type { TooltipContentProps } from './components/tooltip/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
 import type { TooltipPayload } from '@/types/tooltip'
 
-export type RowDataKey<Row> = Extract<keyof Row, string> | ((row: Row) => unknown)
+export type { RowDataKey } from './types/typed'
+
+type RowItem<Item, Row> = Item extends object
+  ? 'payload' extends keyof Item ? Omit<Item, 'payload'> & { payload: Row } : Item
+  : Item
+
+type RowCallback<Value, Row> = Value extends (...args: infer Args) => infer Result
+  ? (...args: { [Index in keyof Args]: RowItem<Args[Index], Row> }) => Result
+  : Value
 
 type RowProps<Props, Row> = {
   [Key in keyof Props]: Key extends 'dataKey' | 'nameKey'
-    ? Extract<NonNullable<Props[Key]>, Function> extends never ? Extract<keyof Row, string> : RowDataKey<Row>
-    : Key extends 'data'
-      ? NonNullable<Props[Key]> extends readonly unknown[] ? Row[] : Props[Key]
-      : Props[Key]
+    ? RowDataKey<Row>
+    : Key extends 'hidden' ? Array<Extract<RowDataKey<Row>, string>>
+      : Key extends 'onUpdate:hidden' ? (hidden: Array<Extract<RowDataKey<Row>, string>>) => void
+        : Key extends 'data'
+          ? NonNullable<Props[Key]> extends readonly unknown[] ? Row[] : Props[Key]
+          : RowCallback<Props[Key], Row>
+}
+
+type RowSlots<Slots, Row> = { [Key in keyof Slots]: RowCallback<Slots[Key], Row> }
+
+type StandaloneComponent<Props, Slots> = { new (): { $props: Props, $slots: Slots } }
+
+type StandaloneComponents<Row> = {
+  Heatmap: StandaloneComponent<HeatmapProps<Row>, HeatmapSlots<Row>>
+  CalendarHeatmap: StandaloneComponent<CalendarHeatmapProps<Row>, CalendarHeatmapSlots<Row>>
+  CohortChart: StandaloneComponent<CohortChartProps<Row>, CohortChartSlots<Row>>
+  Tracker: StandaloneComponent<TrackerProps<Row>, TrackerSlots<Row>>
+  BarList: StandaloneComponent<BarListProps<Row>, BarListSlots<Row>>
+  Sparkline: StandaloneComponent<SparklineProps<Row>, SparklineSlots<Row>>
+  JourneySankey: StandaloneComponent<JourneySankeyProps<Row>, JourneySankeySlots<Row>>
 }
 
 export type TypedTooltipPayload<Row> = Omit<TooltipPayload[number], 'payload' | 'dataKey' | 'nameKey'> & {
@@ -61,7 +94,7 @@ export type TypedLegendPayload<Row> = Omit<LegendPayload, 'dataKey'> & {
 
 type ComponentConstructor = abstract new (...args: never[]) => { $props: object, $slots: object }
 
-type TypedComponent<Component extends ComponentConstructor, Row, Slots = InstanceType<Component>['$slots']> =
+type TypedComponent<Component extends ComponentConstructor, Row, Slots = RowSlots<InstanceType<Component>['$slots'], Row>> =
   // A mapped type drops the original constructor, whose broad props would defeat checking.
   { [Key in keyof Component]: Component[Key] } & {
     new (): Omit<InstanceType<Component>, '$props' | '$slots'> & {
@@ -87,6 +120,7 @@ type RuntimeComponents = {
   Area: typeof Area
   Bar: typeof Bar
   Funnel: typeof Funnel
+  ErrorBar: typeof ErrorBar
   Line: typeof Line
   Pie: typeof Pie
   Radar: typeof Radar
@@ -107,56 +141,26 @@ type RuntimeComponents = {
   Cell: typeof Cell
 }
 
-const components: RuntimeComponents = {
-  AreaChart,
-  BarChart,
-  ComposedChart,
-  FunnelChart,
-  LineChart,
-  PieChart,
-  RadarChart,
-  RadialBarChart,
-  Sankey,
-  ScatterChart,
-  SunburstChart,
-  Treemap,
-  Area,
-  Bar,
-  Funnel,
-  Line,
-  Pie,
-  Radar,
-  RadialBar,
-  Scatter,
-  XAxis,
-  YAxis,
-  ZAxis,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Tooltip,
-  Legend,
-  Brush,
-  ReferenceLine,
-  ReferenceArea,
-  ReferenceDot,
-  LabelList,
-  Cell,
+export type TypedComponents<Row, Components = RuntimeComponents & StandaloneComponents<Row>> = {
+  [Key in keyof Components]: Key extends keyof StandaloneComponents<Row>
+    ? StandaloneComponents<Row>[Key]
+    : Components[Key] extends ComponentConstructor
+      ? Key extends 'Tooltip'
+        ? TypedComponent<Components[Key], Row, Omit<InstanceType<typeof Tooltip>['$slots'], 'content'> & {
+          content?: (props: TypedTooltipContentProps<Row>) => VNodeChild
+        }>
+        : Key extends 'Legend'
+          ? TypedComponent<Components[Key], Row, {
+            content?: (props: Omit<LegendContentProps, 'payload'> & { payload: TypedLegendPayload<Row>[] }) => VNodeChild
+          }>
+          : TypedComponent<Components[Key], Row>
+      : Components[Key]
 }
 
-export type TypedComponents<Row> = {
-  [Key in keyof typeof components]: Key extends 'Tooltip'
-    ? TypedComponent<(typeof components)[Key], Row, Omit<InstanceType<typeof Tooltip>['$slots'], 'content'> & {
-      content?: (props: TypedTooltipContentProps<Row>) => VNodeChild
-    }>
-    : Key extends 'Legend'
-      ? TypedComponent<(typeof components)[Key], Row, {
-        content?: (props: Omit<LegendContentProps, 'payload'> & { payload: TypedLegendPayload<Row>[] }) => VNodeChild
-      }>
-      : TypedComponent<(typeof components)[Key], Row>
-}
-
-/** Opt into row keys and payloads without wrapping or replacing runtime components. */
-export function defineChartComponents<Row>(): TypedComponents<Row> {
-  // The only bridge cast: Vue's runtime components remain identical; only declarations narrow.
-  return components as unknown as TypedComponents<Row>
+/** Select runtime components while giving their keys and item payloads a row type. */
+export function defineChartComponents<Row>() {
+  return function selectComponents<Components extends object>(components: Components): TypedComponents<Row, Components> {
+    // The runtime references stay identical; only the consumer declarations narrow.
+    return components as TypedComponents<Row, Components>
+  }
 }

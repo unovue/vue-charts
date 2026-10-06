@@ -170,6 +170,11 @@ export function createTooltip(inputs: TooltipInputs) {
     return values.map((value, index) => counts.get(value) === 1 ? value : toRaw(rows[index]))
   }
 
+  function positionAt(positions: TooltipPayloadConfiguration['positions'], index: TooltipIndex) {
+    const position = parseTooltipIndex(index)
+    return position === null ? undefined : positions?.[position]
+  }
+
   const axisTargets = computed<readonly Target[]>(() => {
     if (!inputs.entries.entries.value.some(entry => !entry.settings.hide))
       return []
@@ -206,7 +211,7 @@ export function createTooltip(inputs: TooltipInputs) {
       localIndex,
       index: String(localIndex),
       identity: identity[localIndex],
-      coordinate: inputs.options().tooltipPayloadSearcher?.(configuration.positions, String(localIndex)),
+      coordinate: positionAt(configuration.positions, String(localIndex)),
     }))
   }))
   const pointerTargets = computed<readonly Target[]>(() => inputs.entries.registrations.value.flatMap((entry) => {
@@ -439,7 +444,7 @@ export function createTooltip(inputs: TooltipInputs) {
 
   function coordinateAt(index: TooltipIndex, dataKey: DataKey<unknown>) {
     const entry = inputs.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
-    return entry?.positions == null ? undefined : inputs.options().tooltipPayloadSearcher?.(entry.positions, index)
+    return positionAt(entry?.positions, index)
   }
 
   function setActiveMouseOverItemIndex(action: TooltipActionPayload) { activate('item', 'hover', action) }

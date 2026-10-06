@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import { CartesianGrid, defineChartComponents } from 'vccs'
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, defineChartComponents } from 'vccs'
 import ChartContainer from './ChartContainer.vue'
 
 interface Row { month: string, visitors: number }
-const { AreaChart, Area, XAxis, Tooltip } = defineChartComponents<Row>()
+const Chart = defineChartComponents<Row>()({ AreaChart, Area, XAxis, Tooltip })
 const rows: Row[] = [{ month: 'January', visitors: 12 }]
 </script>
 
 <template>
   <ChartContainer>
-    <AreaChart
+    <Chart.AreaChart
       :data="rows"
       :width="600"
       :height="300"
     >
       <CartesianGrid />
-      <XAxis data-key="month" />
-      <Area
+      <Chart.XAxis data-key="month" />
+      <Chart.Area
         data-key="visitors"
         :is-animation-active="false"
       />
-      <Tooltip>
+      <Chart.Tooltip>
         <template #content="{ active, payload, label }">
           <div v-if="active">
             {{ label }}: {{ payload.map(item => item.payload.visitors).join(', ') }}
           </div>
         </template>
-      </Tooltip>
-    </AreaChart>
+      </Chart.Tooltip>
+    </Chart.AreaChart>
   </ChartContainer>
 </template>

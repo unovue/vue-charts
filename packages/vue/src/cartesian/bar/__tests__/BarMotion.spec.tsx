@@ -1,7 +1,8 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Bar, BarChart, XAxis } from '@/index'
+import type { BarSlots } from '@/index'
+import { Bar, BarChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const clock = vi.hoisted(() => ({ update: (_v: number) => {}, to: 0, runs: 0, duration: 0 }))
@@ -135,4 +136,48 @@ it.each([
   await nextTick()
   await nextTick()
   expect(clock.duration).toBe(expected)
+})
+
+// Catches custom shapes receiving missing geometry while a middle value enters, leaves or is chased.
+it('calls custom bar shapes only for drawable geometry through null value transitions', async () => {
+  const rows = ref<Array<{ name: string, value: number | null }>>([
+    { name: 'A', value: 10 },
+    { name: 'B', value: null },
+    { name: 'C', value: 30 },
+  ])
+  const shape = vi.fn<NonNullable<BarSlots['shape']>>(({ x, y, width, height, fill }) => <rect x={x} y={y} width={width} height={height} fill={fill} />)
+  const { container } = render(() => (
+    <BarChart width={300} height={100} margin={{ top: 0, right: 0, bottom: 0, left: 0 }} data={rows.value}>
+      <XAxis hide dataKey="name" />
+      <YAxis hide domain={[0, 40]} />
+      <Bar dataKey="value">{{ shape }}</Bar>
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  clock.update(clock.to)
+  await nextTick()
+  const heights = () => [...container.querySelectorAll('.v-charts-bar-rectangle rect')].map(rect => Math.round(Number(rect.getAttribute('height')) * 100) / 100)
+  expect(heights()).toEqual([25, 75])
+  shape.mockClear()
+  rows.value[1].value = 20
+  await nextTick()
+  clock.update(clock.to / 2)
+  await nextTick()
+  expect(heights()).toEqual([25, 48.07, 75])
+  rows.value[1].value = null
+  await nextTick()
+  clock.update(clock.to / 2)
+  await nextTick()
+  expect(heights()).toEqual([25, 1.86, 75])
+  clock.update(clock.to)
+  await nextTick()
+  expect(heights()).toEqual([25, 75])
+  expect(shape.mock.calls.length).toBeGreaterThan(0)
+  for (const [geometry] of shape.mock.calls) {
+    for (const value of [geometry.x, geometry.y, geometry.width, geometry.height])
+      expect(Number.isFinite(value)).toBe(true)
+    expect(geometry.width).not.toBe(0)
+    expect(geometry.height).not.toBe(0)
+  }
 })

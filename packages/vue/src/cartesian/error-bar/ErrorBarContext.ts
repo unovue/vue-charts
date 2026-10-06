@@ -20,8 +20,7 @@ export interface ErrorBarContextType {
   xAxisId: AxisId
   yAxisId: AxisId
   // This injection boundary accepts geometry from several independent series shapes.
-  // eslint-disable-next-line ts/no-explicit-any -- The injection boundary accepts geometry from independent series shapes.
-  dataPointFormatter: ErrorBarDataPointFormatter<any>
+  dataPointFormatter: ErrorBarDataPointFormatter<unknown>
   errorBarOffset: Ref<number>
 }
 

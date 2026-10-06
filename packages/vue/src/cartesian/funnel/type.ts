@@ -15,7 +15,6 @@ export interface FunnelProps {
   id?: string
   isAnimationActive?: boolean
   transition?: ValueAnimationTransition<number>
-  // label?: ImplicitLabelListType<any>
   lastShapeType?: 'triangle' | 'rectangle'
   legendType?: LegendType
   nameKey?: ChartDataKey

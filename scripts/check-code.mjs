@@ -4,6 +4,8 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import madge from 'madge'
+import ts from 'typescript'
+import { parse } from 'vue/compiler-sfc'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const source = join(root, 'packages/vue/src')
@@ -30,6 +32,35 @@ const report = {
   unused: [],
   errors: [],
 }
+function countAnyTypes(file, text) {
+  const descriptor = file.endsWith('.vue') ? parse(text, { filename: file }).descriptor : undefined
+  const scripts = descriptor
+    ? [descriptor.script, descriptor.scriptSetup].filter(Boolean).map(script => script.content)
+    : [text]
+  let count = 0
+  for (const code of scripts) {
+    const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
+    function visit(node) {
+      if (node.kind === ts.SyntaxKind.AnyKeyword)
+        count++
+      ts.forEachChild(node, visit)
+    }
+    visit(source)
+  }
+  const seen = new WeakSet()
+  function visitTemplate(node) {
+    if (!node || typeof node !== 'object' || seen.has(node))
+      return
+    seen.add(node)
+    if (node.type === 'TSAnyKeyword')
+      count++
+    for (const value of Object.values(node))
+      visitTemplate(value)
+  }
+  visitTemplate(descriptor?.template?.ast)
+  return count
+}
+
 for (const file of files) {
   const text = await readFile(join(source, file), 'utf8')
   const lines = text.split('\n')
@@ -37,7 +68,7 @@ for (const file of files) {
     lines.pop()
   report.lines += lines.length
   report.watch += (text.match(/\bwatch\s*\(/g) ?? []).length
-  report.any += (text.match(/\bany\b/g) ?? []).length
+  report.any += countAnyTypes(file, text)
   if (lines.length > report.longest.lines)
     report.longest = { file, lines: lines.length }
   for (const [index, line] of lines.entries()) {
@@ -98,6 +129,8 @@ if (report.unused.length)
   report.errors.push(`${report.unused.length} files with unused code`)
 if (report.longest.lines > 600)
   report.errors.push(`${report.longest.file}: ${report.longest.lines} lines exceeds 600`)
+if (report.any > 0)
+  report.errors.push(`${report.any} real any types exceeds 0`)
 if (report.disables > 40)
   report.errors.push(`${report.disables} explicit-any disables exceeds 40`)
 if (report.tsIgnore)
@@ -109,6 +142,7 @@ console.log([
   `${report.passed ? 'PASS' : 'FAIL'} code: ${report.cycles.length} cycles`,
   `${report.unused.length} unused files/exports`,
   `longest ${report.longest.lines} lines`,
+  `${report.any} real any types`,
   `${report.disables} any disables`,
   `${report.tsIgnore} ts-ignore`,
 ].join(', '))

@@ -1,3 +1,6 @@
+import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import type { DataKey } from '@/types/common'
+import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
@@ -11,13 +14,13 @@ import { type GridCell, levelColors, levelOf, mixColor } from './cellGridUtils'
 
 export type HeatmapKey = string | number
 
-export interface HeatmapCell {
+export interface HeatmapCell<Row = unknown> {
   x: HeatmapKey
   y: HeatmapKey
   /** Sum of the rows for this x and y; `null` when there are none. */
   value: number | null
   /** The rows behind this cell. */
-  rows: Record<string, unknown>[]
+  rows: readonly Row[]
 }
 
 const LABEL_GAP = 6
@@ -29,13 +32,13 @@ const CHAR_WIDTH = 6
 
 const HeatmapVueProps = {
   ...cellGridSharedProps,
-  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
+  data: { type: Array as PropType<readonly unknown[]>, required: true as const },
   /** Field for the column. */
-  xKey: { type: String, default: 'x' },
+  xKey: { type: [String, Number, Function] as PropType<DataKey<unknown>>, default: 'x' },
   /** Field for the row. */
-  yKey: { type: String, default: 'y' },
+  yKey: { type: [String, Number, Function] as PropType<DataKey<unknown>>, default: 'y' },
   /** Field with the number to color by. Rows with the same x and y are summed. */
-  dataKey: { type: String, default: 'value' },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<unknown>>, default: 'value' },
   /** Column order. Defaults to the order of first appearance in `data`. */
   xDomain: { type: Array as PropType<HeatmapKey[]>, default: undefined },
   /** Row order, top to bottom. Defaults to the order of first appearance in `data`. */
@@ -78,10 +81,10 @@ const _Heatmap = defineComponent({
       const ys: HeatmapKey[] = []
       const seenX = new Set<HeatmapKey>()
       const seenY = new Set<HeatmapKey>()
-      const cells = new Map<string, HeatmapCell>()
+      const cells = new Map<string, HeatmapCell & { rows: unknown[] }>()
       for (const row of rows.value ?? []) {
-        const x = row?.[props.xKey] as HeatmapKey | undefined
-        const y = row?.[props.yKey] as HeatmapKey | undefined
+        const x = getValueByDataKey(row, props.xKey) as HeatmapKey | undefined
+        const y = getValueByDataKey(row, props.yKey) as HeatmapKey | undefined
         if (x == null || y == null)
           continue
         if (!seenX.has(x)) {
@@ -94,7 +97,7 @@ const _Heatmap = defineComponent({
         }
         const key = cellKey(x, y)
         const cell = cells.get(key) ?? { x, y, value: null, rows: [] }
-        const value = Number(row[props.dataKey])
+        const value = Number(getValueByDataKey(row, props.dataKey))
         if (Number.isFinite(value))
           cell.value = (cell.value ?? 0) + value
         cell.rows.push(row)
@@ -266,6 +269,23 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  * <Heatmap :data="visits" x-key="hour" y-key="day" data-key="count"><Tooltip /></Heatmap>
  * ```
  */
-export const Heatmap = _Heatmap as typeof _Heatmap & {
-  new (): { $slots: CellGridSlots<HeatmapCell> & { default?: () => VNode[] } }
+export type HeatmapSlots<Row = unknown> = CellGridSlots<HeatmapCell<Row>> & { default?: () => VNode[] }
+
+export type HeatmapProps<Row = unknown> = Omit<InstanceType<typeof _Heatmap>['$props'], 'data' | 'xKey' | 'yKey' | 'dataKey' | 'valueFormat' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
+  'data': readonly Row[]
+  'xKey'?: RowDataKey<NoInfer<Row>>
+  'yKey'?: RowDataKey<NoInfer<Row>>
+  'dataKey'?: RowDataKey<NoInfer<Row>>
+  'valueFormat'?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
+  'onCellClick'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-click'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCellMouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-mouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCellMouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
+  'onCell-mouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
 }
+
+export const Heatmap = _Heatmap as unknown as <Row>(
+  props: HeatmapProps<Row>,
+  context?: ChartRenderContext<HeatmapSlots<Row>>,
+) => ChartVNode<HeatmapProps<Row>, HeatmapSlots<Row>>

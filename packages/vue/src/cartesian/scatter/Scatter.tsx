@@ -18,7 +18,6 @@ import { useGraphicalLayerRef } from '@/model/runtime'
 import { LabelList } from '@/components/label/LabelList'
 import type { TooltipType } from '@/types/tooltip'
 import type { ScatterPointItem } from '@/types/common'
-import type { ErrorBarDirection } from '@/types/bar'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
@@ -30,16 +29,29 @@ import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarC
 
 const interpolateNumber = (from: number, to: number) => (t: number) => from + (to - from) * t
 
-const errorBarDataPointFormatter: ErrorBarDataPointFormatter<ScatterPointItem> = (
-  dataPoint: ScatterPointItem,
-  dataKey: ChartDataKey,
-  direction: ErrorBarDirection,
-) => ({
-  x: dataPoint.cx,
-  y: dataPoint.cy,
-  value: direction === 'x' ? Number(dataPoint.node.x) : Number(dataPoint.node.y),
-  errorVal: getValueByDataKey(dataPoint.payload, dataKey),
-})
+const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
+  dataPoint,
+  dataKey,
+  direction,
+) => {
+  if (dataPoint == null || typeof dataPoint !== 'object'
+    || !('cx' in dataPoint) || !('cy' in dataPoint) || !('node' in dataPoint)
+    || (dataPoint.cx !== undefined && typeof dataPoint.cx !== 'number')
+    || (dataPoint.cy !== undefined && typeof dataPoint.cy !== 'number')
+    || dataPoint.node == null || typeof dataPoint.node !== 'object') {
+    throw new Error('vccs: ErrorBar requires Scatter geometry.')
+  }
+  const node = dataPoint.node
+  const value = direction === 'x'
+    ? ('x' in node ? node.x : undefined)
+    : ('y' in node ? node.y : undefined)
+  return {
+    x: dataPoint.cx,
+    y: dataPoint.cy,
+    value: Number(value),
+    errorVal: getValueByDataKey('payload' in dataPoint ? dataPoint.payload : undefined, dataKey),
+  }
+}
 
 const ScatterVueProps = {
   xAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },

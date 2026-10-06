@@ -155,13 +155,21 @@ export const BarRectangles = defineComponent({
               dataKey: props.dataKey,
             }
 
-            const shape = isActive && activeBarSlot
-              ? activeBarSlot(barRectangleProps)
-              : shapeSlot
-                ? shapeSlot(barRectangleProps)
-                : baseAttrs
-                  ? rectanglePath({ ...baseAttrs, ...(entryFill ? { fill: entryFill } : {}), ...svgAttrs(cellProps.value?.[index]), ...svgAttrs(activeBarProps) }, bar.x!, bar.y!, bar.width!, bar.height!, (activeBarProps as { radius?: number }).radius ?? props.radius)
-                  : <Rectangle {...barRectangleProps} />
+            const customShape = isActive && activeBarSlot ? activeBarSlot : shapeSlot
+            const { x, y, width, height } = barRectangleProps
+            const geometry = customShape && typeof x === 'number' && typeof y === 'number'
+              && typeof width === 'number' && typeof height === 'number'
+              && Number.isFinite(x) && Number.isFinite(y)
+              && Number.isFinite(width) && Number.isFinite(height)
+              && width !== 0 && height !== 0
+              ? { ...barRectangleProps, x, y, width, height, fill: typeof barRectangleProps.fill === 'string' ? barRectangleProps.fill : undefined }
+              : undefined
+            // Keep missing bars in the transition, but do not send undrawable geometry to slots.
+            const shape = customShape
+              ? geometry ? customShape(geometry) : null
+              : baseAttrs
+                ? rectanglePath({ ...baseAttrs, ...(entryFill ? { fill: entryFill } : {}), ...svgAttrs(cellProps.value?.[index]), ...svgAttrs(activeBarProps) }, bar.x!, bar.y!, bar.width!, bar.height!, (activeBarProps as { radius?: number }).radius ?? props.radius)
+                : <Rectangle {...barRectangleProps} />
 
             return (
               <g
