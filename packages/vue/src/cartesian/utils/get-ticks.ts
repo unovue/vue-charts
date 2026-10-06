@@ -1,8 +1,9 @@
+import { isServer } from '@/utils/env'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { Size } from '@/types'
 import type { CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { CartesianTickItem } from '@/types/tick'
-import { Global, isNumber, isVisible } from '@/utils'
+import { isNumber, isVisible } from '@/utils'
 import { getStringSize } from '@/utils/attrs'
 import { getEquidistantTicks } from '@/utils/cartesian'
 import { mathSign } from '@/utils/data'
@@ -138,7 +139,7 @@ export function getTicks(
   props: GetTicksInput,
   fontSize?: string,
   letterSpacing?: string,
-  canMeasure = !Global.isSsr,
+  canMeasure = !isServer(),
 ): ReadonlyArray<CartesianTickItem> {
   const { tick, ticks, viewBox, minTickGap, orientation, interval, tickFormatter, unit, angle } = props
   if (!ticks || !ticks.length || !tick) {

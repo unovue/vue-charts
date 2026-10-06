@@ -3,7 +3,27 @@ import type { AngleAxisSettings, RadiusAxisSettings, XAxisSettings, YAxisSetting
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '@/types/reference'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
+import type { ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { AxisId } from '@/types/axis'
+import type { Registry } from './registry'
 import { createRegistry } from './registry'
+
+export interface AxisRegistry<T> extends Registry<T> {
+  readonly byId: ComputedRef<ReadonlyMap<string, T>>
+}
+
+function createAxisRegistry<T extends { id?: AxisId }>(): AxisRegistry<T> {
+  const registry = createRegistry<T>()
+  const byId = computed(() => {
+    const axes = new Map<string, T>()
+    // Numeric and string IDs are equivalent; the last registration wins.
+    for (const axis of registry.entries.value)
+      axes.set(String(axis.id), axis)
+    return axes
+  })
+  return { ...registry, byId }
+}
 
 export function createRegistries() {
   return {
@@ -12,11 +32,11 @@ export function createRegistries() {
       polar: createRegistry<PolarGraphicalItemSettings>(),
     },
     axes: {
-      xAxis: createRegistry<XAxisSettings>(),
-      yAxis: createRegistry<YAxisSettings>(),
-      zAxis: createRegistry<ZAxisSettings>(),
-      angleAxis: createRegistry<AngleAxisSettings>(),
-      radiusAxis: createRegistry<RadiusAxisSettings>(),
+      xAxis: createAxisRegistry<XAxisSettings>(),
+      yAxis: createAxisRegistry<YAxisSettings>(),
+      zAxis: createAxisRegistry<ZAxisSettings>(),
+      angleAxis: createAxisRegistry<AngleAxisSettings>(),
+      radiusAxis: createAxisRegistry<RadiusAxisSettings>(),
     },
     references: {
       dots: createRegistry<ReferenceDotSettings>(),

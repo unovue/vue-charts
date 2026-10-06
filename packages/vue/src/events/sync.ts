@@ -1,11 +1,51 @@
-import { useChart } from '@/model/chart'
-import { computed, onMounted, watch } from 'vue'
-import { parseTooltipIndex } from '@/core/tooltip'
-import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
+import type { TooltipSource } from '@/model/tooltip'
+import { useTooltipController } from '@/model/tooltip'
+import { useChartPresentation } from '@/model/presentation'
+import { computed, onMounted, watch, watchEffect } from 'vue'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
+import { useChart } from '@/model/chart'
+import { parseTooltipIndex } from '@/core/tooltip'
+import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import type { BrushStartEndIndex } from '@/types/chartData'
+
+export function useTooltipChartSynchronisation(source: TooltipSource, enabled: () => boolean) {
+  // selectors as computed for reactivity
+  const tooltip = useTooltipController()
+  const presentation = useChartPresentation()
+  const activeDataKey = computed(() => tooltip.target.value?.entry?.value?.settings.dataKey)
+  const eventEmitterSymbol = presentation.emitter
+  const syncId = presentation.syncId
+  const tooltipState = computed(() => tooltip.syncInteraction.value)
+  const isReceivingSynchronisation = computed(() => tooltipState.value?.active)
+
+  watchEffect(() => {
+    if (!enabled())
+      return
+    if (isReceivingSynchronisation.value)
+    /*
+       * This chart currently has active tooltip, synchronised from another chart.
+       * Let's not send any outgoing synchronisation events while that's happening
+       * to avoid infinite loops.
+       */
+      return
+    if (syncId.value == null)
+      return
+    if (eventEmitterSymbol.value == null)
+      return
+
+    const message: TooltipSyncMessage = {
+      kind: 'tooltip',
+      active: source.active.value,
+      coordinate: source.coordinate.value,
+      dataKey: activeDataKey.value,
+      index: source.index.value === null ? null : String(source.index.value),
+      label: source.label.value,
+    }
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId.value, message, eventEmitterSymbol.value)
+  })
+}
 
 function useTooltipSyncEventsListener() {
   const chart = useChart()
@@ -142,5 +182,21 @@ export function useSynchronisedEventsFromOtherCharts() {
   onMounted(() => {
     useTooltipSyncEventsListener()
     useBrushSyncEventsListener()
+  })
+}
+
+export function useBrushChartSynchronisation() {
+  const chart = useChart()
+  const syncId = computed(() => chart.rootProps.value.syncId)
+  const eventEmitterSymbol = computed(() => chart.options.value.eventEmitter)
+  const brushStartIndex = computed(() => chart.dataRange.state.value.dataStartIndex)
+  const brushEndIndex = computed(() => chart.dataRange.state.value.dataEndIndex)
+
+  watchEffect(() => {
+    if (syncId.value == null || brushStartIndex.value == null || brushEndIndex.value == null || eventEmitterSymbol.value == null) {
+      return
+    }
+    const range: BrushStartEndIndex = { startIndex: brushStartIndex.value, endIndex: brushEndIndex.value }
+    eventCenter.emit(BRUSH_SYNC_EVENT, syncId.value, range, eventEmitterSymbol.value)
   })
 }

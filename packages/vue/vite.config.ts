@@ -56,7 +56,7 @@ export default defineConfig({
         'src/**/*.spec.*',
         'src/**/*.test.*',
         'src/__breakit__/**',
-        'src/test/*.ts',
+        'src/test/**',
         'src/storybook/**/*',
         'src/**/*.stories.*',
         'src/**/*.story.*',

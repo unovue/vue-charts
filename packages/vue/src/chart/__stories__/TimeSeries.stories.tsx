@@ -5,7 +5,7 @@ import { timeData } from '@/storybook/data'
 import { ComposedChart } from '@/chart/ComposedChart'
 import { Line } from '@/cartesian/line'
 import { XAxis } from '@/cartesian/axis'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 
 export default {

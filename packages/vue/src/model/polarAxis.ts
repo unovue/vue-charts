@@ -24,11 +24,9 @@ export function createPolarAxis(
   id: AxisId,
 ) {
   const settings = computed<AngleAxisSettings>(() => {
-    const entries = sources.axes[type].entries.value
-    for (let i = entries.length - 1; i >= 0; i--) {
-      if (String(entries[i].id) === String(id))
-        return entries[i]
-    }
+    const axis = sources.axes[type].byId.value.get(String(id))
+    if (axis)
+      return axis
     if (sources.layout() === 'radial')
       return type === 'angleAxis' ? implicitRadialBarAngleAxis : implicitRadialBarRadiusAxis
     return type === 'angleAxis' ? implicitAngleAxis : implicitRadiusAxis
@@ -61,5 +59,5 @@ export function createPolarAxis(
   const numericalDomain = computed(() => combineNumericalDomain(settings.value, domainDefinition.value, stackDomain.value, numericalValues.value, undefined))
   const domain = computed(() => combineAxisDomain(settings.value, sources.layout(), displayedData.value, appliedValues.value, sources.stackOffset(), type, numericalDomain.value))
   const range = type === 'angleAxis' ? sources.polarLayout.angleRange : sources.polarLayout.radiusRange
-  return { settings, items, graphicalData, displayedData, appliedValues, domainDefinition, numericalValues, stackGroups, stackDomain, domain, ...createAxisScale(sources, type, settings, domain, appliedValues, range) }
+  return { settings, displayedData, stackGroups, domain, ...createAxisScale(sources, type, settings, domain, appliedValues, range) }
 }

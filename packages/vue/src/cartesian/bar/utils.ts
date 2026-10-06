@@ -1,6 +1,6 @@
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ResolvedBarProps } from './type'
-import { getTooltipNameProp } from '@/utils/chart'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export function getTooltipEntrySettings(props: ResolvedBarProps): TooltipPayloadConfiguration {
   const { dataKey, stroke, strokeWidth, fill, name, hide, unit } = props

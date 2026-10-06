@@ -3,7 +3,7 @@ import { LineChart } from '@/chart/LineChart'
 import { Line } from '@/cartesian/line'
 import { XAxis, YAxis } from '@/cartesian/axis'
 import { CartesianGrid } from '@/cartesian/cartesian-grid'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { ResponsiveContainer } from '@/index'
 
 export default {

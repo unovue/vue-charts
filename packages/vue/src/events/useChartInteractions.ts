@@ -1,7 +1,7 @@
 import { useChart } from '@/model/chart'
 import { combineActiveProps } from '@/core/interaction'
 import { useItemInteractions } from './useItemInteractions'
-import { getChartPointer } from '@/utils/chart'
+import { getChartPointer } from '@/utils/pointer'
 import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import type { ChartPointer } from '@/types'
 

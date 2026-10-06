@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, shallowRef } from 'vue'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { Sankey } from '../Sankey'
 

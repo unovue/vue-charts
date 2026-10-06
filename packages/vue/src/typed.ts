@@ -29,7 +29,7 @@ import {
 } from './cartesian'
 import { Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar } from './polar'
 import { Cell, LabelList, Legend, Tooltip } from './components'
-import type { TooltipContentProps } from './components/Tooltip'
+import type { TooltipContentProps } from './components/tooltip/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
 import type { TooltipPayload } from '@/types/tooltip'

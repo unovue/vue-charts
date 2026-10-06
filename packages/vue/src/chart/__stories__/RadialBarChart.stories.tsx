@@ -6,7 +6,7 @@ import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
 import { Legend } from '@/components/legend'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { pageData, pageDataWithFillColor } from '@/storybook/data'
 
 const meta = {

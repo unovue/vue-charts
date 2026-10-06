@@ -1,5 +1,5 @@
 import type { Size } from '@/types'
-import { Global } from '@/utils/Global'
+import { isServer } from '@/utils/env'
 import type { CSSProperties } from 'vue'
 
 // Measured sizes by style and text. Category axes with thousands of labels measure every label,
@@ -46,7 +46,7 @@ export function clearStringSizeCache() {
   appliedStyleKey = undefined
 }
 
-export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !Global.isSsr): Size {
+export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !isServer()): Size {
   if (text === undefined || text === null || !canMeasure) {
     return { width: 0, height: 0 }
   }

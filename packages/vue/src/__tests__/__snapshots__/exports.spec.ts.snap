@@ -28,7 +28,6 @@ exports[`keeps the reviewed runtime export surface for every public entry 1`] = 
     "Funnel",
     "FunnelChart",
     "FunnelVueProps",
-    "Global",
     "Heatmap",
     "HeatmapVueProps",
     "JourneySankey",

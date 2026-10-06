@@ -9,7 +9,7 @@ import { Line } from '@/cartesian/line/Line'
 import { Area } from '@/cartesian/area/Area'
 import { XAxis } from '@/cartesian/axis/XAxis'
 import { YAxis } from '@/cartesian/axis/YAxis'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
 

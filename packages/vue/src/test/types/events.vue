@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Tooltip, Treemap } from '../index'
-import type { ChartPointerState } from '../index'
+import { Bar, BarChart, Brush, Legend, Line, Pie, PieChart, Sankey, Tooltip, Treemap } from '../../index'
+import type { ChartPointerState } from '../../index'
 
 const hidden = ref<string[]>([])
 const wrongLegend = {} as InstanceType<typeof Legend>

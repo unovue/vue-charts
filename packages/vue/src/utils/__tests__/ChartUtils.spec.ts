@@ -1,25 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import {
-  MAX_VALUE_REG,
-  MIN_VALUE_REG,
-  calculateActiveTickIndex,
-  calculateTooltipPos,
-  getActiveCoordinate,
-  getBandSizeOfAxis,
-  getBaseValueOfBar,
-  getCateCoordinateOfBar,
-  getCateCoordinateOfLine,
-  getDomainOfStackGroups,
-  getNormalizedStackId,
-  getStackedData,
-  getTicksOfAxis,
-  getTooltipEntry,
-  getTooltipNameProp,
-  getValueByDataKey,
-  inRange,
-  isClipDot,
-  truncateByDomain,
-} from '@/utils/chart'
+import { MAX_VALUE_REG, MIN_VALUE_REG } from '@/core/axis/userDomain'
+import { calculateActiveTickIndex, calculateTooltipPos, getActiveCoordinate, inRange } from '@/core/interaction'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { getBaseValueOfBar, getCateCoordinateOfBar, getCateCoordinateOfLine, getNormalizedStackId, isClipDot, truncateByDomain } from '@/core/coordinates'
+import { getDomainOfStackGroups, getStackedData } from '@/core/axis/stacks'
+import { getTicksOfAxis } from '@/core/axis/ticks'
+import { getTooltipEntry, getTooltipNameProp } from '@/core/tooltip'
+import { getValueByDataKey } from '@/utils/chart'
 import type { TickItem } from '@/types'
 
 describe('getValueByDataKey', () => {

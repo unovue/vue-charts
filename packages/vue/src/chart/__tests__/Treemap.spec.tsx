@@ -192,7 +192,7 @@ describe('treemap component', () => {
 
 describe('tooltip integration', () => {
   it('supports Tooltip as child component', async () => {
-    const { Tooltip } = await import('@/components/Tooltip')
+    const { Tooltip } = await import('@/components/tooltip/Tooltip')
 
     const { container } = render(() => (
       <Treemap data={flatData} dataKey="value" width={600} height={400} isAnimationActive={false}>

@@ -2,7 +2,6 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp, createSSRApp, nextTick } from 'vue'
 import type { VNode } from 'vue'
-import { Global } from '@/utils/Global'
 import { Area, Bar, Brush, CartesianGrid, ComposedChart, ErrorBar, Funnel, FunnelChart, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, ScatterChart, XAxis, YAxis } from '@/index'
 
 const data = [{ name: 'Alpha', value: 10, other: 15 }, { name: 'Beta', value: 20, other: 5 }, { name: 'Gamma', value: 15, other: 10 }]
@@ -184,10 +183,7 @@ describe('hydration with non-zero text measurements', () => {
       const frames: FrameRequestCallback[] = []
       vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback))
       const render = () => chart.render(false)
-      const wasSsr = Global.isSsr
-      Global.set('isSsr', true)
       const html = await renderToString(createSSRApp({ render }))
-      Global.set('isSsr', false)
       const container = containerFor(html)
       const server = geometry(container)
       const app = createSSRApp({ render })
@@ -220,7 +216,6 @@ describe('hydration with non-zero text measurements', () => {
         container.remove()
         rect.mockRestore()
         computedStyle.mockRestore()
-        Global.set('isSsr', wasSsr)
         warn.mockRestore()
         error.mockRestore()
         vi.unstubAllGlobals()

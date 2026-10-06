@@ -64,7 +64,7 @@ export function createAxisScale<S extends BaseCartesianAxis & Partial<TicksSetti
   const inverseScale = computed(() => combineInverseScaleFunction(scale.value))
   const inverseDataScale = computed(() => createCategoricalInverse(scale.value, sortedValues.value))
   const inverseTickScale = computed(() => combineInverseTickScale(ticks.value))
-  return { realScaleType, niceTicks, niceDomain, range, reversedRange, scale, duplicateDomain, categoricalDomain, ticks, graphicalTicks, withScale, bandSize, barBandSize, sortedValues, inverseScale, inverseDataScale, inverseTickScale }
+  return { realScaleType, niceTicks, range, reversedRange, scale, duplicateDomain, categoricalDomain, ticks, graphicalTicks, withScale, bandSize, barBandSize, inverseScale, inverseDataScale, inverseTickScale }
 }
 
 export type AxisScaleModel<S extends BaseCartesianAxis & Partial<TicksSettings> = BaseCartesianAxis> =

@@ -12,7 +12,7 @@ import { createChartBrush } from '@/model/brush'
 import { createChartLegend } from '@/model/legend'
 import type { ChartRegistries } from './registries'
 import { createRegistries } from './registries'
-import type { ComputedRef, EffectScope, InjectionKey } from 'vue'
+import type { ComputedRef, InjectionKey } from 'vue'
 import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
@@ -30,7 +30,7 @@ export interface ChartInputs {
   margin: () => Margin
   options: () => UpdatableChartOptions
   polar: () => PolarChartOptions | null
-  tooltip: Omit<ChartOptions, 'eventEmitter'>
+  tooltip: () => Omit<ChartOptions, 'eventEmitter'>
 }
 
 export interface Chart extends ChartRegistries, ChartGeometry {
@@ -41,7 +41,6 @@ export interface Chart extends ChartRegistries, ChartGeometry {
   readonly axis: AxisLookup
   readonly dataRange: ReturnType<typeof createChartData>
   readonly inputs: ChartInputs
-  readonly scope: EffectScope
   readonly data: ComputedRef<ChartData | undefined>
   readonly layout: ComputedRef<ChartLayoutState>
   readonly rootProps: ComputedRef<UpdatableChartOptions>
@@ -70,7 +69,7 @@ export function createChart(inputs: ChartInputs): Chart {
   }))
   const rootProps = computed(inputs.options)
   const polarOptions = computed(inputs.polar)
-  const options = computed(() => ({ ...inputs.tooltip, eventEmitter }))
+  const options = computed(() => ({ ...inputs.tooltip(), eventEmitter }))
 
   function setScale(value: number) {
     scale.value = value
@@ -125,7 +124,6 @@ export function createChart(inputs: ChartInputs): Chart {
     axis,
     dataRange,
     inputs,
-    scope,
     data,
     layout,
     rootProps,

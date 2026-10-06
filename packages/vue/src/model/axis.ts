@@ -7,11 +7,10 @@ import { combineCalculatedPadding, combineSmallestDistance, combineXAxisRange, c
 import type { CategoricalDomain } from '@/types/categorical'
 import type { ComputedRef, EffectScope } from 'vue'
 import { computed, onScopeDispose } from 'vue'
-import type { AxisDomain, AxisId, AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/types/axis'
+import type { AxisId, AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/types/axis'
 import type { XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
 import type { AppliedChartData, ChartData, ChartDataState } from '@/types/chartData'
 import type { LayoutType, StackOffsetType } from '@/types/common'
-import type { AppliedChartDataWithErrorDomain } from '@/core/axis/data'
 import type { StackGroup } from '@/core/axis/stacks'
 import {
   combineAppliedNumericalValuesIncludingErrorValues,
@@ -36,21 +35,14 @@ import {
 } from '@/core/axis/references'
 import { combineDomainOfStackGroups, combineStackGroups } from '@/core/axis/stacks'
 import { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
-import type { ChartRegistries } from './registries'
-import type { Registry } from './registry'
+import type { AxisRegistry, ChartRegistries } from './registries'
 
 export type CartesianAxisType = 'xAxis' | 'yAxis' | 'zAxis'
 
 export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> extends AxisScaleModel<S> {
   readonly settings: ComputedRef<S>
-  readonly dataWithIndexes: ComputedRef<ChartDataState>
-  readonly graphicalData: ComputedRef<ChartData>
   readonly displayedData: ComputedRef<ChartData>
-  readonly appliedValues: ComputedRef<AppliedChartData>
-  readonly domainDefinition: ComputedRef<AxisDomain>
-  readonly numericalValues: ComputedRef<readonly AppliedChartDataWithErrorDomain[]>
   readonly stackGroups: ComputedRef<Record<string, StackGroup>>
-  readonly stackDomain: ComputedRef<NumberDomain | undefined>
   readonly domain: ComputedRef<NumberDomain | CategoricalDomain | undefined>
 }
 
@@ -77,18 +69,11 @@ function createAxis<S extends BaseCartesianAxis>(
   sources: AxisSources,
   type: CartesianAxisType,
   id: AxisId,
-  registry: Registry<S>,
+  registry: AxisRegistry<S>,
   implicit: S,
   readRange: (settings: S, applied: AppliedChartData) => AxisRange,
 ): AxisModel<S> {
-  const settings = computed(() => {
-    const entries = registry.entries.value
-    for (let i = entries.length - 1; i >= 0; i--) {
-      if (String(entries[i].id) === String(id))
-        return entries[i]
-    }
-    return implicit
-  })
+  const settings = computed(() => registry.byId.value.get(String(id)) ?? implicit)
   const items = computed(() => combineGraphicalItemsSettings(
     sources.items.cartesian.entries.value,
     settings.value,
@@ -136,14 +121,8 @@ function createAxis<S extends BaseCartesianAxis>(
   return {
     ...createAxisScale(sources, type, settings, domain, appliedValues, range),
     settings,
-    dataWithIndexes,
-    graphicalData,
     displayedData,
-    appliedValues,
-    domainDefinition,
-    numericalValues,
     stackGroups,
-    stackDomain,
     domain,
   }
 }

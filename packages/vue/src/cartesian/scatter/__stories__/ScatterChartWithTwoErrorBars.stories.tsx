@@ -4,7 +4,7 @@ import { Scatter } from '@/cartesian/scatter'
 import { ErrorBar } from '@/cartesian/error-bar'
 import { XAxis, YAxis } from '@/cartesian/axis'
 import { CartesianGrid } from '@/cartesian/cartesian-grid'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 
 export default {
   title: 'Examples/ScatterChartWithTwoErrorBars',

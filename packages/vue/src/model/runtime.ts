@@ -1,7 +1,8 @@
+import { useIntersectionObserver } from '@vueuse/core'
 import { useChartId } from '@/hooks/useChartId'
 import type { CategoricalChartProps } from '@/types'
 import type { InjectionKey, Ref } from 'vue'
-import { Global } from '@/utils/Global'
+import { isServer } from '@/utils/env'
 import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, onScopeDispose, provide, ref, ssrContextKey } from 'vue'
 
 export interface ChartRuntime {
@@ -25,23 +26,24 @@ const inViewKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('v-charts-in-view
 export function provideChartInView(el: Readonly<Ref<Element | null | undefined>>) {
   const inView = ref(typeof IntersectionObserver === 'undefined')
   provide(inViewKey, inView)
-  let observer: IntersectionObserver | undefined
+  const { resume, stop } = useIntersectionObserver(() => {
+    const element = el.value
+    return element && (element instanceof HTMLElement || element instanceof SVGElement) ? element : null
+  }, (entries) => {
+    const entry = entries.at(-1)!
+    const viewport = entry.rootBounds?.height ?? window.innerHeight
+    if (entry.isIntersecting && (entry.intersectionRatio >= 0.5 || entry.intersectionRect.height >= viewport / 2)) {
+      inView.value = true
+      stop()
+    }
+  }, { immediate: false, threshold: [0, 0.25, 0.5, 0.75, 1] })
   onMounted(() => {
     if (inView.value || !el.value) {
       inView.value = true
       return
     }
-    observer = new IntersectionObserver((entries) => {
-      const entry = entries.at(-1)!
-      const viewport = entry.rootBounds?.height ?? window.innerHeight
-      if (entry.isIntersecting && (entry.intersectionRatio >= 0.5 || entry.intersectionRect.height >= viewport / 2)) {
-        inView.value = true
-        observer?.disconnect()
-      }
-    }, { threshold: [0, 0.25, 0.5, 0.75, 1] })
-    observer.observe(el.value)
+    resume()
   })
-  onScopeDispose(() => observer?.disconnect())
 }
 
 /** Whether the chart has been on screen; always true outside a chart. */
@@ -124,7 +126,7 @@ export function shouldSkipEntrance(): boolean {
 /** Reactive permission for DOM text measurement. Call during setup. */
 export function useCanMeasureText() {
   const phase = inject(runtimeKey, null)?.renderPhase
-  return computed(() => phase ? !phase.value : !Global.isSsr)
+  return computed(() => phase ? !phase.value : !isServer())
 }
 
 const clipPathKey: InjectionKey<string> = Symbol('v-charts-clip-path')

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineChartComponents } from '../index'
+import { defineChartComponents } from '../../index'
 
 interface Visit { name: string, desktop: number, mobile: number }
 const {

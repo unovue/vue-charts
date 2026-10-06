@@ -199,3 +199,16 @@ export function combineTooltipCoordinate(
     ? { ...fallback, x: tick.coordinate, y: fallback?.y ?? (offset.top + size.height) / 2 }
     : { ...fallback, x: fallback?.x ?? (offset.left + size.width) / 2, y: tick.coordinate }
 }
+
+export function getTooltipNameProp(
+  nameFromItem: unknown,
+  dataKey: DataKey<unknown> | undefined,
+): string | undefined {
+  if (nameFromItem) {
+    return String(nameFromItem)
+  }
+  if (typeof dataKey === 'string') {
+    return dataKey
+  }
+  return undefined
+}

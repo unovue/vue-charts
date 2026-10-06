@@ -7,7 +7,7 @@ import { computed, inject, provide, shallowRef } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeLinePoints } from '@/core/line'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
-import { isClipDot } from '@/utils/chart'
+import { isClipDot } from '@/core/coordinates'
 import { filterProps } from '@/utils/VueUtils'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 

@@ -10,9 +10,9 @@ import { resolveDefaultProps } from '@/utils/resolveDefaultProps'
 import type { CartesianGridProps, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
 import { getCoordinatesOfGrid } from '@/utils/grid'
 import { getTicks } from '@/cartesian/utils/get-ticks'
-import { getTicksOfAxis } from '@/utils/chart'
+import { getTicksOfAxis } from '@/core/axis/ticks'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
-import { CartesianAxisDefaultProps } from '@/cartesian/cartesian-grid/const'
+import { CartesianGridDefaultProps } from '@/cartesian/cartesian-grid/const'
 import Background from './Background'
 import HorizontalStripes from './HorizontalStripes'
 import VerticalStripes from './VerticalStripes'
@@ -24,7 +24,7 @@ const defaultHorizontalCoordinatesGenerator: HorizontalCoordinatesGenerator = (
   syncWithTicks,
 ) => getCoordinatesOfGrid(
   getTicks({
-    ...CartesianAxisDefaultProps,
+    ...CartesianGridDefaultProps,
     ...yAxis,
     ticks: getTicksOfAxis(yAxis, true)!,
     viewBox: { x: 0, y: 0, width, height },
@@ -132,7 +132,7 @@ const CartesianGridView = defineComponent({
       if (!axis.value)
         return []
       const ticks = getTicks({
-        ...CartesianAxisDefaultProps,
+        ...CartesianGridDefaultProps,
         ...axis.value,
         ticks: getTicksOfAxis(axis.value, true)!,
         viewBox: { x: 0, y: 0, width: chartWidth.value, height: chartHeight.value },

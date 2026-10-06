@@ -4,7 +4,7 @@ import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
 import { Sector } from '@/shape/Sector'
 import { Legend } from '@/components/legend'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import type { PieSectorDataItem } from '@/core/pie'
 import { ResponsiveContainer } from '@/container'
 

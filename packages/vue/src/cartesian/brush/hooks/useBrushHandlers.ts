@@ -1,4 +1,5 @@
 import { onUnmounted } from 'vue'
+import { useEventListener, useTimeoutFn } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { getIndex } from '../utils'
 import type { BrushState, BrushTravellerId } from '../type'
@@ -23,27 +24,26 @@ export function useBrushHandlers(
   onChange: (index: BrushStartEndIndex) => void,
   chartData: () => any[],
 ) {
-  let leaveTimer: ReturnType<typeof setTimeout> | null = null
-
-  // --- internal helpers ---
+  const leaveTimer = useTimeoutFn(handleDragEnd, () => props.leaveTimeOut, { immediate: false })
+  let stopDragListeners: (() => void)[] = []
 
   function attachDragEndListener() {
-    window.addEventListener('mouseup', handleDragEnd, true)
-    window.addEventListener('touchend', handleDragEnd, true)
-    window.addEventListener('mousemove', handleMouseDrag, true)
+    leaveTimer.stop()
+    detachDragEndListener()
+    stopDragListeners = [
+      useEventListener(window, 'mouseup', handleDragEnd, true),
+      useEventListener(window, 'touchend', handleDragEnd, true),
+      useEventListener(window, 'mousemove', handleMouseDrag, true),
+    ]
   }
 
   function detachDragEndListener() {
-    window.removeEventListener('mouseup', handleDragEnd, true)
-    window.removeEventListener('touchend', handleDragEnd, true)
-    window.removeEventListener('mousemove', handleMouseDrag, true)
+    stopDragListeners.forEach(stop => stop())
+    stopDragListeners = []
   }
 
   function handleDrag(e: Touch | MouseEvent) {
-    if (leaveTimer != null) {
-      clearTimeout(leaveTimer)
-      leaveTimer = null
-    }
+    leaveTimer.stop()
 
     if (brushState.value.isTravellerMoving) {
       handleTravellerMove(e)
@@ -159,7 +159,7 @@ export function useBrushHandlers(
 
   function handleLeaveWrapper() {
     if (brushState.value.isTravellerMoving || brushState.value.isSlideMoving) {
-      leaveTimer = setTimeout(handleDragEnd, props.leaveTimeOut)
+      leaveTimer.start()
     }
   }
 
@@ -257,6 +257,7 @@ export function useBrushHandlers(
   }
 
   function handleDragEnd() {
+    leaveTimer.stop()
     brushState.value.isTravellerMoving = false
     brushState.value.isSlideMoving = false
 
@@ -271,10 +272,7 @@ export function useBrushHandlers(
 
   // Cleanup on unmount
   onUnmounted(() => {
-    if (leaveTimer != null) {
-      clearTimeout(leaveTimer)
-      leaveTimer = null
-    }
+    leaveTimer.stop()
     detachDragEndListener()
   })
 

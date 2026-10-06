@@ -1,5 +1,5 @@
-import type { FilteredSvgElementType } from '@/cartesian/cartesian-grid/const'
-import { FilteredElementKeyMap, SVGElementPropKeys } from '@/cartesian/cartesian-grid/const'
+import type { FilteredSvgElementType } from '@/utils/svg'
+import { FilteredElementKeyMap, SVGElementPropKeys } from '@/utils/svg'
 import { EventKeys } from '@/types'
 
 const svgKeys = new Set(SVGElementPropKeys)

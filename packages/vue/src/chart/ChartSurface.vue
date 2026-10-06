@@ -20,7 +20,7 @@ interface SurfaceProps {
 }
 
 defineOptions({
-  name: 'ChartsSurface',
+  name: 'ChartSurface',
   inheritAttrs: false,
 })
 

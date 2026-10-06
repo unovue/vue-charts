@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useChartInteractions } from '@/events/useChartInteractions'
-import { useSynchronisedEventsFromOtherCharts } from '@/events/useChartSynchronisation'
+import { useSynchronisedEventsFromOtherCharts } from '@/events/sync'
 import { useReportScale } from '@/hooks/useReportScale'
 import { ChartWrapper, chartWrapperProps } from './ChartWrapper'
 

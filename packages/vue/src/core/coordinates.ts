@@ -132,3 +132,10 @@ export function getCateCoordinateOfBar({
   const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
   return number != null ? axis.scale(number) - bandSize / 2 + offset : null
 }
+
+export function isClipDot(dot: unknown): boolean {
+  if (dot && typeof dot === 'object' && 'clipDot' in dot) {
+    return Boolean(dot.clipDot)
+  }
+  return true
+}

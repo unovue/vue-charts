@@ -1,12 +1,13 @@
 import type { CSSProperties, ComponentPublicInstance, PropType, StyleValue } from 'vue'
-import { defineComponent, onMounted, onUnmounted, ref, useId, watch } from 'vue'
+import { defineComponent, onMounted, ref, useId, watch } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
 import { chartEmits } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import type { ChartPointer } from '@/types'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
 import { classProp } from '@/types'
 import { provideChartInView, provideLegendPortalRaw, providePortalRaw } from '@/model/runtime'
-import { getChartPointer } from '@/utils/chart'
+import { getChartPointer } from '@/utils/pointer'
 
 export interface WrapperInteractions {
   click: (pointer: ChartPointer) => void
@@ -62,20 +63,17 @@ export const ChartWrapper = defineComponent({
 
     provideChartInView(wrapperEl)
 
-    let observer: ResizeObserver | undefined
     onMounted(() => {
-      watch(() => props.isResponsive, (responsive, _, onCleanup) => {
-        if (!responsive || !wrapperEl.value || typeof ResizeObserver === 'undefined')
+      watch(() => props.isResponsive, (responsive, _, cleanup) => {
+        if (!responsive || !wrapperEl.value)
           return
-        observer = new ResizeObserver((entries) => {
+        const { stop } = useResizeObserver(wrapperEl, (entries) => {
           const { width, height } = entries[0].contentRect
           emit('resize', width, height)
         })
-        observer.observe(wrapperEl.value)
-        onCleanup(() => observer?.disconnect())
+        cleanup(stop)
       }, { immediate: true })
     })
-    onUnmounted(() => observer?.disconnect())
 
     const myOnClick = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)

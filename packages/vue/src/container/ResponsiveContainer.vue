@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
-import { computed, onMounted, onUnmounted, ref, toRef } from 'vue'
-import { useThrottleFn } from '@vueuse/core'
+import { computed, ref, toRef } from 'vue'
+import { useMounted, useResizeObserver, useThrottleFn } from '@vueuse/core'
 import { normalizeStyle } from '@/utils/style'
 import { provideInitialDimension } from '@/container/useSizeContext'
 
@@ -36,7 +36,7 @@ const debounce = toRef(props, 'debounce')
 provideInitialDimension(toRef(props, 'initialDimension'))
 
 const handleResize = useThrottleFn(
-  (entries: ResizeObserverEntry[]) => {
+  (entries: readonly ResizeObserverEntry[]) => {
     const { width, height } = entries[0].contentRect
     props.onResize?.(width, height)
   },
@@ -46,14 +46,8 @@ const handleResize = useThrottleFn(
 )
 
 const containerRef = ref<HTMLDivElement>()
-let observer: ResizeObserver | undefined
-onMounted(() => {
-  if (!containerRef.value || typeof ResizeObserver === 'undefined')
-    return
-  observer = new ResizeObserver(handleResize)
-  observer.observe(containerRef.value)
-})
-onUnmounted(() => observer?.disconnect())
+const mounted = useMounted()
+useResizeObserver(() => mounted.value ? containerRef.value : undefined, handleResize)
 
 const containerStyle = computed(() => ({
   ...props.style,

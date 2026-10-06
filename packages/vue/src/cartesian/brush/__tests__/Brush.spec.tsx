@@ -193,6 +193,38 @@ it('emits the changed range and final drag range', async () => {
   expect(end.mock.calls).toEqual([[{ startIndex: 1, endIndex: 2 }]])
 })
 
+// Catches an old leave timer ending a later drag or emitting a duplicate drag-end.
+it('cancels pending leave timers when a drag ends', async () => {
+  vi.useFakeTimers()
+  try {
+    const end = vi.fn()
+    const { container } = render(() => (
+      <BarChart width={400} height={200} data={[{ value: 10 }, { value: 20 }, { value: 30 }]}>
+        <Brush x={0} y={0} width={100} height={40} leaveTimeOut={100} {...{ 'onDrag-end': end }} />
+      </BarChart>
+    ))
+    const traveller = container.querySelector('.v-charts-brush-traveller')!
+    const brush = container.querySelector('.v-charts-brush')!
+    await fireEvent.mouseDown(traveller, { clientX: 0 })
+    await fireEvent.mouseLeave(brush)
+    await vi.advanceTimersByTimeAsync(50)
+    await fireEvent.mouseLeave(brush)
+    await fireEvent.mouseUp(window)
+    await fireEvent.mouseDown(traveller, { clientX: 0 })
+    await vi.advanceTimersByTimeAsync(100)
+    expect(end.mock.calls).toEqual([[{ startIndex: 0, endIndex: 2 }]])
+    await fireEvent.mouseMove(window, { clientX: 50 })
+    await fireEvent.mouseUp(window)
+    expect(end.mock.calls).toEqual([
+      [{ startIndex: 0, endIndex: 2 }],
+      [{ startIndex: 1, endIndex: 2 }],
+    ])
+  }
+  finally {
+    vi.useRealTimers()
+  }
+})
+
 // Catches a rejected controlled proposal leaking into the chart range or traveller position.
 it.each([true, false])('keeps brush ownership when controlled=%s', async (controlled) => {
   const from = ref<number | undefined>(controlled ? 0 : undefined)

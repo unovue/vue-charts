@@ -22,7 +22,7 @@ import {
   Treemap,
   XAxis,
   YAxis,
-} from '../index'
+} from '../../index'
 
 // Reject any as well as incorrect geometry types: this catches lost slot inference.
 function number<T extends number | undefined>(value: T & (0 extends (1 & T) ? never : unknown)) { return value }

@@ -5,7 +5,7 @@ import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
 import type { PropType, StyleValue } from 'vue'
 import { Fragment, defineComponent } from 'vue'
-import Surface from '@/chart/Surface.vue'
+import ChartSurface from '@/chart/ChartSurface.vue'
 import type { ChartData } from '@/types/chartData'
 import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
@@ -177,7 +177,7 @@ export function generateCategoricalChart({
               outerRadius: props.outerRadius ?? chartDefaults.outerRadius,
             }
           : null,
-        tooltip: { chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher },
+        tooltip: () => ({ chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher }),
       })
       provideChart(chart)
       provideRenderPhase()
@@ -195,10 +195,10 @@ export function generateCategoricalChart({
           }
           return (
             <Fragment>
-              <Surface {...attrs} {...rest} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
+              <ChartSurface {...attrs} {...rest} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
                 <ClipPath clipPathId={clipPathId} />
                 {slots.default?.()}
-              </Surface>
+              </ChartSurface>
             </Fragment>
           )
         }
@@ -241,7 +241,7 @@ export function generateCategoricalChart({
               {...chartListeners(emit)}
             >
               {hasValidSize.value && (
-                <Surface
+                <ChartSurface
                   {...{
                     ...svgAttributes,
                     'role': props.accessibilityLayer ? undefined : 'img',
@@ -257,7 +257,7 @@ export function generateCategoricalChart({
                 >
                   <ClipPath clipPathId={clipPathId} />
                   {slots.default?.()}
-                </Surface>
+                </ChartSurface>
               )}
               {slots.tooltip?.()}
             </ChartsWrapper>

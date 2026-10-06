@@ -1,8 +1,8 @@
-import { CartesianAxisDefaultProps } from '@/cartesian/cartesian-grid/const'
+import { CartesianGridDefaultProps } from '@/cartesian/cartesian-grid/const'
 import type { AxisPropsForCartesianGridTicksGeneration } from '@/cartesian/cartesian-grid/type'
 import { getTicks } from '@/cartesian/utils/get-ticks'
 import type { ChartOffset, TickItem } from '@/types'
-import { getTicksOfAxis } from '@/utils/chart'
+import { getTicksOfAxis } from '@/core/axis/ticks'
 
 /**
  * Calculate the Coordinates of grid
@@ -56,7 +56,7 @@ export const defaultHorizontalCoordinatesGenerator: HorizontalCoordinatesGenerat
 ) => {
   return getCoordinatesOfGrid(
     getTicks({
-      ...CartesianAxisDefaultProps,
+      ...CartesianGridDefaultProps,
       ...yAxis,
       ticks: getTicksOfAxis(yAxis, true)!,
       viewBox: { x: 0, y: 0, width, height },
@@ -83,7 +83,7 @@ export const defaultVerticalCoordinatesGenerator: VerticalCoordinatesGenerator =
 ) => {
   return getCoordinatesOfGrid(
     getTicks({
-      ...CartesianAxisDefaultProps,
+      ...CartesianGridDefaultProps,
       ...xAxis,
       ticks: getTicksOfAxis(xAxis, true)!,
       viewBox: { x: 0, y: 0, width, height },
