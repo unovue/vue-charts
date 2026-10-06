@@ -23,7 +23,7 @@ export interface LineContext {
   dotSlot?: LineSlots['dot']
   labelSlot?: LineSlots['label']
   /** The labels as drawn on this frame; LabelList children read them. */
-  labelData: ShallowRef<readonly import('@/components/label/types').Data[] | undefined>
+  labelData: ShallowRef<ComputedRef<readonly import('@/components/label/types').Data[]> | undefined>
 }
 
 // Injection Key
@@ -112,6 +112,6 @@ export function useLine(
     lineData,
     points: lineContext.points,
     clipPathId,
-    labelData: lineContext.labelData,
+    labelData: computed(() => lineContext.labelData.value?.value),
   }
 }

@@ -710,3 +710,12 @@ Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms 
 - M1–M3 and offset mutations each fail; restored sources pass. No public rendering or API changes.
 - Suite timings 115.20 / 82.47 s; spread 32.73 s, load/warmth uncontrolled, no performance conclusion.
 - Evidence: `.evidence/release-1.0/phase-4/`; existing Symbols/RadialBar class defects recorded in LATER.
+
+### 4.2 Performance fixes — done
+- Cached UTC formatters; equal interpolation shortcut; delegated item events; lazy shared Line labels.
+- Observer fix: 83c2348; late-frame, locale/options, item-boundary and nested-label reverse controls fail.
+- Node 22 gate: typecheck, ESLint zero warnings; 142 files / 1407 tests PASS (4.2-suite-node22-final.log).
+- Interleaved before/after: 18/18 PASS; all medians, ranges and intervals in phase-4/benchmark-spread.json.
+- Baseline: exit 0, 16 PASS / 2 Heatmap INCONCLUSIVE / 0 FAIL; spread crosses the unchanged boundary.
+- Injected slowdown: exit 1, selfTestVerified true; evidence .evidence/release-1.0/phase-4/.
+- Assumptions: two workers; native event currentTarget is the series group; payload/index/event identity retained.

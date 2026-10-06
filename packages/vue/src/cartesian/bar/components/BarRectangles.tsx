@@ -1,5 +1,6 @@
 import { useTooltipEntry } from '@/model/tooltip'
 import { barEvents } from '@/events/itemEvents'
+import { delegateItemEvents } from '@/events/delegateItemEvents'
 import { computed, defineComponent, watch } from 'vue'
 import { useChart } from '@/model/chart'
 import { filterProps, svgAttrs } from '@/utils/VueUtils'
@@ -129,6 +130,20 @@ export const BarRectangles = defineComponent({
       else
         tooltip.activate('click', { ...payload, type: 'item' })
     }
+    const listeners = delegateItemEvents(position => items.value[position]?.value, {
+      click: ({ bar, index }, _position, event) => {
+        activate('click', bar, index)
+        emit('click', bar, index, event)
+      },
+      mouseenter: ({ bar, index }, _position, event) => {
+        activate('hover', bar, index)
+        emit('mouseenter', bar, index, event)
+      },
+      mouseleave: ({ bar, index }, _position, event) => {
+        tooltip.clear('hover')
+        emit('mouseleave', bar, index, event)
+      },
+    })
 
     return () => {
       const baseProps = filterProps(props, false)
@@ -138,8 +153,8 @@ export const BarRectangles = defineComponent({
       const activeEnabled = props.activeBar !== false || props.activeIndex != null || !!activeBarSlot
 
       return (
-        <g>
-          {items.value.map(({ key, value: { bar, index, opacity }, phase }) => {
+        <g {...listeners}>
+          {items.value.map(({ key, value: { bar, index, opacity }, phase }, position) => {
             const isActive = phase !== 'exit' && activeEnabled && index === activeIndex.value
             const activeBarProps = isActive && typeof props.activeBar === 'object' ? props.activeBar : {}
             // A per-row `fill` in the data and Cell props apply without a #shape slot, as in Recharts.
@@ -190,10 +205,8 @@ export const BarRectangles = defineComponent({
               <g
                 key={key}
                 class="v-charts-layer v-charts-bar-rectangle"
+                data-v-charts-item-index={position}
                 opacity={opacity != null && opacity < 1 ? opacity : undefined}
-                onMouseenter={(event: MouseEvent) => { activate('hover', bar, index); emit('mouseenter', bar, index, event) }}
-                onMouseleave={(event: MouseEvent) => { tooltip.clear('hover'); emit('mouseleave', bar, index, event) }}
-                onClick={(event: MouseEvent) => { activate('click', bar, index); emit('click', bar, index, event) }}
               >
                 {shape}
               </g>

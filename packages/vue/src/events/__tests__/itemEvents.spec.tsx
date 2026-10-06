@@ -28,7 +28,7 @@ beforeEach(() => mockGetBoundingClientRect({ width: 500, height: 300 }))
 
 describe('graphical item emits', () => {
   // Catches native event fallthrough, missing entry/index, and lost tooltip activation.
-  it.each(families)('$name delivers item payloads once and preserves tooltip hover', async ({ Chart, Item, selector, props }) => {
+  it.each(families)('$name delivers item payloads once and preserves tooltip hover', async ({ name, Chart, Item, selector, props }) => {
     const click = vi.fn()
     const enter = vi.fn()
     const leave = vi.fn()
@@ -51,6 +51,13 @@ describe('graphical item emits', () => {
     owner.dispatchEvent(event)
     expect(enter).toHaveBeenCalledTimes(1)
     expect(enter.mock.calls[0]).toEqual([expect.objectContaining({ payload: expect.objectContaining({ name: 'B' }) }), 1, event])
+    if (['Bar', 'Line', 'Scatter', 'Pie'].includes(name)) {
+      const child = owner.querySelector('path, circle')!
+      child.dispatchEvent(new MouseEvent('mouseenter'))
+      child.dispatchEvent(new MouseEvent('mouseleave'))
+      expect(enter).toHaveBeenCalledTimes(1)
+      expect(leave).not.toHaveBeenCalled()
+    }
     container.querySelector('.v-charts-wrapper')!.dispatchEvent(new MouseEvent('mousemove', { clientX: 200, clientY: 100 }))
     await nextTick()
     expect(container.querySelector('[data-testid="tooltip-state"]')?.getAttribute('data-active')).toBe('true')

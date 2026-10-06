@@ -106,6 +106,32 @@ describe('<Tracker />', () => {
 })
 
 describe('<CalendarHeatmap />', () => {
+  it('keeps date, month and weekday formats separate when the locale changes', async () => {
+    const locale = ref('en-US')
+    const { container } = render(() => (
+      <CalendarHeatmap
+        width={400}
+        height={120}
+        locale={locale.value}
+        start="2026-01-01"
+        end="2026-01-31"
+        data={[{ date: '2026-01-01', value: 5 }]}
+        isAnimationActive={false}
+      />
+    ))
+    for (const [language, date, month, weekdays] of [
+      ['en-US', 'Thu, Jan 1, 2026: 5', 'Jan', ['Mon', 'Wed', 'Fri']],
+      ['fr-FR', 'jeu. 1 janv. 2026: 5', 'janv.', ['lun.', 'mer.', 'ven.']],
+    ] as const) {
+      locale.value = language
+      await nextTick()
+      expect(container.querySelector('.v-charts-cell')?.getAttribute('aria-label')).toBe(date)
+      expect(container.querySelector('.v-charts-calendar-months text')?.textContent).toBe(month)
+      expect(Array.from(container.querySelectorAll('.v-charts-calendar-weekdays text'), item => item.textContent))
+        .toEqual(weekdays)
+    }
+  })
+
   it('exposes contributing rows on summed days and none on missing days', async () => {
     const data = [
       { activity: { date: '2026-01-01', value: 2 }, author: 'A' },

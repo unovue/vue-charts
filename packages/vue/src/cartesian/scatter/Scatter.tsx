@@ -3,6 +3,7 @@ import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, 
 import { useChart } from '@/model/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { scatterEvents } from '@/events/itemEvents'
+import { delegateItemEvents, itemEventIndex } from '@/events/delegateItemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -161,8 +162,33 @@ const ScatterView = defineComponent({
     const onMouseLeaveSymbol = () => {
       tooltip.clear('hover')
     }
+    let symbolData: ReadonlyArray<ScatterPointItem> = []
+    const listeners = delegateItemEvents(index => symbolData[index], {
+      click: (point, index, event) => {
+        tooltip.activate('click', { type: 'item', index, dataKey: props.dataKey, coordinate: point.tooltipPosition })
+        emit('click', point, index, event)
+      },
+      mouseenter: (point, index, event) => {
+        dispatchScatterHover(point, index)
+        emit('mouseenter', point, index, event)
+      },
+      mouseleave: (point, index, event) => {
+        onMouseLeaveSymbol()
+        emit('mouseleave', point, index, event)
+      },
+    })
+    function handleSymbolMove(event: MouseEvent) {
+      const index = itemEventIndex(event)
+      const point = index == null ? undefined : symbolData[index]
+      if (point && index !== undefined) {
+        // Keep the SVG's axis hover handler from replacing the selected Scatter item.
+        event.stopPropagation()
+        dispatchScatterHover(point, index)
+      }
+    }
 
     const renderSymbols = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
+      symbolData = data
       const currentActiveIndex = activeIndex.value
       const currentActiveDataKey = activeDataKey.value
 
@@ -187,15 +213,7 @@ const ScatterView = defineComponent({
           <g
             key={i}
             class="v-charts-scatter-symbol"
-            onMouseenter={(event: MouseEvent) => { dispatchScatterHover(point, i); emit('mouseenter', point, i, event) }}
-            onMousemove={(e: MouseEvent) => {
-              // Stop propagation to prevent SVG-level mousemove from overriding
-              // our per-dot index with the axis-computed index
-              e.stopPropagation()
-              dispatchScatterHover(point, i)
-            }}
-            onMouseleave={(event: MouseEvent) => { onMouseLeaveSymbol(); emit('mouseleave', point, i, event) }}
-            onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: i, dataKey: props.dataKey, coordinate: point.tooltipPosition }); emit('click', point, i, event) }}
+            data-v-charts-item-index={i}
           >
             {slots.shape ? slots.shape({ ...point, index: i, isActive }) : Symbols(symbolProps)}
           </g>
@@ -293,7 +311,7 @@ const ScatterView = defineComponent({
       if (props.hide)
         return null
       return teleport((
-        <Layer data-slot="series" class="v-charts-scatter">
+        <Layer data-slot="series" class="v-charts-scatter" {...listeners} onMousemove={handleSymbolMove}>
           {slots.default?.()}
           {h(Geometry)}
         </Layer>

@@ -1,6 +1,7 @@
 import type { ComputedRef, PropType, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { pieEvents } from '@/events/itemEvents'
+import { delegateItemEvents } from '@/events/delegateItemEvents'
 import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -113,6 +114,27 @@ const PieView = defineComponent({
     function handleSectorLeave() {
       tooltip.clear('hover')
     }
+    let sectorList = items.value
+    const listeners = delegateItemEvents(position => sectorList[position]?.value, {
+      click: (sector, _position, event) => {
+        tooltip.activate('click', {
+          type: 'item',
+          configuration: tooltipConfiguration.value,
+          index: sector.index,
+          dataKey: props.dataKey,
+          coordinate: sector.tooltipPosition,
+        })
+        emit('click', sector, sector.index, event)
+      },
+      mouseenter: (sector, _position, event) => {
+        handleSectorEnter(sector, sector.index)
+        emit('mouseenter', sector, sector.index, event)
+      },
+      mouseleave: (sector, _position, event) => {
+        handleSectorLeave()
+        emit('mouseleave', sector, sector.index, event)
+      },
+    })
 
     // Labels ride along with the sectors as drawn (their angle follows the moving sector), show
     // the new value at once and fade with sectors that enter or leave.
@@ -165,7 +187,8 @@ const PieView = defineComponent({
       // dependencies are tracked and server rendering sees them too.
       const children = slots.default?.() ?? []
       const cells = extractCellProps(children)
-      const sectorList = cells.length
+      // Events read this exact render's sectors, including Cell fill overrides.
+      sectorList = cells.length
         ? items.value.map(item => cells[item.value.index]?.fill != null ? { ...item, value: { ...item.value, fill: cells[item.value.index].fill! } } : item)
         : items.value
       if (!sectorList || sectorList.length === 0) {
@@ -173,8 +196,8 @@ const PieView = defineComponent({
       }
       const stroke = (attrs.stroke as string) ?? props.stroke
       return (
-        <Layer data-slot="series" class={['v-charts-pie', props.class]}>
-          {sectorList.map(({ key, value: sector }) => {
+        <Layer data-slot="series" class={['v-charts-pie', props.class]} {...listeners}>
+          {sectorList.map(({ key, value: sector }, position) => {
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
             const shapeProps = { ...sector, startAngle: animatedStartAngle, endAngle: animatedEndAngle, stroke, isActive: activeIndex.value === sector.index }
@@ -198,9 +221,7 @@ const PieView = defineComponent({
             return (
               <g
                 key={key}
-                onMouseenter={(event: MouseEvent) => { handleSectorEnter(sector, sector.index); emit('mouseenter', sector, sector.index, event) }}
-                onMouseleave={(event: MouseEvent) => { handleSectorLeave(); emit('mouseleave', sector, sector.index, event) }}
-                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index: sector.index, dataKey: props.dataKey, coordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
+                data-v-charts-item-index={position}
               >
                 {content}
               </g>

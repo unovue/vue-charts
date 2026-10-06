@@ -1,10 +1,10 @@
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { delegateItemEvents } from '@/events/delegateItemEvents'
 import { lineEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
-import { Fragment, computed, defineComponent, watch } from 'vue'
+import { Fragment, computed, defineComponent } from 'vue'
 import { useOffset } from '@/context/chartLayoutContext'
 import { Layer } from '@/container/Layer'
-import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
 import type { LinePointItem } from './type'
 import { useLineContext } from './hooks/useLine'
@@ -26,7 +26,7 @@ const Dots = defineComponent({
     /** Below 1 while a dot appears behind the tip of a line drawing itself. */
     opacities: { type: Array as PropType<(number | undefined)[]>, default: () => [] },
     points: {
-      type: Array as PropType<ReadonlyArray<Point>>,
+      type: Array as PropType<ReadonlyArray<LinePointItem>>,
       default: () => [],
     },
   },
@@ -34,6 +34,16 @@ const Dots = defineComponent({
     const emit = lineEvents.use()
     const { clipPathId, clipDot, props, attrs, needClip, dotSlot } = useLineContext()
     const listeners = usePointEvents<LinePointItem>(emit, () => props.dataKey)
+    const delegated = delegateItemEvents((position) => {
+      const point = _props.points[position]
+      if (!point || _props.exiting[position])
+        return undefined
+      return { point, index: _props.indices[position] ?? position }
+    }, {
+      click: ({ point, index }, _position, event) => listeners(point, index).onClick(event),
+      mouseenter: ({ point, index }, _position, event) => listeners(point, index).onMouseenter(event),
+      mouseleave: ({ point, index }, _position, event) => listeners(point, index).onMouseleave(event),
+    })
 
     return () => {
       const { points } = _props
@@ -50,18 +60,25 @@ const Dots = defineComponent({
       return (
         <Layer
           class="v-charts-line-dots"
+          {...delegated}
           clip-path={needClip.value ? `url(#clipPath-${clipDot.value ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
             points?.map((point, position) => {
               const index = _props.indices[position] ?? position
               const exiting = _props.exiting[position]
-              const handlers = exiting ? {} : listeners(point as LinePointItem, index)
-              const pointAsLine = point as LinePointItem
-              if (dotSlot) {
-                return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })}</g>
-              }
-              return <g key={_props.keys[position]} opacity={_props.opacities[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}><Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot.value} /></g>
+              return (
+                <g
+                  key={_props.keys[position]}
+                  data-v-charts-item-index={exiting ? undefined : position}
+                  opacity={_props.opacities[position]}
+                  pointer-events={exiting ? 'none' : undefined}
+                >
+                  {dotSlot
+                    ? dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: point.value, payload: point.payload })
+                    : <Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot.value} />}
+                </g>
+              )
             })
           }
         </Layer>
@@ -101,12 +118,12 @@ export const StaticLine = defineComponent({
     const reached = computed(() => lengthShares(display.points.value))
     // Labels ride along with the points as drawn, appear as the tip reaches them and fade
     // with points that enter or leave.
-    watch(() => sweptLabels(display.items.value.map((item) => {
+    const drawnLabels = computed(() => sweptLabels(display.items.value.map((item) => {
       const opacity = labelOpacity(item)
       return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
-    }), display.reveal.value, (_, index) => reached.value[index]), (value) => {
-      labelData.value = value
-    }, { immediate: true, flush: 'sync' })
+    }), display.reveal.value, (_, index) => reached.value[index]))
+    // Nested LabelList children and own labels share the same lazy frame data.
+    labelData.value = drawnLabels
     /** Dots pop in just behind the tip while the line draws itself. */
     const dotOpacities = computed(() => {
       const reveal = display.reveal.value
@@ -155,7 +172,7 @@ export const StaticLine = defineComponent({
           {(props.label || labelSlot) && (
             <LabelList
               {...labelProps}
-              data={labelData.value ?? []}
+              data={drawnLabels.value}
               dataKey={props.dataKey}
 
               v-slots={labelSlot ? { label: labelSlot } : undefined}

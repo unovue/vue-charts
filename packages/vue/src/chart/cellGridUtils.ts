@@ -53,8 +53,17 @@ export function weekdayOf(day: number): number {
   return new Date(day * DAY_MS).getUTCDay()
 }
 
+const dayFormatters = /* @__PURE__ */ new Map<string, Intl.DateTimeFormat>()
+
 export function formatDay(day: number, locale: string, options: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(new Date(day * DAY_MS))
+  const settings = { ...options, timeZone: 'UTC' }
+  const key = JSON.stringify([locale, settings], Object.keys(settings).sort())
+  let formatter = dayFormatters.get(key)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, settings)
+    dayFormatters.set(key, formatter)
+  }
+  return formatter.format(new Date(day * DAY_MS))
 }
 
 /**
