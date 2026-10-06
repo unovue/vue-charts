@@ -10,8 +10,8 @@ import { provideChartInView, provideLegendPortalRaw, providePortalRaw } from '@/
 import { getChartPointer } from '@/utils/pointer'
 
 export interface WrapperInteractions {
-  click: (pointer: ChartPointer) => void
-  move: (pointer: ChartPointer) => void
+  click: (pointer: ChartPointer, target?: EventTarget | null) => void
+  move: (pointer: ChartPointer, target?: EventTarget | null) => void
   focus: () => void
   keyDown: (event: KeyboardEvent) => void
   touchMove: (event: TouchEvent) => void
@@ -78,7 +78,7 @@ export const ChartWrapper = defineComponent({
     const myOnClick = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        interactions.click(chartPointer)
+        interactions.click(chartPointer, e.target)
       }
       callHandler((state, event) => emit('click', state, event), e)
     }
@@ -86,7 +86,7 @@ export const ChartWrapper = defineComponent({
     const myOnMouseEnter = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        interactions.move(chartPointer)
+        interactions.move(chartPointer, e.target)
       }
       callHandler((state, event) => emit('mouseenter', state, event), e)
     }
@@ -99,7 +99,7 @@ export const ChartWrapper = defineComponent({
     const myOnMouseMove = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
       if (chartPointer) {
-        interactions.move(chartPointer)
+        interactions.move(chartPointer, e.target)
       }
       callHandler((state, event) => emit('mousemove', state, event), e)
     }

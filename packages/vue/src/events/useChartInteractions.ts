@@ -9,8 +9,8 @@ export function useChartInteractions() {
   const chart = useChart()
   const tooltip = chart.tooltip
 
-  function selectionAtPointer(pointer: ChartPointer | undefined) {
-    return getActiveProps(
+  function selectionAtPointer(pointer: ChartPointer | undefined, target?: EventTarget | null) {
+    const selection = getActiveProps(
       pointer,
       chart.inputs.layout(),
       chart.polarLayout.viewBox.value,
@@ -20,16 +20,28 @@ export function useChartInteractions() {
       tooltip.orderedTicks.value,
       chart.offset.value,
     )
+    if (selection || !pointer || !(target instanceof Element))
+      return selection
+    // Radial bars can extend past the polar viewport's inner or outer radius.
+    // A painted sector still identifies its row at those edges.
+    const sector = target.closest('.v-charts-radial-bar .v-charts-sector')
+    const index = sector?.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
+    if (index == null)
+      return undefined
+    return {
+      activeIndex: index,
+      activeCoordinate: { x: pointer.chartX, y: pointer.chartY },
+    }
   }
 
   function coordinateAt(index: string) {
     return tooltip.coordinateFor(tooltip.targets.value.find(target => target.index === index))
   }
 
-  function click(chartPointer: ChartPointer) {
+  function click(chartPointer: ChartPointer, target?: EventTarget | null) {
     const tooltipEventType = tooltip.eventType.value
     if (tooltipEventType === 'axis') {
-      const activeProps = selectionAtPointer(chartPointer)
+      const activeProps = selectionAtPointer(chartPointer, target)
       if (activeProps?.activeIndex != null) {
         tooltip.setMouseClickAxisIndex({
           activeIndex: activeProps.activeIndex,
@@ -40,9 +52,9 @@ export function useChartInteractions() {
     }
   }
 
-  function move(chartPointer: ChartPointer) {
+  function move(chartPointer: ChartPointer, target?: EventTarget | null) {
     const tooltipEventType = tooltip.eventType.value
-    const activeProps = selectionAtPointer(chartPointer)
+    const activeProps = selectionAtPointer(chartPointer, target)
     if (tooltipEventType === 'axis') {
       if (activeProps?.activeIndex != null) {
         tooltip.setMouseOverAxisIndex({

@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { PolarGrid, RadialBar, RadialBarChart } from '@/index'
+import { PolarGrid, RadialBar, RadialBarChart, Tooltip } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const data = [
@@ -20,6 +20,63 @@ describe('radialBar', () => {
   })
 
   describe('basic rendering', () => {
+    it('positions item tooltips on the selected sector for hover and click', async () => {
+      const trigger = ref<'hover' | 'click'>('hover')
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip shared={false} trigger={trigger.value} isAnimationActive={false}>
+            {{ content: ({ coordinate, payload }) => (
+              <div data-testid="radial-tooltip">
+                {`${coordinate ? 'positioned' : 'unpositioned'}:${payload[0]?.value}`}
+              </div>
+            ) }}
+          </Tooltip>
+        </RadialBarChart>
+      ))
+      await nextTick()
+      const sectors = container.querySelectorAll('.v-charts-radial-bar .v-charts-sector')
+      for (const scenario of [
+        { trigger: 'hover' as const, index: 0, value: 'positioned:31.47' },
+        { trigger: 'click' as const, index: 1, value: 'positioned:26.69' },
+      ]) {
+        trigger.value = scenario.trigger
+        await nextTick()
+        if (scenario.trigger === 'hover')
+          await fireEvent.mouseEnter(sectors[scenario.index])
+        else
+          await fireEvent.click(sectors[scenario.index])
+        expect(container.querySelector('[data-testid="radial-tooltip"]')?.textContent)
+          .toBe(scenario.value)
+      }
+    })
+
+    it('shows axis tooltips on painted sectors at the polar viewport edge', async () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} innerRadius={30} outerRadius={110} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip isAnimationActive={false}>
+            {{ content: ({ active, coordinate, payload }) => (
+              <div data-testid="radial-axis-tooltip" data-y={coordinate?.y}>
+                {`${active}:${payload[0]?.value}`}
+              </div>
+            ) }}
+          </Tooltip>
+        </RadialBarChart>
+      ))
+      await nextTick()
+      const sector = container.querySelector('.v-charts-radial-bar .v-charts-sector')!
+      for (const clientX of [285, 277]) {
+        await fireEvent.mouseMove(sector, { clientX, clientY: 150 })
+        const content = container.querySelector('[data-testid="radial-axis-tooltip"]')
+        expect(content?.textContent).toBe('true:31.47')
+        expect(content?.getAttribute('data-y')).toBe('150')
+        expect(container.querySelector<HTMLElement>('.v-charts-tooltip-wrapper')?.style.visibility).toBe('visible')
+      }
+      await fireEvent.mouseMove(container.querySelector('.v-charts-wrapper')!, { clientX: 277, clientY: 150 })
+      expect(container.querySelector<HTMLElement>('.v-charts-tooltip-wrapper')?.style.visibility).toBe('hidden')
+    })
+
     // A setup-time size snapshot would leave the sectors at their original thickness.
     it('renders sectors and updates their thickness with the chart bar size', async () => {
       const barSize = ref(4)

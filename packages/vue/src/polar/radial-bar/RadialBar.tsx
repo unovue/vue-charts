@@ -19,6 +19,8 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { LabelList } from '@/components/label/LabelList'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { interpolate } from '@/utils/data-utils'
+import { polarToCartesian } from '@/utils/polar'
+import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import { RadialBarVueProps } from './type'
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
@@ -119,7 +121,16 @@ const RadialBarView = defineComponent({
 
     useChart().tooltip.entries.register(computed(() => ({
       dataDefinedOnItem: undefined,
-      positions: undefined,
+      positions: sectors.value?.map((sector) => {
+        if (sector.innerRadius == null || sector.outerRadius == null || sector.startAngle == null)
+          return undefined
+        return polarToCartesian(
+          sector.cx,
+          sector.cy,
+          (sector.innerRadius + sector.outerRadius) / 2,
+          (sector.startAngle + sector.endAngle) / 2,
+        )
+      }),
       settings: {
         dataKey: props.dataKey,
         nameKey: undefined,
@@ -229,6 +240,7 @@ const RadialBarView = defineComponent({
             return (
               <Sector
                 key={items.value[i].key}
+                {...{ [DATA_ITEM_INDEX_ATTRIBUTE_NAME]: sector.index }}
                 cx={sector.cx}
                 cy={sector.cy}
                 innerRadius={sector.innerRadius}

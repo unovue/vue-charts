@@ -130,7 +130,7 @@ export type TooltipPayloadConfiguration = {
    * If undefined, then Recharts will use mouse interaction coordinates, or the axis coordinates,
    * with some defaults (like, top/left of the chart).
    */
-  positions: Record<NonNullable<TooltipIndex>, Coordinate> | ReadonlyArray<Coordinate> | undefined
+  positions: Record<NonNullable<TooltipIndex>, Coordinate> | ReadonlyArray<Coordinate | undefined> | undefined
 }
 
 export type ActiveTooltipProps = {

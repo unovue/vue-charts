@@ -195,6 +195,8 @@ export function tooltipCoordinate(
     return fallback
   if (!tick)
     return undefined
+  if (fallback && (layout === 'centric' || layout === 'radial'))
+    return fallback
   return layout === 'horizontal'
     ? { ...fallback, x: tick.coordinate, y: fallback?.y ?? (offset.top + size.height) / 2 }
     : { ...fallback, x: fallback?.x ?? (offset.left + size.width) / 2, y: tick.coordinate }
