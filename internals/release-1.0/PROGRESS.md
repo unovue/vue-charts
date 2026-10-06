@@ -36,8 +36,8 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | done | `7300c14`, this log commit | Step gate, bundle assertion and 285 motion transitions PASS; evidence below. |
 | 2.10 | Slice 4: delete the store shell | yes | 2.11 | done | 30bec72 | 131 files / 1,300 tests; motion 285/285 |
 | 2.12 | Slice 6: context ownership | yes | 2.10 | done | ae90b23 | 131 files / 1,300 tests; motion 285/285 |
-| 2.13 | Remaining architecture findings | assess | 2.12 | todo | | |
-| 2.14 | Code health gates | yes | 2.13 | todo | | |
+| 2.13 | Remaining architecture findings | assess | 2.12 | done | `005aa28`, `962f465`, `1b70eae`, `8874d7c`, `ac10672` | Completed step entry below; stale status row corrected. |
+| 2.14 | Code health gates | yes | 2.13 | done | `4b885d0`, this log commit | Step gate and health proof PASS; Phase 2 verdict and counts below. |
 | 3.1 | Recheck strict public declarations | yes | phase 2 | todo | | |
 | 3.2 | Export surface | yes | phase 2 | todo | | |
 | 3.3 | Internal props out of the public API | yes | phase 2 | todo | | |
@@ -371,3 +371,85 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Original gate retained; public auto-width hydration regression reverse-proved. Evidence `.evidence/release-1.0/step-2.13/checks.md`; servers closed.
 - Anomalies: 22 raw captures / 983 frames / 18 entrances differ; 84 faster throttled intervals; timeout 36.79s; BarList +238 bytes; no conclusion.
 - Assumptions: native defaults now (3.4 not run), preserve ID equivalence and public geometry; Node 22, two workers, six frozen sources, Chromium only.
+
+## Step 2.14: code health gates
+- Done: `4b885d0`, this log commit; dead code removed, typed boundaries simplified, health gates added locally to PR workflow.
+- Step gate PASS: typecheck, 130 files / 1,302 tests, changed-file lint with zero warnings; tests and lockfile unchanged.
+- Code PASS: zero cycles/unused findings, strict typing, longest 547 lines, three reasoned any disables, zero ts-ignore; temporary cycle rejected.
+- Motion PASS: 285/285 transitions, nine unchanged accepted flags, zero browser errors, 570 videos; resize curves 0 → 6 remains an anomaly.
+- Phase 2 verdict and before/after counts are below; no adapter added; `internals/migrations.md` remains empty.
+- Evidence: `.evidence/release-1.0/step-2.14/checks.md`; source commit and final reports preserved; verification servers closed.
+- Assumptions: existing two-worker gate; Chromium/WebKit docs subset; preserve public heterogeneous callback types with three reasoned boundaries.
+- Anomalies: one playground recorder timeout cleared in isolation; baseline benchmark sample failed then retry passed; 70 faster throttled intervals, no conclusion.
+
+## Phase 2 gate after step 2.14
+
+Completed with the two exceptions explicitly accepted in the brief and `LATER.md`. The full verifier exits 1; every other check passes. The full playground sweep has 58 known flags plus one recorder timeout, which did not recur in the isolated route retry. This exception is recorded, not suppressed.
+
+| Check (exact command; Node 22 PATH prefix used throughout) | Verdict | Final result and evidence |
+| --- | --- | --- |
+| `pnpm --filter vccs typecheck` | PASS | Exit 0; `step-2.14/typecheck.log`. |
+| `pnpm --filter vccs exec vitest run --maxWorkers=2` | PASS | 130 files / 1,302 tests; `step-2.14/verify-final.log`. |
+| `pnpm exec eslint .` | PASS | Exit 0; `step-2.14/verify-final.log`. |
+| Changed-file `pnpm exec eslint … --max-warnings 0` | PASS | Exit 0, zero warnings; exact command in `step-2.14/checks.md`. |
+| `pnpm check:code` | PASS | Zero cycles/unused, 547-line maximum, three reasoned disables; `step-2.14/code-final.json`. |
+| Temporary-cycle `pnpm check:code` | PASS (negative proof) | Exit 1, one cycle and two unused files detected; temporary files removed; `step-2.14/cycle-proof-final.json`. |
+| `pnpm --filter vccs build` | PASS | Exit 0; `step-2.14/verify-final.log`. |
+| `pnpm check:package` | PASS | 540 packed files, three exports/declarations; `step-2.14/verify-final.log`. |
+| `pnpm check:a11y` | PASS | 100 cases; `step-2.14/verify-final.log`. |
+| `pnpm motion:report --prod --check` | PASS | 285/285 transitions, nine accepted flags, 570 videos, zero browser errors; `.evidence/motion-report/report.json`. |
+| `pnpm check:play` | known, LATER.md | Exit 1; 22 visits, 209 recordings, 58 known flags (46 teleports, six overflow, six tooltip) plus one execution timeout; `step-2.14/play-final.json`. |
+| `pnpm check:play --skip-build --route=/line-charts --out=.evidence/release-1.0/step-2.14/play-line-retry` | known, LATER.md | Exit 1; two visits, 26 known flags, zero execution flags; timeout absent; `step-2.14/play-line-retry/results.json`. |
+| `node --test scripts/check-play.test.mjs` | PASS | Two tests; `step-2.14/verify-final.log`. |
+| `pnpm check:docs --browser=chromium,webkit` | PASS | 126 visits, zero failed/engine errors; `step-2.14/docs-final.json`. |
+| `node --test scripts/check-docs.test.mjs` | PASS | One test; `step-2.14/verify-final.log`. |
+| `pnpm check:seen` | known, LATER.md | Exit 1; 322 rows, 11 flagged, 134 unreliable, zero errors; `step-2.14/seen-final.json`. |
+| `node --test scripts/check-seen.test.mjs` | PASS | Two tests; `step-2.14/verify-final.log`. |
+| `pnpm bench --compare=.evidence/baseline/dist` | PASS (retry) | Exit 0; 21 interleaved rounds, 18/18 metrics; `step-2.14/bench-final.json`. |
+| `pnpm check:bundle --assert-standalone` | PASS | Exit 0; 19 bundles, zero forbidden standalone modules, BarList 7,652 gzip bytes; `step-2.14/bundle-final.json`. |
+
+All `step-2.14/` evidence paths above are under `.evidence/release-1.0/`. Firefox was not run because its documented launch failure remains. The local workflow was edited and committed; no remote CI run or push was performed.
+
+### Before/after counts
+
+Source: `.evidence/release-1.0/step-2.14/counts.json`. Production `.ts/.tsx/.vue` excludes tests, stories, storybook and fixtures. Lines are physical lines; `watch(` and whole-word `any` are text counts including comments. The 25 final `any` matches are not 25 explicit-any types. Historical test counts come from the named PROGRESS entries; the final count comes from `verify-final.log`.
+
+| Metric | Run baseline `83dc1b0` | Phase 2 start `1995171` | Before 2.14 `ac10672` | After `4b885d0` |
+| --- | ---: | ---: | ---: | ---: |
+| Production files | 318 | 321 | 301 | 296 |
+| Production lines | 32,869 | 33,325 | 28,849 | 28,437 |
+| `watch(` | 58 | 57 | 36 | 36 |
+| `any` text matches | 478 | 477 | 362 | 25 |
+| Tests | 1,240 | 1,280 | 1,302 | 1,302 |
+
+### Benchmark medians and spread
+
+Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from the final `bench-final.json`. A is the saved run baseline; B is the current build. These are equal-work, interleaved samples in the same browser. Ranges are the minimum–maximum of the 21 samples per side. Static units are ms; animated units are CPU ms/frame. No timing comparison is made with earlier runs under different load.
+
+| Case | Metric | A median (range) | B median (range) | B/A |
+| --- | --- | ---: | ---: | ---: |
+| LineChart 100 | mountMs | 13.00 (11.00–18.60) | 12.20 (9.90–15.50) | 0.938 |
+| LineChart 100 | updateMs | 3.60 (3.10–5.00) | 3.60 (3.00–4.20) | 1.000 |
+| LineChart 1000 | mountMs | 43.70 (37.10–54.20) | 44.80 (37.90–54.80) | 1.025 |
+| LineChart 1000 | updateMs | 18.20 (15.80–28.90) | 17.50 (15.00–25.60) | 0.962 |
+| LineChart 10000 | mountMs | 409.00 (363.80–487.20) | 405.50 (357.30–777.40) | 0.991 |
+| LineChart 10000 | updateMs | 182.40 (158.70–263.90) | 187.90 (163.60–269.70) | 1.030 |
+| BarChart 100 | mountMs | 11.00 (9.50–19.80) | 10.20 (8.20–13.50) | 0.927 |
+| BarChart 100 | updateMs | 3.30 (2.80–3.90) | 3.00 (2.50–3.50) | 0.909 |
+| BarChart 1000 | mountMs | 31.50 (27.20–37.60) | 31.80 (26.70–37.90) | 1.010 |
+| BarChart 1000 | updateMs | 13.00 (11.50–18.30) | 12.70 (10.80–87.80) | 0.977 |
+| BarChart 10000 | mountMs | 260.60 (226.70–353.10) | 261.30 (229.40–364.60) | 1.003 |
+| BarChart 10000 | updateMs | 114.20 (104.80–169.90) | 118.20 (102.50–148.50) | 1.035 |
+| Heatmap 168 | mountMs | 5.50 (5.00–9.10) | 5.80 (4.90–12.90) | 1.055 |
+| Heatmap 168 | updateMs | 3.30 (2.70–5.30) | 3.50 (2.90–7.70) | 1.061 |
+| CalendarHeatmap 365 | mountMs | 21.70 (18.80–25.80) | 23.30 (19.70–45.90) | 1.074 |
+| CalendarHeatmap 365 | updateMs | 18.90 (16.50–21.10) | 19.30 (17.30–23.90) | 1.021 |
+| LineChart 1000 | cpuMsPerFrame | 9.22 (7.81–10.98) | 8.72 (7.64–12.96) | 0.945 |
+| BarChart 1000 | cpuMsPerFrame | 6.15 (5.57–6.90) | 5.81 (5.13–8.83) | 0.944 |
+
+### Recorded anomalies
+
+- Motion comparison (`step-2.14/motion-comparison.json`): resize/narrow curve count is 0 → 6 against step 2.13; other curve counts and issue sets match. Native resize/paint timing is a plausible cause, with low confidence; historical resize captures also alternated. Geometry equality is not certified by this comparison; no conclusion is drawn.
+- The same report contains 70 intervals where throttled worst-frame time is lower than unthrottled. Cadence and machine load may explain this; timings were not compared with the concurrent predecessor and no performance conclusion is drawn.
+- Full playground report has one 15,500 ms recorder timeout beyond the accepted 58 flags. The isolated line-route retry completes both visits without that timeout; likely a transient capture stall, with moderate confidence. The full report remains unchanged.
+- First benchmark attempt (`step-2.14/bench.log`, `.evidence/bench/2026-10-06T13-28-00.698Z-75755/results.json`) stopped before a verdict because saved-baseline LineChart lacked an intermediate animation sample. The unchanged full retry passes; sampling/load is plausible, with moderate confidence. No timings from the incomplete attempt are used.
