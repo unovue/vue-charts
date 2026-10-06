@@ -26,7 +26,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.0 | Strict typing and tests that survive the refactor | yes | phase 1 | done | `4f8b072`, `a6ab90a`, `51a8664` and this log commit | Strict typing, packed probe, public rewrites and gap cases pass; 1,275 tests; 285/285 motion transitions. |
 | 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
-| 2.3 | Slice 2: registries | yes | 2.2 | todo | | |
+| 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
 | 2.4 | Slice 3a: layout math | yes | 2.3 | todo | | |
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | todo | | |
 | 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | todo | | |
@@ -261,3 +261,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/step-2.2/`; all verification servers stopped.
 - Anomalies: 99 throttled intervals faster; suite 97.54 → 230.48 s; Area video differs by 50,334 pixels; stale SSR expectation corrected.
 - Assumptions: component EffectScope, compact defaults, standalone fallback in the single adapter; item animation mode in SSR fixture; Node 22, two workers.
+
+## Step 2.3 evidence
+- Done: `d933af2`; computed registrations retain setup order and dispose with component scopes.
+- Gate PASS: strict typing; 130 files / 1,274 tests; lint on 35 changed files, zero warnings; build PASS.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; no curve-count differences.
+- Public regressions and reverse proofs PASS; Nuxt SSR 1/1 and four baseline HTML comparisons PASS.
+- Evidence: `.evidence/release-1.0/step-2.3/`; Bar 57/57 numeric frames match; verification servers closed.
+- Anomalies: Area auxiliary frames, decoded pixels and timing vary; details in `checks.md`. No conclusion.
+- Assumptions: Node 22, two workers, local YAxis measurements; retain type files and the single tracked adapter.
