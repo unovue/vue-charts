@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const route = useRoute()
+const animation = computed(() => route.query.animation !== 'off')
 const data = [{ name: 'Alpha', value: 10 }, { name: 'Beta', value: 20 }]
 </script>
 
@@ -16,7 +18,10 @@ const data = [{ name: 'Alpha', value: 10 }, { name: 'Beta', value: 20 }]
       >
         <XAxis data-key="name" />
         <YAxis />
-        <Bar data-key="value" />
+        <Bar
+          data-key="value"
+          :is-animation-active="animation"
+        />
         <Tooltip />
       </BarChart>
       <AreaChart
@@ -26,7 +31,10 @@ const data = [{ name: 'Alpha', value: 10 }, { name: 'Beta', value: 20 }]
       >
         <XAxis data-key="name" />
         <YAxis />
-        <Area data-key="value" />
+        <Area
+          data-key="value"
+          :is-animation-active="animation"
+        />
         <Tooltip />
       </AreaChart>
       <PieChart
@@ -35,6 +43,7 @@ const data = [{ name: 'Alpha', value: 10 }, { name: 'Beta', value: 20 }]
       >
         <Pie
           :data="data"
+          :is-animation-active="animation"
           data-key="value"
           name-key="name"
         />

@@ -8,14 +8,26 @@ describe('nuxt auto-imported charts', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('./fixtures/nuxt-app', import.meta.url)),
     browser: false,
+    port: 4688,
     nuxtConfig: {
       build: { transpile: process.env.VCCS_TEST_TRANSPILE === '1' ? ['vccs'] : [] },
     },
   })
 
-  it('renders fixed and responsive SVG geometry with stable HTML across requests', async () => {
-    const first = await $fetch<string>('/')
-    const second = await $fetch<string>('/')
+  it('renders entrance and complete SSR geometry with stable HTML across requests', async () => {
+    const entrance = await $fetch<string>('/')
+    expect(await $fetch<string>('/')).toBe(entrance)
+    if (process.env.VCCS_SSR_EVIDENCE)
+      writeFileSync(`${process.env.VCCS_SSR_EVIDENCE}.entrance.html`, entrance)
+    const entranceDom = new JSDOM(entrance)
+    expect(entranceDom.window.document.querySelectorAll('svg')).toHaveLength(6)
+    expect(entranceDom.window.document.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(4)
+    expect(entranceDom.window.document.querySelectorAll('.v-charts-bar-rectangle path[d]')).toHaveLength(0)
+    expect(entranceDom.window.document.querySelectorAll('.v-charts-pie .v-charts-sector[d]')).toHaveLength(0)
+    entranceDom.window.close()
+
+    const first = await $fetch<string>('/?animation=off')
+    const second = await $fetch<string>('/?animation=off')
     if (process.env.VCCS_SSR_EVIDENCE)
       writeFileSync(process.env.VCCS_SSR_EVIDENCE, first)
     expect(second).toBe(first)
