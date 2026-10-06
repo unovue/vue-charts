@@ -29,7 +29,7 @@ export function activeProps(chartEvent: ChartPointer | undefined, layout: Layout
 
   const activeCoordinate = getActiveCoordinate(layout, tooltipTicks, activeIndex, rangeObj)
 
-  return { activeIndex: String(activeIndex), activeCoordinate }
+  return { activeIndex, activeCoordinate }
 }
 
 export type RangeObj = {

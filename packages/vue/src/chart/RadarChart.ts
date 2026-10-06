@@ -1,5 +1,4 @@
 import { generatePolarChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/model/options'
 
 export const RadarChart = generatePolarChart({
   chartName: 'RadarChart',
@@ -10,5 +9,4 @@ export const RadarChart = generatePolarChart({
   },
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: ['axis'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
 })

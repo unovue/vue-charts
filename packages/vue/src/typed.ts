@@ -45,9 +45,20 @@ import type { TooltipPayload } from '@/types/tooltip'
 
 export type { RowDataKey } from './types/typed'
 
-type RowItem<Item, Row> = Item extends object
-  ? 'payload' extends keyof Item ? Omit<Item, 'payload'> & { payload: Row } : Item
-  : Item
+type RowArray<Value, Row> = Value extends readonly unknown[] ? RowItem<Value, Row> : Value
+
+// A string index alone does not guarantee that the runtime object has a payload.
+type ItemKeys<Item> = keyof {
+  [Key in keyof Item as string extends Key ? never : number extends Key ? never : Key]: Item[Key]
+}
+
+type RowObject<Item, Row> = {
+  [Key in keyof Item]: Key extends 'payload' ? Row : RowArray<Item[Key], Row>
+} & ('payload' extends ItemKeys<Item> ? { payload: Row } : unknown)
+
+type RowItem<Item, Row> = Item extends readonly unknown[]
+  ? { [Index in keyof Item]: RowItem<Item[Index], Row> }
+  : Item extends object ? RowObject<Item, Row> : Item
 
 type RowCallback<Value, Row> = Value extends (...args: infer Args) => infer Result
   ? (...args: { [Index in keyof Args]: RowItem<Args[Index], Row> }) => Result

@@ -51,7 +51,7 @@ const BarListVueProps = {
   hrefKey: { type: [String, Number, Function] as PropType<RowDataKey<BarListRow>>, default: undefined },
   sort: { type: String as PropType<'descending' | 'ascending' | 'none'>, default: 'descending' },
   color: { type: String, default: seriesColor(0) },
-  valueFormat: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
+  valueFormatter: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
   /** Locale for the default number format. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
   rowHeight: { type: Number, default: 32 },
@@ -123,7 +123,7 @@ const BarListInner = defineComponent({
         sum + Math.max(0, Math.min(1, item.value.presence)), 0)
       return Math.max(0, count * (props.rowHeight + props.gap) - props.gap)
     })
-    const format = (state: RowState) => props.valueFormat ? props.valueFormat(state.value, state.row) : numbers.value.format(state.value)
+    const format = (state: RowState) => props.valueFormatter ? props.valueFormatter(state.value, state.row) : numbers.value.format(state.value)
 
     function renderName(slotProps: BarListSlotProps<BarListRow>, href: string | undefined, exiting: boolean) {
       if (slots.name)
@@ -210,13 +210,13 @@ const BarListInner = defineComponent({
 
 export type BarListProps<Row = unknown> = DirectChartAttributes & Omit<
   ExtractPublicPropTypes<typeof BarListVueProps>,
-  'data' | 'dataKey' | 'nameKey' | 'hrefKey' | 'valueFormat'
+  'data' | 'dataKey' | 'nameKey' | 'hrefKey' | 'valueFormatter'
 > & {
   'data': readonly Row[]
   'dataKey'?: RowDataKey<NoInfer<Row>>
   'nameKey'?: RowDataKey<NoInfer<Row>>
   'hrefKey'?: RowDataKey<NoInfer<Row>>
-  'valueFormat'?: (value: number, row: NoInfer<Row>) => string
+  'valueFormatter'?: (value: number, row: NoInfer<Row>) => string
   'onRow-click'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
   'onRowClick'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
   'onAnimation-start'?: () => void

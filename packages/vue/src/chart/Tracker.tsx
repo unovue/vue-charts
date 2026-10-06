@@ -38,9 +38,9 @@ const TrackerVueProps = {
   /** The field naming the bar, e.g. its date. It is also the bar's identity across updates. */
   nameKey: { type: [String, Number, Function] as PropType<RowDataKey<TrackerRow>>, default: 'date' },
   /** Fill per status, merged over the defaults. */
-  colors: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
+  statusColors: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
   /** Readable text per status for tooltips and screen readers, merged over the defaults. */
-  labels: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
+  statusLabels: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
   gap: { type: Number, default: 2 },
   /** Locale for dates in tooltips. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
@@ -101,8 +101,8 @@ const _Tracker = defineComponent({
       // Bars narrower than 3px read better touching than with a gap.
       const gap = (width - props.gap * (count - 1)) / count >= 3 ? props.gap : 0
       const step = (width - gap * (count - 1)) / count
-      const colors = { ...trackerStatusColors, ...props.colors }
-      const labels = { ...trackerStatusLabels, ...props.labels }
+      const colors = { ...trackerStatusColors, ...props.statusColors }
+      const labels = { ...trackerStatusLabels, ...props.statusLabels }
       const seen = new Map<string, number>()
       return data.map((row, index) => {
         const status = getValueByDataKey(row, props.dataKey)

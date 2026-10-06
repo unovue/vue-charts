@@ -1,4 +1,4 @@
-import type { PropType, VNode, VNodeChild } from 'vue'
+import type { PropType, VNodeChild } from 'vue'
 import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/types/viewBox'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType } from '@/types'
@@ -124,7 +124,7 @@ export type LabelViewProps = VuePropsToType<typeof LabelViewVueProps>
 export type LabelProps = VuePropsToType<typeof LabelVueProps>
 
 export interface LabelSlots {
-  content: (props: LabelProps & { viewBox: ViewBox }) => VNode
+  content?: (props: LabelProps & { viewBox: ViewBox }) => VNodeChild
 }
 
 export type LabelListSlotProps = Omit<LabelProps, 'viewBox'> & ViewBox & {

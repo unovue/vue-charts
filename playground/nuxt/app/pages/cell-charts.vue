@@ -202,7 +202,7 @@ const cohortMode = ref<'percent' | 'count'>('percent')
         x-key="hour"
         y-key="day"
         data-key="visits"
-        :x-label-format="h => `${h}h`"
+        :x-tick-formatter="h => `${h}h`"
       >
         <Tooltip :cursor="false" />
       </Heatmap>
@@ -222,7 +222,7 @@ const cohortMode = ref<'percent' | 'count'>('percent')
       <CohortChart
         :data="retention"
         :mode="cohortMode"
-        :period-label="i => `Month ${i}`"
+        :period-formatter="i => `Month ${i}`"
       >
         <Tooltip :cursor="false" />
       </CohortChart>

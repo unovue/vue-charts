@@ -170,7 +170,7 @@ describe('<BarList />', () => {
   })
 
   it('ranks rows by value with bars relative to the largest and formatted values', () => {
-    const { container } = render(() => <BarList data={data} href-key="url" isAnimationActive={false} valueFormat={v => `${v} visits`} />)
+    const { container } = render(() => <BarList data={data} href-key="url" isAnimationActive={false} valueFormatter={v => `${v} visits`} />)
     expect(rows(container).sort((a, b) => a.y.localeCompare(b.y, undefined, { numeric: true }))).toEqual([
       { name: '/', value: '100 visits', width: '100%', y: 'translateY(0px)' },
       { name: '/docs', value: '50 visits', width: '50%', y: 'translateY(36px)' },

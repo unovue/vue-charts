@@ -100,7 +100,7 @@ const ScatterView = defineComponent({
 
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
-    // arrayTooltipSearcher returns the tooltipPayload array for the active index,
+    // the selected row supplies the tooltipPayload array for the active index,
     // which tooltipPayload processes into per-axis tooltip entries.
     const tooltipConfiguration = computed(() => ({
       // This owned array contains payloads that reference caller-owned rows.
@@ -149,17 +149,17 @@ const ScatterView = defineComponent({
 
     const dispatchScatterHover = (point: ScatterPointItem, index: number) => {
       const payload = {
-        activeDataKey: props.dataKey,
-        activeIndex: String(index),
-        activeCoordinate: point.tooltipPosition,
+        dataKey: props.dataKey,
+        index,
+        coordinate: point.tooltipPosition,
       }
       // Dispatch to both axis and item interaction so Scatter works in both
       // ComposedChart (tooltipEventType='axis') and ScatterChart (tooltipEventType='item')
-      tooltip.setMouseOverAxisIndex(payload)
-      tooltip.setActiveMouseOverItemIndex(payload)
+      tooltip.activate('hover', { ...payload, type: 'axis' })
+      tooltip.activate('hover', { ...payload, type: 'item' })
     }
     const onMouseLeaveSymbol = () => {
-      tooltip.mouseLeaveChart()
+      tooltip.clear('hover')
     }
 
     const renderSymbols = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
@@ -172,8 +172,8 @@ const ScatterView = defineComponent({
         }
         const keyboard = tooltip.keyboardInteraction.value
         const isActive = keyboard.active
-          ? keyboard.configuration === tooltipConfiguration.value && keyboard.index === String(i)
-          : currentActiveIndex === String(i) && currentActiveDataKey === props.dataKey
+          ? keyboard.configuration === tooltipConfiguration.value && keyboard.index === i
+          : currentActiveIndex === i && currentActiveDataKey === props.dataKey
         const symbolProps: SymbolsProps = {
           ...svgAttrs,
           ...(props.fill != null ? { fill: props.fill } : {}),
@@ -195,7 +195,7 @@ const ScatterView = defineComponent({
               dispatchScatterHover(point, i)
             }}
             onMouseleave={(event: MouseEvent) => { onMouseLeaveSymbol(); emit('mouseleave', point, i, event) }}
-            onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(i), activeDataKey: props.dataKey, activeCoordinate: point.tooltipPosition }); emit('click', point, i, event) }}
+            onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: i, dataKey: props.dataKey, coordinate: point.tooltipPosition }); emit('click', point, i, event) }}
           >
             {slots.shape ? slots.shape({ ...point, index: i, isActive }) : Symbols(symbolProps)}
           </g>

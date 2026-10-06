@@ -138,7 +138,7 @@ describe('treemap component', () => {
         height={400}
         fill="#ff0000"
         stroke="#00ff00"
-        colorPanel={undefined as any}
+        colors={undefined as any}
         isAnimationActive={false}
       />
     ))
@@ -148,7 +148,7 @@ describe('treemap component', () => {
     expect(rect!.getAttribute('stroke')).toBe('#00ff00')
   })
 
-  it('applies colorPanel to nodes by group', () => {
+  it('applies colors to nodes by group', () => {
     const colors = ['#aaa', '#bbb']
     const { container } = render(() => (
       <Treemap
@@ -156,7 +156,7 @@ describe('treemap component', () => {
         dataKey="value"
         width={600}
         height={400}
-        colorPanel={colors}
+        colors={colors}
         isAnimationActive={false}
       />
     ))
@@ -301,7 +301,7 @@ it('uses the explicit label foreground for a custom Treemap fill', async () => {
       height={300}
       data={[{ name: 'Custom', value: 10 }]}
       dataKey="value"
-      colorPanel={['var(--custom-fill, #ffffff)']}
+      colors={['var(--custom-fill, #ffffff)']}
       isAnimationActive={false}
       style={{ '--v-charts-label-foreground': '#ffffff' }}
     />

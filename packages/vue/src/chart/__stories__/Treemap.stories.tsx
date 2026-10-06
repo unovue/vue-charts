@@ -76,7 +76,7 @@ export const CustomColors: Story = {
         data={[...data]}
         dataKey="value"
         stroke="#fff"
-        colorPanel={['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']}
+        colors={['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']}
         isAnimationActive={false}
       />
     </ResponsiveContainer>
@@ -144,7 +144,7 @@ export const NestMode: Story = {
         dataKey="value"
         type="nest"
         stroke="#fff"
-        colorPanel={['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']}
+        colors={['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']}
         isAnimationActive={false}
       />
     </ResponsiveContainer>

@@ -1,4 +1,4 @@
-import type { CSSProperties, PropType, VNode } from 'vue'
+import type { CSSProperties, PropType, VNodeChild } from 'vue'
 import type { LayoutType } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LegendType } from '@/types/legend'
@@ -6,7 +6,7 @@ import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } fr
 import type { VuePropsToType, WithSVGProps } from '@/types/common'
 
 export interface LegendSlots {
-  content: (params: LegendContentProps) => VNode
+  content?: (params: LegendContentProps) => VNodeChild
 }
 
 export type LegendHidden = string[]
@@ -57,7 +57,7 @@ export const LegendVueProps = {
     type: [String, Function] as PropType<'value' | 'dataKey' | ((item: LegendPayload) => number | string)>,
     default: undefined,
   },
-  portal: Object as PropType<HTMLElement | null>,
+  to: [String, Object] as PropType<string | HTMLElement>,
 } as const
 
 export type LegendProps = VuePropsToType<typeof LegendVueProps>

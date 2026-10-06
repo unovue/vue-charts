@@ -24,7 +24,7 @@ export const Cursor = defineComponent({
     tooltipEventType: String,
     coordinate: Object as PropType<ChartCoordinate>,
     payload: Array as PropType<TooltipPayload>,
-    index: String,
+    index: Number,
   },
   setup(props) {
     const presentation = useChartPresentation()
@@ -43,6 +43,8 @@ export const Cursor = defineComponent({
         return null
 
       const cursor = props.cursor
+      // Public cursor slots retain their string index contract.
+      const payloadIndex = props.index === undefined ? undefined : String(props.index)
       // Extract user-provided SVG props when cursor is a plain object (not boolean)
       const cursorSvgProps = (typeof cursor === 'object') ? cursor : {}
 
@@ -59,7 +61,7 @@ export const Cursor = defineComponent({
           class: 'v-charts-tooltip-cursor',
           style: { pointerEvents: 'none' as const },
           payload: props.payload ?? [],
-          payloadIndex: props.index,
+          payloadIndex,
           ...cursorSvgProps,
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(crossProps) : <Cross {...crossProps} />
@@ -81,7 +83,7 @@ export const Cursor = defineComponent({
           class: 'v-charts-tooltip-cursor',
           style: { pointerEvents: 'none' as const },
           payload: props.payload ?? [],
-          payloadIndex: props.index,
+          payloadIndex,
           ...cursorSvgProps,
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(rectProps) : <Rectangle {...rectProps} />
@@ -102,7 +104,7 @@ export const Cursor = defineComponent({
           class: 'v-charts-tooltip-cursor',
           style: { pointerEvents: 'none' as const },
           payload: props.payload ?? [],
-          payloadIndex: props.index,
+          payloadIndex,
           ...cursorSvgProps,
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(sectorProps) : <Sector {...sectorProps} />
@@ -117,7 +119,7 @@ export const Cursor = defineComponent({
           class: ['v-charts-tooltip-cursor'],
           style: { pointerEvents: 'none' as const },
           payload: props.payload ?? [],
-          payloadIndex: props.index,
+          payloadIndex,
           ...cursorSvgProps,
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(cursorProps) : <Curve {...cursorProps} />

@@ -7,7 +7,7 @@ export function useItemInteractions() {
     const { key } = event
     const targets = tooltip.targets.value
     if (key === 'Escape') {
-      tooltip.setKeyboardInteraction({ active: false, activeIndex: null, activeDataKey: undefined })
+      tooltip.clear('keyboard')
       return
     }
     const position = tooltip.source.index.value ?? -1
@@ -29,11 +29,11 @@ export function useItemInteractions() {
     const target = targets[next]
     if (!target)
       return
-    tooltip.setKeyboardInteraction({
+    tooltip.activate('keyboard', {
       active: true,
-      activeIndex: target.index,
-      activeDataKey: target.entry?.value?.settings.dataKey,
-      activeCoordinate: target.coordinate,
+      index: target.index,
+      dataKey: target.entry?.value?.settings.dataKey,
+      coordinate: target.coordinate,
       configuration: target.entry?.value,
     })
   }
@@ -47,11 +47,12 @@ export function useItemInteractions() {
       return
     const index = element?.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
     const dataKey = element?.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
-    const target = tooltip.targets.value.find(item => item.index === index && item.entry?.value?.settings.dataKey === dataKey)
-    tooltip.setActiveMouseOverItemIndex({
-      activeIndex: index ?? null,
-      activeDataKey: dataKey ?? undefined,
-      activeCoordinate: target?.coordinate,
+    const target = tooltip.targets.value.find(item => item.index === (index === null ? null : Number(index)) && item.entry?.value?.settings.dataKey === dataKey)
+    tooltip.activate('hover', {
+      type: 'item',
+      index: index === null ? null : Number(index),
+      dataKey: dataKey ?? undefined,
+      coordinate: target?.coordinate,
       configuration: target?.entry?.value,
     })
   }

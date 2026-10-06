@@ -16,8 +16,8 @@ const data = Array.from({ length: 40 }, (_, i) => ({
     :height="24"
     :gap="3"
     :radius="12"
-    :colors="{ passed: '#14b8a6', failed: '#f97316', skipped: '#f59e0b' }"
-    :labels="{ passed: 'Passed', failed: 'Failed', skipped: 'Skipped' }"
+    :status-colors="{ passed: '#14b8a6', failed: '#f97316', skipped: '#f59e0b' }"
+    :status-labels="{ passed: 'Passed', failed: 'Failed', skipped: 'Skipped' }"
   >
     <Tooltip :cursor="false" />
   </Tracker>

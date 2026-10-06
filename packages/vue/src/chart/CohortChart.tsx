@@ -51,7 +51,7 @@ const CohortChartVueProps = {
   /** `percent` of the cohort size, or the raw `count`. */
   mode: { type: String as PropType<'percent' | 'count'>, default: 'percent' },
   /** Column heading per period, e.g. `i => \`Month ${i}\``. */
-  periodLabel: { type: Function as PropType<(period: number) => string>, default: (period: number) => String(period) },
+  periodFormatter: { type: Function as PropType<(period: number) => string>, default: (period: number) => String(period) },
   color: { type: String, default: seriesColor(0) },
   emptyColor: { type: String, default: 'var(--v-charts-muted, #eef2f7)' },
   /** Locale for numbers. Fixed by default so server and client render the same. */
@@ -66,7 +66,7 @@ const CohortChartVueProps = {
  * share of the cohort still active. Immature periods stay blank, so the grid is a triangle.
  *
  * ```vue
- * <CohortChart :data="[{ cohort: 'Jan', values: [1200, 640, 410] }]" :period-label="i => `M${i}`" />
+ * <CohortChart :data="[{ cohort: 'Jan', values: [1200, 640, 410] }]" :period-formatter="i => `M${i}`" />
  * ```
  */
 const _CohortChart = defineComponent({
@@ -140,9 +140,9 @@ const _CohortChart = defineComponent({
         max={props.mode === 'percent' ? 100 : undefined}
         fillMissing={false}
         showValues
-        valueFormat={format}
-        xLabelFormat={x => props.periodLabel(Number(x))}
-        yLabelFormat={y => `${y} · ${numbers.value.format(model.value.sizes.get(String(y)) ?? 0)}`}
+        valueFormatter={format}
+        xTickFormatter={x => props.periodFormatter(Number(x))}
+        yTickFormatter={y => `${y} · ${numbers.value.format(model.value.sizes.get(String(y)) ?? 0)}`}
         color={props.color}
         emptyColor={props.emptyColor}
         gap={props.gap}

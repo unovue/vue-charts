@@ -46,7 +46,7 @@ try {
   for (const name of ['vite', 'nuxt']) {
     const app = join(temporary, name)
     await cp(join(fixtures, name), app, { recursive: true })
-    for (const probe of ['nullability.ts', 'publicProps.ts', 'api-example-0.vue', 'api-example-1.vue', 'standalone.vue']) {
+    for (const probe of ['nullability.ts', 'publicProps.ts', 'api-example-0.vue', 'api-example-1.vue', 'standalone.vue', 'renames.vue']) {
       const directory = name === 'vite' ? 'src' : 'app'
       await copyFile(join(fixtures, probe), join(app, directory, probe))
     }
@@ -62,6 +62,10 @@ try {
       await copyFile(join(app, 'pnpm-lock.yaml'), join(fixtures, name, 'pnpm-lock.yaml'))
 
     if (name === 'vite') {
+      const config = JSON.parse(await readFile(join(app, 'tsconfig.json'), 'utf8'))
+      if (config.vueCompilerOptions?.strictTemplates !== true)
+        throw new Error('Vite must use strictTemplates: true')
+      console.log('Vite: strictTemplates=true')
       check(app, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
       check(app, ['exec', 'vite', 'build'])
       check(app, ['exec', 'vite', 'build', '--config', 'selected.config.mjs'])
@@ -79,7 +83,9 @@ try {
         const config = JSON.parse(await readFile(join(app, `.nuxt/tsconfig.${context}.json`), 'utf8'))
         if (config.compilerOptions.strict !== true)
           throw new Error(`Nuxt ${context} must use strict: true`)
-        console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}`)
+        if (context === 'app' && config.vueCompilerOptions?.strictTemplates !== true)
+          throw new Error('Nuxt app must use strictTemplates: true')
+        console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}${context === 'app' ? ', strictTemplates=true' : ''}`)
       }
       const guard = spawnSync(process.execPath, [join(root, 'scripts/check-consumer-declarations.mjs'), app], {
         env,

@@ -3,7 +3,7 @@ import type { ViewBox } from '@/types/viewBox'
 import type { ChartOffset } from '@/types'
 import type { AxisId, AxisInterval, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { AxisPropsNeededForTicksGenerator, GetTicksInput } from '@/types/tick'
-import type { SVGAttributes, VNode } from 'vue'
+import type { SVGAttributes, VNode, VNodeChild } from 'vue'
 
 type AxisPropsForCartesianGridTicksGeneration = AxisPropsNeededForTicksGenerator &
   Omit<GetTicksInput, 'ticks' | 'viewBox'>
@@ -141,4 +141,19 @@ export interface CartesianGridProps extends InternalCartesianGridProps {
   tickMargin?: number
   interval?: AxisInterval
 
+}
+
+export interface CartesianGridLineSlotProps extends Omit<SVGAttributes, 'offset'>, Record<string, unknown> {
+  x1?: number
+  y1?: number
+  x2?: number
+  y2?: number
+  index: number
+  key?: string
+  offset?: ChartOffset
+}
+
+export interface CartesianGridSlots {
+  horizontal?: (props: CartesianGridLineSlotProps) => VNodeChild
+  vertical?: (props: CartesianGridLineSlotProps) => VNodeChild
 }

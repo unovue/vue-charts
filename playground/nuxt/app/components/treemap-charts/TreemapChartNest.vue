@@ -58,7 +58,7 @@ const colors = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
         :data="chartData"
         data-key="value"
         type="nest"
-        :color-panel="colors"
+        :colors="colors"
         stroke="#fff"
         :is-animation-active="true"
       />

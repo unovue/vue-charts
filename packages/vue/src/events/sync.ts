@@ -5,7 +5,6 @@ import { computed, nextTick, onMounted, watch, watchEffect } from 'vue'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Chart } from '@/model/chart'
-import { parseTooltipIndex } from '@/core/tooltip'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import type { BrushStartEndIndex } from '@/types/chartData'
 
@@ -40,7 +39,7 @@ export function useTooltipChartSynchronisation(source: TooltipSource, enabled: (
       active: source.active.value,
       coordinate: source.coordinate.value,
       dataKey: activeDataKey.value,
-      index: source.index.value === null ? null : String(source.index.value),
+      index: source.index.value,
       label: source.label.value,
     }
     eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId.value, message, eventEmitterSymbol.value)
@@ -75,8 +74,14 @@ function useTooltipSyncEventsListener(chart: Chart) {
         return
       }
       if (syncMethod.value === 'index') {
-        const { kind: _kind, ...interaction } = message
-        tooltip.setSyncInteraction(interaction)
+        const candidate = message.index === null ? undefined : tooltip.targets.value[message.index]
+        tooltip.activate('sync', {
+          active: message.active,
+          index: candidate?.index ?? null,
+          configuration: candidate?.entry?.value,
+          dataKey: candidate?.entry?.value?.settings.dataKey,
+          coordinate: message.coordinate,
+        })
         // This is the default behaviour, we don't need to do anything else.
         return
       }
@@ -93,9 +98,9 @@ function useTooltipSyncEventsListener(chart: Chart) {
          * In 3.x we store things differently but let's try to keep the old shape for compatibility.
          */
         const syncMethodParam: MouseHandlerDataParam = {
-          activeTooltipIndex: parseTooltipIndex(message.index) ?? undefined,
+          activeTooltipIndex: message.index ?? undefined,
           isTooltipActive: message.active,
-          activeIndex: parseTooltipIndex(message.index) ?? undefined,
+          activeIndex: message.index ?? undefined,
           activeLabel: message.label,
           activeDataKey: message.dataKey,
           activeCoordinate: message.coordinate,
@@ -110,13 +115,7 @@ function useTooltipSyncEventsListener(chart: Chart) {
       }
 
       if (activeTick == null || message.active === false) {
-        tooltip.setSyncInteraction({
-          active: false,
-          coordinate: undefined,
-          dataKey: undefined,
-          index: null,
-          label: undefined,
-        })
+        tooltip.activate('sync', { active: false, index: null, dataKey: undefined })
         return
       }
       const { x, y } = message.coordinate!
@@ -127,12 +126,13 @@ function useTooltipSyncEventsListener(chart: Chart) {
         y: layout.value === 'horizontal' ? validateChartY : activeTick.coordinate,
       }
 
-      tooltip.setSyncInteraction({
+      const candidate = tooltip.targets.value[activeTick.index ?? -1]
+      tooltip.activate('sync', {
         active: message.active,
+        index: candidate?.index ?? null,
+        configuration: candidate?.entry?.value,
+        dataKey: candidate?.entry?.value?.settings.dataKey,
         coordinate: activeCoordinate,
-        dataKey: message.dataKey,
-        index: String(activeTick.index),
-        label: message.label,
       })
     }
     eventCenter.on(TOOLTIP_SYNC_EVENT, listener)

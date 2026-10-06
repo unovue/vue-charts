@@ -1,5 +1,4 @@
 import { generateRadialChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/model/options'
 
 export const RadialBarChart = generateRadialChart({
   chartName: 'RadialBarChart',
@@ -10,5 +9,4 @@ export const RadialBarChart = generateRadialChart({
   },
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: ['axis', 'item'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
 })

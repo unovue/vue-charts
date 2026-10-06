@@ -4,7 +4,7 @@ import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-v'
 import { useChart } from '@/model/chart'
@@ -23,7 +23,20 @@ import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
-import type { RadarPoint } from '@/types/radar'
+import type { RadarComposedData, RadarPoint } from '@/types/radar'
+import type { LineSlots } from '@/cartesian/line/type'
+
+export type RadarShapeSlotProps = RadarComposedData & {
+  fill?: string
+  stroke?: string
+  fillOpacity: number
+  strokeWidth?: number
+  strokeDasharray?: string
+}
+
+export type RadarSlots = Pick<LineSlots, 'dot' | 'activeDot' | 'label'> & {
+  shape?: (props: RadarShapeSlotProps) => VNodeChild
+}
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
   return stroke && stroke !== 'none' ? stroke : fill
@@ -55,6 +68,7 @@ const RadarViewProps = {
 
 const RadarView = defineComponent({
   name: 'RadarView',
+  slots: Object as SlotsType<RadarSlots>,
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof RadarViewProps>>, required: true },
@@ -160,61 +174,67 @@ const RadarView = defineComponent({
       return (
         <Layer data-slot="series" class="v-charts-radar">
           <g class="v-charts-radar-polygon" {...seriesListeners}>
-            {isRange && baseLinePoints.length > 0
-              ? (
-                  <g>
+            {slots.shape
+              ? slots.shape({
+                  points,
+                  baseLinePoints,
+                  isRange,
+                  fill: props.fill,
+                  stroke,
+                  fillOpacity: props.fillOpacity,
+                  strokeWidth: props.strokeWidth,
+                  strokeDasharray: props.strokeDasharray,
+                })
+              : isRange && baseLinePoints.length > 0
+                ? (
+                    <g>
+                      <path
+                        d={pathD}
+                        fill={isClosed ? props.fill : 'none'}
+                        fill-opacity={props.fillOpacity}
+                        stroke="none"
+                        stroke-dasharray={props.strokeDasharray}
+                      />
+                      {hasStroke && (
+                        <path
+                          d={getSinglePolygonPath(points)}
+                          fill="none"
+                          stroke={stroke}
+                          stroke-width={props.strokeWidth}
+                          stroke-dasharray={props.strokeDasharray}
+                        />
+                      )}
+                      {hasStroke && (
+                        <path
+                          d={getSinglePolygonPath(baseLinePoints)}
+                          fill="none"
+                          stroke={stroke}
+                          stroke-width={props.strokeWidth}
+                          stroke-dasharray={props.strokeDasharray}
+                        />
+                      )}
+                    </g>
+                  )
+                : (
                     <path
                       d={pathD}
                       fill={isClosed ? props.fill : 'none'}
                       fill-opacity={props.fillOpacity}
-                      stroke="none"
+                      stroke={stroke}
+                      stroke-width={props.strokeWidth}
                       stroke-dasharray={props.strokeDasharray}
                     />
-                    {hasStroke && (
-                      <path
-                        d={getSinglePolygonPath(points)}
-                        fill="none"
-                        stroke={stroke}
-                        stroke-width={props.strokeWidth}
-                        stroke-dasharray={props.strokeDasharray}
-                      />
-                    )}
-                    {hasStroke && (
-                      <path
-                        d={getSinglePolygonPath(baseLinePoints)}
-                        fill="none"
-                        stroke={stroke}
-                        stroke-width={props.strokeWidth}
-                        stroke-dasharray={props.strokeDasharray}
-                      />
-                    )}
-                  </g>
-                )
-              : (
-                  <path
-                    d={pathD}
-                    fill={isClosed ? props.fill : 'none'}
-                    fill-opacity={props.fillOpacity}
-                    stroke={stroke}
-                    stroke-width={props.strokeWidth}
-                    stroke-dasharray={props.strokeDasharray}
-                  />
-                )}
+                  )}
           </g>
-          {props.dot && (
+          {(props.dot || slots.dot) && (
             <g class="v-charts-radar-dots">
               {points.map((point, i) => {
                 const dotProps = typeof props.dot === 'object' ? props.dot : {}
                 return (
                   <g key={items.value[i].key} {...listeners(point, i)}>
-                    <Dot
-                      cx={point.x}
-                      cy={point.y}
-                      r={3}
-                      fill={props.fill}
-                      stroke={stroke}
-                      {...dotProps}
-                    />
+                    {slots.dot
+                      ? slots.dot({ cx: point.x, cy: point.y, index: i, value: point.value, payload: point.payload })
+                      : <Dot cx={point.x} cy={point.y} r={3} fill={props.fill} stroke={stroke} {...dotProps} />}
                   </g>
                 )
               })}
@@ -245,14 +265,16 @@ const RadarView = defineComponent({
             itemDataKey={props.dataKey}
             activeDot={props.activeDot}
             isAnimationActive={props.isAnimationActive}
+            v-slots={{ activeDot: slots.activeDot }}
           />
         </Layer>
       )
       const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
-      const labelEl = props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
-        : null
+      const labelProps = typeof props.label === 'object' ? props.label : {}
+      const labelEl = slots.label
+        ? <LabelList {...labelProps} v-slots={{ label: slots.label }} />
+        : props.label ? <LabelList {...labelProps} /> : null
 
       return (
         <Fragment>
@@ -265,7 +287,8 @@ const RadarView = defineComponent({
   },
 })
 
-export const Radar = defineComponent({
+const _Radar = defineComponent({
+  slots: Object as SlotsType<RadarSlots>,
   name: 'Radar',
   emits: radarEvents.emits,
   inheritAttrs: false,
@@ -314,3 +337,5 @@ export const Radar = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+export const Radar: typeof _Radar & { new (): { $slots: RadarSlots } } = _Radar

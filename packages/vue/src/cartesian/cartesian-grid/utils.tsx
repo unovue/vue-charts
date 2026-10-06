@@ -1,4 +1,5 @@
 import type { VNodeChild } from 'vue'
+import type { CartesianGridLineSlotProps } from './type'
 import { filterProps } from '@/utils/VueUtils'
 
 /**
@@ -6,9 +7,9 @@ import { filterProps } from '@/utils/VueUtils'
  * Priority: slot > default <line> with optional SVG attr overrides from `option`.
  */
 export function renderLineItem(
-  slot: ((props: Record<string, unknown>) => VNodeChild) | undefined,
+  slot: ((props: CartesianGridLineSlotProps) => VNodeChild) | undefined,
   option: boolean | object,
-  props: { x1?: number, x2?: number, y1?: number, y2?: number, key?: string } & Record<string, unknown>,
+  props: CartesianGridLineSlotProps,
 ) {
   if (slot) {
     return slot(props)

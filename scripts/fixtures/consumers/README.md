@@ -41,7 +41,10 @@ On other systems, run it in a network-disabled container after preparation. `--o
 proves pnpm's install mode; it does not prove a framework build made no network request.
 Temporary applications are removed on success or failure. No server starts during these checks.
 
-Consumer templates use `strict: true` and `skipLibCheck: true`. The nullability probe still
+Consumer templates use `strict: true`, `strictTemplates: true` and `skipLibCheck: true`.
+Template probes reject removed props as well as invalid row keys and payloads.
+The wrapper's `data-slot` and `data-chart` attributes remain accepted. `data-key` stays a checked
+component prop. The nullability probe still
 checks consumer source against packed declarations. A separate guard checks every packed
 vccs declaration with `skipLibCheck: false` in the Nuxt fixture (which supplies Nuxt's optional
 integration types). Errors located in vccs fail the guard; dependency diagnostics are reported.

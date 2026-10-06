@@ -48,6 +48,24 @@ describe('tooltip', () => {
     })
   })
 
+  it('formats the default tooltip label with its active payload', async () => {
+    const labelFormatter = vi.fn((label, payload) => <strong>{`${label}: ${payload.length} series`}</strong>)
+    const { container } = render(() => (
+      <BarChart width={500} height={300} data={data}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip defaultIndex={0} labelFormatter={labelFormatter} />
+        <Bar dataKey="uv" isAnimationActive={false} />
+      </BarChart>
+    ))
+    await nextTick()
+    await nextTick()
+    expect(container.querySelector('.v-charts-tooltip-label strong')?.textContent).toBe('Page A: 1 series')
+    expect(labelFormatter.mock.calls.at(-1)?.[1]).toEqual([
+      expect.objectContaining({ dataKey: 'uv', value: 400, payload: data[0] }),
+    ])
+  })
+
   describe('cursor', () => {
     it('does not render cursor when cursor is false', () => {
       const { container } = render(() => (

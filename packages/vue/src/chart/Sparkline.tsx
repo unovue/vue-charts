@@ -185,7 +185,7 @@ const SparklineInner = defineComponent({
           request: index => emit('update:activeIndex', index),
         },
         keyboardItems: points.value.map(point => ({
-          index: String(point.index),
+          index: point.index,
           identity: point.payload !== null && typeof point.payload === 'object'
             ? counts.get(identities[point.index]) === 1 ? identities[point.index] : point.payload
             : positionalIdentities[point.index] ??= Symbol(),
@@ -201,19 +201,19 @@ const SparklineInner = defineComponent({
     function setActive(index: number | null, keyboard = false) {
       const point = index === null ? undefined : points.value[index]
       if (!point && !keyboard) {
-        tooltip.mouseLeaveItem()
+        tooltip.clear('hover')
         return
       }
       const action = {
-        activeIndex: point ? String(point.index) : null,
+        index: point ? point.index : null,
         configuration: configuration.value,
-        activeDataKey: 'value',
-        activeCoordinate: point ? { x: point.x, y: point.y } : undefined,
+        dataKey: 'value',
+        coordinate: point ? { x: point.x, y: point.y } : undefined,
       }
       if (keyboard)
-        tooltip.setKeyboardInteraction({ ...action, active: !!point })
+        tooltip.activate('keyboard', { ...action, active: !!point })
       else
-        tooltip.setActiveMouseOverItemIndex(action)
+        tooltip.activate('hover', { ...action, type: 'item' })
     }
 
     function onPointer(event: MouseEvent) {

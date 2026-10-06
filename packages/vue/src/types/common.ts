@@ -3,7 +3,6 @@ import type { ChartOffset, Coordinate, TickItem, VueClassValue } from './base'
 
 export type { DataKey, Coordinate, ChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
 import type { TooltipPayload } from '@/types/tooltip'
-import type { TooltipIndex } from './tooltip'
 import type { PropType, SVGAttributes } from 'vue'
 
 export type LayoutType = 'horizontal' | 'vertical' | 'centric' | 'radial'
@@ -24,14 +23,14 @@ export type MouseHandlerDataParam = {
    * Index of the active tick in the current chart. Only works with number-indexed one-dimensional data charts,
    * like Line, Area, Bar, Pie, etc.
    *
-   * Doesn't work with two-dimensional data charts like Treemap, Sankey. But one day it will which is why the TooltipIndex type is here.
+   * Callbacks retain legacy string indexes; hierarchy targets use their payload path.
    */
-  activeTooltipIndex: number | TooltipIndex | undefined
+  activeTooltipIndex: number | string | null | undefined
   isTooltipActive: boolean
   /**
    * Exactly the same as activeTooltipIndex - this was also duplicated in recharts@2 so let's keep both properties for better backwards compatibility.
    */
-  activeIndex: number | TooltipIndex | undefined
+  activeIndex: number | string | null | undefined
   activeLabel: string | number | undefined
   activeDataKey: ChartDataKey | undefined
   activeCoordinate: Coordinate | undefined

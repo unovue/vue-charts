@@ -12,7 +12,6 @@ import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/model/options'
 import type {
-  TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
 } from '@/types/tooltip'
@@ -52,11 +51,11 @@ export interface SankeySlots {
 
 const sankeyPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
-  activeIndex: TooltipIndex,
+  payloadKey: string,
 ) => {
-  if (!data || activeIndex == null)
+  if (!data || payloadKey == null)
     return undefined
-  return get(data, activeIndex as string)
+  return get(data, payloadKey)
 }
 
 const sankeyOptions: ChartOptions = {
@@ -218,7 +217,8 @@ function useSankey(
         dataDefinedOnItem: payloadTree.value,
         positions: undefined,
         pointerItems: layout.value.links.map((link, index) => ({
-          index: `links[${index}]`,
+          index: layout.value.nodes.length + index,
+          payloadKey: `links[${index}]`,
           identity: data.value?.[0]?.links[index],
           coordinate: {
             x: ((link.source as SankeyLayoutNode).x1! + (link.target as SankeyLayoutNode).x0!) / 2,
@@ -229,7 +229,8 @@ function useSankey(
           (a.x0 ?? 0) - (b.x0 ?? 0) || (a.y0 ?? 0) - (b.y0 ?? 0),
         ).map(node => ({
           identity: data.value?.[0]?.nodes[node.index!],
-          index: `nodes[${node.index}]`,
+          index: node.index!,
+          payloadKey: `nodes[${node.index}]`,
           coordinate: {
             x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
             y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
@@ -257,11 +258,7 @@ function useSankey(
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      tooltip.setActiveMouseOverItemIndex({
-        activeIndex: `nodes[${index}]`,
-        activeDataKey: props.dataKey,
-        activeCoordinate: coord,
-      })
+      tooltip.activate('hover', { type: 'item', index, dataKey: props.dataKey, coordinate: coord })
       emit('node-mouseenter', node, index, e)
     }
 
@@ -271,21 +268,22 @@ function useSankey(
       const sy = link.y0 ?? 0
       const ty = link.y1 ?? 0
       const coord: Coordinate = { x: (sx + tx) / 2, y: (sy + ty) / 2 }
-      tooltip.setActiveMouseOverItemIndex({
-        activeIndex: `links[${index}]`,
-        activeDataKey: props.dataKey,
-        activeCoordinate: coord,
+      tooltip.activate('hover', {
+        type: 'item',
+        index: layout.value.nodes.length + index,
+        dataKey: props.dataKey,
+        coordinate: coord,
       })
       emit('link-mouseenter', link, index, e)
     }
 
     function handleNodeMouseLeave(node: SankeyLayoutNode, index: number, e: MouseEvent) {
-      tooltip.mouseLeaveItem()
+      tooltip.clear('hover')
       emit('node-mouseleave', node, index, e)
     }
 
     function handleLinkMouseLeave(link: SankeyLayoutLink, index: number, e: MouseEvent) {
-      tooltip.mouseLeaveItem()
+      tooltip.clear('hover')
       emit('link-mouseleave', link, index, e)
     }
 
@@ -294,11 +292,7 @@ function useSankey(
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      tooltip.setActiveClickItemIndex({
-        activeIndex: `nodes[${index}]`,
-        activeDataKey: props.dataKey,
-        activeCoordinate: coord,
-      })
+      tooltip.activate('click', { type: 'item', index, dataKey: props.dataKey, coordinate: coord })
       emit('node-click', node, index, e)
     }
 
@@ -309,10 +303,11 @@ function useSankey(
         x: (sx + tx) / 2,
         y: ((link.y0 ?? 0) + (link.y1 ?? 0)) / 2,
       }
-      tooltip.setActiveClickItemIndex({
-        activeIndex: `links[${index}]`,
-        activeDataKey: props.dataKey,
-        activeCoordinate: coord,
+      tooltip.activate('click', {
+        type: 'item',
+        index: layout.value.nodes.length + index,
+        dataKey: props.dataKey,
+        coordinate: coord,
       })
       emit('link-click', link, index, e)
     }

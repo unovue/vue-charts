@@ -1,5 +1,4 @@
 import { generatePolarChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/model/options'
 
 export const PieChart = generatePolarChart({
   chartName: 'PieChart',
@@ -10,5 +9,4 @@ export const PieChart = generatePolarChart({
   },
   defaultTooltipEventType: 'item',
   validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
 })

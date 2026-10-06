@@ -2,7 +2,6 @@ import type { ActivePointsSlots } from './type'
 import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent } from 'vue'
-import { parseTooltipIndex } from '@/core/tooltip'
 import type { PropType, SlotsType } from 'vue'
 import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
@@ -38,14 +37,14 @@ export const ActivePoints = defineComponent({
       if (!points?.length || isNullish(activeTooltipIndex.value))
         return null
 
-      const activePoint = points[parseTooltipIndex(activeTooltipIndex.value) ?? -1]
+      const activePoint = points[activeTooltipIndex.value ?? -1]
       if (isNullish(activePoint)) {
         return null
       }
 
       return renderActivePoint({
         point: activePoint!,
-        childIndex: parseTooltipIndex(activeTooltipIndex.value) ?? -1,
+        childIndex: activeTooltipIndex.value ?? -1,
         mainColor: props.mainColor!,
         dataKey: props.itemDataKey!,
         activeDot: props.activeDot,

@@ -1,4 +1,4 @@
-import type { TooltipEventType, TooltipPayloadSearcher } from '@/types/tooltip'
+import type { TooltipEventType } from '@/types/tooltip'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideClipPathId, provideRenderPhase } from '@/model/runtime'
 import type { ExtractPropTypes, SetupContext } from 'vue'
@@ -22,14 +22,12 @@ export interface CategoricalChartOptions {
   defaultProps?: Partial<Pick<CategoricalChartPropsWithOutSvg, 'layout' | 'startAngle' | 'endAngle'>>
   defaultTooltipEventType?: TooltipEventType
   validateTooltipEventTypes?: readonly TooltipEventType[]
-  tooltipPayloadSearcher?: TooltipPayloadSearcher
 }
 
 function createChartSetup({
   chartName,
   defaultTooltipEventType = 'axis',
   validateTooltipEventTypes = ['axis'],
-  tooltipPayloadSearcher,
 }: CategoricalChartOptions) {
   const defaultTitle = chartName === 'ComposedChart'
     ? 'Chart'
@@ -74,7 +72,7 @@ function createChartSetup({
             outerRadius: props.outerRadius ?? chartDefaults.outerRadius,
           }
         : null,
-      tooltip: () => ({ chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher }),
+      tooltip: () => ({ chartName, defaultTooltipEventType, validateTooltipEventTypes }),
     })
     provideChart(chart)
     provideRenderPhase()

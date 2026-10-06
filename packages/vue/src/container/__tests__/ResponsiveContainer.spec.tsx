@@ -164,22 +164,22 @@ describe('responsiveContainer', () => {
   })
 
   describe('resize behavior', () => {
-    it('calls onResize callback when container resizes', async () => {
+    it('emits initial and resized dimensions through resize listeners', async () => {
       const onResize = vi.fn()
 
-      render(() => (
-        <ResponsiveContainer onResize={onResize}>
-          <div class="child">test</div>
-        </ResponsiveContainer>
-      ))
-
+      const { emitted } = render(ResponsiveContainer, {
+        props: { onResize },
+        slots: { default: () => <div class="child">test</div> },
+      })
       expect(MockResizeObserver.instances.length).toBe(1)
-      const observer = MockResizeObserver.instances[0]
+      await nextTick()
+      const observer = MockResizeObserver.instances.at(-1)!
 
       observer.trigger(600, 400)
       await nextTick()
 
-      expect(onResize).toHaveBeenCalledWith(600, 400)
+      expect(emitted().resize).toEqual([[500, 300], [600, 400]])
+      expect(onResize.mock.calls).toEqual([[500, 300], [600, 400]])
     })
 
     it('disconnects ResizeObserver on unmount', () => {

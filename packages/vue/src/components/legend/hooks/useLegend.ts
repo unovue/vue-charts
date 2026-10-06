@@ -118,7 +118,7 @@ export function useLegend(props: LegendProps) {
     const userStyle = props.wrapperStyle ? { ...props.wrapperStyle } : {}
 
     // If user supplies their own portal, only use their defined wrapper styles
-    if (props.portal) {
+    if (props.to) {
       return userStyle
     }
 
@@ -141,7 +141,7 @@ export function useLegend(props: LegendProps) {
   })
 
   // Determine portal target
-  const legendPortal = computed(() => props.portal ?? legendPortalFromContext?.value)
+  const legendPortal = computed(() => props.to ?? legendPortalFromContext?.value)
 
   return {
     legendRef,

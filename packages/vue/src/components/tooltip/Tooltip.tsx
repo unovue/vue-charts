@@ -1,8 +1,8 @@
-import type { Component, PropType, SlotsType, VNode, VNodeChild } from 'vue'
+import type { PropType, SlotsType, VNodeChild } from 'vue'
 import { useTooltipController, useTooltipSource } from '@/model/tooltip'
 import type { ChartTransition } from '@/animation/motion'
 import { useChartPresentation } from '@/model/presentation'
-import { Fragment, Teleport, computed, defineComponent, h, watch } from 'vue'
+import { Fragment, Teleport, computed, defineComponent, watch } from 'vue'
 import { usePortal } from '@/model/runtime'
 import type { Formatter, TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry, TooltipTrigger } from '@/types/tooltip'
 import { useTimeoutFn } from '@vueuse/core'
@@ -16,7 +16,7 @@ import type {
 import { uniqBy } from 'es-toolkit/compat'
 import { useTooltipChartSynchronisation } from '@/events/sync'
 
-import type { AllowInDimension, ContentType, CursorSlotProps, TooltipContentProps } from './types'
+import type { AllowInDimension, CursorSlotProps, TooltipContentProps } from './types'
 import { DefaultTooltipContent } from './DefaultTooltipContent'
 import { TooltipBoundingBox } from './TooltipBoundingBox'
 import { Cursor } from './Cursor'
@@ -61,11 +61,11 @@ const TooltipVueProps = {
    */
   includeHidden: Boolean,
   formatter: Function as PropType<Formatter<ValueType, NameType>>,
+  labelFormatter: Function as PropType<(label: string | number | undefined, payload: TooltipPayload) => VNodeChild>,
   allowEscapeViewBox: {
     type: Object as PropType<AllowInDimension>,
     default: () => ({ x: false, y: false }),
   },
-  content: [Object, Function] as PropType<ContentType>,
   cursor: {
     type: [Boolean, Object] as PropType<boolean | object>,
     default: true,
@@ -87,10 +87,10 @@ const TooltipVueProps = {
   },
   payloadUniqBy: [Boolean, Function] as PropType<UniqueOption<TooltipPayloadEntry>>,
   /**
-   * If portal is defined, then Tooltip will use this element as a target for rendering using Teleport
+   * The selector or element that receives the tooltip, as with Teleport.
    */
-  portal: {
-    type: Object as PropType<HTMLElement | null>,
+  to: {
+    type: [String, Object] as PropType<string | HTMLElement>,
     default: undefined,
   },
   position: Object as PropType<Partial<Coordinate>>,
@@ -157,7 +157,6 @@ const _Tooltip = defineComponent({
   slots: Object as SlotsType<{
     content?: (props: TooltipContentProps) => VNodeChild
     cursor?: (props: CursorSlotProps) => VNodeChild
-    default?: () => VNode[]
   }>,
   setup(props, { slots, emit }) {
     const tooltip = useTooltipController()
@@ -170,7 +169,7 @@ const _Tooltip = defineComponent({
         trigger: props.trigger,
         axisId: props.axisId,
         active: props.active,
-        defaultIndex: props.defaultIndex === undefined ? undefined : String(props.defaultIndex),
+        defaultIndex: props.defaultIndex,
       },
       request: (index: TooltipActiveIndex) => emit('update:activeIndex', index),
     }))
@@ -185,7 +184,7 @@ const _Tooltip = defineComponent({
 
     // Portal
     const tooltipPortalFromContext = usePortal()
-    const tooltipPortal = computed(() => props.portal ?? tooltipPortalFromContext?.value)
+    const tooltipPortal = computed(() => props.to ?? tooltipPortalFromContext?.value)
 
     // Final states
     const finalIsActive = source.active
@@ -256,14 +255,6 @@ const _Tooltip = defineComponent({
 
     const hasPayload = computed(() => finalPayload.value.length > 0)
 
-    // Content component resolution
-    const contentComponent = computed<Component>(() => {
-      if (props.content) {
-        return props.content
-      }
-      return DefaultTooltipContent
-    })
-
     const contentProps = computed(() => ({
       ...props,
       payload: finalPayload.value,
@@ -272,8 +263,6 @@ const _Tooltip = defineComponent({
       coordinate: coordinate.value,
       accessibilityLayer: accessibilityLayer.value,
     }))
-
-    const hasContentSlot = computed(() => !!slots.content || !!slots.default)
 
     useTooltipChartSynchronisation(source, () => ownsInteraction.value)
     return () => {
@@ -297,9 +286,9 @@ const _Tooltip = defineComponent({
                 viewBox={viewBox.value}
                 style={props.style}
               >
-                {hasContentSlot.value
-                  ? (slots.content ? slots.content(contentProps.value) : slots.default!())
-                  : h(contentComponent.value, contentProps.value)}
+                {slots.content
+                  ? slots.content(contentProps.value)
+                  : <DefaultTooltipContent {...contentProps.value} />}
               </TooltipBoundingBox>
             </Teleport>
           </foreignObject>
@@ -323,7 +312,6 @@ const _Tooltip = defineComponent({
 export type TooltipSlots = {
   content?: (props: TooltipContentProps) => VNodeChild
   cursor?: (props: CursorSlotProps) => VNodeChild
-  default?: () => VNode[]
 }
 
 // Explicit constructor slots survive declaration generation for Volar consumers.

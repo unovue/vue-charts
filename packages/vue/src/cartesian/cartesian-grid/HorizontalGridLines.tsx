@@ -1,9 +1,12 @@
-import type { PropType } from 'vue'
+import type { PropType, SlotsType } from 'vue'
+import type { CartesianGridSlots } from './type'
+import type { ChartOffset } from '@/types'
 import { defineComponent } from 'vue'
 import { renderLineItem } from '@/cartesian/cartesian-grid/utils'
 
 const HorizontalGridLines = defineComponent({
   name: 'HorizontalGridLines',
+  slots: Object as SlotsType<CartesianGridSlots>,
   inheritAttrs: false,
   props: {
     x: Number,
@@ -20,7 +23,7 @@ const HorizontalGridLines = defineComponent({
       type: [String, Number],
       default: 0,
     },
-    offset: Object,
+    offset: Object as PropType<ChartOffset>,
     xAxis: Object,
     yAxis: Object,
   },

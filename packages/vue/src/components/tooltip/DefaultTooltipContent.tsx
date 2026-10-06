@@ -38,6 +38,7 @@ export const DefaultTooltipContent = defineComponent({
     itemStyle: Object,
     itemSorter: [Function, String] as PropType<((item: Payload<ValueType, NameType>) => number | string) | 'dataKey' | 'value' | 'name'>,
     formatter: Function as PropType<Formatter<ValueType, NameType>>,
+    labelFormatter: Function as PropType<(label: string | number | undefined, payload: TooltipPayload) => VNodeChild>,
   },
   setup(props) {
     return () => {
@@ -59,11 +60,13 @@ export const DefaultTooltipContent = defineComponent({
       }
       const { itemSorter, payload, formatter } = props
       const sortedPayload = itemSorter ? sortBy(payload, itemSorter) : payload
+      const label = props.labelFormatter ? props.labelFormatter(props.label, payload) : props.label
+      const hasLabel = props.labelFormatter ? label != null : !!props.label
       return (
         <div class="v-charts-tooltip-content" style={finalStyle}>
-          {props.label && (
+          {hasLabel && (
             <div class="v-charts-tooltip-label" style={finalLabelStyle}>
-              {printable(props.label)}
+              {printable(label)}
             </div>
           )}
           <div class="v-charts-tooltip-list">

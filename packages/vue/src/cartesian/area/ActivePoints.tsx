@@ -1,7 +1,6 @@
 import type { ChartDataKey, DataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent } from 'vue'
-import { parseTooltipIndex } from '@/core/tooltip'
 import type { PropType, SlotsType, VNode } from 'vue'
 import type { AreaPointItem } from '@/core/area'
 import type { Point } from '@/shape/Curve'
@@ -55,14 +54,14 @@ export const ActivePoints = defineComponent({
       if (!points?.length || isNullish(activeTooltipIndex.value))
         return null
 
-      const activePoint: PointType | undefined = points[parseTooltipIndex(activeTooltipIndex.value) ?? -1]
+      const activePoint: PointType | undefined = points[activeTooltipIndex.value ?? -1]
       if (isNullish(activePoint)) {
         return null
       }
 
       return renderActivePoint({
         point: activePoint!,
-        childIndex: parseTooltipIndex(activeTooltipIndex.value) ?? -1,
+        childIndex: activeTooltipIndex.value ?? -1,
         mainColor: props.mainColor!,
         dataKey: props.itemDataKey!,
         activeDot: props.activeDot,

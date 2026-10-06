@@ -92,7 +92,7 @@ export const ChartWrapper = defineComponent({
     }
 
     const myOnMouseLeave = (e: MouseEvent) => {
-      tooltip.mouseLeaveChart()
+      tooltip.clear('hover')
       callHandler((state, event) => emit('mouseleave', state, event), e)
     }
 

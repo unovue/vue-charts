@@ -9,7 +9,7 @@ import { nextTick } from 'vue'
 import type { Component, VNode } from 'vue'
 import ts from 'typescript'
 import * as Vccs from '@/index'
-import { Area, Bar, BarList, Brush, CalendarHeatmap, CartesianGrid, CohortChart, ComposedChart, Customized, Funnel, FunnelChart, Heatmap, JourneySankey, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, Sparkline, SunburstChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
+import { Area, Bar, BarList, Brush, CalendarHeatmap, CartesianGrid, CohortChart, ComposedChart, Customized, Funnel, FunnelChart, Heatmap, JourneySankey, Label, LabelList, Legend, Line, Pie, PieChart, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, RadialBar, RadialBarChart, ReferenceArea, ReferenceDot, ReferenceLine, Sankey, Scatter, Sparkline, SunburstChart, Tooltip, Tracker, Treemap, XAxis, YAxis } from '@/index'
 
 // Compile the unchanged docs SFCs against source exports, so this check also
 // works in a fresh checkout where the published dist entry does not exist yet.
@@ -56,12 +56,24 @@ const rows: Row[] = [
   { component: 'ReferenceDot', slot: 'shape', render: slot => <ReferenceDot x="A" y={10} v-slots={{ shape: slot }} />, replaced: '.v-charts-reference-dot circle' },
   { component: 'Label', slot: 'content', render: slot => <Label value="test" v-slots={{ content: slot }} />, replaced: '.v-charts-label' },
   ...['content', 'label'].map(slot => ({ component: 'LabelList', slot, render: (marker: Slot) => <LabelList data={[{ value: 10, x: 10, y: 10, width: 20, height: 20 }]} v-slots={{ [slot]: marker }} />, replaced: '.v-charts-label-list .v-charts-label' })),
-  { component: 'Tooltip', slot: 'default', render: slot => <Tooltip defaultIndex={0} v-slots={{ default: slot }} />, replaced: '.v-charts-tooltip-content' },
   { component: 'Tooltip', slot: 'content', render: slot => <Tooltip defaultIndex={0} v-slots={{ content: slot }} />, replaced: '.v-charts-tooltip-content' },
   { component: 'Tooltip', slot: 'cursor', render: slot => <Tooltip defaultIndex={0} v-slots={{ cursor: slot }} />, replaced: '.v-charts-tooltip-cursor' },
   { component: 'Legend', slot: 'content', render: slot => <Legend v-slots={{ content: slot }} />, replaced: '.v-charts-default-legend' },
   { component: 'Customized', slot: 'default', render: slot => <Customized v-slots={{ default: slot }} /> },
   { component: 'Brush', slot: 'default', render: slot => <Brush v-slots={{ default: () => <ComposedChart width={400} height={100} v-slots={{ default: slot }} /> }} /> },
+  ...['shape', 'dot', 'activeDot', 'label'].map(slot => ({ component: 'Radar', slot, standalone: true, render: (marker: Slot) => (
+    <RadarChart width={400} height={300} data={data}>
+      <PolarAngleAxis dataKey="name" />
+      <PolarRadiusAxis />
+      <Tooltip defaultIndex={0} />
+      <Radar dataKey="value" dot label isAnimationActive={false} v-slots={{ [slot]: marker }} />
+    </RadarChart>
+  ), replaced: ({ shape: '.v-charts-radar-polygon path', dot: '.v-charts-radar-dots circle', activeDot: '.v-charts-active-dot circle', label: '.v-charts-label-list .v-charts-label' })[slot] })),
+  ...['shape', 'label', 'default'].map(slot => ({ component: 'RadialBar', slot, standalone: true, render: (marker: Slot) => (
+    <RadialBarChart width={400} height={300} data={data}>
+      <RadialBar dataKey="value" label isAnimationActive={false} v-slots={{ [slot]: marker }} />
+    </RadialBarChart>
+  ), replaced: slot === 'shape' ? '.v-charts-radial-bar .v-charts-sector' : slot === 'label' ? '.v-charts-label-list .v-charts-label' : undefined })),
   ...['PolarAngleAxis', 'PolarRadiusAxis'].map(component => ({ component, slot: 'tick', standalone: true, render: (marker: Slot) => (
     <RadarChart width={400} height={300} data={data}>
       <PolarAngleAxis dataKey="name" v-slots={component === 'PolarAngleAxis' ? { tick: marker } : {}} />
@@ -115,9 +127,11 @@ describe('declared runtime slots', () => {
     await nextTick()
     await nextTick()
     expect(container.querySelectorAll(`.${className}`).length).toBeGreaterThan(0)
+    if (row.component === 'CartesianGrid')
+      expect(calls[0]).toEqual(expect.objectContaining({ offset: expect.objectContaining({ top: 5 }) }))
     if (row.slot === 'activeDot') {
       expect(calls[0]).toEqual(expect.objectContaining({ index: 0, dataKey: 'value', payload: data[0] }))
-      if (row.component === 'Line')
+      if (row.component === 'Line' || row.component === 'Radar')
         expect(calls[0]).toEqual(expect.objectContaining({ value: 10 }))
       else
         expect(calls[0]).toEqual(expect.objectContaining({ value: [0, 10] }))
@@ -176,9 +190,7 @@ describe('declared runtime slots', () => {
         })
       })
     const covered = rows.map(row => `${row.component}:${row.slot}`)
-    // Untyped Vue $slots has only an index signature. Grid predates S24 and its
-    // two supported slots are included as additional regression rows.
-    expect([...new Set(covered.filter(name => !name.startsWith('CartesianGrid:')))].sort())
+    expect([...new Set(covered)].sort())
       .toEqual([...new Set(declared)].sort())
   }, 30000)
 })

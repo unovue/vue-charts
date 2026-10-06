@@ -24,7 +24,7 @@ function selectCell(cell: HeatmapCell<Hit>) {
     y-key="weekday"
     data-key="visits"
     :levels="5"
-    :value-format="v => `${v} visits`"
+    :value-formatter="v => `${v} visits`"
     title="Visits by hour and weekday"
     :aspect="3"
     @cell-click="selectCell"

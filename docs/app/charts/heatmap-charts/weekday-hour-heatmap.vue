@@ -17,7 +17,7 @@ const data = days.flatMap((day, d) => Array.from({ length: 24 }, (_, hour) => ({
     y-key="day"
     data-key="visits"
     color="#14b8a6"
-    :x-label-format="hour => `${hour}h`"
+    :x-tick-formatter="hour => `${hour}h`"
   >
     <Tooltip :cursor="false" />
   </Heatmap>

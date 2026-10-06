@@ -2,11 +2,11 @@ import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
 import { useCanMeasureText } from '@/model/runtime'
-import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
 import { isNumber, warn } from '@/utils'
-import type { CartesianGridProps, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
+import type { CartesianGridProps, CartesianGridSlots, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
 import { getCoordinatesOfGrid } from '@/utils/grid'
 import { getTicks } from '@/cartesian/utils/get-ticks'
 import { getTicksOfAxis } from '@/core/axis/ticks'
@@ -91,6 +91,7 @@ const CartesianGridViewProps = {
 
 const CartesianGridView = defineComponent({
   name: 'CartesianGridView',
+  slots: Object as SlotsType<CartesianGridSlots>,
   inheritAttrs: true,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof CartesianGridViewProps>>, required: true },
@@ -269,11 +270,11 @@ const CartesianGridView = defineComponent({
 
           <VerticalGridLines
             {...propsIncludingDefaults}
-            offset={offset}
+            offset={offset.value}
             verticalPoints={verticalPoints}
             pointOpacity={verticalOpacity}
-            xAxis={xAxis}
-            yAxis={yAxis}
+            xAxis={xAxis.value!}
+            yAxis={yAxis.value!}
             v-slots={slots.vertical ? { vertical: slots.vertical } : undefined}
           />
         </g>
@@ -282,7 +283,8 @@ const CartesianGridView = defineComponent({
   },
 })
 
-export const CartesianGrid = defineComponent({
+const _CartesianGrid = defineComponent({
+  slots: Object as SlotsType<CartesianGridSlots>,
   name: 'CartesianGrid',
   inheritAttrs: false,
   props: CartesianGridViewProps,
@@ -291,3 +293,5 @@ export const CartesianGrid = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+export const CartesianGrid: typeof _CartesianGrid & { new (): { $slots: CartesianGridSlots } } = _CartesianGrid

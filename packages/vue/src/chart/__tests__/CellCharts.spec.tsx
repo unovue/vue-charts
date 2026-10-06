@@ -46,7 +46,7 @@ describe('<Tracker />', () => {
         height={20}
         gap={0}
         isAnimationActive={false}
-        colors={{ down: 'red', paused: 'gray' }}
+        statusColors={{ down: 'red', paused: 'gray' }}
         data={[{ date: '2026-01-01', status: 'up' }, { date: '2026-01-02', status: 'down' }, { date: '2026-01-03', status: 'paused' }, { date: '2026-01-04' }, { date: '2026-01-05', status: 'typo' }]}
       />
     ))
@@ -302,7 +302,7 @@ describe('<Heatmap />', () => {
         yKey={row => row.position.y}
         dataKey="amount"
         xDomain={['A', 'missing']}
-        valueFormat={formatter}
+        valueFormatter={formatter}
         isAnimationActive={false}
         {...{ 'onCell-click': click }}
       >
@@ -502,7 +502,7 @@ describe('<CohortChart />', () => {
         width={400}
         height={120}
         isAnimationActive={false}
-        periodLabel={i => `M${i}`}
+        periodFormatter={i => `M${i}`}
         data={[{ cohort: 'Jan', values: [1200, 600, 300] }, { cohort: 'Feb', values: [800, 200] }]}
       />
     ))

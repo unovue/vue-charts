@@ -1,10 +1,9 @@
 import { type PropType, type SlotsType, type StyleValue, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
 import { useReducedMotion } from '@/animation/useReducedMotion'
-import { get } from 'es-toolkit/compat'
 import { useTooltipController } from '@/model/tooltip'
 import type { ChartOptions } from '@/model/options'
-import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { cascadeReveal, motionTokens } from '@/animation/motion'
 import type { VueClassValue } from '@/types/common'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -88,16 +87,12 @@ function findSeams(previous: readonly GridCell[], next: readonly GridCell[]): Se
   return seams
 }
 
-const cellPayloadSearcher: TooltipPayloadSearcher = (data, activeIndex) =>
-  data == null || activeIndex == null ? undefined : get(data, activeIndex as string)
-
 /** Chart options shared by every cell chart: tooltips belong to a single cell. */
 export function cellChartOptions(chartName: string): ChartOptions {
   return {
     chartName,
     defaultTooltipEventType: 'item',
     validateTooltipEventTypes: ['item'],
-    tooltipPayloadSearcher: cellPayloadSearcher,
     eventEmitter: undefined,
   }
 }
@@ -273,7 +268,7 @@ export const CellGridLayer = defineComponent({
           request: index => emit('update:activeIndex', index),
         },
         keyboardItems: props.cells.map((cell, index) => ({
-          index: String(index),
+          index,
           identity: cell.key,
           coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
         })),
@@ -300,22 +295,22 @@ export const CellGridLayer = defineComponent({
 
     function activate(cell: GridCell, index: number) {
       const action = {
-        activeIndex: String(index),
+        index,
         configuration: configuration.value,
-        activeDataKey: 'value',
-        activeCoordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
+        dataKey: 'value',
+        coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
       }
       if (keyboard.value)
-        tooltip.setKeyboardInteraction({ ...action, active: true })
+        tooltip.activate('keyboard', { ...action, active: true })
       else
-        tooltip.setActiveMouseOverItemIndex(action)
+        tooltip.activate('hover', { ...action, type: 'item' })
     }
 
     function clear() {
       if (keyboard.value)
-        tooltip.setKeyboardInteraction({ activeIndex: null, activeDataKey: 'value', activeCoordinate: undefined, active: false })
+        tooltip.activate('keyboard', { index: null, dataKey: 'value', coordinate: undefined, active: false })
       else
-        tooltip.mouseLeaveItem()
+        tooltip.clear('hover')
     }
 
     function onEnter(cell: GridCell, index: number, event: MouseEvent) {
@@ -331,11 +326,12 @@ export const CellGridLayer = defineComponent({
     }
 
     function onClick(cell: GridCell, index: number, event: MouseEvent) {
-      tooltip.setActiveClickItemIndex({
-        activeIndex: String(index),
+      tooltip.activate('click', {
+        type: 'item',
+        index,
         configuration: configuration.value,
-        activeDataKey: 'value',
-        activeCoordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
+        dataKey: 'value',
+        coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
       })
       emit('cell-click', cell.payload, index, event)
     }

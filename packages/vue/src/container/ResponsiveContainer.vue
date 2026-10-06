@@ -4,17 +4,24 @@ import { computed, ref, toRef } from 'vue'
 import { useMounted, useResizeObserver, useThrottleFn } from '@vueuse/core'
 import { normalizeStyle } from '@/utils/style'
 import { provideInitialDimension } from '@/container/useSizeContext'
+import { warnOnce } from '@/utils/log'
 
 defineOptions({
   name: 'ResponsiveContainer',
   inheritAttrs: false,
 })
+
 const props = withDefaults(defineProps<ResponsiveContainerProps>(), {
   width: '100%',
   height: '100%',
   minWidth: 0,
   debounce: 0,
 })
+
+const emit = defineEmits<{ resize: [width: number, height: number] }>()
+
+warnOnce('[vccs] ResponsiveContainer is deprecated and will be removed in 2.0. Charts are responsive by default: remove the wrapper and set width, height or aspect on the chart.')
+
 export interface ResponsiveContainerProps {
   aspect?: number
   width?: string | number
@@ -30,7 +37,6 @@ export interface ResponsiveContainerProps {
   id?: string | number
   class?: string | number
   style?: Omit<CSSProperties, keyof ResponsiveContainerProps>
-  onResize?: (width: number, height: number) => void
 }
 const debounce = toRef(props, 'debounce')
 provideInitialDimension(toRef(props, 'initialDimension'))
@@ -38,7 +44,7 @@ provideInitialDimension(toRef(props, 'initialDimension'))
 const handleResize = useThrottleFn(
   (entries: readonly ResizeObserverEntry[]) => {
     const { width, height } = entries[0].contentRect
-    props.onResize?.(width, height)
+    emit('resize', width, height)
   },
   debounce,
   true,

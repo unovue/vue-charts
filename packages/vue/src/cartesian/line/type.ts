@@ -83,7 +83,7 @@ type ActivePointSlotProps = {
 }
 
 export type ActivePointsSlots = {
-  activeDot?: (props: ActivePointSlotProps) => VNode
+  activeDot?: (props: ActivePointSlotProps) => VNodeChild
 }
 
 export type LineSlots = ActivePointsSlots & {

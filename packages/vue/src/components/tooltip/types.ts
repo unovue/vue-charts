@@ -1,15 +1,9 @@
-import type { Component, VNodeChild } from 'vue'
 import type { TooltipPayload } from '@/types/tooltip'
 import type {
   ChartCoordinate,
   LayoutType,
 } from '@/types'
 import type { Point } from '@/shape'
-
-// Types
-export type ContentType =
-  | Component
-  | ((props: TooltipContentProps) => VNodeChild)
 
 export type TooltipContentProps = {
   label?: string | number

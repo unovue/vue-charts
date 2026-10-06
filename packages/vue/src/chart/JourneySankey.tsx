@@ -1,8 +1,7 @@
-import type { ChartRootAttributes } from './directChartTypes'
-import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
+import { get } from 'es-toolkit/compat'
+import type { ChartRenderContext, ChartVNode } from '@/types/typed'
 import { getValueByDataKey } from '@/utils/chart'
-import { seriesColor } from '@/utils/theme'
-import { type ExtractPublicPropTypes, type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
+import { type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -14,7 +13,7 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { ChartShell, useChartShell } from './ChartShell'
-import { cellChartOptions, cellGridSharedProps, isFocusVisible } from './CellGridLayer'
+import { cellChartOptions, isFocusVisible } from './CellGridLayer'
 import {
   type JourneyInput,
   type JourneyLink,
@@ -27,52 +26,23 @@ import {
   truncateMiddle,
 } from './journeyUtils'
 
-import type { JourneySankeySlots } from './journeyTypes'
+import { type JourneySankeyProps, type JourneySankeySlots, JourneySankeyVueProps } from './journeyTypes'
 
-export type { JourneyHeaderSlotProps, JourneyLabelSlotProps, JourneySankeySlots } from './journeyTypes'
+export type { JourneyHeaderSlotProps, JourneyLabelSlotProps, JourneySankeyProps, JourneySankeySlots } from './journeyTypes'
 
 const HEADER_BAND = 28
 const LABEL_HEIGHT = 34
 const CHAR_WIDTH = 6.6
 const CURVATURE = 0.42
 
-const JourneySankeyVueProps = {
-  isAnimationActive: cellGridSharedProps.isAnimationActive,
-  transition: cellGridSharedProps.transition,
-  /** One row per journey: the pages (or events) in order and how many sessions took it. */
-  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
-  pathKey: { type: [String, Number, Function] as PropType<RowDataKey<Record<string, unknown>>>, default: 'path' },
-  dataKey: { type: [String, Number, Function] as PropType<RowDataKey<Record<string, unknown>>>, default: 'count' },
-  /** Columns to show; longer journeys are cut. Defaults to the longest journey. */
-  steps: { type: Number, default: undefined },
-  /**
-   * Whether a journey's end means the session ended there. Set it to `false` when journeys
-   * were cut before they reached you, so no node claims an "end here" share.
-   */
-  exitsKnown: { type: Boolean, default: true },
-  color: { type: String, default: seriesColor(0) },
-  /** Fill for the part of a node whose sessions end there. */
-  exitColor: { type: String, default: 'var(--v-charts-inactive, #a3a3a3)' },
-  nodeWidth: { type: Number, default: 8 },
-  nodePadding: { type: Number, default: 8 },
-  /** The pinned journey, highlighted until cleared; bind with `v-model:pinned`. Clicking a band or node pins the largest journey through it. */
-  pinned: { type: Array as PropType<string[] | null>, default: undefined },
-  /** Show the step headers above the columns. */
-  headers: { type: Boolean, default: true },
-  /** Where a node name links to; return `undefined` for no link. */
-  nodeHref: { type: Function as PropType<(name: string, node: JourneyNode) => string | undefined>, default: undefined },
-  /** Second line under a node name. */
-  formatSubtitle: { type: Function as PropType<(node: JourneyNode) => string>, default: undefined },
-  /** Locale for numbers. Fixed by default so server and client render the same. */
-  locale: { type: String, default: 'en-US' },
-  desc: String,
-  title: { type: String, default: undefined },
-}
-
 const journeyEmits = {
   'update:pinned': (_path: string[] | null) => true,
-  'node-click': (_node: JourneyNode, _event: MouseEvent) => true,
-  'link-click': (_link: JourneyLink, _event: MouseEvent) => true,
+  'node-click': (_node: JourneyNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
+  'node-mouseenter': (_node: JourneyNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseleave': (_node: JourneyNode, _index: number, _event: MouseEvent) => true,
+  'link-click': (_link: JourneyLink, _index: number, _event: MouseEvent | KeyboardEvent) => true,
+  'link-mouseenter': (_link: JourneyLink, _index: number, _event: MouseEvent) => true,
+  'link-mouseleave': (_link: JourneyLink, _index: number, _event: MouseEvent) => true,
   'animation-start': () => true,
   'animation-end': () => true,
 }
@@ -252,8 +222,8 @@ const JourneySankeyInner = defineComponent({
 
     // --- Tooltip: one entry per node and per band.
     const subtitleOf = (node: JourneyNode) => {
-      if (props.formatSubtitle)
-        return props.formatSubtitle(node)
+      if (props.subtitleFormatter)
+        return props.subtitleFormatter(node)
       const count = numbers.value.format(node.count)
       if (node.step === 0)
         return `${count} sessions`
@@ -281,12 +251,14 @@ const JourneySankeyInner = defineComponent({
         positions: undefined,
         pointerItems: [
           ...layout.value.nodes.map((node, index) => ({
-            index: `nodes[${index}]`,
+            index,
+            payloadKey: `nodes[${index}]`,
             identity: node.id,
             coordinate: { x: node.x + props.nodeWidth, y: node.y },
           })),
           ...layout.value.links.map((link, index) => ({
-            index: `links[${index}]`,
+            index: layout.value.nodes.length + index,
+            payloadKey: `links[${index}]`,
             identity: `${link.source}→${link.target}`,
             coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 },
           })),
@@ -296,34 +268,48 @@ const JourneySankeyInner = defineComponent({
       return settings
     }))
 
-    function enterNode(node: JourneyNode) {
+    const nodeIndex = (node: JourneyNode) => layout.value.nodes.findIndex(item => item.id === node.id)
+    const linkIndex = (link: JourneyLink) => layout.value.links.findIndex(item => item.id === link.id)
+
+    function enterNode(node: JourneyNode, event?: MouseEvent) {
       hover.value = { kind: 'node', id: node.id }
-      const index = layout.value.nodes.findIndex(n => n.id === node.id)
-      tooltip.setActiveMouseOverItemIndex({ activeIndex: `nodes[${index}]`, activeDataKey: 'value', activeCoordinate: { x: node.x + props.nodeWidth, y: node.y } })
+      const index = nodeIndex(node)
+      if (event)
+        emit('node-mouseenter', node, index, event)
+      tooltip.activate('hover', { type: 'item', index, dataKey: 'value', coordinate: { x: node.x + props.nodeWidth, y: node.y } })
     }
-    function enterLink(link: JourneyLink) {
+    function enterLink(link: JourneyLink, event: MouseEvent) {
       hover.value = { kind: 'link', id: link.id }
-      const index = layout.value.links.findIndex(l => l.id === link.id)
-      tooltip.setActiveMouseOverItemIndex({ activeIndex: `links[${index}]`, activeDataKey: 'value', activeCoordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 } })
+      const index = linkIndex(link)
+      emit('link-mouseenter', link, index, event)
+      tooltip.activate('hover', { type: 'item', index: layout.value.nodes.length + index, dataKey: 'value', coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 } })
     }
     function leave() {
       hover.value = undefined
-      tooltip.mouseLeaveItem()
+      tooltip.clear('hover')
+    }
+    function leaveNode(node: JourneyNode, event: MouseEvent) {
+      leave()
+      emit('node-mouseleave', node, nodeIndex(node), event)
+    }
+    function leaveLink(link: JourneyLink, event: MouseEvent) {
+      leave()
+      emit('link-mouseleave', link, linkIndex(link), event)
     }
     function pinThrough(step: number, names: string[]) {
       const path = largestJourneyThrough(journeys.value, stepCount.value, { step, names })
       const same = path && pinnedPath.value && path.length === pinnedPath.value.length && path.every((name, i) => name === pinnedPath.value![i])
       setPinned(same || !path ? null : path)
     }
-    function clickNode(node: JourneyNode, event: MouseEvent) {
+    function clickNode(node: JourneyNode, event: MouseEvent | KeyboardEvent) {
       pinThrough(node.step, [node.name])
-      emit('node-click', node, event)
+      emit('node-click', node, nodeIndex(node), event)
     }
-    function clickLink(link: JourneyLink, event: MouseEvent) {
+    function clickLink(link: JourneyLink, event: MouseEvent | KeyboardEvent) {
       const source = nodeById.value.get(link.source)!
       const target = nodeById.value.get(link.target)!
       pinThrough(source.step, [source.name, target.name])
-      emit('link-click', link, event)
+      emit('link-click', link, linkIndex(link), event)
     }
 
     // --- Keyboard: arrows walk the nodes, Enter pins, Escape clears.
@@ -351,7 +337,7 @@ const JourneySankeyInner = defineComponent({
       }
       else if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        pinThrough(current.step, [current.name])
+        clickNode(current, event)
         return
       }
       else if (event.key === 'Escape') {
@@ -455,8 +441,8 @@ const JourneySankeyInner = defineComponent({
                     stroke="transparent"
                     stroke-width={Math.max(link.width, 10)}
                     style={{ cursor: 'pointer' }}
-                    onMouseenter={() => enterLink(link)}
-                    onMouseleave={leave}
+                    onMouseenter={(event: MouseEvent) => enterLink(link, event)}
+                    onMouseleave={(event: MouseEvent) => leaveLink(link, event)}
                     onClick={(event: MouseEvent) => clickLink(link, event)}
                   />
                 ))}
@@ -470,7 +456,7 @@ const JourneySankeyInner = defineComponent({
               const isFocused = focused.value === node.id
               return (
                 <g key={String(key)} class="v-charts-journey-node" style={{ opacity: nodeOpacity(node) * shown, transition: moving ? undefined : fade.value, pointerEvents: phase === 'exit' ? 'none' : undefined }}>
-                  <g style={{ cursor: 'pointer' }} onMouseenter={() => enterNode(node)} onMouseleave={leave} onClick={(event: MouseEvent) => clickNode(node, event)}>
+                  <g style={{ cursor: 'pointer' }} onMouseenter={(event: MouseEvent) => enterNode(node, event)} onMouseleave={(event: MouseEvent) => leaveNode(node, event)} onClick={(event: MouseEvent) => clickNode(node, event)}>
                     <rect x={node.x - 4} y={node.y} width={props.nodeWidth + 8} height={Math.max(height, 4)} fill="transparent" />
                     {node.continueHeight > 0 && <rect class="v-charts-journey-node-continue" x={node.x} y={node.y} width={props.nodeWidth} height={node.continueHeight} rx={2} style={{ fill: props.color }} />}
                     {node.exitHeight > 0 && <rect class="v-charts-journey-node-exit" x={node.x} y={node.y + node.continueHeight} width={props.nodeWidth} height={node.exitHeight} rx={2} style={{ fill: props.exitColor }} />}
@@ -496,24 +482,6 @@ const JourneySankeyInner = defineComponent({
     }
   },
 })
-
-export type JourneySankeyProps<Row = unknown> = ChartRootAttributes & Omit<
-  ExtractPublicPropTypes<typeof JourneySankeyVueProps & typeof chartSizeProps>,
-  'data' | 'dataKey' | 'pathKey' | 'nodeHref' | 'formatSubtitle'
-> & {
-  'data': readonly Row[]
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'pathKey'?: RowDataKey<NoInfer<Row>>
-  'nodeHref'?: (name: string, node: JourneyNode<NoInfer<Row>>) => string | undefined
-  'formatSubtitle'?: (node: JourneyNode<NoInfer<Row>>) => string
-  'onNode-click'?: (node: JourneyNode<NoInfer<Row>>, event: MouseEvent) => void
-  'onNodeClick'?: (node: JourneyNode<NoInfer<Row>>, event: MouseEvent) => void
-  'onLink-click'?: (link: JourneyLink<NoInfer<Row>>, event: MouseEvent) => void
-  'onLinkClick'?: (link: JourneyLink<NoInfer<Row>>, event: MouseEvent) => void
-  'onUpdate:pinned'?: (path: string[] | null) => void
-  'onAnimation-start'?: () => void
-  'onAnimation-end'?: () => void
-}
 
 const _JourneySankey = defineComponent({
   name: 'JourneySankey',
@@ -545,7 +513,10 @@ const _JourneySankey = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : Math.max(200, naturalHeight.value))),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('JourneySankey'))
+    }), {
+      ...cellChartOptions('JourneySankey'),
+      tooltipPayloadSearcher: (data, payloadKey) => get(data, payloadKey),
+    })
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
@@ -557,8 +528,12 @@ const _JourneySankey = defineComponent({
               height={size.effectiveHeight.value}
               {...{
                 'onUpdate:pinned': (path: string[] | null) => emit('update:pinned', path),
-                'onNode-click': (node: JourneyNode, event: MouseEvent) => emit('node-click', node, event),
-                'onLink-click': (link: JourneyLink, event: MouseEvent) => emit('link-click', link, event),
+                'onNode-click': (node: JourneyNode, index: number, event: MouseEvent | KeyboardEvent) => emit('node-click', node, index, event),
+                'onLink-click': (link: JourneyLink, index: number, event: MouseEvent | KeyboardEvent) => emit('link-click', link, index, event),
+                'onNode-mouseenter': (item: JourneyNode, index: number, event: MouseEvent) => emit('node-mouseenter', item, index, event),
+                'onNode-mouseleave': (item: JourneyNode, index: number, event: MouseEvent) => emit('node-mouseleave', item, index, event),
+                'onLink-mouseenter': (item: JourneyLink, index: number, event: MouseEvent) => emit('link-mouseenter', item, index, event),
+                'onLink-mouseleave': (item: JourneyLink, index: number, event: MouseEvent) => emit('link-mouseleave', item, index, event),
                 'onAnimation-start': () => emit('animation-start'),
                 'onAnimation-end': () => emit('animation-end'),
               }}

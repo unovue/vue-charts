@@ -16,7 +16,6 @@ import { polarToCartesian } from '@/utils/polar'
 import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/model/options'
 import type {
-  TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
 } from '@/types/tooltip'
@@ -39,11 +38,11 @@ export interface SunburstSlots {
 
 const sunburstPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
-  activeIndex: TooltipIndex,
+  payloadKey: string,
 ) => {
-  if (!data || !activeIndex)
+  if (!data || !payloadKey)
     return undefined
-  return get(data, activeIndex)
+  return get(data, payloadKey)
 }
 
 const sunburstOptions: ChartOptions = {
@@ -76,15 +75,19 @@ const SunburstChartVueProps = {
   transition: { type: Object as PropType<ChartTransition>, default: undefined },
 }
 
+const sunburstItemEmits = {
+  'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
+  'node-mouseenter': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseleave': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent) => true,
+  'animation-start': () => true,
+  'animation-end': () => true,
+}
+
 const SunburstInner = defineComponent({
   name: 'SunburstInner',
   props: SunburstChartVueProps,
   slots: Object as SlotsType<SunburstSlots>,
-  emits: {
-    'animationStart': () => true,
-    'animationEnd': () => true,
-    'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
-  },
+  emits: sunburstItemEmits,
   setup(props, { slots, emit }) {
     const trackedData = useTrackedData(() => [props.data])
     const data = computed(() => ({ ...trackedData.value![0] }))
@@ -114,7 +117,7 @@ const SunburstInner = defineComponent({
 
     // Sectors match by their name path. The first appearance sweeps open from the start angle;
     // later, new sectors grow out of the edge of their neighbour and removed ones fold into it.
-    const callbacks = useAnimationCallbacks(() => emit('animationStart'), () => emit('animationEnd'))
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     let appeared = false
     const mix = (a: number, b: number, t: number) => a + (b - a) * t
     const collapsed = (node: SunburstLayoutNode, angle: number) => ({ ...node, startAngle: angle, endAngle: angle })
@@ -158,7 +161,8 @@ const SunburstInner = defineComponent({
           return a.startAngle - b.startAngle || a.depth - b.depth
         }).map(node => ({
           identity: node.payload,
-          index: node.tooltipIndex,
+          index: nodes.value.indexOf(node),
+          payloadKey: node.tooltipIndex,
           coordinate: getTooltipCoordinate(node),
           onClick: event => handleClick(node, event),
         })),
@@ -192,25 +196,31 @@ const SunburstInner = defineComponent({
       return polarToCartesian(node.cx, node.cy, midRadius, midAngle)
     }
 
+    const indexOf = (node: SunburstLayoutNode) => nodes.value.findIndex(candidate => candidate.path === node.path)
+
     function handleMouseEnter(node: SunburstLayoutNode, e: MouseEvent) {
-      tooltip.setActiveMouseOverItemIndex({
-        activeIndex: node.tooltipIndex,
-        activeDataKey: props.dataKey,
-        activeCoordinate: getTooltipCoordinate(node),
+      emit('node-mouseenter', node, indexOf(node), e)
+      tooltip.activate('hover', {
+        type: 'item',
+        index: indexOf(node),
+        dataKey: props.dataKey,
+        coordinate: getTooltipCoordinate(node),
       })
     }
 
     function handleMouseLeave(node: SunburstLayoutNode, e: MouseEvent) {
-      tooltip.mouseLeaveItem()
+      tooltip.clear('hover')
+      emit('node-mouseleave', node, indexOf(node), e)
     }
 
     function handleClick(node: SunburstLayoutNode, e: MouseEvent | KeyboardEvent) {
-      tooltip.setActiveClickItemIndex({
-        activeIndex: node.tooltipIndex,
-        activeDataKey: props.dataKey,
-        activeCoordinate: getTooltipCoordinate(node),
+      tooltip.activate('click', {
+        type: 'item',
+        index: indexOf(node),
+        dataKey: props.dataKey,
+        coordinate: getTooltipCoordinate(node),
       })
-      emit('node-click', node, nodes.value.indexOf(node), e)
+      emit('node-click', node, indexOf(node), e)
     }
 
     // Leaving sectors are not interactive; their data is gone.
@@ -271,7 +281,7 @@ const _SunburstChart = defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
-  emits: { ...chartEmits, 'node-click': (_node: SunburstLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true, 'animation-start': () => true, 'animation-end': () => true },
+  emits: { ...chartEmits, ...sunburstItemEmits },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots, emit, attrs }) {
     const size = useChartShell(props, sunburstOptions)
@@ -288,9 +298,13 @@ const _SunburstChart = defineComponent({
               {...innerProps}
               width={size.effectiveWidth.value}
               height={size.effectiveHeight.value}
-              {...{ 'onNode-click': (node, index, event) => emit('node-click', node, index, event) }}
-              onAnimationStart={() => emit('animation-start')}
-              onAnimationEnd={() => emit('animation-end')}
+              {...{
+                'onNode-click': (node, index, event) => emit('node-click', node, index, event),
+                'onNode-mouseenter': (node, index, event) => emit('node-mouseenter', node, index, event),
+                'onNode-mouseleave': (node, index, event) => emit('node-mouseleave', node, index, event),
+                'onAnimation-start': () => emit('animation-start'),
+                'onAnimation-end': () => emit('animation-end'),
+              }}
             >
               {{ content: slots.content }}
             </SunburstInner>

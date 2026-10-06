@@ -20,7 +20,7 @@ import { Layer } from '@/container/Layer'
 import { getStringSize } from '@/utils/attrs'
 import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/model/options'
-import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
+import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 interface TreemapData extends Record<string, unknown> {
@@ -60,11 +60,11 @@ function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
  */
 const treemapPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
-  activeIndex: TooltipIndex,
+  payloadKey: string,
 ) => {
-  if (!data || !activeIndex)
+  if (!data || !payloadKey)
     return undefined
-  return get(data, activeIndex)
+  return get(data, payloadKey)
 }
 
 const treemapOptions: ChartOptions = {
@@ -111,11 +111,11 @@ const TreemapVueProps = {
   nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
-  aspectRatio: { type: Number, default: 4 / 3 },
+  tileAspectRatio: { type: Number, default: 4 / 3 },
   fill: { type: String, default: seriesColor(0) },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
-  colorPanel: { type: Array as PropType<string[]>, default: undefined },
+  colors: { type: Array as PropType<string[]>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
@@ -168,8 +168,8 @@ function useTreemap(
       height: props.height,
       dataKey: isNestMode.value ? 'value' : props.dataKey,
       nameKey: props.nameKey,
-      aspectRatio: props.aspectRatio,
-      colorPanel: props.colorPanel,
+      tileAspectRatio: props.tileAspectRatio,
+      colors: props.colors,
     })
   })
 
@@ -222,7 +222,8 @@ function useTreemap(
         || a.x + a.width / 2 - b.x - b.width / 2,
       ).map(node => ({
         identity: node.payload,
-        index: getTooltipIndex(node)!,
+        index: nodes.value.indexOf(node),
+        payloadKey: getTooltipIndex(node) ?? undefined,
         coordinate: { x: node.x + node.width / 2, y: node.y + node.height / 2 },
         onClick: event => handleNodeClick(node, nodes.value.indexOf(node), event),
       })),
@@ -243,9 +244,9 @@ function useTreemap(
   }))
 
   // Map layout node name → tooltipIndex from nodeTree
-  function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
+  function getTooltipIndex(node: TreemapLayoutNode): string | null {
     const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-    function findPath(items: TreemapData[], parent: string): TooltipIndex {
+    function findPath(items: TreemapData[], parent: string): string | null {
       for (const [index, item] of items.entries()) {
         const path = `${parent}children[${index}]`
         if (toRaw(item) === toRaw(node.payload)
@@ -295,21 +296,21 @@ function useTreemap(
   }
 
   function handleNodeMouseEnter(node: TreemapLayoutNode, index: number, e: MouseEvent) {
-    const tooltipIndex = getTooltipIndex(node)
-    const activeCoordinate: Coordinate = {
+    const coordinate: Coordinate = {
       x: node.x + node.width / 2,
       y: node.y + node.height / 2,
     }
-    tooltip.setActiveMouseOverItemIndex({
-      activeIndex: tooltipIndex,
-      activeDataKey: props.dataKey,
-      activeCoordinate,
+    tooltip.activate('hover', {
+      type: 'item',
+      index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
+      dataKey: props.dataKey,
+      coordinate,
     })
     emit('node-mouseenter', node, index, e)
   }
 
   function handleNodeMouseLeave(node: TreemapLayoutNode, index: number, e: MouseEvent) {
-    tooltip.mouseLeaveItem()
+    tooltip.clear('hover')
     emit('node-mouseleave', node, index, e)
   }
 
@@ -318,15 +319,15 @@ function useTreemap(
       handleNestClick(node, index, e)
     }
     else {
-      const tooltipIndex = getTooltipIndex(node)
-      const activeCoordinate: Coordinate = {
+      const coordinate: Coordinate = {
         x: node.x + node.width / 2,
         y: node.y + node.height / 2,
       }
-      tooltip.setActiveClickItemIndex({
-        activeIndex: tooltipIndex,
-        activeDataKey: props.dataKey,
-        activeCoordinate,
+      tooltip.activate('click', {
+        type: 'item',
+        index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
+        dataKey: props.dataKey,
+        coordinate,
       })
       emit('node-click', node, index, e)
     }

@@ -273,7 +273,7 @@ const extraJourney = { path: ['/blog', '/blog/launch', '/pricing', '/signup'], c
         <Treemap
           :data="treemap"
           data-key="value"
-          :color-panel="treemapColors"
+          :colors="treemapColors"
           :aspect="3"
           stroke="var(--background)"
         />

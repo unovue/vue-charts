@@ -22,13 +22,13 @@ export interface TreemapLayoutOptions {
   width: number
   height: number
   dataKey: DataKey<Record<string, unknown>>
-  aspectRatio?: number
+  tileAspectRatio?: number
   nameKey?: DataKey<Record<string, unknown>>
-  colorPanel?: string[]
+  colors?: string[]
 }
 
 export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayoutNode[] {
-  const { data, width, height, dataKey, aspectRatio = 4 / 3, nameKey = 'name', colorPanel } = options
+  const { data, width, height, dataKey, tileAspectRatio = 4 / 3, nameKey = 'name', colors } = options
 
   if (!data || data.length === 0 || width <= 0 || height <= 0)
     return []
@@ -44,7 +44,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
 
   const layout = treemap<Record<string, unknown>>()
     .size([width, height])
-    .tile(treemapSquarify.ratio(aspectRatio))
+    .tile(treemapSquarify.ratio(tileAspectRatio))
     .round(true)(root)
 
   return layout.leaves().map((leaf) => {
@@ -64,7 +64,7 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
       payload: d,
       root: rootIndex,
       entryIndex: data.indexOf(ancestor.data),
-      color: colorPanel ? colorPanel[rootIndex % colorPanel.length] : undefined,
+      color: colors ? colors[rootIndex % colors.length] : undefined,
     }
   })
 }

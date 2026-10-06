@@ -15,7 +15,7 @@ const data = [
   <CohortChart
     :data="data"
     color="#f97316"
-    :period-label="month => `Month ${month}`"
+    :period-formatter="month => `Month ${month}`"
   >
     <Tooltip :cursor="false" />
   </CohortChart>

@@ -1,7 +1,6 @@
 import { useChart } from '@/model/chart'
 import { computed } from 'vue'
 import { useTooltipEntry } from '@/model/tooltip'
-import { parseTooltipIndex } from '@/core/tooltip'
 import type { DataKey } from '@/types'
 import type { EmitFn } from 'vue'
 
@@ -18,18 +17,18 @@ export function usePointEvents<Entry extends { x: number, y: number }>(
   const tooltip = useChart().tooltip
   const configuration = useTooltipEntry()
   return (entry: Entry, index: number) => {
-    const payload = () => ({ configuration: configuration?.value, activeIndex: String(index), activeDataKey: dataKey(), activeCoordinate: { x: entry.x, y: entry.y } })
+    const payload = () => ({ configuration: configuration?.value, index, dataKey: dataKey(), coordinate: { x: entry.x, y: entry.y } })
     return {
       onClick: (event: MouseEvent) => {
-        tooltip.setActiveClickItemIndex(payload())
+        tooltip.activate('click', { ...payload(), type: 'item' })
         emit('click', entry, index, event)
       },
       onMouseenter: (event: MouseEvent) => {
-        tooltip.setActiveMouseOverItemIndex(payload())
+        tooltip.activate('hover', { ...payload(), type: 'item' })
         emit('mouseenter', entry, index, event)
       },
       onMouseleave: (event: MouseEvent) => {
-        tooltip.mouseLeaveItem()
+        tooltip.clear('hover')
         emit('mouseleave', entry, index, event)
       },
     }
@@ -45,7 +44,7 @@ export function useSeriesPointEvents<Entry extends { x: number, y: number }>(
   const activeIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
   const listeners = usePointEvents(emit, dataKey)
   const dispatch = (name: 'onClick' | 'onMouseenter' | 'onMouseleave', event: MouseEvent) => {
-    const index = parseTooltipIndex(activeIndex.value) ?? 0
+    const index = activeIndex.value ?? 0
     const entry = points()[index]
     if (entry)
       listeners(entry, index)[name](event)

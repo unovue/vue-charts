@@ -101,16 +101,17 @@ const PieView = defineComponent({
 
     // Hoisted event handlers — stable closures, not recreated per animation frame
     function handleSectorEnter(sector: PieSectorDataItem, index: number) {
-      tooltip.setActiveMouseOverItemIndex({
+      tooltip.activate('hover', {
+        type: 'item',
         configuration: tooltipConfiguration.value,
-        activeIndex: String(index),
-        activeDataKey: props.dataKey,
-        activeCoordinate: sector.tooltipPosition,
+        index,
+        dataKey: props.dataKey,
+        coordinate: sector.tooltipPosition,
       })
     }
 
     function handleSectorLeave() {
-      tooltip.mouseLeaveItem()
+      tooltip.clear('hover')
     }
 
     // Labels ride along with the sectors as drawn (their angle follows the moving sector), show
@@ -199,7 +200,7 @@ const PieView = defineComponent({
                 key={key}
                 onMouseenter={(event: MouseEvent) => { handleSectorEnter(sector, sector.index); emit('mouseenter', sector, sector.index, event) }}
                 onMouseleave={(event: MouseEvent) => { handleSectorLeave(); emit('mouseleave', sector, sector.index, event) }}
-                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ configuration: tooltipConfiguration.value, activeIndex: String(sector.index), activeDataKey: props.dataKey, activeCoordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index: sector.index, dataKey: props.dataKey, coordinate: sector.tooltipPosition }); emit('click', sector, sector.index, event) }}
               >
                 {content}
               </g>

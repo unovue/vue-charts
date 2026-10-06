@@ -134,7 +134,7 @@ export function app(name, variant = 'default') {
     if (variant === 'opaque')
       props.colors = ['#ffffff', '#0a0a0a']
     if (variant === 'nested' || variant === 'translucent') {
-      props.colorPanel = ['var(--fixture-fill, #ffffff)']
+      props.colors = ['var(--fixture-fill, #ffffff)']
       props.style = {
         '--fixture-fill': variant === 'nested' ? '#0a0a0a' : 'rgba(10,10,10,0.2)',
         '--v-charts-label-foreground': variant === 'nested' ? '#ffffff' : 'var(--ds-text)',

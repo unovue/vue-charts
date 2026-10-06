@@ -8,7 +8,7 @@ const tooltipMessage: TooltipSyncMessage = {
   active: true,
   coordinate: undefined,
   dataKey: undefined,
-  index: '0',
+  index: 0,
   label: 'A',
 }
 const brushIndexes: BrushStartEndIndex = { startIndex: 0, endIndex: 2 }

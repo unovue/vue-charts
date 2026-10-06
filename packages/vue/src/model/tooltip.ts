@@ -6,11 +6,11 @@ import type { Registry } from './registry'
 import { createRegistry } from './registry'
 import { warn } from '@/utils/log'
 import type { createChartData } from './dataRange'
-import { parseTooltipIndex, tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
+import { tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
-import type { TooltipActionPayload, TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipSyncState } from '@/types/tooltip'
+import type { TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipTargetRequest } from '@/types/tooltip'
 
 const noInteraction: TooltipInteractionState = Object.freeze({
   active: false,
@@ -47,14 +47,16 @@ type Channel = 'hover' | 'click' | 'keyboard' | 'sync'
 export interface Target {
   entry?: Entry
   identity: unknown
-  index: string
+  /** Payload position can differ from the keyboard target order. */
+  index: number
+  payloadKey?: string
   localIndex: number
   coordinate?: Coordinate
   onClick?: (event: KeyboardEvent) => void
 }
 interface Selection {
   target: Pick<Target, 'entry' | 'identity'>
-  requestedIndex: string
+  requestedIndex: number
   channel: Channel
   active: boolean
   coordinate?: Coordinate
@@ -170,9 +172,11 @@ export function createTooltip(inputs: TooltipInputs) {
     return values.map((value, index) => counts.get(value) === 1 ? value : toRaw(rows[index]))
   }
 
-  function positionAt(positions: TooltipPayloadConfiguration['positions'], index: TooltipIndex) {
-    const position = parseTooltipIndex(index)
-    return position === null ? undefined : positions?.[position]
+  function payloadAt(configuration: TooltipPayloadConfiguration, index: number, payloadKey?: string) {
+    const data = configuration.dataDefinedOnItem
+    return payloadKey === undefined
+      ? Array.isArray(data) ? data[index] : undefined
+      : inputs.options().tooltipPayloadSearcher?.(data, payloadKey)
   }
 
   const axisTargets = computed<readonly Target[]>(() => {
@@ -180,7 +184,7 @@ export function createTooltip(inputs: TooltipInputs) {
       return []
     const identity = identities(displayedData.value, axis.value?.settings.value.dataKey)
     return (ticks.value ?? []).map((tick, index) => ({
-      index: String(index),
+      index,
       localIndex: index,
       identity: identity[index],
     }))
@@ -191,7 +195,7 @@ export function createTooltip(inputs: TooltipInputs) {
       return []
     if (configuration.keyboardItems) {
       const rows = configuration.keyboardItems.map(item => item.identity
-        ?? inputs.options().tooltipPayloadSearcher?.(configuration.dataDefinedOnItem, item.index))
+        ?? payloadAt(configuration, item.index, item.payloadKey))
       const identity = identities(rows, configuration.settings.nameKey)
       return configuration.keyboardItems.map((item, localIndex) => ({
         ...item,
@@ -209,9 +213,9 @@ export function createTooltip(inputs: TooltipInputs) {
     return data.map((row, localIndex) => ({
       entry,
       localIndex,
-      index: String(localIndex),
+      index: localIndex,
       identity: identity[localIndex],
-      coordinate: positionAt(configuration.positions, String(localIndex)),
+      coordinate: configuration.positions?.[localIndex],
     }))
   }))
   const pointerTargets = computed<readonly Target[]>(() => inputs.entries.registrations.value.flatMap((entry) => {
@@ -222,13 +226,15 @@ export function createTooltip(inputs: TooltipInputs) {
       ...item,
       entry,
       localIndex,
-      identity: rowIdentity(item.identity ?? inputs.options().tooltipPayloadSearcher?.(configuration.dataDefinedOnItem, item.index), configuration.settings.nameKey),
+      identity: rowIdentity(item.identity ?? payloadAt(configuration, item.index, item.payloadKey), configuration.settings.nameKey),
     }))
   }))
   const targets = computed(() => eventType.value === 'axis' ? axisTargets.value : itemTargets.value)
 
   function positional(index: TooltipActiveIndex | undefined, candidates = targets.value) {
-    return index === undefined || index === null ? undefined : candidates[parseTooltipIndex(index) ?? -1]
+    return index === undefined || index === null || !Number.isSafeInteger(index) || index < 0
+      ? undefined
+      : candidates[index]
   }
 
   function sameTarget(a: Pick<Target, 'entry' | 'identity'>, b: Pick<Target, 'entry' | 'identity'>) {
@@ -248,7 +254,7 @@ export function createTooltip(inputs: TooltipInputs) {
         return positional(modelIndex, itemTargets.value.filter(item => item.entry === candidate?.entry))
       return candidate
     }
-    return current === null ? undefined : positional(parseTooltipIndex(settings.value.defaultIndex))
+    return current === null ? undefined : positional(settings.value.defaultIndex)
   })
   const index = computed(() => {
     const position = target.value ? targets.value.indexOf(target.value) : -1
@@ -305,6 +311,7 @@ export function createTooltip(inputs: TooltipInputs) {
       label.value,
       inputs.options().tooltipPayloadSearcher,
       eventType.value,
+      target.value?.payloadKey,
     ) ?? []
   })
   const source: TooltipSource = { active, index, label, payload, coordinate }
@@ -327,11 +334,11 @@ export function createTooltip(inputs: TooltipInputs) {
     notify(next)
   }
 
-  function findTarget(type: TooltipEventType, action: TooltipActionPayload) {
+  function findTarget(type: TooltipEventType, input: TooltipTargetRequest) {
     if (type === 'axis')
-      return positional(parseTooltipIndex(action.activeIndex), axisTargets.value)
-    return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === action.activeIndex
-      && (action.configuration ? item.entry?.value === action.configuration : item.entry?.value?.settings.dataKey === action.activeDataKey))
+      return positional(input.index, axisTargets.value)
+    return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === input.index
+      && (input.configuration ? item.entry?.value === input.configuration : item.entry?.value?.settings.dataKey === input.dataKey))
   }
 
   let lastSeriesRequest: { entry: Entry, index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target: Target } | undefined
@@ -350,10 +357,12 @@ export function createTooltip(inputs: TooltipInputs) {
     model.request(next)
   }
 
-  function activate(type: TooltipEventType, channel: Channel, action: TooltipActionPayload, isActive = true) {
+  function activate(channel: Channel, input: TooltipTargetRequest) {
+    const type = input.type ?? eventType.value
+    const isActive = input.active ?? true
     if ((channel === 'hover' || channel === 'click') && channel !== settings.value.trigger)
       return
-    const next = findTarget(type, action)
+    const next = findTarget(type, input)
     if (type !== eventType.value) {
       requestSeries(next, isActive)
       return
@@ -371,7 +380,7 @@ export function createTooltip(inputs: TooltipInputs) {
       requestedIndex: next.index,
       channel,
       active: isActive,
-      coordinate: action.activeCoordinate,
+      coordinate: input.coordinate,
     }
   }
 
@@ -379,6 +388,10 @@ export function createTooltip(inputs: TooltipInputs) {
     if (channel === 'hover' && settings.value.trigger !== 'hover')
       return
     request(null)
+    if (channel === 'keyboard') {
+      selection.value = null
+      return
+    }
     const intent = selection.value
     const candidate = intent ? [...itemTargets.value, ...pointerTargets.value].find(item => sameTarget(item, intent.target)) : undefined
     requestSeries(candidate, false)
@@ -444,21 +457,7 @@ export function createTooltip(inputs: TooltipInputs) {
 
   function coordinateAt(index: TooltipIndex, dataKey: DataKey<unknown>) {
     const entry = inputs.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
-    return positionAt(entry?.positions, index)
-  }
-
-  function setActiveMouseOverItemIndex(action: TooltipActionPayload) { activate('item', 'hover', action) }
-  function setActiveClickItemIndex(action: TooltipActionPayload) { activate('item', 'click', action) }
-  function setMouseOverAxisIndex(action: TooltipActionPayload) { activate('axis', 'hover', action) }
-  function setMouseClickAxisIndex(action: TooltipActionPayload) { activate('axis', 'click', action) }
-  function mouseLeaveItem() { clear('hover') }
-  function mouseLeaveChart() { clear('hover') }
-  function setSyncInteraction(action: TooltipSyncState) {
-    const candidate = positional(parseTooltipIndex(action.index))
-    activate(eventType.value, 'sync', { activeIndex: candidate?.index ?? null, configuration: candidate?.entry?.value, activeDataKey: candidate?.entry?.value?.settings.dataKey, activeCoordinate: action.coordinate }, action.active)
-  }
-  function setKeyboardInteraction(action: TooltipActionPayload & { active: boolean }) {
-    activate(eventType.value, 'keyboard', action, action.active)
+    return index === null ? undefined : entry?.positions?.[index]
   }
 
   return {
@@ -482,13 +481,7 @@ export function createTooltip(inputs: TooltipInputs) {
     coordinateAt,
     activeIndexFor,
     coordinateFor,
-    setActiveMouseOverItemIndex,
-    setActiveClickItemIndex,
-    setMouseOverAxisIndex,
-    setMouseClickAxisIndex,
-    mouseLeaveItem,
-    mouseLeaveChart,
-    setSyncInteraction,
-    setKeyboardInteraction,
+    activate,
+    clear,
   }
 }

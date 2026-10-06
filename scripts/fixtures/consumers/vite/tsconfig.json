@@ -1,4 +1,11 @@
 {
+  "vueCompilerOptions": {
+    "strictTemplates": true,
+    "dataAttributes": [
+      "data-slot",
+      "data-chart"
+    ]
+  },
   "compilerOptions": {
     "target": "ES2023",
     "lib": [

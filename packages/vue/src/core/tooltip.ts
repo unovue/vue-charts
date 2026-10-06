@@ -8,8 +8,8 @@ import { findEntryInArray, mathSign } from '@/utils/data'
 
 import { getValueByDataKey } from '@/core/data'
 
-export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
-  if (activeIndex == null || tooltipPayloadSearcher == null) {
+export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined, payloadKey?: string): TooltipPayload | undefined {
+  if (activeIndex == null) {
     return undefined
   }
 
@@ -43,7 +43,9 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
     // Fall back to index-based search if findEntryInArray didn't find a match
     // (e.g. scatter tooltip data where items are TooltipPayloadEntry arrays, not raw data objects)
     if (tooltipPayload == null) {
-      tooltipPayload = tooltipPayloadSearcher(sliced, activeIndex, finalNameKey)
+      tooltipPayload = payloadKey === undefined
+        ? Array.isArray(sliced) ? sliced[activeIndex] : undefined
+        : tooltipPayloadSearcher?.(sliced, payloadKey, finalNameKey)
     }
 
     if (Array.isArray(tooltipPayload)) {
@@ -72,7 +74,7 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
           tooltipEntrySettings: settings,
           dataKey: finalDataKey!,
           payload: tooltipPayload,
-          value: values?.[activeIndex] ?? getValueByDataKey(tooltipPayload, finalDataKey),
+          value: values?.[payloadKey ?? activeIndex] ?? getValueByDataKey(tooltipPayload, finalDataKey),
           name: getValueByDataKey(tooltipPayload, finalNameKey) ?? settings?.name,
         }),
       )
@@ -124,12 +126,6 @@ export function tooltipTicks(layout: LayoutType, axis: AxisWithTicksSettings, re
   )
 }
 
-export function parseTooltipIndex(value: string | number | null | undefined): number | null {
-  if (value == null || (typeof value === 'string' && !/^(?:0|[1-9]\d*)$/.test(value)))
-    return null
-  const index = Number(value)
-  return Number.isSafeInteger(index) && index >= 0 ? index : null
-}
 export function getTooltipEntry({
   tooltipEntrySettings,
   dataKey,

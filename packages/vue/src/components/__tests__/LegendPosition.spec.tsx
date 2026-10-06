@@ -191,7 +191,7 @@ it.each(['portal', 'unmount', 'inside'] as const)(
         {(mode !== 'unmount' || !changed.value) && (
           <Legend
             verticalAlign="bottom"
-            portal={mode === 'portal' && changed.value ? portal : undefined}
+            to={mode === 'portal' && changed.value ? portal : undefined}
             position={mode === 'inside' && changed.value ? 'insideBottomRight' : undefined}
           />
         )}

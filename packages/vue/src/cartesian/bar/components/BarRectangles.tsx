@@ -120,14 +120,14 @@ export const BarRectangles = defineComponent({
     const activate = (kind: 'hover' | 'click', bar: BarRectangleItem, index: number) => {
       const payload = {
         configuration: entry.value,
-        activeDataKey: props.dataKey,
-        activeIndex: String(index),
-        activeCoordinate: { x: bar.tooltipPosition.x, y: bar.tooltipPosition.y },
+        dataKey: props.dataKey,
+        index,
+        coordinate: { x: bar.tooltipPosition.x, y: bar.tooltipPosition.y },
       }
       if (kind === 'hover')
-        tooltip.setActiveMouseOverItemIndex(payload)
+        tooltip.activate('hover', { ...payload, type: 'item' })
       else
-        tooltip.setActiveClickItemIndex(payload)
+        tooltip.activate('click', { ...payload, type: 'item' })
     }
 
     return () => {
@@ -177,7 +177,7 @@ export const BarRectangles = defineComponent({
                 class="v-charts-layer v-charts-bar-rectangle"
                 opacity={opacity != null && opacity < 1 ? opacity : undefined}
                 onMouseenter={(event: MouseEvent) => { activate('hover', bar, index); emit('mouseenter', bar, index, event) }}
-                onMouseleave={(event: MouseEvent) => { tooltip.mouseLeaveItem(); emit('mouseleave', bar, index, event) }}
+                onMouseleave={(event: MouseEvent) => { tooltip.clear('hover'); emit('mouseleave', bar, index, event) }}
                 onClick={(event: MouseEvent) => { activate('click', bar, index); emit('click', bar, index, event) }}
               >
                 {shape}

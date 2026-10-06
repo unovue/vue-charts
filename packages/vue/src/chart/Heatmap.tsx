@@ -57,9 +57,9 @@ const HeatmapVueProps = {
   /** Draw each value on its cell when it fits. */
   showValues: { type: Boolean, default: false },
   /** Text for a value, on the cell and in the tooltip. */
-  valueFormat: { type: Function as PropType<(value: number, cell: HeatmapCell) => string>, default: undefined },
-  xLabelFormat: { type: Function as PropType<(x: HeatmapKey) => string>, default: undefined },
-  yLabelFormat: { type: Function as PropType<(y: HeatmapKey) => string>, default: undefined },
+  valueFormatter: { type: Function as PropType<(value: number, cell: HeatmapCell) => string>, default: undefined },
+  xTickFormatter: { type: Function as PropType<(x: HeatmapKey) => string>, default: undefined },
+  yTickFormatter: { type: Function as PropType<(y: HeatmapKey) => string>, default: undefined },
   xLabels: { type: Boolean, default: true },
   yLabels: { type: Boolean, default: true },
   gap: { type: Number, default: 2 },
@@ -106,8 +106,8 @@ const _Heatmap = defineComponent({
       return { xs: props.xDomain ?? xs, ys: props.yDomain ?? ys, cells }
     })
 
-    const xText = (x: HeatmapKey) => props.xLabelFormat ? props.xLabelFormat(x) : String(x)
-    const yText = (y: HeatmapKey) => props.yLabelFormat ? props.yLabelFormat(y) : String(y)
+    const xText = (x: HeatmapKey) => props.xTickFormatter ? props.xTickFormatter(x) : String(x)
+    const yText = (y: HeatmapKey) => props.yTickFormatter ? props.yTickFormatter(y) : String(y)
     const left = computed(() => props.yLabels && matrix.value.ys.length
       ? Math.min(160, Math.max(...matrix.value.ys.map(y => yText(y).length)) * CHAR_WIDTH + LABEL_GAP * 2)
       : 0)
@@ -165,7 +165,7 @@ const _Heatmap = defineComponent({
             return
           const data = cell ?? { x, y, value: null, rows: [] }
           const fill = fillOf(data.value)
-          const text = data.value === null ? undefined : props.valueFormat ? props.valueFormat(data.value, data) : String(data.value)
+          const text = data.value === null ? undefined : props.valueFormatter ? props.valueFormatter(data.value, data) : String(data.value)
           cells.push({
             key: cellKey(x, y),
             x: left.value + column * stepX,
@@ -271,12 +271,12 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  */
 export type HeatmapSlots<Row = unknown> = CellGridSlots<HeatmapCell<Row>> & { default?: () => VNode[] }
 
-export type HeatmapProps<Row = unknown> = Omit<InstanceType<typeof _Heatmap>['$props'], 'data' | 'xKey' | 'yKey' | 'dataKey' | 'valueFormat' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
+export type HeatmapProps<Row = unknown> = Omit<InstanceType<typeof _Heatmap>['$props'], 'data' | 'xKey' | 'yKey' | 'dataKey' | 'valueFormatter' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
   'data': readonly Row[]
   'xKey'?: RowDataKey<NoInfer<Row>>
   'yKey'?: RowDataKey<NoInfer<Row>>
   'dataKey'?: RowDataKey<NoInfer<Row>>
-  'valueFormat'?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
+  'valueFormatter'?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
   'onCellClick'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
   'onCell-click'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
   'onCellMouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void

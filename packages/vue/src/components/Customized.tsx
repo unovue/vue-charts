@@ -1,6 +1,7 @@
 import type { ChartDataKey } from '@/types/base'
 import type { SlotsType, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
+import { warnOnce } from '@/utils/log'
 import { computed, defineComponent } from 'vue'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
@@ -27,6 +28,7 @@ const _Customized = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<CustomizedSlots>,
   setup(_props, { slots }) {
+    warnOnce('[vccs] Customized is deprecated and will be removed in 2.0. Use the chart\'s default slot with usePlotArea() and the other chart composables.')
     const chart = useChart()
     const chartWidth = useChartWidth()
     const chartHeight = useChartHeight()

@@ -1,14 +1,8 @@
 import type { ChartCoordinate, ChartDataKey, Coordinate, VueClassValue } from '@/types/base'
 import type { VNodeChild } from 'vue'
 
-/**
- * null means no active index
- * string means: whichever index from the chart data it is.
- * Different charts have different requirements on data shapes,
- * and are also responsible for providing a function that will accept this index
- * and return data.
- */
-export type TooltipIndex = string | null
+/** Numeric item position; null means no selection. */
+export type TooltipIndex = number | null
 
 export type TooltipEventType = 'axis' | 'item'
 
@@ -74,31 +68,21 @@ export type TooltipEntrySettings = Omit<TooltipPayloadEntry, 'payload' | 'value'
  */
 export type TooltipPayload = ReadonlyArray<TooltipPayloadEntry>
 
-/**
- * null means no active index
- * string means: whichever index from the chart data it is.
- * Different charts have different requirements on data shapes,
- * and are also responsible for providing a function that will accept this index
- * and return data.
- */
+/** Position in the chart's keyboard target order; null clears selection. */
 export type TooltipActiveIndex = number | null
 
-/**
- * Different items have different data shapes so the state has no opinion on what the data shape should be;
- * the only requirement is that the chart also provides a searcher function
- * that accepts the data, and a key, and returns whatever the payload in Tooltip should be.
- */
-// Payload searchers narrow array and hierarchy data at this runtime boundary.
+/** Hierarchy lookup keys stay separate from numeric selection indexes. */
 export type TooltipPayloadSearcher<T = unknown, R = T> = (
   data: T,
-  index: TooltipIndex,
+  payloadKey: string,
   nameKey?: ChartDataKey,
 ) => R | undefined
 
 type TooltipKeyboardItem = {
   /** Stable identity, independent of the current payload lookup path. */
   identity?: unknown
-  index: string
+  index: number
+  payloadKey?: string
   coordinate: Coordinate
   onClick?: (event: KeyboardEvent) => void
 }
@@ -118,11 +102,7 @@ export type TooltipPayloadConfiguration = {
 
   // This is the data that is the same for all tooltip payloads, regardless of activeIndex
   settings: TooltipEntrySettings
-  /**
-   * This is the data that the item has provided, all of it mixed together.
-   * Later as user is interacting with the chart, a selector will use this
-   * data + activeIndex, pass it to the TooltipPayloadSearcher, and render the result in a Tooltip.
-   */
+  /** Arrays use the numeric item index; hierarchies use the target payload key. */
   dataDefinedOnItem: unknown
   /**
    * Opportunity for the graphical item to define its own Tooltip coordinates
@@ -233,10 +213,12 @@ export type TooltipSyncState = TooltipInteractionState & {
 }
 
 /** Selection requests carry the entry identity and interaction coordinate. */
-export type TooltipActionPayload = {
+export type TooltipTargetRequest = {
+  type?: TooltipEventType
+  active?: boolean
   configuration?: TooltipPayloadConfiguration
 
-  activeIndex: TooltipIndex
-  activeDataKey: ChartDataKey | undefined
-  activeCoordinate?: ChartCoordinate | undefined
+  index: TooltipIndex
+  dataKey: ChartDataKey | undefined
+  coordinate?: ChartCoordinate
 }

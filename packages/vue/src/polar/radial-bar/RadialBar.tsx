@@ -3,7 +3,7 @@ import { getValueByDataKey } from '@/utils/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChart } from '@/model/chart'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
@@ -23,6 +23,23 @@ import { interpolate } from '@/utils/data-utils'
 import { polarToCartesian } from '@/utils/polar'
 import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import { RadialBarVueProps } from './type'
+import type { LabelListSlotProps } from '@/components/label/types'
+
+export type RadialBarShapeSlotProps = RadialBarDataItem & {
+  innerRadius: number
+  outerRadius: number
+  startAngle: number
+  endAngle: number
+  fill: string
+  stroke: string
+  fillOpacity?: number
+}
+
+export interface RadialBarSlots {
+  shape?: (props: RadialBarShapeSlotProps) => VNodeChild
+  label?: (props: LabelListSlotProps) => VNodeChild
+  default?: () => VNodeChild
+}
 
 function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
   return fill
@@ -30,6 +47,7 @@ function getLegendItemColor(stroke: string | undefined, fill: string | undefined
 
 const RadialBarView = defineComponent({
   name: 'RadialBarView',
+  slots: Object as SlotsType<RadialBarSlots>,
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof RadialBarVueProps>>, required: true },
@@ -228,15 +246,37 @@ const RadialBarView = defineComponent({
             }
             const sectorFill = sector.fill ?? defaultFill ?? seriesColor(sector.index)
             const onMouseenter = (event: MouseEvent) => {
-              tooltip.setActiveMouseOverItemIndex({
-                activeIndex: String(sector.index),
-                activeDataKey: props.dataKey,
-              })
+              tooltip.activate('hover', { type: 'item', index: sector.index, dataKey: props.dataKey })
               emit('mouseenter', sector, sector.index, event)
             }
             const onMouseleave = (event: MouseEvent) => {
-              tooltip.mouseLeaveItem()
+              tooltip.clear('hover')
               emit('mouseleave', sector, sector.index, event)
+            }
+            if (slots.shape) {
+              return (
+                <g
+                  key={items.value[i].key}
+                  {...{ [DATA_ITEM_INDEX_ATTRIBUTE_NAME]: sector.index }}
+                  onMouseenter={onMouseenter}
+                  onMouseleave={onMouseleave}
+                  onClick={(event: MouseEvent) => {
+                    tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey })
+                    emit('click', sector, sector.index, event)
+                  }}
+                >
+                  {slots.shape({
+                    ...sector,
+                    innerRadius: sector.innerRadius,
+                    outerRadius: sector.outerRadius,
+                    startAngle: sector.startAngle,
+                    endAngle: sector.endAngle,
+                    fill: sectorFill,
+                    stroke: defaultStroke ?? sectorFill,
+                    fillOpacity: props.fillOpacity,
+                  })}
+                </g>
+              )
             }
             return (
               <Sector
@@ -258,7 +298,7 @@ const RadialBarView = defineComponent({
                 stroke-dasharray={props.strokeDasharray}
                 onMouseenter={onMouseenter}
                 onMouseleave={onMouseleave}
-                onClick={(event: MouseEvent) => { tooltip.setActiveClickItemIndex({ activeIndex: String(sector.index), activeDataKey: props.dataKey }); emit('click', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey }); emit('click', sector, sector.index, event) }}
               />
             )
           })}
@@ -274,9 +314,10 @@ const RadialBarView = defineComponent({
       if (data.length === 0)
         return null
 
-      const labelEl = props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
-        : null
+      const labelProps = typeof props.label === 'object' ? props.label : {}
+      const labelEl = slots.label
+        ? <LabelList {...labelProps} v-slots={{ label: slots.label }} />
+        : props.label ? <LabelList {...labelProps} /> : null
       const slotChildren = slots.default?.()
 
       return (
@@ -290,7 +331,8 @@ const RadialBarView = defineComponent({
   },
 })
 
-export const RadialBar = defineComponent({
+const _RadialBar = defineComponent({
+  slots: Object as SlotsType<RadialBarSlots>,
   name: 'RadialBar',
   emits: radialBarEvents.emits,
   props: RadialBarVueProps,
@@ -320,3 +362,5 @@ export const RadialBar = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
+
+export const RadialBar: typeof _RadialBar & { new (): { $slots: RadialBarSlots } } = _RadialBar

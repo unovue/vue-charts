@@ -190,7 +190,7 @@ const _Legend = defineComponent({
     const measuredSize = shallowRef<Size>()
     useChart().legend.register(computed(() => ({
       hidden: props.hidden,
-      size: props.portal == null && (props.position == null || isOutsidePosition(props.position))
+      size: props.to == null && (props.position == null || isOutsidePosition(props.position))
         ? measuredSize.value
         : undefined,
       settings: {
