@@ -3,7 +3,7 @@ import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/animation/renderPhase'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { cellGridSharedProps } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
 
 export type BarListRow = Record<string, any>
 

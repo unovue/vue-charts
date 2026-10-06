@@ -5,7 +5,7 @@ import { get } from 'es-toolkit/compat'
 import { useTooltipController } from '@/model/tooltip'
 import type { ChartOptions } from '@/state/chartOptions'
 import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
-import { type ChartTransition, cascadeReveal, motionTokens } from '@/animation/motion'
+import { cascadeReveal, motionTokens } from '@/animation/motion'
 import type { VueClassValue } from '@/types/common'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
@@ -121,13 +121,8 @@ export const cellGridEmits = {
   'animation-end': () => true,
 }
 
-/** Props every cell chart passes straight through to the layer. */
-export const cellGridSharedProps = {
-  /** Corner radius of each cell in px; capped at half the cell's shorter side. */
-  radius: { type: Number, default: 2 },
-  isAnimationActive: { type: Boolean, default: true },
-  transition: { type: Object as PropType<ChartTransition>, default: undefined },
-}
+export { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps } from './cellGridProps'
 
 type Rect = Pick<GridCell, 'x' | 'y' | 'width' | 'height'>
 /** A cell as drawn: `opacity` is the entrance's fade. */

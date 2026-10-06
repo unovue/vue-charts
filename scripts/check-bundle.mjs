@@ -124,7 +124,11 @@ try {
     console.log(`${chart.padEnd(20)} ${String(result.minifiedBytes).padStart(11)} ${String(result.gzipBytes).padStart(9)} ${String(result.reselectBytes).padStart(11)}`)
   }
   const offenders = report.results.filter(result => result.offendingModules.length > 0)
-  report.passed = !assertStandalone || offenders.length === 0
+  const barList = report.results.find(result => result.chart === 'BarList')
+  const oversizedBarList = assertStandalone && barList.gzipBytes > 8947
+  if (oversizedBarList)
+    console.error(`BarList: ${barList.gzipBytes} gzip bytes exceeds the 8947-byte baseline`)
+  report.passed = !assertStandalone || (offenders.length === 0 && !oversizedBarList)
   if (!report.passed) {
     for (const result of offenders) {
       for (const module of result.offendingModules) {
