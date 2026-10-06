@@ -168,6 +168,61 @@ describe('<JourneySankey />', () => {
     expect(container.textContent).not.toContain('/de/pricing')
   })
 
+  it('keeps visible pages apart through both directions of a journey rerank', async () => {
+    const paths = [
+      ['/', '/pricing'],
+      ['/', '/pricing', '/', '/docs'],
+      ['/', '/pricing', '/', '/docs/guides/wordpress'],
+      ['/', '/pricing', '/docs/self-hosting'],
+      ['/', '/pricing', '/features/session-replay', '/features/web-analytics'],
+      ['/', '/pricing', '/docs/mcp', '/docs/hiding-own-traffic'],
+      ['/', '/docs'],
+      ['/', '/docs', '/pricing', '/features/session-replay'],
+      ['/de', '/de/pricing', '/de', '/de/compare/fathom'],
+      ['/de', '/de/pricing', '/de', '/de/pricing'],
+      ['/de', '/de/pricing', '/de'],
+      ['/de', '/features/web-analytics', '/de/docs/self-hosting', '/de/docs/managing-your-installation'],
+      ['/de', '/de/docs/self-hosting'],
+      ['/compare/plausible', '/compare/google-analytics', '/compare/posthog', '/compare/umami'],
+      ['/de', '/de/for-european-companies', '/de/docs/self-hosting', '/de/docs/managing-your-installation'],
+    ]
+    const full = paths.map((path, i) => ({ path, count: (i === 0 ? 6 : i === 6 ? 2 : 1) * (i % 3 + 1) + i % 2 }))
+    const top = [...full].sort((a, b) => b.count - a.count).slice(0, 8)
+    const data = ref(full)
+    const { container } = render(() => <JourneySankey width={720} height={480} steps={4} data={data.value} />)
+    const rectangles = () => Array.from(container.querySelectorAll<SVGRectElement>(
+      '.v-charts-journey-node-continue, .v-charts-journey-node-exit',
+    ))
+    const geometry = () => rectangles().map(rect => ['x', 'y', 'width', 'height'].map(name => rect.getAttribute(name)))
+    await frame()
+    const fullGeometry = geometry()
+    let topGeometry: (string | null)[][] = []
+    for (const rows of [top, full, top]) {
+      data.value = rows
+      await nextTick()
+      for (let elapsed = 0; elapsed <= 0.5; elapsed += 0.016) {
+        await frame(elapsed)
+        const visible = rectangles().filter(rect => Number(rect.closest<SVGGElement>('.v-charts-journey-node')?.style.opacity) >= 0.35)
+        for (const [i, rect] of visible.entries()) {
+          const box = ['x', 'y', 'width', 'height'].map(name => Number(rect.getAttribute(name)))
+          for (const other of visible.slice(i + 1)) {
+            const next = ['x', 'y', 'width', 'height'].map(name => Number(other.getAttribute(name)))
+            const overlap = Math.max(0, Math.min(box[0] + box[2], next[0] + next[2]) - Math.max(box[0], next[0]))
+              * Math.max(0, Math.min(box[1] + box[3], next[1] + next[3]) - Math.max(box[1], next[1]))
+            expect(overlap).toBeLessThan(0.000001)
+          }
+        }
+      }
+      await frame()
+      if (rows === full)
+        expect(geometry()).toEqual(fullGeometry)
+      else if (topGeometry.length)
+        expect(geometry()).toEqual(topGeometry)
+      else
+        topGeometry = geometry()
+    }
+  })
+
   it('shows the first node when it receives keyboard focus', async () => {
     const { container } = render(() => <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} />)
     const group = container.querySelector<SVGGElement>('.v-charts-journey')!

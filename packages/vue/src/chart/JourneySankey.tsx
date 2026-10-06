@@ -128,10 +128,32 @@ const JourneySankeyInner = defineComponent({
     // and unfolds where it goes instead, its label and bands fading with it.
     let reordered = new Set<string>()
     let previousNodes: JourneyNode[] = []
+    let foldTargets = new Map<string, number>()
+    let unfoldStarts = new Map<string, number>()
     watch(layout, ({ nodes }) => {
       reordered = reorderedNodes(previousNodes, nodes)
+      foldTargets = foldAnchors(previousNodes, nodes)
+      unfoldStarts = foldAnchors(nodes, previousNodes)
       previousNodes = nodes
     }, { immediate: true, flush: 'sync' })
+    function foldAnchors(from: JourneyNode[], to: JourneyNode[]): Map<string, number> {
+      if (!reordered.size)
+        return new Map()
+      const target = new Map(to.map(node => [node.id, node]))
+      const anchors = new Map<string, number>()
+      for (const node of from) {
+        const neighbours = from.filter(other => other.step === node.step
+          && other.id !== node.id && target.has(other.id) && !reordered.has(other.id))
+        const previous = neighbours.filter(other => other.y < node.y).at(-1)
+        const next = neighbours.find(other => other.y > node.y)
+        const above = previous && target.get(previous.id)
+        const below = next && target.get(next.id)
+        const top = above ? above.y + above.continueHeight + above.exitHeight : 0
+        const bottom = below?.y ?? Infinity
+        anchors.set(node.id, Math.max(top, Math.min(bottom, node.y)))
+      }
+      return anchors
+    }
     const fold = (node: JourneyNode, size: number) => ({ ...node, continueHeight: node.continueHeight * size, exitHeight: node.exitHeight * size })
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const mix = (a: number, b: number, t: number) => a + (b - a) * t
@@ -145,10 +167,10 @@ const JourneySankeyInner = defineComponent({
         return from.fade === undefined ? shape : { ...shape, fade: Math.min(1, Math.max(0, mix(from.fade, to.fade ?? 1, t))) }
       },
       enterFrom: shape => shape.kind === 'node'
-        ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }
+        ? { kind: 'node', node: { ...shape.node, y: unfoldStarts.get(shape.node.id) ?? shape.node.y, continueHeight: 0, exitHeight: 0 } }
         : { kind: 'link', link: { ...shape.link, width: 0 } },
       exitTo: shape => shape.kind === 'node'
-        ? { kind: 'node', node: { ...shape.node, continueHeight: 0, exitHeight: 0 } }
+        ? { kind: 'node', node: { ...shape.node, y: foldTargets.get(shape.node.id) ?? shape.node.y, continueHeight: 0, exitHeight: 0 } }
         : { kind: 'link', link: { ...shape.link, width: 0 } },
       reveal,
       connected: true,
@@ -160,8 +182,14 @@ const JourneySankeyInner = defineComponent({
 
     function interpolateShape(from: Shape, to: Shape, t: number): Shape {
       if (from.kind === 'node' && to.kind === 'node') {
-        if (reordered.has(to.node.id))
-          return { kind: 'node', node: t < 0.5 ? fold(from.node, 1 - t * 2) : fold(to.node, t * 2 - 1) }
+        if (reordered.has(to.node.id)) {
+          // Collapsing slots follow their stable neighbour on the shared eased layout curve.
+          // Their height folds faster than the slot closes, so they cannot cover that neighbour.
+          const node = t < 0.5
+            ? { ...fold(from.node, 1 - t * 2), y: mix(from.node.y, foldTargets.get(from.node.id) ?? from.node.y, t) }
+            : { ...fold(to.node, t * 2 - 1), y: mix(unfoldStarts.get(to.node.id) ?? to.node.y, to.node.y, t) }
+          return { kind: 'node', node }
+        }
         return { kind: 'node', node: { ...to.node, x: mix(from.node.x, to.node.x, t), y: mix(from.node.y, to.node.y, t), continueHeight: mix(from.node.continueHeight, to.node.continueHeight, t), exitHeight: mix(from.node.exitHeight, to.node.exitHeight, t) } }
       }
       if (from.kind === 'link' && to.kind === 'link') {
