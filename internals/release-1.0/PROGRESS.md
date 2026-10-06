@@ -690,3 +690,14 @@ Numeric: 285 captures / 16,245 frames and motion metrics unchanged; packed Vite/
 Bench: 18/18 PASS; Line/Bar 10,000 update ratios 0.985/1.034, mount 0.941/1.024; medians/ranges in benchmark-spread.json.
 BarList: 8,008 B gzip; cached reader ~193 B accepted; remaining ~43 B tracked for 4.3 in LATER.md.
 Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms per key; preserve the existing accessor return boundary.
+
+## Phase 4 mechanical slice
+
+### Tooling prerequisites — done (61ab6ee; recorder sweeps pending)
+- Independent static motion targets; empty coverage rejection; bounded lifecycle; metrics/guide checks wired.
+- Gate: typecheck and ESLint zero warnings; coverage-run Vitest 140 files / 1418 tests PASS.
+- Coverage before surgery: lines 90.45%, branches 79.54% (`tooling-vitest-coverage.log`).
+- Final tooling regressions 14/14 PASS; cut-off, filter, empty CLI, lifecycle and recorder reverse controls fail.
+- Diagnostic playground: 22 views / 211 captures, zero real flags; historical timeout cause not proven.
+- Evidence: `.evidence/release-1.0/phase-4/`; recorder recovery sweep and final verify provide follow-up.
+- Assumptions: deterministic paired bootstrap intervals declare benchmark uncertainty; unchanged ratio boundaries.

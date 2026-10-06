@@ -38,7 +38,7 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 - ~~P2 `check:play` exits 1 at baseline~~ done in 8da11ee and eb19d45. The full product sweep
   exits zero with no real flags; detector fixture remains verified. D-25d's temporary baseline
   allowance is no longer needed. Evidence: `product-fix/play-final/results.json`.
-- **P2 `check:seen` cannot pass on this machine** (see the startup item above).
+- ~~P2 `check:seen` cannot pass on this machine~~ handled in 61ab6ee: unreliable rows are INCONCLUSIVE with their measured reason; reliable flags still fail.
 - ~~P3 Motion lab rate comparison~~ done: state reset (`e78ed41`) and a discarded warm-up
   replay before timed rates (`9c807fa`) remove the 1×/4× inversion.
 - ~~P3 Hover probes on SVG centres~~ done (`5bb3b5b`, `e58fa1a`): 130 → 86 flags; the rest are
@@ -134,22 +134,22 @@ step covers only part of an item, the step is named. Items marked ✓ were check
 
 ### Checks and tooling
 
-- **P2 Motion "unsettled" check can never fire** ✓ (`test/lab/report-metrics.mjs:35`, `:70`):
+- ~~P2 Motion "unsettled" check can never fire~~ fixed in 61ab6ee; independent static target and reverse-proved cut-off control. ✓ (`test/lab/report-metrics.mjs:35`, `:70`):
   progress is normalized to the last sample, which is always 100 %. Frame-exact comparison hides
   most of this, but a cut-off transition in a new scenario passes. Fix: compare with the target
   geometry; add a positive control that must fail.
-- **P2 Checkers that pass on empty input:** `check:seen` with recordings but no chart rows
+- ~~P2 Checkers that pass on empty input~~ fixed in 61ab6ee; CLI controls fail without the fixes: `check:seen` with recordings but no chart rows
   (`check-seen.mjs:285`); `check:docs` accepts a sized but empty chart surface (`check-docs.mjs:132`);
   an unknown motion step filter gives an empty report that passes (`report.mjs:275`). Fix: require
   expected coverage.
-- **P2 `pnpm verify` cannot express "known flags"**: the phase 2 gate wants every check PASS, but
+- ~~P2 `pnpm verify` cannot express "known flags"~~ handled in 61ab6ee by Opus’s declared reliability rule; no reliable flag is accepted: the phase 2 gate wants every check PASS, but
   `check:play` (58 P1 flags) and `check:seen` fail for known reasons. Fix: an accepted-flags file
   like the motion lab's, so verify is green and new flags still fail.
-- **P2 Process hygiene in checkers:** `report.mjs` cleans up server/browser only on success
+- ~~P2 Process hygiene in checkers~~ fixed in 61ab6ee; contained paths, finally cleanup, reverse-proved readiness and shutdown controls: `report.mjs` cleans up server/browser only on success
   (`:376`) and `rm -rf`s a path built from arguments (`:265`); `check-play`/`check-seen` wait
   forever after SIGTERM (`check-play.mjs:595`) and start with a fixed delay instead of polling
   (`:396`). Fix: `try/finally`, contained output dir, bounded shutdown, readiness polling. S each.
-- **P2 Not wired:** motion-metrics regressions are outside vitest config and `verify.mjs`;
+- ~~P2 Not wired~~ fixed in 61ab6ee: motion-metrics regressions are outside vitest config and `verify.mjs`;
   `update-motion-docs.mjs --check` is not in verify/CI. S.
 - **P2 Consumer CI on a cold store:** `test.yml:66` runs the offline consumer check without
   prefetching fixture dependencies (`check-consumers.mjs:52`). Validate a cold-cache run (4.6). M.
