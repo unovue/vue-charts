@@ -681,3 +681,12 @@ Source: `part-b/benchmark-spread.json`, derived from the final retry `bench-fina
 | BarChart 1000 | animated / cpuMsPerFrame | 5.916 (5.543–6.840) | 5.764 (5.210–9.328) | 0.9744 | PASS |
 
 Anomaly: the BarChart static update median at the largest case exceeds the unchanged 1.10 ratio limit (1.1108 observed); its baseline/current ranges overlap. The previous Phase 2 benchmark passed, but its load is not comparable. Sampling variation or added API work may contribute; cause is unproven and no performance conclusion is drawn from this run. The failed verdict is retained without another retry.
+
+### Phase 3 regression follow-up
+
+Done: reader 2d298fd and Bar fix (this commit); 9eb6655 added the path parser and unused slot-prop geometry reads.
+Gate: typecheck, 1,418 Vitest tests, ESLint 0 warnings, check:code and standalone bundle check PASS.
+Numeric: 285 captures / 16,245 frames and motion metrics unchanged; packed Vite/Nuxt consumers PASS.
+Bench: 18/18 PASS; Line/Bar 10,000 update ratios 0.985/1.034, mount 0.941/1.024; medians/ranges in benchmark-spread.json.
+BarList: 8,008 B gzip; cached reader ~193 B accepted; remaining ~43 B tracked for 4.3 in LATER.md.
+Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms per key; preserve the existing accessor return boundary.

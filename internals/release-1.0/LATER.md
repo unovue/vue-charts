@@ -51,6 +51,12 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 
 ## Code
 
+- **P3 Typed reader byte target:** the regression follow-up keeps cached dot/numeric paths
+  and accessors; BarList is 8,008 B gzip. Its estimated feature cost is 193 B against the
+  requested ~150 B target. Opus accepted this cost; revisit the remaining ~43 B in phase 4.3
+  without per-row parsing or allocations for string/number key reads.
+  Evidence: `regression-follow-up/final-reader-bundle.json`, `boundary-bundles.json` in that folder.
+
 - **Platform reuse (research done, `.evidence/release-1.0/platform-report.md`, checked against
   vue-core 3.5.0, VueUse 13.1, Nuxt 3.15 sources).** Verdict: the code already uses Vue and
   VueUse for most things; the remaining wins are modest. Scheduled in the run:
