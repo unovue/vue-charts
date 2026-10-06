@@ -1,4 +1,4 @@
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { Size } from '@/types'
 import type { CartesianTickItem } from '@/types/tick'
 import { getAngledRectangleWidth } from '@/utils/cartesian'

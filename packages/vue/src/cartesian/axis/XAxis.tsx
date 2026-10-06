@@ -1,17 +1,15 @@
+import { useChart } from '@/model/chart'
 import type { AxisSlots, AxisTick, TickFormatter } from '@/types/tick'
 import { useDeferredView } from '@/hooks/deferredView'
-import { selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize, useChartCartesianAxis } from '@/state/chartContext'
 /**
  * @fileOverview X Axis
  */
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import type { XAxisSettings } from '@/state/chartCartesianAxis'
+import type { XAxisSettings } from '@/types/axisSettings'
 import { implicitXAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
 import type { DataKey } from '@/types'
-import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 
 const XAxisImpl = defineComponent({
@@ -24,12 +22,13 @@ const XAxisImpl = defineComponent({
   },
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
+    const chart = useChart()
     const axisType = 'xAxis'
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.xAxisId))
-    const axisSize = useAppSelector(state => selectXAxisSize(state, props.xAxisId!))
-    const position = useAppSelector(state => selectXAxisPosition(state, props.xAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.xAxisId!))
-    const viewBox = useAppSelector(selectAxisViewBox)
+    const scale = computed(() => chart.axis(axisType, props.xAxisId).scale.value)
+    const axisSize = computed(() => chart.axis('xAxis', props.xAxisId!).size.value)
+    const position = computed(() => chart.axis('xAxis', props.xAxisId!).position.value)
+    const cartesianTickItems = computed(() => chart.axis(axisType, props.xAxisId!).ticks.value)
+    const viewBox = computed(() => chart.axisViewBox.value)
 
     return () => {
       const { ticks, ...allOtherProps } = props
@@ -87,7 +86,7 @@ const XAxisSettingsDispatcher = defineComponent({
     tickFormatter: Function as PropType<TickFormatter>,
   },
   setup(props, { slots: dispatcherSlots }) {
-    const { xAxis } = useChartCartesianAxis()
+    const { xAxis } = useChart().axes
     const settings = computed<XAxisSettings>(() => {
       return {
         interval: props.interval ?? 'preserveEnd',

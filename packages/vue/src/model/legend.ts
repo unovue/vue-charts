@@ -1,0 +1,34 @@
+import { computed, shallowRef } from 'vue'
+import type { Registry } from './registry'
+import { createRegistry } from './registry'
+import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
+import type { LayoutType, Size } from '@/types'
+
+export interface LegendSettings {
+  layout: LayoutType
+  align: HorizontalAlignmentType
+  verticalAlign: VerticalAlignmentType
+  position?: CartesianPosition
+  offset?: number
+}
+
+export function createChartLegend(entries: Registry<readonly LegendPayload[]>) {
+  const bindings = createRegistry<{ settings: LegendSettings, hidden: readonly string[] | undefined }>()
+  const size = shallowRef<Size>({ width: 0, height: 0 })
+  const settings = computed(() => bindings.entries.value.at(-1)?.settings ?? {
+    layout: 'horizontal' as const,
+    align: 'center' as const,
+    verticalAlign: 'middle' as const,
+  })
+  const hidden = computed(() => new Set(bindings.entries.value.at(-1)?.hidden))
+  const payload = computed(() => entries.entries.value.flat())
+  const state = computed(() => ({ settings: settings.value, hidden: hidden.value, size: size.value }))
+
+  function setLegendSize(value: Size) {
+    if (size.value.width !== value.width || size.value.height !== value.height)
+      size.value = { width: value.width, height: value.height }
+  }
+
+  return { state, entries, payload, register: bindings.register, setLegendSize }
+}

@@ -1,4 +1,4 @@
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { Size } from '@/types'
 import type { CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { CartesianTickItem } from '@/types/tick'

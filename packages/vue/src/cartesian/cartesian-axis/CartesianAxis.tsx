@@ -2,7 +2,7 @@ import { useCanMeasureText } from '@/animation/renderPhase'
 /**
  * @fileOverview Cartesian Axis
  */
-import type { CartesianViewBox } from '@/cartesian/type'
+import type { CartesianViewBox } from '@/types/viewBox'
 import type { VueClassValue } from '@/types/common'
 import type { AxisInterval } from '@/types/axis'
 import type { RechartsScale } from '@/types/scale'

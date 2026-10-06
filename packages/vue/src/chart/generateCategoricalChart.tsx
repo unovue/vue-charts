@@ -1,15 +1,13 @@
-import type { TooltipPayloadSearcher } from '@/state/chartTooltip'
+import type { TooltipEventType, TooltipPayloadSearcher } from '@/types/tooltip'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { classProp } from '@/types'
 import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
-import { provideChartContext } from '@/state/chartContext'
 import type { PropType, StyleValue } from 'vue'
 import { Fragment, defineComponent } from 'vue'
-import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
 import Surface from '@/chart/Surface.vue'
-import type { ChartData } from '@/state/chartData'
+import type { ChartData } from '@/types/chartData'
 import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
 import { FULL_WIDTH_AND_HEIGHT } from '@/chart/const'
@@ -183,7 +181,6 @@ export function generateCategoricalChart({
         tooltip: { chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher },
       })
       provideChart(chart)
-      provideChartContext(chart)
       provideRenderPhase()
 
       const clipPathId = provideClipPathId(props)

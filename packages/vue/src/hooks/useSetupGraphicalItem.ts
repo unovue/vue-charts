@@ -1,16 +1,16 @@
+import { useChart } from '@/model/chart'
 import { provideTooltipEntry } from '@/model/tooltip'
 import type { Coordinate } from '@/types'
-import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { Ref, SVGAttributes, ShallowRef } from 'vue'
 import type { MinPointSize } from '@/shape'
 import type { AreaProps } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/chartGraphicalItems'
-import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
+import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/types/graphical'
 import { getNormalizedStackId, getTooltipNameProp } from '@/utils/chart'
 import { computed, useAttrs } from 'vue'
 import { useTrackedData } from './useTrackedData'
-import type { AxisId } from '@/state/chartCartesianAxis'
+import type { AxisId } from '@/types/axisSettings'
 
 type GraphicalItemProps = Partial<Pick<AreaProps, 'dataKey' | 'stackId' | 'hide' | 'xAxisId' | 'yAxisId'
   | 'stroke' | 'fill' | 'name' | 'legendType' | 'tooltipType' | 'unit'>> & {
@@ -56,7 +56,7 @@ export function useSetupGraphicalItem(
       },
     ]
   })
-  useChartGraphicalItems().cartesian.register(computed(() => {
+  useChart().items.cartesian.register(computed(() => {
     return {
       data: data.value,
       dataKey: props.dataKey,
@@ -72,7 +72,7 @@ export function useSetupGraphicalItem(
     }
   }))
 
-  useChartLegend().entries.register(legendPayload)
+  useChart().legend.entries.register(legendPayload)
   if (!options?.skipTooltip)
     useSetupTooltipEntry(props, type, data)
   return data
@@ -104,7 +104,7 @@ export function useSetupTooltipEntry(
       unit: props.unit,
     },
   }))
-  useChartTooltip().entries.register(entry)
+  useChart().tooltip.entries.register(entry)
   provideTooltipEntry(entry)
   return entry
 }

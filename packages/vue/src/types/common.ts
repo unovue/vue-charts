@@ -1,4 +1,4 @@
-import type { TooltipPayload, TooltipPayloadSearcher } from '@/state/chartTooltip'
+import type { TooltipPayload, TooltipPayloadSearcher } from '@/types/tooltip'
 import type { TooltipEventType, TooltipIndex } from './tooltip'
 import type { PropType, SVGAttributes } from 'vue'
 

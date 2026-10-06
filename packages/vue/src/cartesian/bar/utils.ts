@@ -1,4 +1,4 @@
-import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ResolvedBarProps } from './type'
 import { getTooltipNameProp } from '@/utils/chart'
 

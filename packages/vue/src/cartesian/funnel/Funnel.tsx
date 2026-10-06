@@ -3,7 +3,6 @@ import { funnelEvents } from '@/events/itemEvents'
 import type { ComputedRef, ExtractPropTypes, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { useChart } from '@/model/chart'
 import { Layer } from '@/container/Layer'
@@ -43,7 +42,7 @@ const FunnelView = defineComponent({
     const data = view.data
     const trapezoids = view.trapezoids
     const cellPropsRef = view.cellPropsRef
-    const tooltip = useChartTooltip()
+    const tooltip = useChart().tooltip
     // A trapezoid enters from and leaves into the seam between its neighbours, so the stack
     // stays closed while it opens or shrinks.
     type Trap = (typeof trapezoids.value)[number] & { index: number }
@@ -83,7 +82,7 @@ const FunnelView = defineComponent({
         unit: '',
       },
     }))
-    useChartTooltip().entries.register(tooltipConfiguration)
+    useChart().tooltip.entries.register(tooltipConfiguration)
 
     // LabelList children ride along with the trapezoids as drawn, show the new values at once
     // and fade with trapezoids that enter or leave.
@@ -148,9 +147,9 @@ const FunnelView = defineComponent({
 
             const trapezoidProps = {
               ...trap,
-              isActive: tooltip.state.value.keyboardInteraction.active
-                && tooltip.state.value.keyboardInteraction.configuration === tooltipConfiguration.value
-                && tooltip.state.value.keyboardInteraction.index === String(trap.index),
+              isActive: tooltip.keyboardInteraction.value.active
+                && tooltip.keyboardInteraction.value.configuration === tooltipConfiguration.value
+                && tooltip.keyboardInteraction.value.index === String(trap.index),
               fill: trapFill,
               stroke: trapStroke,
               animationProgress: isAnimating.value ? 0 : 1,
@@ -218,7 +217,7 @@ const _Funnel = defineComponent({
       },
     }))
 
-    useChartGraphicalItems().polar.register(computed(() => ({
+    useChart().items.polar.register(computed(() => ({
       stackId: undefined,
       barSize: undefined,
       type: 'funnel' as const,
@@ -252,7 +251,7 @@ const _Funnel = defineComponent({
         inactive: props.hide,
       }))
     })
-    useChartLegend().entries.register(computed(() => legendPayload.value))
+    useChart().legend.entries.register(computed(() => legendPayload.value))
 
     const View = useDeferredView(FunnelView)
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)

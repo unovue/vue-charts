@@ -1,9 +1,7 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useAppSelector } from '@/state/hooks'
-import { selectPolarViewBox } from '@/state/chartContext'
-import { selectPolarGridAngles, selectPolarGridRadii } from '@/state/selectors/polarGridSelectors'
 import { polarToCartesian } from '@/utils/polar'
 
 function getPolygonPath(radius: number, cx: number, cy: number, polarAngles: ReadonlyArray<number>): string {
@@ -34,11 +32,12 @@ const PolarGridView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
-    const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const polarAngles = useAppSelector(state => selectPolarGridAngles(state, props.angleAxisId))
-    const selectedPolarRadii = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
+    const polarViewBox = computed(() => chart.polarLayout.viewBox.value)
+    const polarAngles = computed(() => chart.axis('angleAxis', props.angleAxisId).ticks.value?.map(tick => tick.coordinate))
+    const selectedPolarRadii = computed(() => chart.axis('radiusAxis', props.radiusAxisId).ticks.value?.map(tick => tick.coordinate))
 
     const polarRadii = computed(() => {
       if (Array.isArray(props.polarRadius))

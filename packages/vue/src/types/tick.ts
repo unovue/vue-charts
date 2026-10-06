@@ -1,4 +1,4 @@
-import type { CartesianViewBox } from '@/cartesian/type'
+import type { CartesianViewBox } from '@/types/viewBox'
 import type { AxisType, CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { TickItem } from '@/types/common'
 import type { RechartsScale } from '@/types/scale'

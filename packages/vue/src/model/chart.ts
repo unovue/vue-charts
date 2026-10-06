@@ -1,22 +1,26 @@
-import { createTooltip } from './tooltip'
+import { combineLegendArea, combineRegisteredAxes } from '@/core/layout'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { provideChartPresentation } from './presentation'
+import { createTooltip, provideTooltipController } from './tooltip'
 import { createPolarLayout } from '@/model/polar'
 import { createAxes } from './axis'
 import type { AxisLookup } from './axis'
-import { createChartData } from '@/state/chartData'
+import { createChartData } from '@/model/dataRange'
 import { createLayout } from './layout'
 import type { ChartGeometry } from './layout'
-import { createChartBrush } from '@/state/chartBrush'
-import { createChartLegend } from '@/state/chartLegend'
+import { createChartBrush } from '@/model/brush'
+import { createChartLegend } from '@/model/legend'
 import type { ChartRegistries } from './registries'
 import { createRegistries } from './registries'
 import type { ComputedRef, EffectScope, InjectionKey } from 'vue'
 import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
-import type { ChartData } from '@/state/chartData'
-import type { ChartLayoutState } from '@/state/chartLayout'
-import type { ChartOptions } from '@/state/chartOptions'
-import type { PolarChartOptions } from '@/state/chartPolarOptions'
-import type { UpdatableChartOptions } from '@/state/chartRootProps'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
+import type { ChartData } from '@/types/chartData'
+import type { ChartLayoutState } from '@/types/chartLayout'
+import type { ChartOptions } from '@/model/options'
+import type { PolarChartOptions } from '@/types/polarOptions'
+import type { UpdatableChartOptions } from '@/types/chartOptions'
 import { useTrackedData } from '@/hooks/useTrackedData'
 
 export interface ChartInputs {
@@ -30,6 +34,8 @@ export interface ChartInputs {
 }
 
 export interface Chart extends ChartRegistries, ChartGeometry {
+  readonly legendArea: ComputedRef<CartesianViewBoxRequired>
+  readonly direction: ComputedRef<string | undefined>
   readonly tooltip: ReturnType<typeof createTooltip>
   readonly polarLayout: ReturnType<typeof createPolarLayout>
   readonly axis: AxisLookup
@@ -104,7 +110,16 @@ export function createChart(inputs: ChartInputs): Chart {
     offset: () => geometry.offset.value,
     options: () => options.value,
   })
+  const legendArea = computed(() => combineLegendArea(inputs.size(), inputs.margin()))
+  const direction = computed(() => {
+    if (inputs.layout() === 'horizontal')
+      return combineRegisteredAxes(registries.axes.xAxis.entries.value).some(axis => axis.reversed) ? 'right-to-left' : 'left-to-right'
+    if (inputs.layout() === 'vertical')
+      return combineRegisteredAxes(registries.axes.yAxis.entries.value).some(axis => axis.reversed) ? 'bottom-to-top' : 'top-to-bottom'
+  })
   return {
+    legendArea,
+    direction,
     tooltip,
     polarLayout,
     axis,
@@ -126,6 +141,23 @@ export function createChart(inputs: ChartInputs): Chart {
 
 export function provideChart(chart: Chart) {
   provide(chartKey, chart)
+  provideTooltipController(chart.tooltip)
+  provideChartPresentation({
+    name: computed(() => chart.options.value.chartName),
+    layout: computed(() => chart.layout.value.layoutType),
+    width: chart.width,
+    height: chart.height,
+    margin: chart.margin,
+    viewBox: chart.viewBox,
+    offset: chart.offset,
+    accessibility: computed(() => chart.rootProps.value.accessibilityLayer !== false),
+    bandSize: computed(() => {
+      const axis = chart.tooltip.axis.value
+      return axis ? getBandSizeOfAxis({ ...axis.settings.value, scale: axis.scale.value! }, chart.tooltip.ticks.value ?? undefined) : undefined
+    }),
+    syncId: computed(() => chart.rootProps.value.syncId),
+    emitter: computed(() => chart.options.value.eventEmitter),
+  })
 }
 
 export function useChart(): Chart {

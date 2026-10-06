@@ -3,7 +3,6 @@ import { pieEvents } from '@/events/itemEvents'
 import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { useChart } from '@/model/chart'
 import { Layer } from '@/container/Layer'
@@ -45,7 +44,7 @@ const PieView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const pieSettings = view.pieSettings
-    const tooltip = useChartTooltip()
+    const tooltip = useChart().tooltip
     const chart = useChart()
     const displayedData = computed(() => data.value?.length ? data.value : chart.data.value)
     const sectors = computed(() => displayedData.value == null
@@ -250,7 +249,7 @@ const _Pie = defineComponent({
       presentationProps: {},
     }))
 
-    useChartGraphicalItems().polar.register(computed(() => ({
+    useChart().items.polar.register(computed(() => ({
       stackId: undefined,
       barSize: undefined,
       type: 'pie' as const,
@@ -266,7 +265,7 @@ const _Pie = defineComponent({
       data.value?.length ? data.value : chart.data.value,
       pieSettings.value,
     ))
-    useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
+    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(PieView)
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)

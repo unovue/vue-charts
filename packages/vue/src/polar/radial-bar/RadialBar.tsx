@@ -3,7 +3,6 @@ import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { useChart } from '@/model/chart'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
 import { getBaseValueOfBar } from '@/core/coordinates'
@@ -36,7 +35,7 @@ const RadialBarView = defineComponent({
     const emit = radialBarEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
-    const tooltip = useChartTooltip()
+    const tooltip = useChart().tooltip
 
     const radialBarSettings = computed<RadialBarSettings>(() => ({
       dataKey: props.dataKey,
@@ -117,7 +116,7 @@ const RadialBarView = defineComponent({
       })
     })
 
-    useChartTooltip().entries.register(computed(() => ({
+    useChart().tooltip.entries.register(computed(() => ({
       dataDefinedOnItem: undefined,
       positions: undefined,
       settings: {
@@ -285,7 +284,7 @@ export const RadialBar = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     radialBarEvents.provide(emit)
-    useChartGraphicalItems().polar.register(computed(() => ({
+    useChart().items.polar.register(computed(() => ({
       type: 'radialBar' as const,
       data: undefined,
       dataKey: props.dataKey,
@@ -301,7 +300,7 @@ export const RadialBar = defineComponent({
     const chart = useChart()
     const legendPayload = computed(() => combineRadialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
-    useChartLegend().entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
+    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, color: entry.color ?? props.fill, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

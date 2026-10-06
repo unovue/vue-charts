@@ -1,17 +1,14 @@
+import { useChart } from '@/model/chart'
 import { toPx } from '@/utils/style'
 import { useCanMeasureText } from '@/animation/renderPhase'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
-import { useAppSelector } from '@/state/hooks'
-import { useChartLegend } from '@/state/chartContext'
-import { selectLegendPayload } from '@/state/selectors/legendSelectors'
-import { selectLegendArea } from '@/state/selectors/selectLegendArea'
 import { useChartHeight, useChartWidth, useMargin, useViewBox } from '@/context/chartLayoutContext'
 import { useLegendPortal } from '@/chart/LegendPortalContext'
 import { getUniqPayload } from '@/utils/payload/getUniqPayload'
 import { sortBy } from 'es-toolkit/compat'
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { LayoutType } from '@/types'
 import { getCartesianPosition, isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
@@ -20,15 +17,16 @@ import type { LegendProps } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
 export function useLegend(props: LegendProps) {
+  const chart = useChart()
   const canMeasureText = useCanMeasureText()
-  const { setLegendSize } = useChartLegend()
-  const contextPayload = useAppSelector(selectLegendPayload)
+  const { setLegendSize } = chart.legend
+  const contextPayload = chart.legend.payload
   const legendPortalFromContext = useLegendPortal()
   const margin = useMargin()
   const chartWidth = useChartWidth()
   const chartHeight = useChartHeight()
   const viewBox = useViewBox()
-  const legendArea = useAppSelector(selectLegendArea)
+  const legendArea = chart.legendArea
 
   // Element ref for bounding box calculation
   const legendRef = ref<HTMLElement>()

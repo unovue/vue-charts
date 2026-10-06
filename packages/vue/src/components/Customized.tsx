@@ -1,10 +1,8 @@
+import { useChart } from '@/model/chart'
 import type { SlotsType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import { selectUnfilteredCartesianItems } from '@/state/chartContext'
-import { selectChartOffset } from '@/state/selectors/selectChartOffset'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
-import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/chartGraphicalItems'
+import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 import type { DataKey } from '@/types'
 
 export interface FormattedGraphicalItem {
@@ -29,11 +27,12 @@ const _Customized = defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<CustomizedSlots>,
   setup(_props, { slots }) {
+    const chart = useChart()
     const chartWidth = useChartWidth()
     const chartHeight = useChartHeight()
-    const offset = useAppSelector(selectChartOffset)
-    const cartesianItems = useAppSelector(selectUnfilteredCartesianItems)
-    const polarItems = useAppSelector(state => state.graphicalItems.polarItems)
+    const offset = chart.offset
+    const cartesianItems = chart.items.cartesian.entries
+    const polarItems = chart.items.polar.entries
 
     const formattedGraphicalItems = computed<FormattedGraphicalItem[]>(() => {
       const items: FormattedGraphicalItem[] = []

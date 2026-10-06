@@ -1,4 +1,4 @@
-import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/cartesian/type'
+import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/types/viewBox'
 import type { LabelProps } from '@/components/label/types'
 import type { Coordinate } from '@/types'
 import { isNumber, isPercent } from '@/utils'

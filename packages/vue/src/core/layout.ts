@@ -114,3 +114,13 @@ export function appendOffsetOfLegend(offset: ChartOffset, legendSettings: Layout
 
   return offset
 }
+
+/** Outside legends use the margin-inset chart area rather than the axis-inset plot. */
+export function combineLegendArea(size: Size, margin: Margin) {
+  return {
+    x: margin.left || 0,
+    y: margin.top || 0,
+    width: Math.max(size.width - (margin.left || 0) - (margin.right || 0), 0),
+    height: Math.max(size.height - (margin.top || 0) - (margin.bottom || 0), 0),
+  }
+}

@@ -1,9 +1,8 @@
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import type { XAxisSettings, YAxisSettings, ZAxisSettings } from '@/state/chartCartesianAxis'
-import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/chartGraphicalItems'
-import type { AngleAxisSettings, RadiusAxisSettings } from '@/state/chartPolarAxis'
-import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '@/state/chartReferenceElements'
-import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { AngleAxisSettings, RadiusAxisSettings, XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
+import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
+import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '@/types/reference'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { createRegistry } from './registry'
 
 export function createRegistries() {

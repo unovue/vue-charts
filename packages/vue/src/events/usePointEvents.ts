@@ -1,7 +1,7 @@
+import { useChart } from '@/model/chart'
+import { computed } from 'vue'
 import { useTooltipEntry } from '@/model/tooltip'
 import { parseTooltipIndex } from '@/core/tooltip'
-import { useAppSelector } from '@/state/hooks'
-import { selectActiveTooltipIndex, useChartTooltip } from '@/state/chartContext'
 import type { DataKey } from '@/types'
 import type { EmitFn } from 'vue'
 
@@ -15,7 +15,7 @@ export function usePointEvents<Entry extends { x: number, y: number }>(
   emit: PointEmitter<Entry>,
   dataKey: () => DataKey<unknown>,
 ) {
-  const tooltip = useChartTooltip()
+  const tooltip = useChart().tooltip
   const configuration = useTooltipEntry()
   return (entry: Entry, index: number) => {
     const payload = () => ({ configuration: configuration?.value, activeIndex: String(index), activeDataKey: dataKey(), activeCoordinate: { x: entry.x, y: entry.y } })
@@ -41,7 +41,8 @@ export function useSeriesPointEvents<Entry extends { x: number, y: number }>(
   dataKey: () => DataKey<unknown>,
   points: () => readonly Entry[],
 ) {
-  const activeIndex = useAppSelector(selectActiveTooltipIndex)
+  const chart = useChart()
+  const activeIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
   const listeners = usePointEvents(emit, dataKey)
   const dispatch = (name: 'onClick' | 'onMouseenter' | 'onMouseleave', event: MouseEvent) => {
     const index = parseTooltipIndex(activeIndex.value) ?? 0

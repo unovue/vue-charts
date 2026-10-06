@@ -1,7 +1,7 @@
-import { useChartCartesianAxis } from '@/state/chartContext'
+import { useChart } from '@/model/chart'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
-import type { ZAxisSettings } from '@/state/chartCartesianAxis'
+import type { ZAxisSettings } from '@/types/axisSettings'
 import { implicitZAxis } from '@/core/axis/settings'
 import type { AxisDomain, AxisRange } from '@/types/axis'
 import type { DataKey } from '@/types'
@@ -44,7 +44,7 @@ export const ZAxis = defineComponent({
     },
   },
   setup(props) {
-    const { zAxis } = useChartCartesianAxis()
+    const { zAxis } = useChart().axes
 
     const settings = computed<ZAxisSettings>(() => {
       return {

@@ -1,4 +1,4 @@
-import type { ViewBox } from '@/cartesian/type'
+import type { ViewBox } from '@/types/viewBox'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType } from '@/types'
 import { last } from 'es-toolkit/compat'

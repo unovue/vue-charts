@@ -1,6 +1,6 @@
 import type { LayoutType, Margin } from '@/types'
-import type { UpdatableChartOptions } from '@/state/chartRootProps'
-import type { PolarChartOptions } from '@/state/chartPolarOptions'
+import type { UpdatableChartOptions } from '@/types/chartOptions'
+import type { PolarChartOptions } from '@/types/polarOptions'
 
 export const chartDefaults: UpdatableChartOptions & PolarChartOptions & {
   layout: LayoutType

@@ -1,5 +1,5 @@
-import type { TooltipSyncState } from '../state/chartTooltip'
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { TooltipSyncState } from '@/types/tooltip'
+import type { BrushStartEndIndex } from '@/types/chartData'
 
 export const TOOLTIP_SYNC_EVENT = 'recharts.syncEvent.tooltip'
 

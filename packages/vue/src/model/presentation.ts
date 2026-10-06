@@ -1,6 +1,6 @@
 import type { ComputedRef, InjectionKey } from 'vue'
 import { inject, provide } from 'vue'
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { ChartOffsetRequired, LayoutType, Margin } from '@/types'
 
 export interface ChartPresentation {

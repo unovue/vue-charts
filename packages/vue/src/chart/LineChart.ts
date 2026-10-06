@@ -1,5 +1,5 @@
 import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/chartOptions'
+import { arrayTooltipSearcher } from '@/model/options'
 import type { TooltipEventType } from '@/types'
 
 const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']

@@ -1,10 +1,10 @@
 import type { AxisRange, AxisType } from '@/types/axis'
 import type { AxisWithTicksSettings } from '@/types/axisSettings'
 import type { ChartDataState } from '@/types/chartData'
-import type { TooltipEntrySettings, TooltipIndex, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher } from '@/state/chartTooltip'
+import type { TooltipEntrySettings, TooltipIndex, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher } from '@/types/tooltip'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TickItem, TooltipEventType, ValueType } from '@/types'
 import type { RechartsScale } from '@/types/scale'
-import { isCategoricalAxis } from '@/utils'
+import { isCategoricalAxis } from '@/utils/validate'
 import { findEntryInArray, mathSign } from '@/utils/data'
 
 import { getValueByDataKey } from '@/core/data'

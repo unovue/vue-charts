@@ -1,20 +1,19 @@
+import { useChart } from '@/model/chart'
+import { computed, onMounted, watch } from 'vue'
 import { parseTooltipIndex } from '@/core/tooltip'
-import { useAppSelector } from '@/state/hooks'
-import { onMounted, watch } from 'vue'
-import { selectEventEmitter, selectSyncId, selectSyncMethod } from '@/state/selectors/rootPropsSelectors'
 import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
-import { selectTooltipAxisTicks, useChartDataActions, useChartTooltip } from '@/state/chartContext'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { BrushStartEndIndex } from '@/types/chartData'
 
 function useTooltipSyncEventsListener() {
-  const mySyncId = useAppSelector(selectSyncId)
-  const myEventEmitter = useAppSelector(selectEventEmitter)
-  const tooltip = useChartTooltip()
-  const syncMethod = useAppSelector(selectSyncMethod)
-  const tooltipTicks = useAppSelector(selectTooltipAxisTicks)
+  const chart = useChart()
+  const mySyncId = computed(() => chart.rootProps.value.syncId)
+  const myEventEmitter = computed(() => chart.options.value.eventEmitter)
+  const tooltip = chart.tooltip
+  const syncMethod = computed(() => chart.rootProps.value.syncMethod)
+  const tooltipTicks = computed(() => chart.tooltip.ticks.value)
   const layout = useChartLayout()
   const viewBox = useViewBox()
 
@@ -105,9 +104,10 @@ function useTooltipSyncEventsListener() {
 }
 
 function useBrushSyncEventsListener() {
-  const mySyncId = useAppSelector(selectSyncId)
-  const myEventEmitter = useAppSelector(selectEventEmitter)
-  const data = useChartDataActions()
+  const chart = useChart()
+  const mySyncId = computed(() => chart.rootProps.value.syncId)
+  const myEventEmitter = computed(() => chart.options.value.eventEmitter)
+  const data = chart.dataRange
   watch([mySyncId, myEventEmitter], (v, o, onCleanup) => {
     if (mySyncId.value == null) {
       // This chart is not synchronised with any other chart so we don't need to listen for any events.

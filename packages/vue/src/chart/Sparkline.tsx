@@ -2,7 +2,7 @@ import { type PropType, type SlotsType, computed, defineComponent, reactive, ref
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
-import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
 import { drawTiming } from '@/animation/motion'

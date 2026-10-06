@@ -1,4 +1,4 @@
-import type { Sign } from '@/cartesian/type'
+import type { Sign } from '@/types/viewBox'
 import type { Size } from '@/types'
 import type { CartesianTickItem } from '@/types/tick'
 import { getEveryNthWithCondition } from '@/utils/tick'
@@ -16,6 +16,8 @@ export function normalizeAngle(angle: number) {
 /**
  * Calculates the width of the largest horizontal line that fits inside a rectangle that is displayed at an angle.
  * @param {object} size Width and height of the text in a horizontal position.
+ * @param {number} size.width Horizontal text width.
+ * @param {number} size.height Horizontal text height.
  * @param {number} angle Angle in degrees in which the text is displayed.
  * @return {number} The width of the largest horizontal line that fits inside a rectangle that is displayed at an angle.
  */

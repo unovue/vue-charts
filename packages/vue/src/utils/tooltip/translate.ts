@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'vue'
 import { isNumber } from '@/utils/validate'
 import type { AllowInDimension, Coordinate } from '@/types'
-import type { CartesianViewBox } from '@/cartesian/type'
+import type { CartesianViewBox } from '@/types/viewBox'
 
 export type Dimension2D = 'x' | 'y'
 

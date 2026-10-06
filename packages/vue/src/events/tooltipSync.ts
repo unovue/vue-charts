@@ -12,7 +12,7 @@ export function useTooltipChartSynchronisation(source: TooltipSource, enabled: (
   const activeDataKey = computed(() => tooltip.target.value?.entry?.value?.settings.dataKey)
   const eventEmitterSymbol = presentation.emitter
   const syncId = presentation.syncId
-  const tooltipState = computed(() => tooltip.state.value.syncInteraction)
+  const tooltipState = computed(() => tooltip.syncInteraction.value)
   const isReceivingSynchronisation = computed(() => tooltipState.value?.active)
 
   watchEffect(() => {

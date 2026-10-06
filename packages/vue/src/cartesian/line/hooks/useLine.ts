@@ -1,6 +1,6 @@
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
-import { useChartName } from '@/state/chartContext'
+import { useChartPresentation } from '@/model/presentation'
 import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
@@ -51,7 +51,7 @@ export function useLineContext() {
 export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
   const chart = useChart()
   const layout = useChartLayout()
-  const chartName = useChartName()
+  const chartName = useChartPresentation().name
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
 

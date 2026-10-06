@@ -12,12 +12,12 @@ import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/state/chartOptions'
+import type { ChartOptions } from '@/model/options'
 import type {
   TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
-} from '@/state/chartTooltip'
+} from '@/types/tooltip'
 import {
   type SunburstData,
   type SunburstLayoutNode,

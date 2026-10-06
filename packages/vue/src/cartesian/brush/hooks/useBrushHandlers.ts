@@ -2,7 +2,7 @@ import { onUnmounted } from 'vue'
 import type { Ref } from 'vue'
 import { getIndex } from '../utils'
 import type { BrushState, BrushTravellerId } from '../type'
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { BrushStartEndIndex } from '@/types/chartData'
 
 export interface UseBrushHandlersProps {
   x: number

@@ -17,8 +17,8 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import { getStringSize } from '@/utils/attrs'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/state/chartOptions'
-import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/state/chartTooltip'
+import type { ChartOptions } from '@/model/options'
+import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 const DEFAULT_COLORS = [

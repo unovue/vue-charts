@@ -7,7 +7,7 @@ import { useChart } from '@/model/chart'
 import { combineErrorBarLines } from '@/core/errorBar'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { ErrorBarsSettings } from '@/state/chartGraphicalItems'
+import type { ErrorBarsSettings } from '@/types/graphical'
 
 export const ErrorBarVueProps = {
   dataKey: { type: [String, Number, Function] as PropType<string | number | ((obj: any) => any)>, required: true as const },

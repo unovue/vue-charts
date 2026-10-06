@@ -1,11 +1,10 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
 import { useCanMeasureText } from '@/animation/renderPhase'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
-import { useAppSelector } from '@/state/hooks'
-import { selectAxisPropsNeededForCartesianGridTicksGenerator } from '@/state/chartContext'
 import { isNumber, warn } from '@/utils'
 import { resolveDefaultProps } from '@/utils/resolveDefaultProps'
 import type { CartesianGridProps, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
@@ -113,6 +112,7 @@ const CartesianGridView = defineComponent({
     svgAttrs: { type: Object as PropType<SVGAttributes & Pick<CartesianGridProps, 'verticalFill' | 'horizontalFill'> & { ry?: number }>, required: true },
   },
   setup(view, { slots }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
     const chartWidth = useChartWidth()
@@ -122,12 +122,8 @@ const CartesianGridView = defineComponent({
     // Like the axes, the grid measures tick labels only after hydration, so the client's first
     // render reproduces the server's lines.
     const canMeasureText = useCanMeasureText()
-    const xAxis = useAppSelector(state =>
-      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'xAxis', props.xAxisId!),
-    )
-    const yAxis = useAppSelector(state =>
-      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'yAxis', props.yAxisId!),
-    )
+    const xAxis = computed(() => chart.axis('xAxis', props.xAxisId!).grid.value)
+    const yAxis = computed(() => chart.axis('yAxis', props.yAxisId!).grid.value)
 
     // Default grid lines follow the axis ticks by value, on the same clock as the ticks, so the
     // grid never lags behind or runs ahead of the labels. Custom points and generators are drawn

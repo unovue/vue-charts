@@ -11,7 +11,7 @@ import { Legend } from '@/components/legend'
 import { ResponsiveContainer } from '@/container'
 import { getStoryArgsFromArgsTypesObject } from '@/storybook/api/props/utils'
 import { CategoricalChartProps } from '@/storybook/api/props/chart-props'
-import type { ChartData } from '@/state/chartData'
+import type { ChartData } from '@/types/chartData'
 import { ReferenceArea } from '@/cartesian/reference-area'
 import { babiesAndVideosCorrelation } from '@/storybook/data/spurriousCorrelations'
 

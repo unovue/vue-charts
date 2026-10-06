@@ -1,22 +1,12 @@
 import { parseTooltipIndex } from '@/core/tooltip'
-import type { TooltipIndex, TooltipPayloadSearcher } from './chartTooltip'
+import type { TooltipIndex, TooltipPayloadSearcher } from '@/types/tooltip'
 import type { TooltipEventType } from '@/types'
 
-/**
- * These chart options are decided internally, by Recharts,
- * and will not change during the lifetime of the chart.
- *
- * Changing these options can be done by swapping the root element
- * which will create brand-new chart-local state.
- *
- * If you want to store options that can be changed by the user,
- * use UpdatableChartOptions in chartRootProps.ts.
- */
+/** Internal options remain fixed for the lifetime of a chart root. */
 export type ChartOptions = {
   chartName: string
   defaultTooltipEventType: TooltipEventType
   validateTooltipEventTypes?: ReadonlyArray<TooltipEventType>
-  // Should this instead be a property of a graphical item? Do we want to mix items with different data types in one chart?
   tooltipPayloadSearcher: TooltipPayloadSearcher | undefined
   /**
    * We use this to identify which chart is sending events when synchronising.

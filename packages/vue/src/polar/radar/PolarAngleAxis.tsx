@@ -1,9 +1,8 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useAppSelector } from '@/state/hooks'
-import { selectPolarAxisTicks, selectPolarViewBox, useChartPolarAxis } from '@/state/chartContext'
-import type { AngleAxisSettings } from '@/state/chartPolarAxis'
+import type { AngleAxisSettings } from '@/types/axisSettings'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
 import type { DataKey } from '@/types'
 import type { AxisDomain } from '@/types/axis'
@@ -63,10 +62,11 @@ const PolarAngleAxisView = defineComponent({
     tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
   }>,
   setup(view, { slots }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
-    const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'angleAxis', props.angleAxisId))
+    const polarViewBox = computed(() => chart.polarLayout.viewBox.value)
+    const ticks = computed(() => chart.axis('angleAxis', props.angleAxisId).ticks.value)
 
     return () => {
       const viewBox = polarViewBox.value
@@ -157,7 +157,7 @@ const _PolarAngleAxis = defineComponent({
     tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
   }>,
   setup(props, { attrs, slots }) {
-    const { angleAxis } = useChartPolarAxis()
+    const { angleAxis } = useChart().axes
 
     const settings = computed<AngleAxisSettings>(() => ({
       id: props.angleAxisId,

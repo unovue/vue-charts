@@ -1,5 +1,5 @@
 import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/chartOptions'
+import { arrayTooltipSearcher } from '@/model/options'
 
 export const PieChart = generateCategoricalChart({
   chartName: 'PieChart',

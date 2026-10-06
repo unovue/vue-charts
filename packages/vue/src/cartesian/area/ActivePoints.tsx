@@ -1,9 +1,8 @@
+import { useChart } from '@/model/chart'
+import { computed, defineComponent } from 'vue'
 import { parseTooltipIndex } from '@/core/tooltip'
-import { defineComponent } from 'vue'
 import type { PropType, SlotsType, VNode } from 'vue'
 import type { DataKey, VuePropsToType } from '@/types'
-import { useAppSelector } from '@/state/hooks'
-import { selectActiveTooltipIndex } from '@/state/chartContext'
 import type { AreaPointItem } from '@/core/area'
 import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
@@ -50,7 +49,8 @@ export const ActivePoints = defineComponent({
   props: ActivePointsVueProps,
   slots: Object as SlotsType<ActivePointsSlots>,
   setup(props, { slots }) {
-    const activeTooltipIndex = useAppSelector(selectActiveTooltipIndex)
+    const chart = useChart()
+    const activeTooltipIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
 
     return () => {
       const { points } = props

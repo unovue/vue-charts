@@ -3,7 +3,7 @@ import type { BarPositionPosition, BarRectangleItem, BarSettings } from '@/types
 import type { BaseAxisWithScale } from '@/types/axisSettings'
 import type { Series, SeriesPoint } from 'd3-shape'
 import type { ChartOffsetInternal } from '@/utils/types'
-import type { MinPointSize } from '@/shape'
+import type { MinPointSize } from '@/types/shape'
 import { getBaseValueOfBar, getCateCoordinateOfBar, truncateByDomain } from '@/core/coordinates'
 import { getValueByDataKey } from '@/core/data'
 import { isNullish, isNumber } from '@/utils/validate'

@@ -1,22 +1,35 @@
+import { useChart } from '@/model/chart'
+import { combineActiveProps } from '@/core/interaction'
 import { useItemInteractions } from './useItemInteractions'
-import { selectChartDirection, selectCoordinateForDefaultIndex, selectTooltipAxisTicks, useChartTooltip } from '@/state/chartContext'
-import { useAppSelector } from '@/state/hooks'
-import { selectActivePropsFromChartPointer } from '@/state/selectors/selectActivePropsFromChartPointer'
-import { selectTooltipEventType } from '@/state/selectors/selectTooltipEventType'
-import { selectTooltipCoordinate } from '@/state/selectors/touchSelectors'
 import { getChartPointer } from '@/utils/chart'
 import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import type { ChartPointer } from '@/types'
 
 export function useChartInteractions() {
-  const chartState = useAppSelector(state => state)
-  const tooltip = useChartTooltip()
+  const chart = useChart()
+  const tooltip = chart.tooltip
+
+  function selectionAtPointer(pointer: ChartPointer | undefined) {
+    return combineActiveProps(
+      pointer,
+      chart.inputs.layout(),
+      chart.polarLayout.viewBox.value,
+      tooltip.axisType.value,
+      tooltip.axis.value?.reversedRange.value,
+      tooltip.ticks.value,
+      tooltip.orderedTicks.value,
+      chart.offset.value,
+    )
+  }
+
+  function coordinateAt(index: string) {
+    return tooltip.coordinateFor(tooltip.targets.value.find(target => target.index === index))
+  }
 
   function click(chartPointer: ChartPointer) {
-    const state = chartState.value
-    const tooltipEventType = selectTooltipEventType(state, state.tooltip.settings.shared)
+    const tooltipEventType = tooltip.eventType.value
     if (tooltipEventType === 'axis') {
-      const activeProps = selectActivePropsFromChartPointer(state, chartPointer)
+      const activeProps = selectionAtPointer(chartPointer)
       if (activeProps?.activeIndex != null) {
         tooltip.setMouseClickAxisIndex({
           activeIndex: activeProps.activeIndex,
@@ -28,9 +41,8 @@ export function useChartInteractions() {
   }
 
   function move(chartPointer: ChartPointer) {
-    const state = chartState.value
-    const tooltipEventType = selectTooltipEventType(state, state.tooltip.settings.shared)
-    const activeProps = selectActivePropsFromChartPointer(state, chartPointer)
+    const tooltipEventType = tooltip.eventType.value
+    const activeProps = selectionAtPointer(chartPointer)
     if (tooltipEventType === 'axis') {
       if (activeProps?.activeIndex != null) {
         tooltip.setMouseOverAxisIndex({
@@ -49,12 +61,11 @@ export function useChartInteractions() {
 
   function keyDown(event: KeyboardEvent) {
     const { key } = event
-    const state = chartState.value
-    const accessibilityLayerIsActive = state.rootProps.accessibilityLayer !== false
+    const accessibilityLayerIsActive = chart.rootProps.value.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
       return
     }
-    if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item') {
+    if (tooltip.eventType.value === 'item') {
       itemKeyDown(event)
       return
     }
@@ -66,11 +77,11 @@ export function useChartInteractions() {
     if (key !== 'ArrowRight' && key !== 'ArrowLeft' && key !== 'Enter')
       return
     const currentIndex = tooltip.source.index.value ?? 0
-    const tooltipTicks = selectTooltipAxisTicks(state)
+    const tooltipTicks = tooltip.ticks.value
     if (!tooltipTicks?.length)
       return
     if (key === 'Enter') {
-      const coordinate = selectCoordinateForDefaultIndex(state, String(keyboardInteraction.index))
+      const coordinate = coordinateAt(String(keyboardInteraction.index))
       tooltip.setKeyboardInteraction({
         active: !keyboardInteraction.active,
         activeIndex: keyboardInteraction.index,
@@ -80,14 +91,14 @@ export function useChartInteractions() {
       return
     }
 
-    const direction = selectChartDirection(state)
+    const direction = chart.direction.value
     const directionMultiplier = direction === 'left-to-right' ? 1 : -1
     const movement = key === 'ArrowRight' ? 1 : -1
     const nextIndex = currentIndex + movement * directionMultiplier
     if (nextIndex >= tooltipTicks.length || nextIndex < 0) {
       return
     }
-    const coordinate = selectCoordinateForDefaultIndex(state, String(nextIndex))
+    const coordinate = coordinateAt(String(nextIndex))
 
     tooltip.setKeyboardInteraction({
       active: true,
@@ -98,12 +109,11 @@ export function useChartInteractions() {
   }
 
   function focus() {
-    const state = chartState.value
-    const accessibilityLayerIsActive = state.rootProps.accessibilityLayer !== false
+    const accessibilityLayerIsActive = chart.rootProps.value.accessibilityLayer !== false
     if (!accessibilityLayerIsActive) {
       return
     }
-    if (selectTooltipEventType(state, state.tooltip.settings.shared) === 'item')
+    if (tooltip.eventType.value === 'item')
       return
     const keyboardInteraction = { index: tooltip.target.value?.index ?? null, active: tooltip.source.active.value }
     if (keyboardInteraction.active) {
@@ -111,7 +121,7 @@ export function useChartInteractions() {
     }
     if (keyboardInteraction.index == null) {
       const nextIndex = '0'
-      const coordinate = selectCoordinateForDefaultIndex(state, String(nextIndex))
+      const coordinate = coordinateAt(String(nextIndex))
       tooltip.setKeyboardInteraction({
         activeDataKey: undefined,
         active: true,
@@ -125,11 +135,9 @@ export function useChartInteractions() {
     const touch = touchEvent.touches[0]
     if (!touch)
       return
-    const state = chartState.value
-    const tooltipEventType = selectTooltipEventType(state, state.tooltip.settings.shared)
+    const tooltipEventType = tooltip.eventType.value
     if (tooltipEventType === 'axis') {
-      const activeProps = selectActivePropsFromChartPointer(
-        state,
+      const activeProps = selectionAtPointer(
         getChartPointer({
           clientX: touch.clientX,
           clientY: touch.clientY,
@@ -151,7 +159,7 @@ export function useChartInteractions() {
       }
       const itemIndex = target.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
       const dataKey = target.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
-      const coordinate = selectTooltipCoordinate(chartState.value, itemIndex, dataKey!)
+      const coordinate = tooltip.coordinateAt(itemIndex, dataKey!)
 
       tooltip.setActiveMouseOverItemIndex({
         activeDataKey: dataKey!,

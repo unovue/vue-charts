@@ -1,3 +1,4 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, getCurrentInstance, h, nextTick, reactive, shallowRef, watch } from 'vue'
 import type { CSSProperties, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -13,10 +14,7 @@ import { useBrushState } from './hooks/useBrushState'
 import { useBrushHandlers } from './hooks/useBrushHandlers'
 import { useBrushSetting } from '@/cartesian/brush/hooks/useBrushSetting'
 import { useBrushChartSynchronisation } from '@/synchronisation/useChartSynchronisation'
-import { useAppSelector } from '@/state/hooks'
-import { selectBrushDimensions } from '@/state/selectors/brushSelectors'
-import { useChartDataActions } from '@/state/chartContext'
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { BrushStartEndIndex } from '@/types/chartData'
 import { isNumber } from '@/utils'
 import { useChartGesture } from '@/animation/renderPhase'
 
@@ -38,14 +36,15 @@ const BrushView = defineComponent({
     controlled: { type: Function as PropType<() => { start: boolean, end: boolean }>, required: true },
   },
   setup(view, { slots, emit }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
 
-    const dataActions = useChartDataActions()
-    const chartData = useAppSelector(state => state.chartData.chartData)
-    const dataStartIndex = useAppSelector(state => state.chartData.dataStartIndex)
-    const dataEndIndex = useAppSelector(state => state.chartData.dataEndIndex)
-    const brushDimensions = useAppSelector(selectBrushDimensions)
+    const dataActions = useChart().dataRange
+    const chartData = computed(() => chart.dataRange.state.value.chartData)
+    const dataStartIndex = computed(() => chart.dataRange.state.value.dataStartIndex)
+    const dataEndIndex = computed(() => chart.dataRange.state.value.dataEndIndex)
+    const brushDimensions = computed(() => chart.brushDimensions.value)
 
     // --- Computed properties ---
     const x = computed(() => props.x ?? brushDimensions.value?.x)

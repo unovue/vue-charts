@@ -1,9 +1,8 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, h, provide } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useAppSelector } from '@/state/hooks'
-import { selectPolarAxisTicks, selectPolarViewBox, useChartPolarAxis } from '@/state/chartContext'
-import type { RadiusAxisSettings } from '@/state/chartPolarAxis'
+import type { RadiusAxisSettings } from '@/types/axisSettings'
 import { polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
 import type { AxisTick } from '@/types/tick'
@@ -48,10 +47,11 @@ const PolarRadiusAxisView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
-    const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'radiusAxis', props.radiusAxisId))
+    const polarViewBox = computed(() => chart.polarLayout.viewBox.value)
+    const ticks = computed(() => chart.axis('radiusAxis', props.radiusAxisId).ticks.value)
 
     // Provide polar viewBox for child Label components
     provide(POLAR_LABEL_VIEW_BOX_KEY, computed(() => polarViewBox.value))
@@ -128,7 +128,7 @@ const _PolarRadiusAxis = defineComponent({
   name: 'PolarRadiusAxis',
   props: PolarRadiusAxisViewProps,
   setup(props, { attrs, slots }) {
-    const { radiusAxis } = useChartPolarAxis()
+    const { radiusAxis } = useChart().axes
     const layout = useChartLayout()
 
     const settings = computed<RadiusAxisSettings>(() => ({

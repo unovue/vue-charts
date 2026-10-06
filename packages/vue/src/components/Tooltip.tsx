@@ -6,10 +6,10 @@ import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
 import { usePortal } from '@/chart/TooltipPortalContext'
 import { animate, useSpring } from 'motion-v'
 import type { AnimationPlaybackControls } from 'motion-dom'
-import type { TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry } from '@/state/chartTooltip'
+import type { Formatter, TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry, TooltipTrigger } from '@/types/tooltip'
 import { useMagicKeys } from '@vueuse/core'
 import { useReducedMotion } from '@/animation/useReducedMotion'
-import type { AxisId } from '@/state/chartCartesianAxis'
+import type { AxisId } from '@/types/axisSettings'
 import type {
   ChartCoordinate,
   Coordinate,
@@ -18,7 +18,6 @@ import type {
   Payload,
   ValueType,
 } from '@/types'
-import type { Formatter, TooltipTrigger } from '@/types/tooltip'
 import { getTooltipTranslate } from '@/utils/tooltip/translate'
 import { Cross } from '@/shape/Cross'
 import { Curve } from '@/shape/Curve'
@@ -711,12 +710,12 @@ const _Tooltip = defineComponent({
     // Listen to keyboard state only: pointer updates must never trigger announcements.
     watch([
       ownsInteraction,
-      () => tooltip.state.value.keyboardInteraction.active,
-      () => tooltip.state.value.settings.activeIndex !== undefined
-        ? tooltip.state.value.settings.activeIndex
-        : tooltip.state.value.keyboardInteraction.index,
-      () => tooltip.state.value.keyboardInteraction.index,
-      () => tooltip.state.value.keyboardInteraction.configuration,
+      () => tooltip.keyboardInteraction.value.active,
+      () => tooltip.controlled.value !== undefined
+        ? tooltip.controlled.value
+        : tooltip.keyboardInteraction.value.index,
+      () => tooltip.keyboardInteraction.value.index,
+      () => tooltip.keyboardInteraction.value.configuration,
     ], ([owner, active, index], _, cleanup) => {
       if (!owner || !accessibilityLayer.value || !active || index == null)
         return

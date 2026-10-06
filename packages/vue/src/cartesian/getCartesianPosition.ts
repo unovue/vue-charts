@@ -1,4 +1,4 @@
-import type { CartesianViewBoxRequired, TrapezoidViewBox } from '@/cartesian/type'
+import type { CartesianViewBoxRequired, TrapezoidViewBox } from '@/types/viewBox'
 import { getPercentValue } from '@/utils/data'
 import { isNumber, isPercent } from '@/utils/validate'
 

@@ -1,15 +1,13 @@
+import { useChart } from '@/model/chart'
 import type { AxisSlots, TickFormatter } from '@/types/tick'
 import { useCanMeasureText } from '@/animation/renderPhase'
 import { useDeferredView } from '@/hooks/deferredView'
-import { selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize, useChartCartesianAxis } from '@/state/chartContext'
 import type { ComponentPublicInstance, PropType } from 'vue'
 import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import type { YAxisSettings } from '@/state/chartCartesianAxis'
+import type { YAxisSettings } from '@/types/axisSettings'
 import { implicitYAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian'
 import type { DataKey } from '@/types'
-import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
@@ -25,15 +23,16 @@ const YAxisImpl = defineComponent({
   inheritAttrs: false,
   emits: ['measure-width'],
   setup(props, { attrs, slots, emit }) {
+    const chart = useChart()
     const canMeasureText = useCanMeasureText()
 
     const axisType = 'yAxis'
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId))
-    const axisSize = useAppSelector(state => selectYAxisSize(state, props.yAxisId!))
-    const position = useAppSelector(state => selectYAxisPosition(state, props.yAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.yAxisId!))
-    const viewBox = useAppSelector(selectAxisViewBox)
-    const chartDataLengthEmpty = useAppSelector(state => !state.chartData.chartData?.length)
+    const scale = computed(() => chart.axis(axisType, props.yAxisId).scale.value)
+    const axisSize = computed(() => chart.axis('yAxis', props.yAxisId!).size.value)
+    const position = computed(() => chart.axis('yAxis', props.yAxisId!).position.value)
+    const cartesianTickItems = computed(() => chart.axis(axisType, props.yAxisId!).ticks.value)
+    const viewBox = computed(() => chart.axisViewBox.value)
+    const chartDataLengthEmpty = computed(() => !chart.dataRange.state.value.chartData?.length)
 
     const cartesianAxisRef = ref<ComponentPublicInstance | null>(null)
 
@@ -150,7 +149,7 @@ const YAxisSettingsDispatcher = defineComponent({
     },
   },
   setup(props, { slots }) {
-    const { yAxis } = useChartCartesianAxis()
+    const { yAxis } = useChart().axes
     const measured = shallowRef<{ id: string | number, width: number, history: number[] }>()
 
     function updateWidth(width: number) {

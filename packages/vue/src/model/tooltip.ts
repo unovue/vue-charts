@@ -6,11 +6,17 @@ import type { Registry } from './registry'
 import { createRegistry } from './registry'
 import { combineTicksOfTooltipAxis, combineTooltipCoordinate, combineTooltipPayload, parseTooltipIndex, sliceTooltipData } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
-import type { ChartOptions } from '@/state/chartOptions'
+import type { ChartOptions } from '@/model/options'
 import type { ChartDataState } from '@/types/chartData'
-import type { ChartOffsetRequired, Coordinate, LayoutType, Size, TooltipEventType } from '@/types'
-import type { TooltipActionPayload, TooltipActiveIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipState, TooltipSyncState } from '@/state/chartTooltip'
-import { noInteraction } from '@/state/chartTooltip'
+import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
+import type { TooltipActionPayload, TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipSyncState } from '@/types/tooltip'
+
+const noInteraction: TooltipInteractionState = Object.freeze({
+  active: false,
+  index: null,
+  dataKey: undefined,
+  coordinate: undefined,
+})
 
 export interface TooltipSource {
   readonly active: ComputedRef<boolean>
@@ -406,22 +412,18 @@ export function createTooltip(inputs: TooltipInputs) {
     dataKey: target.value?.entry?.value?.settings.dataKey,
     coordinate: coordinate.value,
   }))
-  const state = computed<TooltipState>(() => {
-    const current = interaction.value
-    const channel = selection.value?.channel
-    const hover = channel === 'hover' ? current : noInteraction
-    const click = channel === 'click' ? current : noInteraction
-    return {
-      settings: { ...settings.value, activeIndex: controlled.value },
-      tooltipItemPayloads: inputs.entries.entries.value,
-      itemInteraction: { hover, click },
-      axisInteraction: { hover, click },
-      keyboardInteraction: channel === 'keyboard' && selection.value
-        ? { ...current, index: selection.value.requestedIndex, active: selection.value.active }
-        : noInteraction,
-      syncInteraction: { ...(channel === 'sync' ? current : noInteraction), label: label.value },
-    }
-  })
+  const keyboardInteraction = computed(() => selection.value?.channel === 'keyboard'
+    ? { ...interaction.value, index: selection.value.requestedIndex, active: selection.value.active }
+    : noInteraction)
+  const syncInteraction = computed(() => ({
+    ...(selection.value?.channel === 'sync' ? interaction.value : noInteraction),
+    label: label.value,
+  }))
+
+  function coordinateAt(index: TooltipIndex, dataKey: DataKey<unknown>) {
+    const entry = inputs.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
+    return entry?.positions == null ? undefined : inputs.options().tooltipPayloadSearcher?.(entry.positions, index)
+  }
 
   function setActiveMouseOverItemIndex(action: TooltipActionPayload) { activate('item', 'hover', action) }
   function setActiveClickItemIndex(action: TooltipActionPayload) { activate('item', 'click', action) }
@@ -453,7 +455,9 @@ export function createTooltip(inputs: TooltipInputs) {
     requestedIndex,
     entries: inputs.entries,
     announcement,
-    state,
+    keyboardInteraction,
+    syncInteraction,
+    coordinateAt,
     activeIndexFor,
     coordinateFor,
     setActiveMouseOverItemIndex,

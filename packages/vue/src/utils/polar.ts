@@ -1,4 +1,4 @@
-import type { PolarViewBoxRequired } from '@/cartesian/type'
+import type { PolarViewBoxRequired } from '@/types/viewBox'
 import type { ChartOffset, Coordinate } from '@/types'
 
 export const RADIAN = Math.PI / 180

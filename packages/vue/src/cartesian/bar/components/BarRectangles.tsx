@@ -1,7 +1,6 @@
 import { useTooltipEntry } from '@/model/tooltip'
 import { barEvents } from '@/events/itemEvents'
 import { computed, defineComponent, watch } from 'vue'
-import { useChartTooltip } from '@/state/chartContext'
 import { useChart } from '@/model/chart'
 import { filterProps, svgAttrs } from '@/utils/VueUtils'
 import { getValueByDataKey } from '@/utils/chart'
@@ -22,7 +21,7 @@ export const BarRectangles = defineComponent({
 
   setup() {
     const emit = barEvents.use()
-    const tooltip = useChartTooltip()
+    const tooltip = useChart().tooltip
     const entry = useTooltipEntry()
     if (!entry)
       throw new Error('vccs: Bar requires its tooltip entry.')

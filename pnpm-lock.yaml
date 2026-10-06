@@ -214,9 +214,6 @@ importers:
       motion-v:
         specifier: ^2.4.0
         version: 2.5.2(@vueuse/core@13.1.0(vue@3.5.18(typescript@6.0.3)))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vue@3.5.18(typescript@6.0.3))
-      reselect:
-        specifier: ^5.1.1
-        version: 5.1.1
     devDependencies:
       '@nuxt/kit':
         specifier: ^4.4.2
@@ -11875,9 +11872,6 @@ packages:
 
   requires-port@1.0.0:
     resolution: {integrity: sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==}
-
-  reselect@5.1.1:
-    resolution: {integrity: sha512-K/BG6eIky/SBpzfHZv/dd+9JBFiS4SWV7FIujVyJRux6e45+73RaUHXLmIR1f7WOMaQ0U1km6qwklRQxpJJY0w==}
 
   resolve-dependency-path@4.0.1:
     resolution: {integrity: sha512-YQftIIC4vzO9UMhO/sCgXukNyiwVRCVaxiWskCBy7Zpqkplm8kTAISZ8O1MoKW1ca6xzgLUBjZTcDgypXvXxiQ==}
@@ -29388,8 +29382,6 @@ snapshots:
 
   requires-port@1.0.0:
     optional: true
-
-  reselect@5.1.1: {}
 
   resolve-dependency-path@4.0.1: {}
 

@@ -1,9 +1,8 @@
+import { useChart } from '@/model/chart'
+import { computed, defineComponent } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { defineComponent } from 'vue'
 import { BarChart } from '@/chart/BarChart'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
-import { useAppSelector } from '@/state/hooks'
-import { selectContainerScale } from '@/state/selectors/containerSelectors'
 
 /**
  * Vue version of ChartSizeDimensions from Recharts storybook.
@@ -72,9 +71,10 @@ const ChartSizeDimensions = defineComponent({
  */
 const ShowScale = defineComponent({
   setup() {
+    const chart = useChart()
     const width = useChartWidth()
     const height = useChartHeight()
-    const scale = useAppSelector(selectContainerScale)
+    const scale = computed(() => chart.layout.value.scale)
 
     return () => {
       if (width.value == null || height.value == null)

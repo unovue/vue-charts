@@ -1,6 +1,6 @@
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
-import { useChartName } from '@/state/chartContext'
+import { useChartPresentation } from '@/model/presentation'
 import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
@@ -57,7 +57,7 @@ export function useAreaContext() {
 export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => any) {
   const chart = useChart()
   const layout = useChartLayout()
-  const chartName = useChartName()
+  const chartName = useChartPresentation().name
   const localId = useChartId('v-charts-area')
   const clipPathId = computed(() => props.id || localId)
 

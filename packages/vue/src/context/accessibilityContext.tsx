@@ -1,3 +1,5 @@
-import { useAppSelector } from '../state/hooks'
+import { useChartPresentation } from '@/model/presentation'
 
-export const useAccessibilityLayer = () => useAppSelector(state => state.rootProps.accessibilityLayer)
+export function useAccessibilityLayer() {
+  return useChartPresentation().accessibility
+}

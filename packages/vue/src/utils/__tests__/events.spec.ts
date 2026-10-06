@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { TooltipSyncMessage } from '@/utils/events'
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { BrushStartEndIndex } from '@/types/chartData'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 
 const tooltipMessage: TooltipSyncMessage = {

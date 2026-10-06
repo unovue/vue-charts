@@ -1,4 +1,4 @@
-export * from './types'
+export * from '@/types/shape'
 export * from './Cross'
 export { Curve, CurveVueProps, getPath } from './Curve'
 export type { CurveType, CurvePropsWithOutSVG, CurveProps } from './Curve'

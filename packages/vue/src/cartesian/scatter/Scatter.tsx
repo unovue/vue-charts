@@ -1,10 +1,10 @@
+import { useChart } from '@/model/chart'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { scatterEvents } from '@/events/itemEvents'
 import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { selectActiveTooltipDataKey, selectActiveTooltipIndex, useChartTooltip } from '@/state/chartContext'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
@@ -24,7 +24,6 @@ import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { getLinearRegression } from '@/utils/getLinearRegression'
 import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
-import { useAppSelector } from '@/state/hooks'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 
@@ -74,6 +73,7 @@ const ScatterView = defineComponent({
     default?: () => any
   }>,
   setup(view, { slots }) {
+    const chart = useChart()
     const emit = scatterEvents.use()
     const props = view.item
     const attrs = view.svgAttrs
@@ -81,9 +81,9 @@ const ScatterView = defineComponent({
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, points } = useScatter(trackedProps)
     const svgAttrs = attrs as SVGAttributes
-    const tooltip = useChartTooltip()
-    const activeIndex = useAppSelector(selectActiveTooltipIndex)
-    const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
+    const tooltip = chart.tooltip
+    const activeIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
+    const activeDataKey = computed(() => chart.tooltip.target.value?.entry?.value?.settings.dataKey)
 
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
@@ -157,7 +157,7 @@ const ScatterView = defineComponent({
         if (point.cx == null || point.cy == null) {
           return null
         }
-        const keyboard = tooltip.state.value.keyboardInteraction
+        const keyboard = tooltip.keyboardInteraction.value
         const isActive = keyboard.active
           ? keyboard.configuration === tooltipConfiguration.value && keyboard.index === String(i)
           : currentActiveIndex === String(i) && currentActiveDataKey === props.dataKey

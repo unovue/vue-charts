@@ -95,8 +95,7 @@
     "d3-time": "^3.1.0",
     "decimal.js-light": "^2.5.1",
     "es-toolkit": "^1.39.3",
-    "motion-dom": "^13.3.0",
-    "reselect": "^5.1.1"
+    "motion-dom": "^13.3.0"
   },
   "devDependencies": {
     "@nuxt/kit": "^4.4.2",

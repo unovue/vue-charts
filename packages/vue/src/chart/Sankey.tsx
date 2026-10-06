@@ -9,12 +9,12 @@ import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/state/chartOptions'
+import type { ChartOptions } from '@/model/options'
 import type {
   TooltipIndex,
   TooltipPayloadConfiguration,
   TooltipPayloadSearcher,
-} from '@/state/chartTooltip'
+} from '@/types/tooltip'
 import type { Coordinate } from '@/types'
 import {
   type SankeyInputLink,

@@ -1,6 +1,6 @@
+import { useChart } from '@/model/chart'
 import { useTooltipSource } from '@/model/tooltip'
 import { type ComputedRef, computed } from 'vue'
-import { selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis, useAppSelector, useChartAxes } from '@/state/chartContext'
 import {
   useChartHeight,
   useChartWidth,
@@ -8,7 +8,7 @@ import {
   useOffset,
   useViewBox,
 } from '@/context/chartLayoutContext'
-import type { AxisId } from '@/state/chartCartesianAxis'
+import type { AxisId } from '@/types/axisSettings'
 import type { Coordinate } from '@/types/common'
 
 export type { InverseScaleFunction } from '@/utils/createCategoricalInverse'
@@ -75,7 +75,7 @@ export function usePlotArea() {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useXAxisDomain(axisId: AxisId = 0) {
-  return useChartAxes()('xAxis', axisId).domain
+  return useChart().axis('xAxis', axisId).domain
 }
 
 /**
@@ -85,7 +85,7 @@ export function useXAxisDomain(axisId: AxisId = 0) {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useYAxisDomain(axisId: AxisId = 0) {
-  return useChartAxes()('yAxis', axisId).domain
+  return useChart().axis('yAxis', axisId).domain
 }
 
 /**
@@ -95,7 +95,8 @@ export function useYAxisDomain(axisId: AxisId = 0) {
  * @returns A reactive array of TickItem or undefined
  */
 export function useXAxisTicks(axisId: AxisId = 0) {
-  return useAppSelector(state => selectTicksOfAxis(state, 'xAxis', axisId))
+  const chart = useChart()
+  return chart.axis('xAxis', axisId).ticks
 }
 
 /**
@@ -105,7 +106,8 @@ export function useXAxisTicks(axisId: AxisId = 0) {
  * @returns A reactive array of TickItem or undefined
  */
 export function useYAxisTicks(axisId: AxisId = 0) {
-  return useAppSelector(state => selectTicksOfAxis(state, 'yAxis', axisId))
+  const chart = useChart()
+  return chart.axis('yAxis', axisId).ticks
 }
 
 /**
@@ -115,7 +117,8 @@ export function useYAxisTicks(axisId: AxisId = 0) {
  * @returns A reactive ScaleFunction or undefined if the axis is not yet initialized
  */
 export function useXAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | undefined> {
-  const scale = useAppSelector(state => selectAxisScale(state, 'xAxis', axisId))
+  const chart = useChart()
+  const scale = chart.axis('xAxis', axisId).scale
   return computed(() => {
     const s = scale.value
     if (s == null)
@@ -134,7 +137,8 @@ export function useXAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | u
  * @returns A reactive ScaleFunction or undefined if the axis is not yet initialized
  */
 export function useYAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | undefined> {
-  const scale = useAppSelector(state => selectAxisScale(state, 'yAxis', axisId))
+  const chart = useChart()
+  const scale = chart.axis('yAxis', axisId).scale
   return computed(() => {
     const s = scale.value
     if (s == null)
@@ -153,7 +157,8 @@ export function useYAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | u
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseScale(state, 'xAxis', axisId))
+  const chart = useChart()
+  return chart.axis('xAxis', axisId).inverseScale
 }
 
 /**
@@ -163,7 +168,8 @@ export function useXAxisInverseScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseScale(state, 'yAxis', axisId))
+  const chart = useChart()
+  return chart.axis('yAxis', axisId).inverseScale
 }
 
 /**
@@ -173,7 +179,8 @@ export function useYAxisInverseScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseDataSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'xAxis', axisId))
+  const chart = useChart()
+  return chart.axis('xAxis', axisId).inverseDataScale
 }
 
 /**
@@ -183,7 +190,8 @@ export function useXAxisInverseDataSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseDataSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'yAxis', axisId))
+  const chart = useChart()
+  return chart.axis('yAxis', axisId).inverseDataScale
 }
 
 /**
@@ -193,7 +201,8 @@ export function useYAxisInverseDataSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseTickSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'xAxis', axisId))
+  const chart = useChart()
+  return chart.axis('xAxis', axisId).inverseTickScale
 }
 
 /**
@@ -203,7 +212,8 @@ export function useXAxisInverseTickSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseTickSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'yAxis', axisId))
+  const chart = useChart()
+  return chart.axis('yAxis', axisId).inverseTickScale
 }
 
 /**

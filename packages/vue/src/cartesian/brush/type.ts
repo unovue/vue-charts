@@ -1,4 +1,4 @@
-import type { BrushStartEndIndex } from '@/state/chartData'
+import type { BrushStartEndIndex } from '@/types/chartData'
 import { classProp } from '../../types/common'
 import type { DataKey, Padding, VuePropsToType, WithSVGProps } from '../../types/common'
 import type { PropType } from 'vue'

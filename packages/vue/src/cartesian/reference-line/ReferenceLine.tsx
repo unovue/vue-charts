@@ -1,12 +1,11 @@
+import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
-import { useAppSelector } from '@/state/hooks'
-import { selectAxisScale, selectXAxisSettings, selectYAxisSettings, useChartReferenceElements } from '@/state/chartContext'
-import type { AxisId } from '@/state/chartCartesianAxis'
+import type { AxisId } from '@/types/axisSettings'
 import { useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
 import { isNumOrStr, isWellBehavedNumber } from '@/utils'
@@ -34,16 +33,17 @@ const ReferenceLineView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup(view, { slots }) {
+    const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
 
     const clipPathId = useClipPathId()
     const viewBox = useViewBox()
 
-    const xAxisSettings = useAppSelector(state => selectXAxisSettings(state, props.xAxisId))
-    const yAxisSettings = useAppSelector(state => selectYAxisSettings(state, props.yAxisId))
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId))
+    const xAxisSettings = computed(() => chart.axis('xAxis', props.xAxisId).settings.value)
+    const yAxisSettings = computed(() => chart.axis('yAxis', props.yAxisId).settings.value)
+    const xAxisScale = computed(() => chart.axis('xAxis', props.xAxisId).scale.value)
+    const yAxisScale = computed(() => chart.axis('yAxis', props.yAxisId).scale.value)
 
     const endPoints = computed(() => {
       const vb = viewBox.value
@@ -148,7 +148,7 @@ const _ReferenceLine = defineComponent({
   props: ReferenceLineVueProps,
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    const { lines } = useChartReferenceElements()
+    const { lines } = useChart().references
     const settings = computed(() => ({
       xAxisId: props.xAxisId,
       yAxisId: props.yAxisId,

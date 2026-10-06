@@ -1,11 +1,11 @@
+import { computed, defineComponent, h, watch } from 'vue'
+import { useChart } from '@/model/chart'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
-import { defineComponent, h, onUnmounted, watch } from 'vue'
 import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { LegendHidden, LegendSlots } from './type'
 import { LegendVueProps } from './type'
 import { useLegend } from './hooks/useLegend'
-import { useChartLegend } from '@/state/chartContext'
 import { getLayoutForPosition } from './utils'
 import { useLegendContent } from './hooks/useLegendContent'
 import Surface from '@/container/Surface'
@@ -187,16 +187,16 @@ const _Legend = defineComponent({
   slots: Object as SlotsType<LegendSlots>,
   props: LegendVueProps,
   setup(props, { attrs, slots, emit }) {
-    const { setLegendSettings, setHidden } = useChartLegend()
-    watch(() => props.hidden, setHidden, { immediate: true, deep: true })
-    onUnmounted(() => setHidden(undefined))
-    watch(() => ({
-      layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
-      align: props.align,
-      verticalAlign: props.verticalAlign,
-      position: props.position,
-      offset: props.offset,
-    }), setLegendSettings, { immediate: true })
+    useChart().legend.register(computed(() => ({
+      hidden: props.hidden,
+      settings: {
+        layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
+        align: props.align,
+        verticalAlign: props.verticalAlign,
+        position: props.position,
+        offset: props.offset,
+      },
+    })))
 
     const View = useDeferredView(LegendView)
     return () => h(View, {

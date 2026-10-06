@@ -1,5 +1,5 @@
 import type { CartesianAxisProps } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { ViewBox } from '@/cartesian/type'
+import type { ViewBox } from '@/types/viewBox'
 import type { ChartOffset, DataKey } from '@/types'
 import type { AxisDomain, AxisDomainType, AxisId, AxisInterval, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { RechartsScale, ScaleType } from '@/types/scale'

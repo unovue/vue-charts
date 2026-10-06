@@ -13,7 +13,7 @@ import { ResponsiveContainer } from '@/index'
 import { getStoryArgsFromArgsTypesObject } from '@/storybook/api/props/utils'
 import { CategoricalChartProps } from '@/storybook/api/props/chart-props'
 import { logData, pageData } from '@/storybook/data'
-import type { ChartData } from '@/state/chartData'
+import type { ChartData } from '@/types/chartData'
 
 const meta = {
   title: 'examples/LineChart',

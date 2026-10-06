@@ -1,11 +1,5 @@
 import type { BrushStartEndIndex, ChartData } from '@/types/chartData'
 
-export type {
-  ChartData,
-  BrushStartEndIndex,
-  AppliedChartData,
-  ChartDataState,
-} from '@/types/chartData'
 import { computed, shallowRef, watch } from 'vue'
 
 export function createChartData(source: () => ChartData | undefined) {

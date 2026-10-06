@@ -6,7 +6,6 @@ import type { StackId } from '@/types/tick'
 import type { MaybeStackedGraphicalItem } from '@/types/graphical'
 import type { RadialBarDataItem } from '@/types/radialBar'
 import type { LegendPayload, LegendType } from '@/types/legend'
-import type { SectorProps } from '@/shape/Sector'
 import { getCateCoordinateOfBar, truncateByDomain } from '@/core/coordinates'
 import { getValueByDataKey } from '@/core/data'
 import { mathSign } from '@/utils/data'
@@ -64,7 +63,7 @@ export function computeRadialBarDataItems({
       outerRadius: number | undefined,
       startAngle: number | null,
       endAngle: number | undefined,
-      backgroundSector: { background: SectorProps } | undefined
+      backgroundSector: { background: NonNullable<RadialBarDataItem['background']> } | undefined
 
     if (stackedData) {
       // @ts-expect-error truncateByDomain expects only numerical domain, but it can receive categorical domain too

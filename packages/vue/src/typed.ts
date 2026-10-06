@@ -32,7 +32,7 @@ import { Cell, LabelList, Legend, Tooltip } from './components'
 import type { TooltipContentProps } from './components/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
-import type { TooltipPayload } from './state/chartTooltip'
+import type { TooltipPayload } from '@/types/tooltip'
 
 export type RowDataKey<Row> = Extract<keyof Row, string> | ((row: Row) => unknown)
 

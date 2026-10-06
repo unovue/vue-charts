@@ -7,7 +7,6 @@ import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-dom'
 import { useChart } from '@/model/chart'
-import { useChartGraphicalItems, useChartLegend, useChartTooltip } from '@/state/chartContext'
 import { computeRadarPoints, getRangePath, getSinglePolygonPath } from '@/core/radar'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
 import { isCategoricalAxis } from '@/utils/validate'
@@ -274,7 +273,7 @@ export const Radar = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     radarEvents.provide(emit)
-    useChartGraphicalItems().polar.register(computed(() => ({
+    useChart().items.polar.register(computed(() => ({
       stackId: undefined,
       barSize: undefined,
       type: 'radar' as const,
@@ -285,7 +284,7 @@ export const Radar = defineComponent({
       radiusAxisId: props.radiusAxisId,
     })))
 
-    useChartLegend().entries.register(computed(() => [{
+    useChart().legend.entries.register(computed(() => [{
       dataKey: props.dataKey,
       type: props.legendType,
       color: getLegendItemColor(props.stroke, props.fill),
@@ -294,7 +293,7 @@ export const Radar = defineComponent({
       inactive: props.hide,
     }]))
 
-    useChartTooltip().entries.register(computed(() => ({
+    useChart().tooltip.entries.register(computed(() => ({
       dataDefinedOnItem: undefined,
       positions: undefined,
       settings: {

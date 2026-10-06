@@ -1,5 +1,5 @@
 import type { Coordinate } from '@/types/common'
-import type { ViewBox } from '@/cartesian/type'
+import type { ViewBox } from '@/types/viewBox'
 import type { TrapezoidProps } from '@/shape'
 
 export interface FunnelTrapezoidItem extends TrapezoidProps {

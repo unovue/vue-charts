@@ -3,7 +3,7 @@ import { type PropType, type SlotsType, computed, defineComponent, reactive, ref
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
-import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
