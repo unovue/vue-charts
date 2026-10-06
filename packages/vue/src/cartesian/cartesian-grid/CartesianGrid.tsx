@@ -6,7 +6,6 @@ import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
 import { isNumber, warn } from '@/utils'
-import { resolveDefaultProps } from '@/utils/resolveDefaultProps'
 import type { CartesianGridProps, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
 import { getCoordinatesOfGrid } from '@/utils/grid'
 import { getTicks } from '@/cartesian/utils/get-ticks'
@@ -51,23 +50,6 @@ const defaultVerticalCoordinatesGenerator: VerticalCoordinatesGenerator = (
   )
 }
 
-const defaultProps = {
-  horizontal: true,
-  vertical: true,
-  // The ordinates of horizontal grid lines
-  horizontalPoints: [],
-  // The abscissas of vertical grid lines
-  verticalPoints: [],
-
-  stroke: 'var(--v-charts-grid, #ccc)',
-  fill: 'none',
-  // The fill of colors of grid lines
-  verticalFill: [],
-  horizontalFill: [],
-  xAxisId: 0,
-  yAxisId: 0,
-} as const satisfies Partial<CartesianGridProps>
-
 const CartesianGridViewProps = {
   xAxisId: {
     type: [String, Number],
@@ -93,11 +75,14 @@ const CartesianGridViewProps = {
     type: [Boolean, Object],
     default: true,
   },
-  horizontalPoints: Array,
-  verticalPoints: Array,
+  horizontalPoints: { type: Array as PropType<number[]>, default: () => [] },
+  verticalPoints: { type: Array as PropType<number[]>, default: () => [] },
   horizontalValues: Array,
   verticalValues: Array,
-  fill: String,
+  stroke: { type: [String, Number] as PropType<CartesianGridProps['stroke']>, default: 'var(--v-charts-grid, #ccc)' },
+  fill: { type: String, default: 'none' },
+  verticalFill: { type: Array as PropType<string[]>, default: () => [] },
+  horizontalFill: { type: Array as PropType<string[]>, default: () => [] },
   fillOpacity: Number,
   ry: Number,
   verticalCoordinatesGenerator: Function,
@@ -169,7 +154,8 @@ const CartesianGridView = defineComponent({
 
     return () => {
       const propsIncludingDefaults = {
-        ...resolveDefaultProps({ ...props, ...attrs }, defaultProps),
+        ...props,
+        ...attrs,
         x: isNumber(props.x) ? props.x : offset.value.left,
         y: isNumber(props.y) ? props.y : offset.value.top,
         width: isNumber(props.width) ? props.width : offset.value.width,

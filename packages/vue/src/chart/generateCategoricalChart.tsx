@@ -12,7 +12,6 @@ import { ChartsWrapper } from './ChartsWrapper'
 import { FULL_WIDTH_AND_HEIGHT } from '@/chart/const'
 import { createChart, provideChart } from '@/model/chart'
 import { chartDefaults } from '@/model/defaults'
-import { applyDefaultProps } from '@/utils/props'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useChartId } from '@/hooks/useChartId'
 
@@ -120,7 +119,7 @@ export type CategoricalChartProps = WithSVGProps<CategoricalChartPropsWithOutSvg
 
 export interface CategoricalChartOptions {
   chartName: string
-  defaultProps?: Partial<CategoricalChartPropsWithOutSvg>
+  defaultProps?: Partial<Pick<CategoricalChartPropsWithOutSvg, 'layout' | 'startAngle' | 'endAngle'>>
   defaultTooltipEventType?: TooltipEventType
   validateTooltipEventTypes?: readonly TooltipEventType[]
   tooltipPayloadSearcher?: TooltipPayloadSearcher
@@ -135,7 +134,15 @@ export function generateCategoricalChart({
 }: CategoricalChartOptions) {
   return defineComponent({
     name: chartName,
-    props: applyDefaultProps(CategoricalProps, defaultProps),
+    props: {
+      ...CategoricalProps,
+      layout: {
+        ...CategoricalProps.layout,
+        default: defaultProps.layout === undefined ? chartDefaults.layout : defaultProps.layout,
+      },
+      startAngle: { ...CategoricalProps.startAngle, default: defaultProps.startAngle },
+      endAngle: { ...CategoricalProps.endAngle, default: defaultProps.endAngle },
+    },
     inheritAttrs: false,
     emits: chartEmits,
     setup(props, { attrs, slots, emit }) {

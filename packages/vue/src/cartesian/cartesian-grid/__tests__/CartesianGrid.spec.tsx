@@ -1,4 +1,5 @@
 import { render } from '@testing-library/vue'
+import { h } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -24,6 +25,34 @@ describe('cartesianGrid', () => {
     { name: 'Page E', uv: 278, pv: 3908, amt: 2400 },
     { name: 'Page F', uv: 189, pv: 4800, amt: 2400 },
   ]
+
+  // Catches defaults overriding explicit null/false or losing SVG attrs at the prop boundary.
+  it.each([
+    { name: 'omitted', props: {}, horizontal: 2, vertical: 1, stroke: 'var(--v-charts-grid, #ccc)', fill: null },
+    { name: 'undefined', props: { horizontal: undefined, stroke: undefined, fill: undefined }, horizontal: 2, vertical: 1, stroke: 'var(--v-charts-grid, #ccc)', fill: null },
+    { name: 'null', props: { horizontal: null, stroke: null, fill: null }, horizontal: 0, vertical: 1, stroke: null, fill: null },
+    { name: 'explicit', props: { vertical: false, stroke: '#123', fill: 'gold' }, horizontal: 2, vertical: 0, stroke: '#123', fill: 'gold' },
+  ])('preserves $name grid defaults and SVG attrs', (row) => {
+    const { container } = render(() => (
+      <BarChart width={400} height={200} data={data}>
+        {h(CartesianGrid, {
+          ...row.props,
+          'horizontalPoints': [20, 50],
+          'verticalPoints': [40],
+          'stroke-dasharray': '3 4',
+        })}
+        <Bar dataKey="uv" isAnimationActive={false} />
+      </BarChart>
+    ))
+    expect(getHorizontalLines(container)).toHaveLength(row.horizontal)
+    expect(getVerticalLines(container)).toHaveLength(row.vertical)
+    for (const line of container.querySelectorAll('.v-charts-cartesian-grid line')) {
+      expect(line.getAttribute('stroke')).toBe(row.stroke)
+      expect(line.getAttribute('stroke-dasharray')).toBe('3 4')
+    }
+    expect(container.querySelector('.v-charts-cartesian-grid-bg')?.getAttribute('fill') ?? null)
+      .toBe(row.fill)
+  })
 
   describe('rendering inside BarChart', () => {
     it('renders horizontal and vertical grid lines', () => {
