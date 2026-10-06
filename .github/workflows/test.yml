@@ -27,7 +27,12 @@ jobs:
 
       - run: pnpm --filter vccs typecheck
 
-      - run: pnpm --filter vccs exec vitest run --exclude 'src/__breakit__/**'
+      - run: pnpm --filter vccs exec vitest run --maxWorkers=2 --exclude 'src/__breakit__/**'
+
+      - name: Check tooling regressions and motion tokens
+        run: |
+          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs packages/vue/test/lab/report-metrics.test.mjs
+          node scripts/update-motion-docs.mjs --check
 
       - run: pnpm exec eslint .
 
@@ -65,7 +70,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: node scripts/check-consumers.mjs
+      - name: Prepare locked consumer dependencies
+        run: node scripts/check-consumers.mjs --prepare
+
+      - name: Reconfirm frozen consumers offline
+        run: node scripts/check-consumers.mjs
 
   motion:
     runs-on: ubuntu-latest
@@ -94,12 +103,16 @@ jobs:
 
       - run: pnpm check:motion
 
+      - run: pnpm check:a11y
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: motion-results
           include-hidden-files: true
-          path: .evidence/s21/
+          path: |
+            .evidence/s21/
+            .evidence/release-1.0/a11y/
           if-no-files-found: warn
 
   package:

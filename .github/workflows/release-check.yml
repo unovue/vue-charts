@@ -1,0 +1,85 @@
+name: Release checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: echo '.evidence/' >> .git/info/exclude
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install locked browsers and system dependencies
+        run: |
+          node --input-type=module <<'JS'
+          import { spawnSync } from 'node:child_process'
+          import { realpath } from 'node:fs/promises'
+          import { createRequire } from 'node:module'
+          import { dirname, join } from 'node:path'
+          const require = createRequire(await realpath('packages/vue/node_modules/@nuxt/test-utils/package.json'))
+          const cli = join(dirname(require.resolve('playwright-core')), 'cli.js')
+          process.exitCode = spawnSync(process.execPath, [cli, 'install', '--with-deps', 'chromium-headless-shell', 'firefox', 'webkit'], { stdio: 'inherit' }).status ?? 1
+          JS
+      - run: pnpm --filter vccs build
+      - run: pnpm check:motion
+      - run: pnpm check:a11y
+      - run: node --test packages/vue/test/lab/report-metrics.test.mjs
+      - run: node scripts/update-motion-docs.mjs --check
+      - run: pnpm motion:report --prod --check --frames
+      - run: pnpm check:play
+      - run: node --test scripts/check-play.test.mjs
+      - run: pnpm check:docs
+      - run: node --test scripts/check-docs.test.mjs
+      - run: pnpm check:seen
+      - run: node --test scripts/check-seen.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-browser-evidence
+          include-hidden-files: true
+          path: .evidence/
+          if-no-files-found: error
+
+  # Real-clock timings use one runner for both builds, alternating sides each round.
+  # The CLI reports boundary-crossing spread as INCONCLUSIVE, never PASS.
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: echo '.evidence/' >> .git/info/exclude
+      - run: node scripts/check-motion.mjs --install-browser
+      - name: Build the pinned release baseline separately
+        run: |
+          mkdir -p .evidence/release-baseline
+          git archive 83dc1b066a71849314dc1a3922a8b367043862a0 | tar -x -C .evidence/release-baseline
+          pnpm --dir .evidence/release-baseline install --frozen-lockfile --ignore-scripts
+          pnpm --dir .evidence/release-baseline --filter vccs build
+      - run: pnpm --filter vccs build
+      - run: pnpm bench --compare=.evidence/release-baseline/packages/vue/dist
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-benchmark-evidence
+          include-hidden-files: true
+          path: .evidence/bench/
+          if-no-files-found: error
