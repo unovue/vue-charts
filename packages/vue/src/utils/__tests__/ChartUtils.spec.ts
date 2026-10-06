@@ -11,14 +11,13 @@ import {
   getCateCoordinateOfLine,
   getDomainOfStackGroups,
   getNormalizedStackId,
+  getStackedData,
   getTicksOfAxis,
   getTooltipEntry,
   getTooltipNameProp,
   getValueByDataKey,
   inRange,
   isClipDot,
-  offsetPositive,
-  offsetSign,
   truncateByDomain,
 } from '@/utils/chart'
 import type { TickItem } from '@/types'
@@ -530,44 +529,38 @@ describe('getCateCoordinateOfLine', () => {
 
 describe('offsetSign', () => {
   it('separates positive and negative stacks', () => {
-    // 2 series, 2 data points each
-    const series = [
-      [[-1, 10], [-1, -5]],
-      [[-1, 20], [-1, -3]],
-    ] as any
-
-    offsetSign(series, [])
+    const series = getStackedData([
+      { a: 10, b: 20 },
+      { a: -5, b: -3 },
+    ], ['a', 'b'], 'sign')
 
     // First data point: series[0] = [0, 10], series[1] = [10, 30]
-    expect(series[0][0]).toEqual([0, 10])
-    expect(series[1][0]).toEqual([10, 30])
+    expect(series[0][0].slice()).toEqual([0, 10])
+    expect(series[1][0].slice()).toEqual([10, 30])
 
     // Second data point: series[0] = [0, -5], series[1] = [-5, -8]
-    expect(series[0][1]).toEqual([0, -5])
-    expect(series[1][1]).toEqual([-5, -8])
+    expect(series[0][1].slice()).toEqual([0, -5])
+    expect(series[1][1].slice()).toEqual([-5, -8])
   })
 
   it('handles empty series', () => {
-    const series: any[] = []
-    expect(() => offsetSign(series, [])).not.toThrow()
+    expect(getStackedData([], ['a', 'b'], 'sign').map(series => series.length)).toEqual([0, 0])
   })
 })
 
 describe('offsetPositive', () => {
   it('replaces negative values with zero', () => {
-    const series = [
-      [[-1, 10], [-1, -5]],
-      [[-1, 20], [-1, -3]],
-    ] as any
-
-    offsetPositive(series, [])
+    const series = getStackedData([
+      { a: 10, b: 20 },
+      { a: -5, b: -3 },
+    ], ['a', 'b'], 'positive')
 
     // First data point: positive values stack normally
-    expect(series[0][0]).toEqual([0, 10])
-    expect(series[1][0]).toEqual([10, 30])
+    expect(series[0][0].slice()).toEqual([0, 10])
+    expect(series[1][0].slice()).toEqual([10, 30])
 
     // Second data point: negative values become [0, 0]
-    expect(series[0][1]).toEqual([0, 0])
-    expect(series[1][1]).toEqual([0, 0])
+    expect(series[0][1].slice()).toEqual([0, 0])
+    expect(series[1][1].slice()).toEqual([0, 0])
   })
 })

@@ -68,7 +68,7 @@ const PolarAngleAxisView = defineComponent({
     const props = view.item
     const attrs = view.svgAttrs
     const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'angleAxis', props.angleAxisId, false))
+    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'angleAxis', props.angleAxisId))
 
     return () => {
       const viewBox = polarViewBox.value

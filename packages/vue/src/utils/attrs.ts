@@ -185,29 +185,3 @@ export function resolveDefaultProps<T, D extends Partial<T>>(
    */
   return withDefaults as RequiresDefaultProps<T, D>
 }
-
-/**
- * merge props and attrs
- * @param props - props
- * @param attrs - attrs
- * @returns merged props
- */
-export function mergePropAttrs<T extends object>(props: T, attrs: any) {
-  function toObject() {
-    return {
-      ...props,
-      ...attrs,
-    }
-  }
-  return new Proxy({
-    ...props,
-    ...attrs,
-  }, {
-    get(_, key) {
-      if (key === 'toObject') {
-        return toObject
-      }
-      return props[key as keyof T] ?? attrs[key]
-    },
-  }) as T & { toObject: () => T }
-}

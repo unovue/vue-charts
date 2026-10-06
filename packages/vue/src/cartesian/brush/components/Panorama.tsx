@@ -1,6 +1,5 @@
 import type { PropType, VNode } from 'vue'
 import { cloneVNode, defineComponent } from 'vue'
-import { PanoramaContextProvider } from '@/context/PanoramaContextProvider'
 import type { Padding } from '@/types/common'
 
 export const Panorama = defineComponent({
@@ -31,11 +30,7 @@ export const Panorama = defineComponent({
         data: props.data,
       })
 
-      return (
-        <PanoramaContextProvider isPanorama>
-          {cloned}
-        </PanoramaContextProvider>
-      )
+      return cloned
     }
   },
 })

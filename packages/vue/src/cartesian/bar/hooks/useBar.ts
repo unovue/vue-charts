@@ -3,7 +3,6 @@ import type { Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, ref, shallowRef } from 'vue'
 import { createContext } from 'motion-v'
 import type { ResolvedBarProps } from '../type'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { getNormalizedStackId } from '@/utils/chart'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
@@ -40,7 +39,6 @@ export interface DrawnBar {
 export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
 
 export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
-  const isPanorama = useIsPanorama()
   const layout = useChartLayout()
   const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
   const barSettings = computed(() => ({
@@ -51,9 +49,9 @@ export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?
     minPointSize: props.minPointSize,
     stackId: getNormalizedStackId(props.stackId),
   }))
-  const rects = useAppSelector(state => selectBarRectangles(state, props.xAxisId, props.yAxisId, isPanorama, barSettings.value))
-  const position = useAppSelector(state => selectBarPosition(state, props.xAxisId, props.yAxisId, isPanorama, barSettings.value))
-  const bandSize = useAppSelector(state => selectAxisBandSize(state, props.xAxisId, props.yAxisId, isPanorama))
+  const rects = useAppSelector(state => selectBarRectangles(state, props.xAxisId, props.yAxisId, barSettings.value))
+  const position = useAppSelector(state => selectBarPosition(state, props.xAxisId, props.yAxisId, barSettings.value))
+  const bandSize = useAppSelector(state => selectAxisBandSize(state, props.xAxisId, props.yAxisId))
   const band = computed(() => position.value && bandSize.value ? { offset: position.value.offset, size: bandSize.value } : undefined)
 
   const shouldRender = computed(() => {

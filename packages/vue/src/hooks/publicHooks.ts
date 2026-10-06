@@ -81,7 +81,7 @@ export function usePlotArea() {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useXAxisDomain(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisDomain(state, 'xAxis', axisId, false))
+  return useAppSelector(state => selectAxisDomain(state, 'xAxis', axisId))
 }
 
 /**
@@ -91,7 +91,7 @@ export function useXAxisDomain(axisId: AxisId = 0) {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useYAxisDomain(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisDomain(state, 'yAxis', axisId, false))
+  return useAppSelector(state => selectAxisDomain(state, 'yAxis', axisId))
 }
 
 /**
@@ -101,7 +101,7 @@ export function useYAxisDomain(axisId: AxisId = 0) {
  * @returns A reactive array of TickItem or undefined
  */
 export function useXAxisTicks(axisId: AxisId = 0) {
-  return useAppSelector(state => selectTicksOfAxis(state, 'xAxis', axisId, false))
+  return useAppSelector(state => selectTicksOfAxis(state, 'xAxis', axisId))
 }
 
 /**
@@ -111,7 +111,7 @@ export function useXAxisTicks(axisId: AxisId = 0) {
  * @returns A reactive array of TickItem or undefined
  */
 export function useYAxisTicks(axisId: AxisId = 0) {
-  return useAppSelector(state => selectTicksOfAxis(state, 'yAxis', axisId, false))
+  return useAppSelector(state => selectTicksOfAxis(state, 'yAxis', axisId))
 }
 
 /**
@@ -121,7 +121,7 @@ export function useYAxisTicks(axisId: AxisId = 0) {
  * @returns A reactive ScaleFunction or undefined if the axis is not yet initialized
  */
 export function useXAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | undefined> {
-  const scale = useAppSelector(state => selectAxisScale(state, 'xAxis', axisId, false))
+  const scale = useAppSelector(state => selectAxisScale(state, 'xAxis', axisId))
   return computed(() => {
     const s = scale.value
     if (s == null)
@@ -140,7 +140,7 @@ export function useXAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | u
  * @returns A reactive ScaleFunction or undefined if the axis is not yet initialized
  */
 export function useYAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | undefined> {
-  const scale = useAppSelector(state => selectAxisScale(state, 'yAxis', axisId, false))
+  const scale = useAppSelector(state => selectAxisScale(state, 'yAxis', axisId))
   return computed(() => {
     const s = scale.value
     if (s == null)
@@ -159,7 +159,7 @@ export function useYAxisScale(axisId: AxisId = 0): ComputedRef<ScaleFunction | u
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseScale(state, 'xAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseScale(state, 'xAxis', axisId))
 }
 
 /**
@@ -169,7 +169,7 @@ export function useXAxisInverseScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseScale(state, 'yAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseScale(state, 'yAxis', axisId))
 }
 
 /**
@@ -179,7 +179,7 @@ export function useYAxisInverseScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseDataSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'xAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'xAxis', axisId))
 }
 
 /**
@@ -189,7 +189,7 @@ export function useXAxisInverseDataSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseDataSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'yAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseDataSnapScale(state, 'yAxis', axisId))
 }
 
 /**
@@ -199,7 +199,7 @@ export function useYAxisInverseDataSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useXAxisInverseTickSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'xAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'xAxis', axisId))
 }
 
 /**
@@ -209,7 +209,7 @@ export function useXAxisInverseTickSnapScale(axisId: AxisId = 0) {
  * @returns A reactive InverseScaleFunction or undefined
  */
 export function useYAxisInverseTickSnapScale(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'yAxis', axisId, false))
+  return useAppSelector(state => selectAxisInverseTickSnapScale(state, 'yAxis', axisId))
 }
 
 /**

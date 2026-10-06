@@ -4,7 +4,6 @@ import { useCanMeasureText } from '@/animation/renderPhase'
 import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectAxisPropsNeededForCartesianGridTicksGenerator } from '@/state/selectors/axisSelectors'
 import { isNumber, warn } from '@/utils'
@@ -120,15 +119,14 @@ const CartesianGridView = defineComponent({
     const chartHeight = useChartHeight()
     const offset = useOffset()
 
-    const isPanorama = useIsPanorama()
     // Like the axes, the grid measures tick labels only after hydration, so the client's first
     // render reproduces the server's lines.
     const canMeasureText = useCanMeasureText()
     const xAxis = useAppSelector(state =>
-      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'xAxis', props.xAxisId!, isPanorama),
+      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'xAxis', props.xAxisId!),
     )
     const yAxis = useAppSelector(state =>
-      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'yAxis', props.yAxisId!, isPanorama),
+      selectAxisPropsNeededForCartesianGridTicksGenerator(state, 'yAxis', props.yAxisId!),
     )
 
     // Default grid lines follow the axis ticks by value, on the same clock as the ticks, so the

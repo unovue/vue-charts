@@ -4,7 +4,6 @@ import { useChartName } from '@/state/selectors/selectors'
 import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectLinePoints } from '@/state/selectors/lineSelectors'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
@@ -54,7 +53,6 @@ export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, sha
   const chartName = useChartName()
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
-  const isPanorama = useIsPanorama()
 
   const isAnimating = useIsAnimating(() => props.isAnimationActive)
   const { needClip } = useNeedsClip(props.xAxisId!, props.yAxisId!)
@@ -72,7 +70,7 @@ export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, sha
   )
 
   const lineData = useAppSelector(state =>
-    selectLinePoints(state, props.xAxisId!, props.yAxisId!, isPanorama, lineSettings.value),
+    selectLinePoints(state, props.xAxisId!, props.yAxisId!, lineSettings.value),
   )
 
   // Dot related logic

@@ -27,11 +27,6 @@ export type AppliedChartData = ReadonlyArray<{ value: unknown }>
 export type ChartDataState = {
   chartData: ChartData | undefined
   /**
-   * store a copy of chart data after it has been processed by each chart's specific
-   * compute functions. TODO: add other charts besides Sankey
-   */
-  computedData: unknown | undefined
-  /**
    * Using Brush, users can choose where they want to zoom in.
    * This is zero-based index of the starting data point.
    */
@@ -46,7 +41,6 @@ export type ChartDataState = {
 export function createChartData() {
   const state = shallowRef<ChartDataState>({
     chartData: undefined,
-    computedData: undefined,
     dataStartIndex: 0,
     dataEndIndex: 0,
   })

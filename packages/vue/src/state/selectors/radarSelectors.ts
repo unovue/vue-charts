@@ -49,8 +49,8 @@ export const selectRadiusAxisForBandSize: (
   },
 )
 
-function selectRadiusAxisTicks(state: RechartsRootState, radiusAxisId: AxisId, _angleAxisId: AxisId, isPanorama: boolean): ReadonlyArray<TickItem> | undefined {
-  return selectPolarAxisTicks(state, 'radiusAxis', radiusAxisId, isPanorama)
+function selectRadiusAxisTicks(state: RechartsRootState, radiusAxisId: AxisId, _angleAxisId: AxisId): ReadonlyArray<TickItem> | undefined {
+  return selectPolarAxisTicks(state, 'radiusAxis', radiusAxisId)
 }
 
 function selectAngleAxisForRadar(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId): AngleAxisSettings | undefined {
@@ -74,8 +74,8 @@ export const selectAngleAxisForBandSize = createSelector(
   },
 )
 
-function selectAngleAxisTicks(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId, isPanorama: boolean): ReadonlyArray<TickItem> | undefined {
-  return selectPolarAxisTicks(state, 'angleAxis', angleAxisId, isPanorama)
+function selectAngleAxisTicks(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId): ReadonlyArray<TickItem> | undefined {
+  return selectPolarAxisTicks(state, 'angleAxis', angleAxisId)
 }
 
 export const selectAngleAxisWithScaleAndViewport: (
@@ -98,7 +98,7 @@ export const selectAngleAxisWithScaleAndViewport: (
   },
 )
 
-function pickDataKey(_state: RechartsRootState, _radiusAxisId: AxisId, _angleAxisId: AxisId, _isPanorama: boolean, radarDataKey: DataKey<any> | undefined): DataKey<any> | undefined {
+function pickDataKey(_state: RechartsRootState, _radiusAxisId: AxisId, _angleAxisId: AxisId, radarDataKey: DataKey<any> | undefined): DataKey<any> | undefined {
   return radarDataKey
 }
 
@@ -106,7 +106,6 @@ const selectBandSizeOfAxis: (
   state: RechartsRootState,
   radiusAxisId: AxisId,
   angleAxisId: AxisId,
-  isPanorama: boolean,
   radarDataKey: DataKey<any> | undefined,
 ) => number | undefined = createSelector(
   [
@@ -134,7 +133,6 @@ const selectSynchronisedRadarDataKey: (
   state: RechartsRootState,
   _radiusAxisId: AxisId,
   _angleAxisId: AxisId,
-  _isPanorama: boolean,
   radarDataKey: DataKey<any> | undefined,
 ) => DataKey<any> | undefined = createSelector(
   [selectUnfilteredPolarItems, pickDataKey],
@@ -213,7 +211,6 @@ export const selectRadarPoints: (
   state: RechartsRootState,
   radiusAxisId: AxisId,
   angleAxisId: AxisId,
-  isPanorama: boolean,
   radarDataKey: DataKey<any> | undefined,
 ) => RadarComposedData | undefined = createSelector(
   [

@@ -37,8 +37,8 @@ const ErrorBarView = defineComponent({
     const layout = useChartLayout()
     const { data, dataPointFormatter, xAxisId, yAxisId, errorBarOffset } = useErrorBarContext()
 
-    const xAxis = useAppSelector(state => selectAxisWithScale(state, 'xAxis', xAxisId, false))
-    const yAxis = useAppSelector(state => selectAxisWithScale(state, 'yAxis', yAxisId, false))
+    const xAxis = useAppSelector(state => selectAxisWithScale(state, 'xAxis', xAxisId))
+    const yAxis = useAppSelector(state => selectAxisWithScale(state, 'yAxis', yAxisId))
 
     return () => {
       const xAxisVal = xAxis.value

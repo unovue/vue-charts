@@ -11,7 +11,7 @@ import {
 } from './axisSelectors'
 import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
-import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
+import { selectChartDataWithIndexes } from './dataSelectors'
 import type { ChartData } from '../chartData'
 import type { Point as CurvePoint } from '@/shape'
 import type { BaseValue } from '@/types/area'
@@ -40,20 +40,20 @@ export type ComputedArea = {
   isRange: boolean
 }
 
-function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'xAxis', xAxisId)
 }
 
-function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)
 }
 
-function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'yAxis', yAxisId)
 }
 
-function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)
 }
 
 const selectBandSize = createSelector(
@@ -66,15 +66,15 @@ const selectBandSize = createSelector(
   },
 )
 
-function selectGraphicalItemStackedData(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean, areaSettings: AreaSettings) {
+function selectGraphicalItemStackedData(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, areaSettings: AreaSettings) {
   const layout = selectChartLayout(state)
   const isXAxisCategorical = isCategoricalAxis(layout, 'xAxis')
   let stackGroups: Record<StackId, StackGroup> | undefined
   if (isXAxisCategorical) {
-    stackGroups = selectStackGroups(state, 'yAxis', yAxisId, isPanorama)
+    stackGroups = selectStackGroups(state, 'yAxis', yAxisId)
   }
   else {
-    stackGroups = selectStackGroups(state, 'xAxis', xAxisId, isPanorama)
+    stackGroups = selectStackGroups(state, 'xAxis', xAxisId)
   }
   if (stackGroups == null) {
     return undefined
@@ -84,7 +84,7 @@ function selectGraphicalItemStackedData(state: RechartsRootState, xAxisId: AxisI
   return groups?.find(v => v.key === dataKey)
 }
 
-function pickAreaSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _isPanorama: boolean, areaSettings: AreaSettings) {
+function pickAreaSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, areaSettings: AreaSettings) {
   return areaSettings
 }
 
@@ -101,7 +101,6 @@ const selectSynchronisedAreaSettings: (
   state: RechartsRootState,
   xAxisId: AxisId,
   yAxisId: AxisId,
-  isPanorama: boolean,
   areaSettings: AreaSettings,
 ) => AreaSettings | undefined = createSelector(
   [selectUnfilteredCartesianItems, pickAreaSettings],
@@ -133,7 +132,6 @@ export const selectArea: (
   state: RechartsRootState,
   xAxisId: AxisId,
   yAxisId: AxisId,
-  isPanorama: boolean,
   areaSettings: AreaSettings,
 ) => ComputedArea | undefined = createSelector(
   [
@@ -143,7 +141,7 @@ export const selectArea: (
     selectXAxisTicks,
     selectYAxisTicks,
     selectGraphicalItemStackedData,
-    selectChartDataWithIndexesIfNotInPanorama,
+    selectChartDataWithIndexes,
     selectBandSize,
     selectSynchronisedAreaSettings,
   ],

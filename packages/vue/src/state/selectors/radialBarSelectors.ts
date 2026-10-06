@@ -74,8 +74,8 @@ export const selectRadiusAxisWithScale: (state: RechartsRootState, radiusAxisId:
     },
   )
 
-export function selectRadiusAxisTicks(state: RechartsRootState, radiusAxisId: AxisId, _angleAxisId: AxisId, isPanorama: boolean): ReadonlyArray<TickItem> | undefined {
-  return selectPolarGraphicalItemAxisTicks(state, 'radiusAxis', radiusAxisId, isPanorama) ?? undefined
+export function selectRadiusAxisTicks(state: RechartsRootState, radiusAxisId: AxisId, _angleAxisId: AxisId): ReadonlyArray<TickItem> | undefined {
+  return selectPolarGraphicalItemAxisTicks(state, 'radiusAxis', radiusAxisId) ?? undefined
 }
 
 function selectAngleAxisForRadialBar(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId): AngleAxisSettings {
@@ -100,8 +100,8 @@ export const selectAngleAxisWithScale: (
   },
 )
 
-function selectAngleAxisTicks(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId, isPanorama: boolean): ReadonlyArray<TickItem> | undefined {
-  return selectPolarAxisTicks(state, 'angleAxis', angleAxisId, isPanorama)
+function selectAngleAxisTicks(state: RechartsRootState, _radiusAxisId: AxisId, angleAxisId: AxisId): ReadonlyArray<TickItem> | undefined {
+  return selectPolarAxisTicks(state, 'angleAxis', angleAxisId)
 }
 
 function pickRadialBarSettings(_state: RechartsRootState, _radiusAxisId: AxisId, _angleAxisId: AxisId, radialBarSettings: RadialBarSettings): RadialBarSettings {
@@ -134,7 +134,6 @@ export const selectBandSizeOfPolarAxis: (
   state: RechartsRootState,
   radiusAxisId: AxisId,
   angleAxisId: AxisId,
-  isPanorama: boolean,
 ) => number | undefined = createSelector(
   [selectChartLayout, selectRadiusAxisWithScale, selectRadiusAxisTicks, selectAngleAxisWithScale, selectAngleAxisTicks],
   (
@@ -230,9 +229,9 @@ export const selectPolarBarBandSize: (
     selectChartLayout,
     selectRootMaxBarSize,
     selectAngleAxisWithScale,
-    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId),
     selectRadiusAxisWithScale,
-    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId),
     pickMaxBarSize,
   ],
   (
@@ -264,7 +263,7 @@ export const selectAllPolarBarPositions: (
     selectBarGap,
     selectBarCategoryGap,
     selectPolarBarBandSize,
-    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId),
     pickMaxBarSize,
   ],
   combineAllBarPositions,
@@ -485,12 +484,12 @@ export const selectRadialBarSectors: (
 ) => ReadonlyArray<RadialBarDataItem> | undefined = createSelector(
   [
     selectAngleAxisWithScale,
-    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId),
     selectRadiusAxisWithScale,
-    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId),
     selectChartDataWithIndexes,
     selectSynchronisedRadialBarSettings,
-    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId, Boolean(settings)),
+    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId),
     selectChartLayout,
     selectBaseValue,
     selectPolarViewBox,

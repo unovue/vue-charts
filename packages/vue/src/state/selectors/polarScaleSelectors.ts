@@ -76,7 +76,6 @@ export const selectPolarAxisTicks: (
   state: RechartsRootState,
   axisType: 'angleAxis' | 'radiusAxis',
   polarAxisId: AxisId,
-  isPanorama: boolean,
 ) => ReadonlyArray<CartesianTickItem> | undefined = createSelector(
   [
     selectChartLayout,
@@ -96,7 +95,6 @@ export const selectPolarGraphicalItemAxisTicks: (
   state: RechartsRootState,
   axisType: 'angleAxis' | 'radiusAxis',
   polarAxisId: AxisId,
-  isPanorama: boolean,
 ) => ReadonlyArray<CartesianTickItem> | null = createSelector(
   [
     selectChartLayout,

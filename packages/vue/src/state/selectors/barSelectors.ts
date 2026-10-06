@@ -14,7 +14,7 @@ import {
 } from './axisSelectors'
 import type { AxisId } from '../chartCartesianAxis'
 import type { ChartData } from '../chartData'
-import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
+import { selectChartDataWithIndexes } from './dataSelectors'
 import { selectChartOffset } from './selectChartOffset'
 import { selectBarCategoryGap, selectBarGap, selectRootBarSize, selectRootMaxBarSize } from './rootPropsSelectors'
 import type { DataKey, LayoutType, TickItem } from '@/types'
@@ -40,19 +40,15 @@ const pickXAxisId = (_state: RechartsRootState, xAxisId: AxisId) => xAxisId
 
 const pickYAxisId = (_state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) => yAxisId
 
-function pickIsPanorama(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return isPanorama
-}
-
-function pickBarSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _isPanorama: boolean, barSettings: BarSettings): BarSettings {
+function pickBarSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, barSettings: BarSettings): BarSettings {
   return barSettings
 }
 
-function pickMaxBarSize(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _isPanorama: boolean, barSettings: BarSettings): number | undefined {
+function pickMaxBarSize(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, barSettings: BarSettings): number | undefined {
   return barSettings.maxBarSize
 }
 
-function pickCells(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _isPanorama: boolean, _barSettings: BarSettings, cells: ReadonlyArray<any> | undefined): ReadonlyArray<any> | undefined {
+function pickCells(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _barSettings: BarSettings, cells: ReadonlyArray<any> | undefined): ReadonlyArray<any> | undefined {
   return []
   // return cells
 }
@@ -63,9 +59,9 @@ function getBarSize(globalSize: number | string | undefined, totalSize: number |
   return isNullish(barSize) ? undefined : getPercentValue(barSize!, totalSize!, 0)
 }
 
-export const selectAllVisibleBars = createSelector(
-  [selectChartLayout, selectUnfilteredCartesianItems, pickXAxisId, pickYAxisId, pickIsPanorama],
-  (layout: LayoutType, allItems, xAxisId, yAxisId, isPanorama) =>
+const selectAllVisibleBars = createSelector(
+  [selectChartLayout, selectUnfilteredCartesianItems, pickXAxisId, pickYAxisId],
+  (layout: LayoutType, allItems, xAxisId, yAxisId) =>
     allItems
       .filter((i) => {
         if (layout === 'horizontal') {
@@ -73,7 +69,6 @@ export const selectAllVisibleBars = createSelector(
         }
         return i.yAxisId === yAxisId
       })
-      .filter(i => i.isPanorama === isPanorama)
       .filter(i => i.hide === false)
       .filter(i => i.type === 'bar'),
 )
@@ -97,12 +92,12 @@ type BarCategory = {
 
 export type SizeList = ReadonlyArray<BarCategory>
 
-function selectBarStackGroups(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean): Record<StackId, StackGroup> | undefined {
+function selectBarStackGroups(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId): Record<StackId, StackGroup> | undefined {
   const layout = selectChartLayout(state)
   if (layout === 'horizontal') {
-    return selectStackGroups(state, 'yAxis', yAxisId, isPanorama)
+    return selectStackGroups(state, 'yAxis', yAxisId)
   }
-  return selectStackGroups(state, 'xAxis', xAxisId, isPanorama)
+  return selectStackGroups(state, 'xAxis', xAxisId)
 }
 
 export function selectBarCartesianAxisSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId) {
@@ -156,33 +151,33 @@ export const selectBarSizeList = createSelector(
   combineBarSizeList,
 )
 
-export function selectBarBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean, barSettings: BarSettings) {
+export function selectBarBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, barSettings: BarSettings) {
   const layout = selectChartLayout(state)
   const globalMaxBarSize: number | undefined = selectRootMaxBarSize(state)
   const { maxBarSize: childMaxBarSize } = barSettings
   const maxBarSize: number = isNullish(childMaxBarSize) ? globalMaxBarSize! : childMaxBarSize!
   let axis: BaseAxisWithScale, ticks: ReadonlyArray<TickItem>
   if (layout === 'horizontal') {
-    axis = selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)!
-    ticks = selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)!
+    axis = selectAxisWithScale(state, 'xAxis', xAxisId)!
+    ticks = selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)!
   }
   else {
-    axis = selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)!
-    ticks = selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)!
+    axis = selectAxisWithScale(state, 'yAxis', yAxisId)!
+    ticks = selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)!
   }
   return getBandSizeOfAxis(axis, ticks, true) ?? maxBarSize ?? 0
 }
 
-export function selectAxisBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
+export function selectAxisBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId) {
   const layout = selectChartLayout(state)
   let axis: BaseAxisWithScale, ticks: ReadonlyArray<TickItem>
   if (layout === 'horizontal') {
-    axis = selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)!
-    ticks = selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)!
+    axis = selectAxisWithScale(state, 'xAxis', xAxisId)!
+    ticks = selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)!
   }
   else {
-    axis = selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)!
-    ticks = selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)!
+    axis = selectAxisWithScale(state, 'yAxis', yAxisId)!
+    ticks = selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)!
   }
   return getBandSizeOfAxis(axis, ticks)
 }
@@ -325,20 +320,20 @@ export const selectAllBarPositions = createSelector(
   combineAllBarPositions,
 )
 
-function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'xAxis', xAxisId)
 }
 
-function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'yAxis', yAxisId)
 }
 
-function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)
 }
 
-function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)
 }
 export const selectBarPosition = createSelector(
   [selectAllBarPositions, pickBarSettings],
@@ -397,7 +392,6 @@ const selectStackedDataOfItem: (
   state: RechartsRootState,
   xAxisId: AxisId,
   yAxisId: AxisId,
-  isPanorama: boolean,
   barSettings: BarSettings,
 ) => Series<Record<number, number>, DataKey<any>> | undefined = createSelector(
   [selectBarStackGroups, pickBarSettings],
@@ -413,7 +407,7 @@ export const selectBarRectangles = createSelector(
     selectYAxisTicks,
     selectBarPosition,
     selectChartLayout,
-    selectChartDataWithIndexesIfNotInPanorama,
+    selectChartDataWithIndexes,
     selectAxisBandSize,
     selectStackedDataOfItem,
     selectSynchronisedBarSettings,

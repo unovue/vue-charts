@@ -11,7 +11,6 @@ import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
 import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
 import { selectRadarPoints } from '@/state/selectors/radarSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
@@ -88,10 +87,9 @@ const RadarView = defineComponent({
     const props = view.item
     const listeners = usePointEvents<RadarPoint>(emit, () => props.dataKey)
     const attrs = view.svgAttrs
-    const isPanorama = useIsPanorama()
 
     const radarPoints = useAppSelector(state =>
-      selectRadarPoints(state, props.radiusAxisId, props.angleAxisId, isPanorama, props.dataKey),
+      selectRadarPoints(state, props.radiusAxisId, props.angleAxisId, props.dataKey),
     )
 
     const teleport = useLayerTeleport()

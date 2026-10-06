@@ -10,7 +10,6 @@ import type { AxisId } from '@/state/chartCartesianAxis'
 import { selectAxisScale, selectXAxisSettings, selectYAxisSettings } from '@/state/selectors/axisSelectors'
 import { useViewBox } from '@/context/chartLayoutContext'
 import { useClipPathId } from '@/chart/provideClipPathId'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { isNumOrStr, isWellBehavedNumber } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
@@ -38,14 +37,14 @@ const ReferenceLineView = defineComponent({
   setup(view, { slots }) {
     const props = view.item
     const attrs = view.svgAttrs
-    const isPanorama = useIsPanorama()
+
     const clipPathId = useClipPathId()
     const viewBox = useViewBox()
 
     const xAxisSettings = useAppSelector(state => selectXAxisSettings(state, props.xAxisId))
     const yAxisSettings = useAppSelector(state => selectYAxisSettings(state, props.yAxisId))
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
+    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId))
+    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId))
 
     const endPoints = computed(() => {
       const vb = viewBox.value

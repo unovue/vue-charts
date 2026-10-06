@@ -25,13 +25,7 @@ export const ReportMainChartProps = defineComponent({
   },
   setup(props) {
     const layout = useChartLayoutActions()
-    /*
-    * Skip dispatching properties in panorama chart for two reasons:
-    * 1. The root chart should be deciding on these properties, and
-    * 2. Brush reads these properties from chart-local Vue state, and so they must remain stable
-    *      to avoid circular dependency and infinite re-rendering.
-    */
-    const isPanorama = false
+
     watch([
       () => props.width,
       () => props.height,
@@ -41,9 +35,7 @@ export const ReportMainChartProps = defineComponent({
       () => props.margin.bottom,
       () => props.margin.left,
     ], () => {
-      if (!isPanorama) {
-        layout.setProps(props.layout, { width: props.width, height: props.height }, props.margin)
-      }
+      layout.setProps(props.layout, { width: props.width, height: props.height }, props.margin)
     }, {
       immediate: true,
     })

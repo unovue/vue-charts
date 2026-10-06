@@ -1,5 +1,4 @@
 import { computed } from 'vue'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectScatterPoints } from '@/state/selectors/scatterSelectors'
 import type { ResolvedScatterSettings } from '@/state/selectors/scatterSelectors'
@@ -20,8 +19,6 @@ export interface ScatterProps {
 }
 
 export function useScatter(props: ScatterProps) {
-  const isPanorama = useIsPanorama()
-
   const scatterSettings = computed<ResolvedScatterSettings>(() => ({
     data: props.data as any,
     dataKey: props.dataKey,
@@ -36,7 +33,6 @@ export function useScatter(props: ScatterProps) {
       props.yAxisId ?? 0,
       props.zAxisId ?? 0,
       scatterSettings.value,
-      isPanorama,
     ),
   )
 

@@ -1,7 +1,7 @@
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
 import type { AxisId } from '../chartCartesianAxis'
-import { selectChartDataWithIndexesIfNotInPanorama } from './dataSelectors'
+import { selectChartDataWithIndexes } from './dataSelectors'
 import { selectAxisWithScale, selectTicksOfGraphicalItem, selectUnfilteredCartesianItems } from './axisSelectors'
 import type { ChartData } from '../chartData'
 import type { DataKey } from '@/types'
@@ -15,20 +15,20 @@ export type ResolvedLineSettings = {
   dataKey: DataKey<any> | undefined
 }
 
-function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'xAxis', xAxisId)
 }
 
-function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)
+function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId)
 }
 
-function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectAxisWithScale(state, 'yAxis', yAxisId)
 }
 
-function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, isPanorama: boolean) {
-  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)
+function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) {
+  return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId)
 }
 
 const selectBandSize = createSelector(
@@ -41,7 +41,7 @@ const selectBandSize = createSelector(
   },
 )
 
-function pickLineSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _isPanorama: boolean, lineSettings: ResolvedLineSettings) {
+function pickLineSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, lineSettings: ResolvedLineSettings) {
   return lineSettings
 }
 
@@ -58,7 +58,6 @@ const selectSynchronisedLineSettings: (
   state: RechartsRootState,
   xAxisId: AxisId,
   yAxisId: AxisId,
-  isPanorama: boolean,
   lineSettings: ResolvedLineSettings,
 ) => ResolvedLineSettings | undefined = createSelector(
   [selectUnfilteredCartesianItems, pickLineSettings],
@@ -94,7 +93,7 @@ export const selectLinePoints = createSelector(
     selectYAxisTicks,
     selectSynchronisedLineSettings,
     selectBandSize,
-    selectChartDataWithIndexesIfNotInPanorama,
+    selectChartDataWithIndexes,
   ],
   (
     layout,

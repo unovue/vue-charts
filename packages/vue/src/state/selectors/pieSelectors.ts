@@ -2,7 +2,6 @@ import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
 import { selectChartDataAndAlwaysIgnoreIndexes } from './dataSelectors'
 import type { ChartData, ChartDataState } from '../chartData'
-import { selectChartOffset } from './selectChartOffset'
 import { selectUnfilteredPolarItems } from './polarSelectors'
 import type { ChartOffset, Coordinate, DataKey, TooltipType } from '@/types'
 import type { LegendType } from '@/types/legend'
@@ -261,26 +260,3 @@ export function computePieSectors({
 
   return sectors
 }
-
-export const selectPieSectors: (
-  state: RechartsRootState,
-  pieSettings: ResolvedPieSettings,
-  // @ts-ignore
-) => Readonly<PieSectorDataItem[]> | undefined = createSelector(
-  [selectDisplayedData, selectSynchronisedPieSettings, pickCells, selectChartOffset],
-  (
-    displayedData: ChartData | undefined,
-    pieSettings: ResolvedPieSettings | undefined,
-    _cells: ReadonlyArray<any> | undefined,
-    offset: ChartOffset,
-  ): Readonly<PieSectorDataItem[]> | undefined => {
-    if (pieSettings == null || displayedData == null) {
-      return undefined
-    }
-    return computePieSectors({
-      offset,
-      pieSettings,
-      displayedData,
-    }) as Readonly<PieSectorDataItem[]> | undefined
-  },
-)

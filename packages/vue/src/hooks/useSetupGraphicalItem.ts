@@ -1,6 +1,5 @@
 import type { AreaProps, AreaPropsWithSVG } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/state/chartGraphicalItems'
 import { SetCartesianGraphicalItem } from '@/state/SetGraphicalItem'
 import { SetLegendPayload } from '@/state/SetLegendPayload'
@@ -26,7 +25,7 @@ function getItemColor(type: CartesianGraphicalItemType, stroke: string | undefin
 export function useSetupGraphicalItem(props: AreaProps | any, type: CartesianGraphicalItemType, options?: { skipTooltip?: boolean, errorBars?: ShallowRef<ReadonlyArray<ErrorBarsSettings>> }) {
   const data = useTrackedData<unknown>(() => props.data)
   const attrs = useAttrs() as SVGAttributes
-  const isPanorama = useIsPanorama()
+
   const legendPayload = computed(() => {
     return [
       {
@@ -46,7 +45,6 @@ export function useSetupGraphicalItem(props: AreaProps | any, type: CartesianGra
     return {
       ...props,
       data: data.value,
-      isPanorama,
       type,
       errorBars: options?.errorBars?.value,
     }

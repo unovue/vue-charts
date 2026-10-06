@@ -43,7 +43,6 @@ export type TooltipActiveIndex = number | null
 export type TooltipPayloadSearcher<T = any, R = T> = (
   data: T,
   index: TooltipIndex,
-  computedData?: unknown,
   nameKey?: DataKey<any>,
 ) => R | undefined
 

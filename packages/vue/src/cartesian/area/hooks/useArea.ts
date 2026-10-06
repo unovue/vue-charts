@@ -4,7 +4,6 @@ import { useChartName } from '@/state/selectors/selectors'
 import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { useAppSelector } from '@/state/hooks'
 import { selectArea } from '@/state/selectors/areaSelectors'
 import { useIsAnimating } from '@/hooks/useIsAnimating'
@@ -59,7 +58,6 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
   const chartName = useChartName()
   const localId = useChartId('v-charts-area')
   const clipPathId = computed(() => props.id || localId)
-  const isPanorama = useIsPanorama()
 
   /**
    * is Area animating
@@ -82,7 +80,7 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
       dataKey: props.dataKey!,
     }),
   )
-  const areaData = useAppSelector(state => selectArea(state, props.xAxisId!, props.yAxisId!, isPanorama, areaSettings.value))
+  const areaData = useAppSelector(state => selectArea(state, props.xAxisId!, props.yAxisId!, areaSettings.value))
   // Dot related logic
   const dot = props.dot
   const clipDot = isClipDot(dot)

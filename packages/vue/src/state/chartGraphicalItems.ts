@@ -47,11 +47,6 @@ export interface GraphicalItemSettings extends MaybeStackedGraphicalItem {
 export type CartesianGraphicalItemSettings = GraphicalItemSettings & {
   type: CartesianGraphicalItemType
   /**
-   * Graphical items that are inside Brush panorama should not interact with the main area graphical items
-   * and vice versa.
-   */
-  isPanorama: boolean
-  /**
    * Each of the graphical items explicitly says which axis it uses;
    * this property is optional for users but every graphical item must have a default,
    * and it is required here.
@@ -91,14 +86,6 @@ type ReplacePayload<T> = {
 
 export type GraphicalItemsState = {
   /**
-   * @deprecated - we can now read graphicalitems.type property instead of maintaining separate reducer. TODO replace
-   * Axis scale selector behaves differently if one of the child elements is a bar
-   * vs if it's not;
-   * So we need to track the number of bars present in the chart
-   * and then report if there is at least one.
-   */
-  countOfBars: number
-  /**
    * This is an array of all cartesian graphical items and their settings.
    * Graphical item is a visual representation of data on the chart.
    * Some examples are: Line, Bar.
@@ -117,15 +104,7 @@ export type GraphicalItemsState = {
 }
 
 export function createChartGraphicalItems() {
-  const state = shallowRef<GraphicalItemsState>({ countOfBars: 0, cartesianItems: [], polarItems: [] })
-
-  function addBar() {
-    state.value = { ...state.value, countOfBars: state.value.countOfBars + 1 }
-  }
-
-  function removeBar() {
-    state.value = { ...state.value, countOfBars: state.value.countOfBars - 1 }
-  }
+  const state = shallowRef<GraphicalItemsState>({ cartesianItems: [], polarItems: [] })
 
   function addCartesianGraphicalItem(item: CartesianGraphicalItemSettings) {
     state.value = { ...state.value, cartesianItems: [...state.value.cartesianItems, item] }
@@ -173,5 +152,5 @@ export function createChartGraphicalItems() {
     return next
   }
 
-  return { state: computed(() => state.value), addBar, removeBar, addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem, addPolarGraphicalItem, removePolarGraphicalItem, replacePolarGraphicalItem }
+  return { state: computed(() => state.value), addCartesianGraphicalItem, removeCartesianGraphicalItem, replaceCartesianGraphicalItem, addPolarGraphicalItem, removePolarGraphicalItem, replacePolarGraphicalItem }
 }

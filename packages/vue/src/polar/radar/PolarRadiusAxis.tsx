@@ -53,7 +53,7 @@ const PolarRadiusAxisView = defineComponent({
     const props = view.item
     const attrs = view.svgAttrs
     const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'radiusAxis', props.radiusAxisId, false))
+    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'radiusAxis', props.radiusAxisId))
 
     // Provide polar viewBox for child Label components
     provide(POLAR_LABEL_VIEW_BOX_KEY, computed(() => polarViewBox.value))

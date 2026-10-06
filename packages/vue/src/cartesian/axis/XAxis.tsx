@@ -9,7 +9,6 @@ import { defineComponent, onUnmounted, watch } from 'vue'
 import { useAppSelector } from '@/state/hooks'
 import type { XAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitXAxis, selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize } from '@/state/selectors/axisSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
@@ -25,12 +24,11 @@ const XAxisImpl = defineComponent({
   },
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    const isPanorama = useIsPanorama()
     const axisType = 'xAxis'
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.xAxisId, isPanorama))
+    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.xAxisId))
     const axisSize = useAppSelector(state => selectXAxisSize(state, props.xAxisId!))
     const position = useAppSelector(state => selectXAxisPosition(state, props.xAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.xAxisId!, isPanorama))
+    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.xAxisId!))
     const viewBox = useAppSelector(selectAxisViewBox)
 
     return () => {

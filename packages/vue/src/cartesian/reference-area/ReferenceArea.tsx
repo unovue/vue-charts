@@ -10,7 +10,6 @@ import { useChartReferenceElements } from '@/state/chartContext'
 import type { AxisId } from '@/state/chartCartesianAxis'
 import { selectAxisScale } from '@/state/selectors/axisSelectors'
 import { useClipPathId } from '@/chart/provideClipPathId'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { isNumOrStr } from '@/utils'
 import { rangeMax, rangeMin, scaleValue } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
@@ -42,11 +41,11 @@ const ReferenceAreaView = defineComponent({
   setup(view, { slots }) {
     const props = view.item
     const attrs = view.svgAttrs
-    const isPanorama = useIsPanorama()
+
     const clipPathId = useClipPathId()
 
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
+    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId))
+    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId))
 
     const rect = computed(() => {
       const xScale = xAxisScale.value

@@ -7,7 +7,6 @@ import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch } from 'vue
 import { useAppSelector } from '@/state/hooks'
 import type { YAxisSettings } from '@/state/chartCartesianAxis'
 import { implicitYAxis, selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize } from '@/state/selectors/axisSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { CartesianAxis } from '@/cartesian'
 import type { DataKey } from '@/types'
 import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
@@ -26,13 +25,13 @@ const YAxisImpl = defineComponent({
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
     const canMeasureText = useCanMeasureText()
-    const isPanorama = useIsPanorama()
+
     const axisType = 'yAxis'
     const { updateYAxisWidth } = useChartCartesianAxis()
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId, isPanorama))
+    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId))
     const axisSize = useAppSelector(state => selectYAxisSize(state, props.yAxisId!))
     const position = useAppSelector(state => selectYAxisPosition(state, props.yAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.yAxisId!, isPanorama))
+    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.yAxisId!))
     const viewBox = useAppSelector(selectAxisViewBox)
     const chartDataLengthEmpty = useAppSelector(state => !state.chartData.chartData?.length)
 

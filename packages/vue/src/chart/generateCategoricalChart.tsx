@@ -20,7 +20,6 @@ import { applyDefaultProps } from '@/utils/props'
 import { ReportPolarOptions } from '@/state/ReportPolarOptions'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useChartId } from '@/hooks/useChartId'
-import { provideIndependentChart } from '@/context/PanoramaContextProvider'
 
 const defaultLayout: LayoutType = 'horizontal'
 const defaultMargin: Margin = { top: 5, right: 5, bottom: 5, left: 5 }
@@ -157,7 +156,6 @@ export function generateCategoricalChart({
       }
       provideChartContext(options)
       provideRenderPhase()
-      provideIndependentChart()
 
       const clipPathId = provideClipPathId(props)
       const descriptionId = useChartId('v-charts-desc')

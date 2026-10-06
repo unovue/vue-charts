@@ -102,7 +102,7 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
   if (activeIndex == null || tooltipPayloadSearcher == null) {
     return undefined
   }
-  const { chartData, computedData, dataStartIndex, dataEndIndex } = chartDataState
+  const { chartData, dataStartIndex, dataEndIndex } = chartDataState
 
   const init: Array<TooltipPayloadEntry> = []
 
@@ -136,7 +136,7 @@ export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArra
     // Fall back to index-based search if findEntryInArray didn't find a match
     // (e.g. scatter tooltip data where items are TooltipPayloadEntry arrays, not raw data objects)
     if (tooltipPayload == null) {
-      tooltipPayload = tooltipPayloadSearcher(sliced, activeIndex, computedData, finalNameKey)
+      tooltipPayload = tooltipPayloadSearcher(sliced, activeIndex, finalNameKey)
     }
 
     if (Array.isArray(tooltipPayload)) {
@@ -231,7 +231,7 @@ export const selectTooltipGraphicalItemsData = createSelector(
 
 /**
  * Data for tooltip always use the data with indexes set by a Brush,
- * and never accept the isPanorama flag:
+ * and always use the chart context:
  * because Tooltip never displays inside the panorama anyway
  * so we don't need to worry what would happen there.
  */
@@ -346,8 +346,8 @@ export const selectTooltipAxisDomainIncludingNiceTicks: (
 function selectTooltipAxisRange(state: RechartsRootState): AxisRange | undefined {
   const axisType = selectTooltipAxisType(state)
   const axisId = selectTooltipAxisId(state)
-  const isPanorama = false // Tooltip never displays in panorama so this is safe to assume
-  return selectAxisRange(state, axisType, axisId, isPanorama)
+
+  return selectAxisRange(state, axisType, axisId)
 }
 
 export const selectTooltipAxisRangeWithReverse = createSelector(
@@ -505,7 +505,7 @@ export const selectIsTooltipActive: (state: RechartsRootState) => boolean = crea
   (tooltipInteractionState: TooltipInteractionState | undefined) => tooltipInteractionState?.active ?? false,
 )
 
-export const selectActiveTooltipPayload: (state: RechartsRootState) => TooltipPayload | undefined = createSelector(
+const selectActiveTooltipPayload: (state: RechartsRootState) => TooltipPayload | undefined = createSelector(
   [
     selectTooltipPayloadConfigurations,
     selectActiveTooltipIndex,

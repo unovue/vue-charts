@@ -24,7 +24,6 @@ describe('chart-local data', () => {
     chart.setData(values)
     expect(snapshots).toEqual([{
       chartData: values,
-      computedData: undefined,
       dataStartIndex: 0,
       dataEndIndex: 3,
     }])

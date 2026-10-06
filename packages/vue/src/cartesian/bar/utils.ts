@@ -12,21 +12,6 @@ import type { MinPointSize } from '@/shape'
 import { invariant } from 'es-toolkit'
 import { isNaN } from 'es-toolkit/compat'
 import { mathSign } from '@/utils/data'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
-
-export function computeLegendPayloadFromBarData(props: ResolvedBarProps): ReadonlyArray<LegendPayload> {
-  const { dataKey, name, fill, legendType, hide } = props
-  return [
-    {
-      inactive: hide,
-      dataKey,
-      type: legendType,
-      color: fill,
-      value: getTooltipNameProp(name, dataKey),
-      payload: props as any,
-    },
-  ]
-}
 
 export function getTooltipEntrySettings(props: ResolvedBarProps): TooltipPayloadConfiguration {
   const { dataKey, stroke, strokeWidth, fill, name, hide, unit } = props

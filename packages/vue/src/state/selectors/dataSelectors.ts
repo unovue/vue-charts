@@ -1,20 +1,8 @@
 import { createSelector } from '../createSelector'
 import type { RechartsRootState } from '../chartState'
 import type { ChartDataState } from '../chartData'
-import type { AxisId } from '../chartCartesianAxis'
 
-/**
- * This selector always returns the data with the indexes set by a Brush.
- * Trouble is, that might or might not be what you want.
- *
- * In charts with Brush, you will sometimes want to select the full range of data, and sometimes the one decided by the Brush
- * - even if the Brush is active, the panorama inside the Brush should show the full range of data.
- *
- * So instead of this selector, consider using either selectChartDataAndAlwaysIgnoreIndexes or selectChartDataWithIndexesIfNotInPanorama
- *
- * @param state RechartsRootState
- * @returns data defined on the chart root element, such as BarChart or ScatterChart
- */
+/** Data and the range owned by this chart's Brush. */
 export const selectChartDataWithIndexes = (state: RechartsRootState): ChartDataState => state.chartData
 
 /**
@@ -28,16 +16,8 @@ export const selectChartDataAndAlwaysIgnoreIndexes: (state: RechartsRootState) =
     const dataEndIndex = dataState.chartData != null ? dataState.chartData.length - 1 : 0
     return {
       chartData: dataState.chartData,
-      computedData: dataState.computedData,
       dataEndIndex,
       dataStartIndex: 0,
     }
   },
 )
-
-export function selectChartDataWithIndexesIfNotInPanorama(state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, isPanorama: boolean) {
-  if (isPanorama) {
-    return selectChartDataAndAlwaysIgnoreIndexes(state)
-  }
-  return selectChartDataWithIndexes(state)
-}

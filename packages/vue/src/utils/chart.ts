@@ -555,7 +555,7 @@ export function isClipDot(dot: any): boolean {
 
 type OffsetAccessor = (series: Array<Series<Record<string, unknown>, string>>, order: number[]) => void
 
-export const offsetSign: OffsetAccessor = (series) => {
+const offsetSign: OffsetAccessor = (series) => {
   const n = series.length
   if (n <= 0) {
     return
@@ -589,7 +589,7 @@ export const offsetSign: OffsetAccessor = (series) => {
  * @param {Array} series from d3-shape Stack
  * @return {Array} series with applied offset
  */
-export const offsetPositive: OffsetAccessor = (series) => {
+const offsetPositive: OffsetAccessor = (series) => {
   const n = series.length
   if (n <= 0) {
     return

@@ -26,16 +26,3 @@ export function applyDefaultProps<T extends ComponentObjectPropsOptions>(
 
   return newProps as T
 }
-
-/**
- * 创建带有默认值的 props 对象
- * @param baseProps - 基础 props 定义
- * @param defaultProps - 默认值配置
- * @returns 合并后的 props 对象
- */
-export function createPropsWithDefaults<T extends ComponentObjectPropsOptions>(
-  baseProps: T,
-  defaultProps: Partial<Record<keyof T, any>>,
-): T {
-  return applyDefaultProps(baseProps, defaultProps)
-}
