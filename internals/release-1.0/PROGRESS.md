@@ -29,7 +29,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
 | 2.4 | Slice 3a: layout math | yes | 2.3 | done | `49a7c42`, this log commit | Shared layout, step gate and 285/285 motion PASS; evidence below. |
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | done | `efad585`, this log commit | Shared Cartesian axis models, step gate and 285/285 motion PASS; evidence below. |
-| 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | todo | | |
+| 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | done | `2f271f0`, this log | 131 files / 1,283 tests; typing, lint and 285 motion transitions PASS. |
 | 2.7 | Slice 3d: tooltip model | yes | 2.6 | todo | | |
 | 2.8 | Slice 3e: cartesian series | yes | 2.7 | todo | | |
 | 2.9 | Slice 3f: polar series | yes | 2.8 | todo | | |
@@ -292,3 +292,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - The auxiliary sampler excludes clip paths; three unchanged shape snapshots can falsely report a sweeping Area as settled.
 - Its next action interrupts that unfinished entrance; even one extra metadata read changes the same registry build in 56/57 frames; this capture mixes in unfinished entrance scheduling.
 - No steady-state geometry regression: `.evidence/release-1.0/area-investigation/settled-comparison.json`; raw captures and screenshots retained alongside.
+
+## Step 2.6: axis scales, ticks and polar geometry
+- Done: `2f271f0`; this log commit records verification. Removed axis/polar selectors; one tracked adapter remains.
+- Gate PASS: Node 22, 131 files / 1,283 tests (107.10 s), typecheck, build and 52 changed-file lint checks, zero warnings.
+- Public duplicate-ID regression: 6/6 pass; reverse patch fails both placement cases (45 expected, 65 received).
+- Motion PASS: 285/285, nine unchanged accepted flags, zero browser errors, 570 videos.
+- Area: 114/114 frames match pre-2.3 exactly; SSR: 1/1 test and four byte-identical sections.
+- Evidence: `.evidence/release-1.0/step-2.6/checks.md`; resize narrow curves 6 → 0; 103 throttled intervals faster; no conclusion.
+- Assumptions: Node 22, two workers, six immutable source snapshots; preserve last duplicate-axis registration and the single adapter.
