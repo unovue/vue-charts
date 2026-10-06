@@ -252,3 +252,12 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/step-2.1/`; verification server closed.
 - Anomalies: resize/narrow curves 0 → 6; 109 throttled intervals faster; suite 73.57 → 97.54 s. No performance conclusion.
 - Assumptions: Node 22.23.3, two workers; retain locally used calculations as private; fixed-size Brush fixture.
+
+## Step 2.2 evidence
+- Done: `1f0aa71`, `b676450`; chart model/getters, shared defaults, one tracked selector adapter, SSR fixture correction.
+- Gate PASS: 129 files / 1,273 tests; typecheck; lint on 19 changed files, zero warnings.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors; four pixel samples and all 57 numeric Area frames match.
+- Data contracts, margin/range, reverse proofs, fresh packed Vite/Nuxt and SSR entrance/completed geometry PASS.
+- Evidence: `.evidence/release-1.0/step-2.2/`; all verification servers stopped.
+- Anomalies: 99 throttled intervals faster; suite 97.54 → 230.48 s; Area video differs by 50,334 pixels; stale SSR expectation corrected.
+- Assumptions: component EffectScope, compact defaults, standalone fallback in the single adapter; item animation mode in SSR fixture; Node 22, two workers.
