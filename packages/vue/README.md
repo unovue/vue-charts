@@ -1,161 +1,156 @@
-<p align="center">
-  <img src="docs/public/logo.svg" alt="vccs logo" width="120" />
-</p>
+# vccs
 
-<h1 align="center">Vue Charts (vccs)</h1>
-
-<p align="center">
-  <strong>Composable charting components for Vue 3</strong>
-</p>
-
-<p align="center">
-  An unofficial Vue.js port of <a href="https://recharts.org">Recharts</a>, bringing React's most popular charting library to the Vue ecosystem.
-</p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/vccs"><img src="https://img.shields.io/npm/v/vccs.svg" alt="npm version"></a>
-</p>
-
----
-
-> **Work in Progress**: This library is under active development. APIs may change.
-
-## Install
-
-```bash
-# pnpm
-pnpm add vccs
-
-# npm
-npm install vccs
-
-# yarn
-yarn add vccs
-```
-
-**Peer dependency**: `vue >= 3.0.0`
-
-## Quick Start
+Composable charts for Vue 3. vccs is an unofficial Vue port of [Recharts](https://recharts.org):
+you build a chart from components, and each component owns one part of it.
 
 ```vue
-<script setup>
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+<script setup lang="ts">
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
-  { name: 'Page A', uv: 4000, pv: 2400 },
-  { name: 'Page B', uv: 3000, pv: 1398 },
-  { name: 'Page C', uv: 2000, pv: 9800 },
-  { name: 'Page D', uv: 2780, pv: 3908 },
-  { name: 'Page E', uv: 1890, pv: 4800 },
-  { name: 'Page F', uv: 2390, pv: 3800 },
+  { month: 'Jan', visits: 4000, signups: 240 },
+  { month: 'Feb', visits: 3000, signups: 139 },
+  { month: 'Mar', visits: 2000, signups: 980 },
 ]
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
-    :height="300"
-  >
-    <BarChart :data="data">
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip />
-      <Bar
-        data-key="pv"
-        fill="#8884d8"
-      />
-      <Bar
-        data-key="uv"
-        fill="#82ca9d"
-      />
-    </BarChart>
-  </ResponsiveContainer>
+  <BarChart :data="data" :height="300">
+    <XAxis data-key="month" />
+    <YAxis />
+    <Tooltip :cursor="false" />
+    <Bar data-key="visits" />
+    <Bar data-key="signups" />
+  </BarChart>
 </template>
 ```
 
-## Chart Types
+The chart fills its container's width. Series without a color take the next color from the
+palette, which you can change with CSS variables.
 
-| Chart | Component | Description |
-|-------|-----------|-------------|
-| Area | `<AreaChart>` + `<Area>` | Filled area charts with stacking & gradients |
-| Bar | `<BarChart>` + `<Bar>` | Vertical/horizontal bar charts |
-| Line | `<LineChart>` + `<Line>` | Line charts with multiple curve types |
-| Scatter | `<ScatterChart>` + `<Scatter>` | X-Y scatter plots |
-| Composed | `<ComposedChart>` | Mix Area, Bar, Line in one chart |
-| Pie | `<PieChart>` + `<Pie>` | Pie and donut charts |
-| Radar | `<RadarChart>` + `<Radar>` | Radar/spider charts |
-| Radial Bar | `<RadialBarChart>` + `<RadialBar>` | Circular bar charts |
-| Funnel | `<FunnelChart>` + `<Funnel>` | Funnel/pipeline charts |
-| Treemap | `<Treemap>` | Not yet supported |
-| Sankey | `<Sankey>` | Not yet supported |
-| Sunburst | `<SunburstChart>` | Not yet supported |
+## Requirements
 
-## Components
+- Vue `^3.5`
+- [`motion-v`](https://motion.dev/docs/vue) `^2.4` (peer dependency, drives all animation)
+- An ESM build setup (Vite, Nuxt, or another bundler). vccs ships ES modules only.
 
-**Cartesian**: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `ReferenceArea`, `ErrorBar`, `Brush`
-
-**Polar**: `PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`
-
-**General**: `Tooltip`, `Legend`, `Label`, `LabelList`, `Cell`, `ResponsiveContainer`
-
-**Shapes**: `Rectangle`, `Dot`, `Sector`, `Symbols`
-
-## Features
-
-- **Vue 3 Native** — Composition API + JSX, full TypeScript support
-- **Recharts API** — Same intuitive composable component design
-- **Animated** — Smooth transitions powered by [Motion for Vue](https://motion.dev/docs/vue)
-- **Interactive** — Tooltip, legend, brush, and click/hover events
-- **Responsive** — `<ResponsiveContainer>` adapts to parent width
-- **Customizable** — Named slots for shapes, ticks, tooltip content, legend, and more
-
-## Architecture
-
-- **State**: Chart-local Vue domains with a stable read-only view and fine-grained computed selectors
-- **Math**: Direct D3 scale and shape modules
-- **Animation**: [Motion for Vue](https://motion.dev/docs/vue)
-
-## Project Structure
-
-```
-packages/vue/src/     # Library source (published as vccs)
-playground/nuxt/      # Nuxt 3 playground for manual testing
-docs/                 # Documentation site (Nuxt 3 + Docus)
-```
-
-## Development
+## Install
 
 ```bash
-pnpm install          # Install dependencies
-pnpm dev              # Watch mode (library)
-pnpm test             # Run tests
-pnpm test:coverage    # Tests with coverage
-pnpm storybook        # Storybook
-pnpm play             # Nuxt playground
-pnpm docs             # Documentation site
+pnpm add vccs motion-v
 ```
 
-Root and package test commands share the library Vitest configuration. Coverage
-uses Istanbul and includes library source, excluding stories and test helpers;
-reports are written to `packages/vue/coverage`. Tests restore DOM measurements,
-spies, global stubs, environment stubs, timers, and mounted components after each
-case. Declaration generation runs only during the library build.
+npm and yarn work the same way: `npm install vccs motion-v`.
+
+### Nuxt
+
+Add the module. It registers every component, so you can use them without imports.
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['vccs/nuxt'],
+})
+```
+
+Set `vccs: { prefix: 'V' }` to register `<VBarChart>` and so on.
+
+### Vite with auto-imports
+
+With [`unplugin-vue-components`](https://github.com/unplugin/unplugin-vue-components), the
+resolver imports components on use:
+
+```ts
+// vite.config.ts
+import Components from 'unplugin-vue-components/vite'
+import { VccsResolver } from 'vccs/resolver'
+
+export default defineConfig({
+  plugins: [vue(), Components({ resolvers: [VccsResolver()] })],
+})
+```
+
+## Typed rows
+
+`defineChartComponents` binds your row type to the components you pick. A wrong `data-key` is
+then a type error, and tooltip payloads carry your row type. Only the components you pick end up
+in your bundle.
+
+```vue
+<script setup lang="ts">
+import { Area, AreaChart, Tooltip, XAxis, defineChartComponents } from 'vccs'
+
+interface Visit { date: string, desktop: number, mobile: number }
+defineProps<{ visits: Visit[] }>()
+
+const Chart = defineChartComponents<Visit>()({ AreaChart, Area, XAxis, Tooltip })
+</script>
+
+<template>
+  <Chart.AreaChart :data="visits" :height="300">
+    <Chart.XAxis data-key="date" />
+    <Chart.Area data-key="desktop" />
+    <Chart.Tooltip />
+  </Chart.AreaChart>
+</template>
+```
+
+Standalone charts such as `Heatmap` and `BarList` infer the row type from `data`.
+
+## Charts
+
+| From Recharts | Component |
+| --- | --- |
+| Area, Bar, Line, Scatter | `AreaChart`, `BarChart`, `LineChart`, `ScatterChart` |
+| Mixed series | `ComposedChart` |
+| Pie, Radar, Radial bar | `PieChart`, `RadarChart`, `RadialBarChart` |
+| Funnel | `FunnelChart` |
+| Hierarchy and flow | `Treemap`, `SunburstChart`, `Sankey` |
+
+| Added by vccs | Use it for |
+| --- | --- |
+| `BarList` | Ranked lists with inline bars |
+| `Sparkline` | Small trend lines inside text or tables |
+| `Tracker` | Status over time, one block per period |
+| `Heatmap` | Values on a grid of two categories |
+| `CalendarHeatmap` | Daily values over a year |
+| `CohortChart` | Retention by cohort and period |
+| `JourneySankey` | Paths that users take, step by step |
+
+Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `ReferenceArea`,
+`ReferenceDot`, `ErrorBar`, `Brush`, `PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`, `Tooltip`,
+`Legend`, `Label`, `LabelList`, `Cell`, `ResponsiveContainer`, and the shapes `Rectangle`, `Dot`,
+`Sector`, `Curve`, `Symbols`.
+
+## What works the Vue way
+
+- **Models:** `v-model:active-index` on charts and series, `v-model:range` on `Brush`.
+- **Slots:** custom shapes, dots, ticks, labels and tooltip content are named slots.
+- **Events:** item events receive `(item, index, event)`.
+- **Server rendering:** charts render on the server and hydrate without layout jumps.
+- **Motion:** enter, update and exit animations follow `prefers-reduced-motion`.
+- **Accessibility:** every chart has an accessible name, and item charts support the keyboard.
+
+## Upgrading from 0.x
+
+1.0 changes some props, events and exports. The
+[migration guide](https://github.com/rick-hup/vuecharts/blob/main/docs/content/1.getting-started/3.migration.md)
+lists every change with a before and after example.
+
+## Links
+
+- [Documentation source](https://github.com/rick-hup/vuecharts/tree/main/docs/content)
+- [Changelog](https://github.com/rick-hup/vuecharts/blob/main/CHANGELOG.md)
+- [Issues](https://github.com/rick-hup/vuecharts/issues)
+
+## Contribute
+
+The repository holds the library (`packages/vue`), the docs site (`docs`) and a Nuxt playground
+(`playground/nuxt`). `pnpm install`, then `pnpm test` for the tests and `pnpm verify` for every
+release check (`--quick` skips the browser checks). `VERIFY.md` lists what each check proves.
 
 ## License
 
-[MIT](LICENSE)
-
-## Credits
-
-- **[Recharts](https://recharts.org)** — Original React charting library this project ports from
-- **[Victory Vendor](https://github.com/FormidableLabs/victory)** — D3 math utilities
-- **[Motion for Vue](https://motion.dev/docs/vue)** — Animation engine
-- **[Reselect](https://reselect.js.org/)** — Selector result memoization over Vue domain snapshots
-- **[VueUse](https://vueuse.org/)** — Vue composition utilities
-
----
-
-<p align="center">
-  <em>This is an unofficial port and is not affiliated with the original Recharts team.</em>
-</p>
+MIT. vccs is an unofficial port and is not affiliated with the Recharts team. It builds on
+[Recharts](https://recharts.org), [Victory Vendor](https://github.com/FormidableLabs/victory) for
+D3 math, [Motion for Vue](https://motion.dev/docs/vue) and [VueUse](https://vueuse.org).
