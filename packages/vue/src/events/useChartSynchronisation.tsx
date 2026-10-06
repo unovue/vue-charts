@@ -6,7 +6,7 @@ import { selectTooltipAxisTicks } from '@/state/selectors/tooltipSelectors'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
-import { useChartDataActions, useChartOptions, useChartTooltip } from '@/state/chartContext'
+import { useChartDataActions, useChartTooltip } from '@/state/chartContext'
 import type { BrushStartEndIndex } from '@/state/chartData'
 
 function useTooltipSyncEventsListener() {
@@ -101,7 +101,7 @@ function useTooltipSyncEventsListener() {
     onCleanup(() => {
       eventCenter.off(TOOLTIP_SYNC_EVENT, listener)
     })
-  })
+  }, { immediate: true })
 }
 
 function useBrushSyncEventsListener() {
@@ -129,7 +129,7 @@ function useBrushSyncEventsListener() {
     onCleanup(() => {
       eventCenter.off(BRUSH_SYNC_EVENT, listener)
     })
-  })
+  }, { immediate: true })
 }
 
 /**
@@ -137,15 +137,10 @@ function useBrushSyncEventsListener() {
  *
  * Reads syncMethod from state and decides how to synchronise the tooltip based on that.
  *
- * @returns void
  */
 export function useSynchronisedEventsFromOtherCharts() {
-  const { createEventEmitter } = useChartOptions()
-
   onMounted(() => {
-    createEventEmitter()
+    useTooltipSyncEventsListener()
+    useBrushSyncEventsListener()
   })
-
-  useTooltipSyncEventsListener()
-  useBrushSyncEventsListener()
 }

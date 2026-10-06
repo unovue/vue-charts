@@ -118,3 +118,25 @@ describe('brush data ownership', () => {
     expect(wrappers[wrappers.length - 1].querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(4)
   })
 })
+
+// Catch data invalidation resetting the start or failing to extend the uncontrolled end.
+it('reconciles the Brush range when root data changes', async () => {
+  const rows = ref(data)
+  const { container } = render(() => (
+    <BarChart width={500} height={300} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush startIndex={1} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(getBarRects(container)).toHaveLength(3)
+  rows.value = [...data, { name: 'E', value: 50 }]
+  await nextTick()
+  await nextTick()
+  expect(getBarRects(container)).toHaveLength(4)
+  rows.value = []
+  await nextTick()
+  await nextTick()
+  expect(getBarRects(container)).toHaveLength(0)
+})

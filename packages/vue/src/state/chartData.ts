@@ -1,4 +1,4 @@
-import { computed, shallowRef } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 
 /**
  * This is the data that's coming through main chart `data` prop
@@ -38,30 +38,29 @@ export type ChartDataState = {
   dataEndIndex: number
 }
 
-export function createChartData() {
-  const state = shallowRef<ChartDataState>({
-    chartData: undefined,
-    dataStartIndex: 0,
-    dataEndIndex: 0,
-  })
+export function createChartData(source: () => ChartData | undefined) {
+  const range = shallowRef<BrushStartEndIndex>({ startIndex: 0, endIndex: 0 })
+  // Data changes reconcile the uncontrolled Brush range; data itself stays with its owner.
+  watch(source, (data) => {
+    setRange({
+      startIndex: data == null ? 0 : range.value.startIndex,
+      endIndex: data == null ? 0 : data.length > 0 ? data.length - 1 : range.value.endIndex,
+    })
+  }, { immediate: true, flush: 'sync' })
 
-  function setData(chartData: ChartData | undefined) {
-    const current = state.value
-    const dataStartIndex = chartData == null ? 0 : current.dataStartIndex
-    const dataEndIndex = chartData == null ? 0 : chartData.length > 0 ? chartData.length - 1 : current.dataEndIndex
-    if (current.chartData === chartData && current.dataStartIndex === dataStartIndex && current.dataEndIndex === dataEndIndex)
-      return
-    state.value = { ...current, chartData, dataStartIndex, dataEndIndex }
+  const state = computed(() => ({
+    chartData: source(),
+    dataStartIndex: range.value.startIndex,
+    dataEndIndex: range.value.endIndex,
+  }))
+
+  function setRange(value: Partial<BrushStartEndIndex>) {
+    const current = range.value
+    const startIndex = value.startIndex ?? current.startIndex
+    const endIndex = value.endIndex ?? current.endIndex
+    if (current.startIndex !== startIndex || current.endIndex !== endIndex)
+      range.value = { startIndex, endIndex }
   }
 
-  function setRange(range: Partial<BrushStartEndIndex>) {
-    const current = state.value
-    const dataStartIndex = range.startIndex ?? current.dataStartIndex
-    const dataEndIndex = range.endIndex ?? current.dataEndIndex
-    if (current.dataStartIndex === dataStartIndex && current.dataEndIndex === dataEndIndex)
-      return
-    state.value = { ...current, dataStartIndex, dataEndIndex }
-  }
-
-  return { state: computed(() => state.value), setData, setRange }
+  return { state, setRange }
 }

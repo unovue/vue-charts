@@ -1,5 +1,5 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, expect, it } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
 import { nextTick, reactive, ref } from 'vue'
 import { Bar, BarChart, Legend, Line, Tooltip, XAxis, YAxis } from '@/index'
 import { getBarRects } from '@/test/helper'
@@ -85,4 +85,21 @@ it('keeps a surviving axis consumer correct through repeated registration and di
     expect([...container.parentElement!.querySelectorAll('.v-charts-tooltip-item-value')].map(item => item.textContent))
       .toEqual(['20', '100'])
   }
+})
+
+// Catch the reporter rejecting a percentage gap that the root accepts.
+it('renders a percentage bar gap without a Vue warning', async () => {
+  const warn = vi.spyOn(console, 'warn')
+  const { container } = render(() => (
+    <BarChart width={400} height={200} margin={{ top: 0, right: 0, bottom: 0, left: 0 }} barGap="20%" data={[{ a: 20, b: 40 }]}>
+      <YAxis hide domain={[0, 100]} />
+      <Bar dataKey="a" isAnimationActive={false} />
+      <Bar dataKey="b" isAnimationActive={false} />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(getBarRects(container).map(rect => [rect.getAttribute('x'), rect.getAttribute('width')]))
+    .toEqual([['40', '120'], ['240', '120']])
+  expect(warn).not.toHaveBeenCalled()
 })

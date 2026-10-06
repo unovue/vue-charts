@@ -115,14 +115,13 @@ const SankeyInner = defineComponent({
   emits: sankeyEmits,
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots, emit }) {
-    const nodes = useTrackedData(() => props.data.nodes)
-    const links = useTrackedData(() => props.data.links)
+    const data = useTrackedData(() => [props.data])
     const tooltip = useChartTooltip()
 
     const layout = computed(() => {
       const m = props.margin
       return computeSankeyLayout({
-        data: { nodes: nodes.value ?? [], links: links.value ?? [] },
+        data: data.value![0],
         width: props.width,
         height: props.height,
         nodePadding: props.nodePadding,

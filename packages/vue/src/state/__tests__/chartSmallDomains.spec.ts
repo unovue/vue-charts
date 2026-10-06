@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { createChartBrush } from '../chartBrush'
 import { createChartLegend } from '../chartLegend'
 import type { LegendSettings } from '../chartLegend'
-import { arrayTooltipSearcher, createChartOptions } from '../chartOptions'
-import { createChartRootProps, initialState } from '../chartRootProps'
-import { createChartPolarOptions } from '../chartPolarOptions'
 import { createChartPolarAxis } from '../chartPolarAxis'
 import type { AngleAxisSettings } from '../chartPolarAxis'
 import { createChartReferenceElements } from '../chartReferenceElements'
@@ -68,57 +65,6 @@ describe('chart-local small domains', () => {
     legend.setLegendSettings({ ...settings })
     expect(legend.state.value).toBe(configured)
     expect(sibling.state.value).toEqual(defaults)
-  })
-
-  it('initializes options once and retains a unique emitter per chart', () => {
-    const options = createChartOptions({ chartName: 'BarChart', defaultTooltipEventType: 'axis', validateTooltipEventTypes: ['axis'], tooltipPayloadSearcher: arrayTooltipSearcher, eventEmitter: undefined })
-    const sibling = createChartOptions()
-    const initial = options.state.value
-    options.createEventEmitter()
-    const emitting = options.state.value
-    expect(emitting).not.toBe(initial)
-    expect(emitting.eventEmitter).toBeTypeOf('symbol')
-    expect(emitting.chartName).toBe('BarChart')
-    expect(emitting.tooltipPayloadSearcher).toBe(arrayTooltipSearcher)
-    expect(emitting.validateTooltipEventTypes).toBe(initial.validateTooltipEventTypes)
-    options.createEventEmitter()
-    expect(options.state.value).toBe(emitting)
-    sibling.createEventEmitter()
-    expect(sibling.state.value.eventEmitter).not.toBe(emitting.eventEmitter)
-    const preloaded = createChartOptions({ ...emitting })
-    const snapshot = preloaded.state.value
-    preloaded.createEventEmitter()
-    expect(preloaded.state.value).toBe(snapshot)
-    expect(preloaded.state.value.eventEmitter).toBe(emitting.eventEmitter)
-  })
-
-  it('updates root props without changing defaults or a sibling chart', () => {
-    const root = createChartRootProps()
-    const sibling = createChartRootProps()
-    const previous = root.state.value
-    root.updateOptions({ ...initialState, barCategoryGap: 20, syncId: 'shared' })
-    expect(root.state.value).toEqual({ ...initialState, barCategoryGap: 20, syncId: 'shared' })
-    expect(previous).toEqual(initialState)
-    const next = root.state.value
-    root.updateOptions({ ...next })
-    expect(root.state.value).toBe(next)
-    expect(sibling.state.value).toEqual(initialState)
-  })
-
-  it('starts polar options empty and suppresses equal updates', () => {
-    const polar = createChartPolarOptions()
-    const sibling = createChartPolarOptions()
-    expect(polar.state.value).toBeNull()
-    const options = { cx: '50%', cy: '50%', startAngle: 90, endAngle: -270, innerRadius: 0, outerRadius: '80%' }
-    polar.updatePolarOptions(options)
-    expect(polar.state.value).toEqual(options)
-    const previous = polar.state.value
-    polar.updatePolarOptions({ ...options })
-    expect(polar.state.value).toBe(previous)
-    polar.updatePolarOptions({ ...options, startAngle: 0 })
-    expect(polar.state.value).not.toBe(previous)
-    expect(previous?.startAngle).toBe(90)
-    expect(sibling.state.value).toBeNull()
   })
 
   it.each([

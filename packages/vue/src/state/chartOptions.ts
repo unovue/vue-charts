@@ -1,4 +1,3 @@
-import { computed, shallowRef } from 'vue'
 import type { TooltipIndex, TooltipPayloadSearcher } from './chartTooltip'
 import type { TooltipEventType } from '@/types'
 import { isNan } from '@/utils'
@@ -35,22 +34,4 @@ export function arrayTooltipSearcher<T>(data: ReadonlyArray<T>, strIndex: Toolti
     return undefined
   }
   return data?.[numIndex]
-}
-
-export function createChartOptions(options?: ChartOptions) {
-  const state = shallowRef<ChartOptions>(options
-    ? { ...options }
-    : {
-        chartName: '',
-        tooltipPayloadSearcher: undefined,
-        eventEmitter: undefined,
-        defaultTooltipEventType: 'axis',
-      })
-
-  function createEventEmitter() {
-    if (state.value.eventEmitter == null)
-      state.value = { ...state.value, eventEmitter: Symbol('rechartsEventEmitter') }
-  }
-
-  return { state: computed(() => state.value), createEventEmitter }
 }

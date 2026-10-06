@@ -1,3 +1,4 @@
+import type { TooltipPayloadSearcher } from '@/state/chartTooltip'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideRenderPhase } from '@/animation/renderPhase'
 import { classProp } from '@/types'
@@ -8,34 +9,28 @@ import { Fragment, defineComponent } from 'vue'
 import type { TooltipEventType } from '@/types/tooltip'
 import { provideClipPathId } from './provideClipPathId'
 import Surface from '@/chart/Surface.vue'
-import { ChartDataContextProvider } from '@/context/ChartDataContextProvider'
 import type { ChartData } from '@/state/chartData'
 import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
 import { FULL_WIDTH_AND_HEIGHT } from '@/chart/const'
-import { ReportMainChartProps } from '@/state/ReportMainChartProps'
-import type { ChartOptions } from '@/state/chartOptions'
-import ReportChartProps from '@/state/ReportChartProps'
+import { createChart, provideChart } from '@/model/chart'
+import { chartDefaults } from '@/model/defaults'
 import { applyDefaultProps } from '@/utils/props'
-import { ReportPolarOptions } from '@/state/ReportPolarOptions'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useChartId } from '@/hooks/useChartId'
-
-const defaultLayout: LayoutType = 'horizontal'
-const defaultMargin: Margin = { top: 5, right: 5, bottom: 5, left: 5 }
 
 export const CategoricalProps = {
   accessibilityLayer: {
     type: Boolean,
-    default: true,
+    default: chartDefaults.accessibilityLayer,
   },
   barCategoryGap: {
     type: [Number, String],
-    default: '10%',
+    default: chartDefaults.barCategoryGap,
   },
   barGap: {
     type: [Number, String],
-    default: 4,
+    default: chartDefaults.barGap,
   },
   barSize: {
     type: [Number, String],
@@ -71,11 +66,11 @@ export const CategoricalProps = {
   },
   layout: {
     type: String as PropType<LayoutType>,
-    default: defaultLayout,
+    default: chartDefaults.layout,
   },
   margin: {
     type: Object as PropType<Margin>,
-    default: () => defaultMargin,
+    default: () => ({ ...chartDefaults.margin }),
   },
   maxBarSize: {
     type: Number,
@@ -93,7 +88,7 @@ export const CategoricalProps = {
   },
   stackOffset: {
     type: String as PropType<StackOffsetType>,
-    default: 'none',
+    default: chartDefaults.stackOffset,
   },
   startAngle: {
     type: Number,
@@ -106,7 +101,7 @@ export const CategoricalProps = {
   },
   syncMethod: {
     type: [String, Function] as PropType<SyncMethod>,
-    default: 'index',
+    default: chartDefaults.syncMethod,
   },
   tabIndex: {
     type: Number,
@@ -131,7 +126,7 @@ export interface CategoricalChartOptions {
   defaultProps?: Partial<CategoricalChartPropsWithOutSvg>
   defaultTooltipEventType?: TooltipEventType
   validateTooltipEventTypes?: readonly TooltipEventType[]
-  tooltipPayloadSearcher?: any
+  tooltipPayloadSearcher?: TooltipPayloadSearcher
 }
 
 export function generateCategoricalChart({
@@ -147,43 +142,56 @@ export function generateCategoricalChart({
     inheritAttrs: false,
     emits: chartEmits,
     setup(props, { attrs, slots, emit }) {
-      const options: ChartOptions = {
-        chartName,
-        defaultTooltipEventType,
-        validateTooltipEventTypes,
-        tooltipPayloadSearcher,
-        eventEmitter: undefined,
-      }
-      provideChartContext(options)
+      const {
+        effectiveWidth,
+        effectiveHeight,
+        hasValidSize,
+        handleResize,
+        isResponsive,
+        measured,
+        boxStyle,
+      } = useResponsiveSize(props)
+      const chart = createChart({
+        data: () => hasValidSize.value ? props.data : undefined,
+        layout: () => props.layout,
+        size: () => ({ width: effectiveWidth.value, height: effectiveHeight.value }),
+        margin: () => props.margin,
+        // Compact panoramas used root defaults instead of reported wrapper options.
+        options: () => props.compact
+          ? chartDefaults
+          : ({
+              accessibilityLayer: props.accessibilityLayer,
+              barCategoryGap: props.barCategoryGap,
+              barGap: props.barGap,
+              barSize: props.barSize,
+              class: props.class,
+              maxBarSize: props.maxBarSize,
+              stackOffset: props.stackOffset,
+              syncId: props.syncId,
+              syncMethod: props.syncMethod,
+            }),
+        polar: () => props.layout === 'centric' || props.layout === 'radial'
+          ? {
+              cx: props.cx ?? chartDefaults.cx,
+              cy: props.cy ?? chartDefaults.cy,
+              startAngle: props.startAngle ?? chartDefaults.startAngle,
+              endAngle: props.endAngle ?? chartDefaults.endAngle,
+              innerRadius: props.innerRadius ?? chartDefaults.innerRadius,
+              outerRadius: props.outerRadius ?? chartDefaults.outerRadius,
+            }
+          : null,
+        tooltip: { chartName, defaultTooltipEventType, validateTooltipEventTypes, tooltipPayloadSearcher },
+      })
+      provideChart(chart)
+      provideChartContext(undefined, chart)
       provideRenderPhase()
 
       const clipPathId = provideClipPathId(props)
       const descriptionId = useChartId('v-charts-desc')
 
-      const { effectiveWidth, effectiveHeight, hasValidSize, handleResize, isResponsive, measured, boxStyle } = useResponsiveSize(props)
-
-      function renderPolarOptions(isPolarChart: boolean) {
-        if (!isPolarChart) {
-          return null
-        }
-        return (
-          <ReportPolarOptions
-            cx={props.cx ?? '50%'}
-            cy={props.cy ?? '50%'}
-            startAngle={props.startAngle ?? defaultProps.startAngle ?? 90}
-            endAngle={props.endAngle ?? defaultProps.endAngle ?? -270}
-            innerRadius={props.innerRadius ?? 0}
-            outerRadius={props.outerRadius ?? '80%'}
-          />
-        )
-      }
-
       return () => {
         const { compact, width, height, title, desc, aspect, initialDimension, ...rest } = props
         const attributes = { ...attrs }
-
-        const layout = props.layout ?? defaultProps.layout ?? defaultLayout
-        const isPolarChart = layout === 'centric' || layout === 'radial'
 
         if (compact) {
           if (!hasValidSize.value) {
@@ -191,9 +199,6 @@ export function generateCategoricalChart({
           }
           return (
             <Fragment>
-              <ChartDataContextProvider chartData={props.data!} />
-              <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin} />
-              {renderPolarOptions(isPolarChart)}
               <Surface {...attrs} {...rest} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
                 <ClipPath clipPathId={clipPathId} />
                 {slots.default?.()}
@@ -211,8 +216,8 @@ export function generateCategoricalChart({
         }
 
         // Separate event handler attrs (onMouseDown, etc.) from SVG attrs
-        const eventHandlerAttrs: Record<string, any> = {}
-        const svgAttributes: Record<string, any> = {}
+        const eventHandlerAttrs: Record<string, unknown> = {}
+        const svgAttributes: Record<string, unknown> = {}
         for (const [key, value] of Object.entries(attributes)) {
           if (key.startsWith('on') && typeof value === 'function') {
             eventHandlerAttrs[key] = value
@@ -223,9 +228,6 @@ export function generateCategoricalChart({
         }
         return (
           <Fragment>
-            {hasValidSize.value && <ChartDataContextProvider chartData={props.data!} />}
-            {hasValidSize.value && <ReportMainChartProps width={effectiveWidth.value} height={effectiveHeight.value} layout={layout} margin={props.margin ?? defaultMargin} />}
-            {hasValidSize.value && renderPolarOptions(isPolarChart)}
             <ChartsWrapper
               accessibilityLayer={props.accessibilityLayer}
               tabIndex={props.tabIndex}
@@ -263,7 +265,6 @@ export function generateCategoricalChart({
               )}
               {slots.tooltip?.()}
             </ChartsWrapper>
-            {hasValidSize.value && <ReportChartProps {...props as any} />}
           </Fragment>
         )
       }

@@ -157,3 +157,38 @@ it('updates Scatter item data without freezing caller-owned rows', async () => {
   await nextTick()
   expect(symbols()).toHaveLength(3)
 })
+
+// Catch raw, same-identity data staying cached after an accessor's input changes.
+it.each([
+  ['root', 'path'],
+  ['root', 'function'],
+  ['root', 'array'],
+  ['series', 'path'],
+  ['series', 'function'],
+  ['series', 'array'],
+] as const)('updates %s data after a nested %s edit', async (owner, accessor) => {
+  const objects = reactive([{ metrics: { nested: { value: 20 } } }, { metrics: { nested: { value: 40 } } }])
+  const arrays = reactive([[20], [40]])
+  const rows = accessor === 'array' ? arrays : objects
+  const dataKey = accessor === 'array'
+    ? '0'
+    : accessor === 'path'
+      ? 'metrics.nested.value'
+      : (row: typeof objects[number]) => row.metrics.nested.value
+  const { container } = render(() => (
+    <BarChart width={400} height={200} margin={{ top: 0, right: 0, bottom: 0, left: 0 }} data={owner === 'root' ? rows : undefined}>
+      <YAxis hide domain={[0, 100]} />
+      <Bar data={owner === 'series' ? rows : undefined} dataKey={dataKey} isAnimationActive={false} />
+    </BarChart>
+  ))
+  await nextTick()
+  expect([...container.querySelectorAll('.v-charts-bar-rectangle path')].map(rect => rect.getAttribute('height')))
+    .toEqual(['40', '80'])
+  if (accessor === 'array')
+    arrays[0][0] = 80
+  else
+    objects[0].metrics.nested.value = 80
+  await nextTick()
+  expect([...container.querySelectorAll('.v-charts-bar-rectangle path')].map(rect => rect.getAttribute('height')))
+    .toEqual(['160', '80'])
+})

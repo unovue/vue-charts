@@ -186,25 +186,25 @@ describe('areaChart', () => {
       >
         <XAxis dataKey="name" />
         <YAxis tickFormatter={toPercent} />
-        <Area dataKey="uv" stackId="1" />
-        <Area dataKey="pv" stackId="1" />
-        <Area dataKey="amt" stackId="1" />
+        <Area dataKey="uv" stackId="1" isAnimationActive={false} />
+        <Area dataKey="pv" stackId="1" isAnimationActive={false} />
+        <Area dataKey="amt" stackId="1" isAnimationActive={false} />
       </AreaChart>
     ))
 
+    await nextTick()
+    await nextTick()
     expectAreaCurve(container, [
       {
-        d: 'M80,10L158,95L236,95L314,180L392,113.7L470,189.35',
+        d: 'M80,323.846L158,335.964L236,325.11L314,344.516L392,335.648L470,341.303',
       },
       {
-        d: 'M80,254.8L158,184.522L236,292.268L314,10L392,207.676L470,180.374',
+        d: 'M80,166.923L158,122.288L236,209.122L314,75.806L392,133.899L470,120.434',
       },
       {
-        d: 'M80,223.714L158,173.516L236,250.477L314,48.857L392,190.054L470,170.553',
+        d: 'M80,10L158,10L236,10L314,10L392,10L470,10',
       },
     ])
-    await nextTick()
-    await nextTick()
     expect([...container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')].map(tick => tick.textContent))
       .toEqual(['0%', '50.0%', '100.00%'])
   })
