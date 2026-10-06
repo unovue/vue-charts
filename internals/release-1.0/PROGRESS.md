@@ -27,7 +27,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.1 | Slice 0: delete dead paths | yes | 2.0 | todo | | |
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
 | 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
-| 2.4 | Slice 3a: layout math | yes | 2.3 | todo | | |
+| 2.4 | Slice 3a: layout math | yes | 2.3 | done | `49a7c42`, this log commit | Shared layout, step gate and 285/285 motion PASS; evidence below. |
 | 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | todo | | |
 | 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | todo | | |
 | 2.7 | Slice 3d: tooltip model | yes | 2.6 | todo | | |
@@ -270,3 +270,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Evidence: `.evidence/release-1.0/step-2.3/`; Bar 57/57 numeric frames match; verification servers closed.
 - Anomalies: Area auxiliary frames, decoded pixels and timing vary; details in `checks.md`. No conclusion.
 - Assumptions: Node 22, two workers, local YAxis measurements; retain type files and the single tracked adapter.
+
+## Step 2.4 evidence
+- Done: `49a7c42`; chart-scoped layout refs and pure core math; obsolete forwarding paths removed.
+- Gate PASS: strict typing; 130 files / 1,274 tests; lint on 11 files, zero warnings.
+- Motion PASS: 285/285 transitions, nine unchanged accepted flags, zero errors; 570 videos.
+- Geometry PASS: all 114 Bar/Area numeric frames match step 2.3; Bar images inspected.
+- Evidence: `.evidence/release-1.0/step-2.4/`; anomalies: suite 126.57 → 212.51 → 122.74 s; 92 throttled intervals faster.
+- Assumptions: Node 22, two workers; retain Brush/Legend interaction owners and the single adapter fallback.
