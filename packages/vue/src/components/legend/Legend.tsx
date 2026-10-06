@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, watch } from 'vue'
+import { computed, defineComponent, h, shallowRef, watch } from 'vue'
 import { useChart } from '@/model/chart'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
@@ -9,6 +9,8 @@ import { useLegend } from './hooks/useLegend'
 import { getLayoutForPosition } from './utils'
 import { useLegendContent } from './hooks/useLegendContent'
 import Surface from '@/container/Surface'
+import type { Size } from '@/types'
+import { isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 import { LegendSymbol, SIZE } from './LegendSymbol'
 
@@ -42,11 +44,8 @@ const LegendView = defineComponent({
       legendPortal,
       resolvedLayout,
       positionViewBox,
-      syncSize,
       boundingBox,
     } = useLegend(props)
-
-    watch([resolvedLayout, () => props.align, () => props.verticalAlign, () => props.position, () => props.offset, () => props.portal, boundingBox], syncSize, { immediate: true })
 
     const {
       getItemStyle,
@@ -187,8 +186,12 @@ const _Legend = defineComponent({
   slots: Object as SlotsType<LegendSlots>,
   props: LegendVueProps,
   setup(props, { attrs, slots, emit }) {
+    const measuredSize = shallowRef<Size>()
     useChart().legend.register(computed(() => ({
       hidden: props.hidden,
+      size: props.portal == null && (props.position == null || isOutsidePosition(props.position))
+        ? measuredSize.value
+        : undefined,
       settings: {
         layout: props.layout && props.layout !== 'auto' ? props.layout : getLayoutForPosition(props.position),
         align: props.align,
@@ -206,7 +209,10 @@ const _Legend = defineComponent({
       'onClick': (entry, index, event) => emit('click', entry, index, event),
       'onMouseenter': (entry, index, event) => emit('mouseenter', entry, index, event),
       'onMouseleave': (entry, index, event) => emit('mouseleave', entry, index, event),
-      'onBbox-update': box => emit('bbox-update', box),
+      'onBbox-update': (box) => {
+        measuredSize.value = box ?? undefined
+        emit('bbox-update', box)
+      },
     }, slots)
   },
 })

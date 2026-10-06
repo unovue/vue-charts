@@ -18,7 +18,6 @@ import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePosi
 export function useLegend(props: LegendProps) {
   const chart = useChart()
   const canMeasureText = useCanMeasureText()
-  const { setLegendSize } = chart.legend
   const contextPayload = chart.legend.payload
   const legendPortalFromContext = useLegendPortal()
   const margin = useMargin()
@@ -60,11 +59,6 @@ export function useLegend(props: LegendProps) {
     }
     return isOutsidePosition(props.position) ? legendArea.value : viewBox.value
   })
-
-  // Inside/center positions are absolutely placed over the plot area
-  // and must not shrink it, so their size is not reported to chart state.
-  const shouldReportDimensions = computed(() =>
-    props.portal == null && (props.position == null || isOutsidePosition(props.position)))
 
   // Process payload
   const processedPayload = computed(() => {
@@ -149,17 +143,6 @@ export function useLegend(props: LegendProps) {
   // Determine portal target
   const legendPortal = computed(() => props.portal ?? legendPortalFromContext?.value)
 
-  // Report size to chart state
-  const syncSize = () => {
-    if (!shouldReportDimensions.value) {
-      return
-    }
-    setLegendSize({
-      width: boundingBox.value.width,
-      height: boundingBox.value.height,
-    })
-  }
-
   return {
     legendRef,
     boundingBox,
@@ -169,6 +152,5 @@ export function useLegend(props: LegendProps) {
     legendPortal,
     resolvedLayout,
     positionViewBox,
-    syncSize,
   }
 }
