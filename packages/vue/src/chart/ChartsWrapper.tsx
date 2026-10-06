@@ -1,3 +1,4 @@
+import { useChart } from '@/model/chart'
 import { defineComponent } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useChartInteractions } from '@/events/useChartInteractions'
@@ -12,7 +13,7 @@ export const ChartsWrapper = defineComponent({
   emits: { ...chartEmits, resize: (_width: number, _height: number) => true },
   setup(props, { attrs, slots, emit }) {
     const interactions = useChartInteractions()
-    useSynchronisedEventsFromOtherCharts()
+    useSynchronisedEventsFromOtherCharts(useChart())
     const scale = useReportScale()
     return () => (
       <ChartWrapper

@@ -4,14 +4,12 @@ import { useChartPresentation } from '@/model/presentation'
 import { computed, onMounted, watch, watchEffect } from 'vue'
 import type { TooltipSyncMessage } from '@/utils/events'
 import { BRUSH_SYNC_EVENT, TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
-import { useChart } from '@/model/chart'
+import type { Chart } from '@/model/chart'
 import { parseTooltipIndex } from '@/core/tooltip'
-import { useChartLayout, useViewBox } from '@/context/chartLayoutContext'
 import type { Coordinate, MouseHandlerDataParam, TickItem } from '@/types'
 import type { BrushStartEndIndex } from '@/types/chartData'
 
 export function useTooltipChartSynchronisation(source: TooltipSource, enabled: () => boolean) {
-  // selectors as computed for reactivity
   const tooltip = useTooltipController()
   const presentation = useChartPresentation()
   const activeDataKey = computed(() => tooltip.target.value?.entry?.value?.settings.dataKey)
@@ -47,15 +45,14 @@ export function useTooltipChartSynchronisation(source: TooltipSource, enabled: (
   })
 }
 
-function useTooltipSyncEventsListener() {
-  const chart = useChart()
+function useTooltipSyncEventsListener(chart: Chart) {
   const mySyncId = computed(() => chart.options.value.syncId)
   const myEventEmitter = computed(() => chart.tooltipOptions.value.eventEmitter)
   const tooltip = chart.tooltip
   const syncMethod = computed(() => chart.options.value.syncMethod)
   const tooltipTicks = computed(() => chart.tooltip.ticks.value)
-  const layout = useChartLayout()
-  const viewBox = useViewBox()
+  const layout = computed(chart.inputs.layout)
+  const viewBox = chart.viewBox
 
   // Subscribe only to what identifies the channel. The listener reads ticks, layout and viewBox
   // when a message arrives; watching them re-queued this job for every series registration and
@@ -143,8 +140,7 @@ function useTooltipSyncEventsListener() {
   }, { immediate: true })
 }
 
-function useBrushSyncEventsListener() {
-  const chart = useChart()
+function useBrushSyncEventsListener(chart: Chart) {
   const mySyncId = computed(() => chart.options.value.syncId)
   const myEventEmitter = computed(() => chart.tooltipOptions.value.eventEmitter)
   const data = chart.dataRange
@@ -172,21 +168,15 @@ function useBrushSyncEventsListener() {
   }, { immediate: true })
 }
 
-/**
- * Will receive synchronisation events from other charts.
- *
- * Reads syncMethod from state and decides how to synchronise the tooltip based on that.
- *
- */
-export function useSynchronisedEventsFromOtherCharts() {
+/** Receive requests through the chart's configured synchronisation method. */
+export function useSynchronisedEventsFromOtherCharts(chart: Chart) {
   onMounted(() => {
-    useTooltipSyncEventsListener()
-    useBrushSyncEventsListener()
+    useTooltipSyncEventsListener(chart)
+    useBrushSyncEventsListener(chart)
   })
 }
 
-export function useBrushChartSynchronisation() {
-  const chart = useChart()
+export function useBrushChartSynchronisation(chart: Chart) {
   const syncId = computed(() => chart.options.value.syncId)
   const eventEmitterSymbol = computed(() => chart.tooltipOptions.value.eventEmitter)
   const brushStartIndex = computed(() => chart.dataRange.state.value.dataStartIndex)

@@ -265,7 +265,7 @@ const _Brush = defineComponent({
   inheritAttrs: false,
   setup(props, { attrs, slots, emit }) {
     useBrushSetting(props)
-    useBrushChartSynchronisation()
+    useBrushChartSynchronisation(useChart())
     const View = useDeferredView(BrushView)
     const instance = getCurrentInstance()!
     const listens = (name: string) => {
