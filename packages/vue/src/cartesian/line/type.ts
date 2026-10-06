@@ -2,7 +2,7 @@ import type { LinePointItem } from '@/types/line'
 import type { LabelListSlotProps } from '@/components/label/types'
 import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
 import type { ChartDataKey } from '@/types/base'
-import type { LayoutType, TooltipType, VueClassValue, VuePropsToType, WithSVGProps } from '@/types'
+import type { LayoutType, TooltipType, VueClassValue, WithSVGProps } from '@/types'
 import type { AxisId } from '@/types/axis'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { LegendType } from '@/types/legend'
@@ -79,7 +79,6 @@ export const LineVueProps = {
   class: classProp,
 }
 
-export type LinePropsInternal = VuePropsToType<typeof LineVueProps>
 export type LinePropsWithSVG = WithSVGProps<typeof LineVueProps>
 
 export type ResolvedLineProps = ExtractPropTypes<typeof LineVueProps>

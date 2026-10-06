@@ -49,7 +49,7 @@ export interface SankeySlots {
   default?: () => VNode[]
 }
 
-export const sankeyPayloadSearcher: TooltipPayloadSearcher = (
+const sankeyPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
   activeIndex: TooltipIndex,
 ) => {
@@ -66,7 +66,7 @@ const sankeyOptions: ChartOptions = {
   eventEmitter: undefined,
 }
 
-export const SankeyVueProps = {
+const SankeyVueProps = {
   title: { type: String, default: 'Sankey diagram' },
   desc: String,
   data: {

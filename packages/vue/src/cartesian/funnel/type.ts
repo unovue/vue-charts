@@ -5,7 +5,7 @@ import { classProp } from '@/types'
 import type { TooltipType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 
-export type { FunnelTrapezoidItem, FunnelComposedData } from '@/types/funnel'
+export type { FunnelTrapezoidItem } from '@/types/funnel'
 
 export interface FunnelProps {
   // activeShape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>

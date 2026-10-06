@@ -1,1 +1,1 @@
-export * from './CartesianGrid'
+export { CartesianGrid } from './CartesianGrid'

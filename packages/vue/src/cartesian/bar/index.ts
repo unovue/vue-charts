@@ -1,1 +1,2 @@
-export * from './Bar'
+export { Bar } from './Bar'
+export type { BarSlots } from './Bar'

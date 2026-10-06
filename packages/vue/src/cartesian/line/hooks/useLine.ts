@@ -27,10 +27,10 @@ export interface LineContext {
 }
 
 // Injection Key
-export const LineContextKey: InjectionKey<LineContext> = Symbol('LineContext')
+const LineContextKey: InjectionKey<LineContext> = Symbol('LineContext')
 
 // 提供 Line Context
-export function provideLineContext(context: LineContext) {
+function provideLineContext(context: LineContext) {
   provide(LineContextKey, context)
 }
 

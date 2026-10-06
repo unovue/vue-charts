@@ -1,2 +1,3 @@
 export type { AreaProps, AreaDotSlotProps } from './type'
-export * from './Area'
+export { Area } from './Area'
+export type { AreaSlots } from './Area'

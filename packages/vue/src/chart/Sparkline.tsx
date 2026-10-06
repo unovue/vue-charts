@@ -28,7 +28,7 @@ interface SparkPoint {
 /** Room for the end dot and the stroke at the edges. */
 const PAD = 3
 
-export const SparklineVueProps = {
+const SparklineVueProps = {
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   /** Numbers, or rows with `data-key`. `null` leaves a gap. */

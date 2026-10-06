@@ -26,7 +26,7 @@ const NO_DATA_COLOR = 'var(--v-charts-muted, #e5e5e5)'
 
 export type TrackerRow = Record<string, unknown>
 
-export const TrackerVueProps = {
+const TrackerVueProps = {
   ...cellGridSharedProps,
   /** One row per bar, oldest first. */
   data: { type: Array as PropType<TrackerRow[]>, required: true as const },

@@ -1,3 +1,3 @@
-export type { LineProps, LinePropsWithSVG, LinePropsInternal, LinePointItem } from './type'
-export * from './Line'
-export * from './hooks/useLine'
+export type { LineProps, LinePropsWithSVG, LinePointItem } from './type'
+export { Line } from './Line'
+export type { LineSlots } from './Line'

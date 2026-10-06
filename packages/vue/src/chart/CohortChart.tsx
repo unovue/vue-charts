@@ -4,7 +4,7 @@ import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { Heatmap, type HeatmapCell } from './Heatmap'
 
-export const CohortChartVueProps = {
+const CohortChartVueProps = {
   ...cellGridSharedProps,
   /** One row per cohort, oldest first. */
   data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },

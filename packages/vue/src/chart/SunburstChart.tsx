@@ -35,7 +35,7 @@ export interface SunburstSlots {
   default?: () => VNode[]
 }
 
-export const sunburstPayloadSearcher: TooltipPayloadSearcher = (
+const sunburstPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
   activeIndex: TooltipIndex,
 ) => {
@@ -52,7 +52,7 @@ const sunburstOptions: ChartOptions = {
   eventEmitter: undefined,
 }
 
-export const SunburstChartVueProps = {
+const SunburstChartVueProps = {
   title: { type: String, default: 'Sunburst chart' },
   desc: String,
   data: { type: Object as PropType<SunburstData>, required: true as const },

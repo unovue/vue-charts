@@ -5,7 +5,7 @@ import { computed, defineComponent } from 'vue'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 
-export interface FormattedGraphicalItem {
+interface FormattedGraphicalItem {
   type: string
   dataKey: ChartDataKey | undefined
   props: CartesianGraphicalItemSettings | PolarGraphicalItemSettings

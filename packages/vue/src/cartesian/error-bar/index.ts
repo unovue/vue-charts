@@ -1,2 +1,1 @@
-export * from './ErrorBar'
-export * from './ErrorBarContext'
+export { ErrorBar } from './ErrorBar'

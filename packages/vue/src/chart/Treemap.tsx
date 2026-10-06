@@ -67,7 +67,7 @@ function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
  * Tooltip payload searcher for Treemap — navigates nested node structure
  * using a path string like 'children[0].children[1]'.
  */
-export const treemapPayloadSearcher: TooltipPayloadSearcher = (
+const treemapPayloadSearcher: TooltipPayloadSearcher = (
   data: unknown,
   activeIndex: TooltipIndex,
 ) => {
@@ -112,7 +112,7 @@ function buildNodeTree(
   return { children, name: 'root', tooltipIndex: parentIndex }
 }
 
-export const TreemapVueProps = {
+const TreemapVueProps = {
   title: { type: String, default: 'Treemap' },
   desc: String,
   data: { type: Array as PropType<TreemapData[]>, required: true as const },

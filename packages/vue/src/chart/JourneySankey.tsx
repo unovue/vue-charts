@@ -45,7 +45,7 @@ const LABEL_HEIGHT = 34
 const CHAR_WIDTH = 6.6
 const CURVATURE = 0.42
 
-export const JourneySankeyVueProps = {
+const JourneySankeyVueProps = {
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   /** One row per journey: the pages (or events) in order and how many sessions took it. */

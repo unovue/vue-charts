@@ -477,3 +477,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Reverse packed scale-type patch fails guard; restoring the callable type passes.
 - Evidence: `.evidence/release-1.0/part-a/` (`3.1-guard-*.log`, `3.1-consumers.log`).
 - Assumptions: template skipLibCheck defaults; guard runs in Nuxt to supply optional Nuxt types.
+
+### 3.2 Export surface — done
+- Explicit root/barrel exports; removed D-12a internals and obsolete exports.
+- Every component Props type and TooltipPayloadEntry compile in both packed fixtures.
+- Gate: typecheck/lint/code pass; Vitest 130 files / 1310 tests (`3.2-*.log`).
+- Packed consumers pass; strict guard 295 files / zero vccs errors / 100 external diagnostics.
+- Export snapshot reviewed; migration rows and TypeScript guide updated.
+- Evidence: `.evidence/release-1.0/part-a/3.2-*.log`.
+- Assumption: infer missing Props types from public constructors; useOffset removal follows D-12a now.

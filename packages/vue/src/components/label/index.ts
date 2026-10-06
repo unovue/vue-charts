@@ -1,2 +1,2 @@
-export * from './Label'
-export * from './LabelList'
+export { Label } from './Label'
+export { LabelList } from './LabelList'

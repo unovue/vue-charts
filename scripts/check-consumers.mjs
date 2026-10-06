@@ -45,8 +45,10 @@ try {
   for (const name of ['vite', 'nuxt']) {
     const app = join(temporary, name)
     await cp(join(fixtures, name), app, { recursive: true })
-    const probe = name === 'vite' ? 'src/nullability.ts' : 'app/nullability.ts'
-    await copyFile(join(fixtures, 'nullability.ts'), join(app, probe))
+    for (const probe of ['nullability.ts', 'publicProps.ts']) {
+      const directory = name === 'vite' ? 'src' : 'app'
+      await copyFile(join(fixtures, probe), join(app, directory, probe))
+    }
     // pnpm refreshes the local archive's integrity. Existing registry resolutions
     // stay locked; fixture preparation is required if a new dependency is absent.
     run(app, ['update', 'vccs', '--lockfile-only', ...(prepare ? [] : ['--offline'])])

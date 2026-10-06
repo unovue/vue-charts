@@ -36,7 +36,7 @@ interface RowState {
   rising?: boolean
 }
 
-export const BarListVueProps = {
+const BarListVueProps = {
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   data: { type: Array as PropType<BarListRow[]>, required: true as const },

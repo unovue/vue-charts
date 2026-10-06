@@ -26,7 +26,7 @@ const DEFAULT_ROW = 28
 /** Rough width of one label character at 10 px, to size the label column without measuring. */
 const CHAR_WIDTH = 6
 
-export const HeatmapVueProps = {
+const HeatmapVueProps = {
   ...cellGridSharedProps,
   data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   /** Field for the column. */

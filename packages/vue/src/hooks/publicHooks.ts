@@ -5,7 +5,6 @@ import {
   useChartHeight,
   useChartWidth,
   useMargin,
-  useOffset,
   useViewBox,
 } from '@/context/chartLayoutContext'
 import type { AxisId } from '@/types/axisSettings'
@@ -21,7 +20,7 @@ export interface CartesianDataPoint {
 }
 
 // Re-export existing layout hooks
-export { useChartWidth, useChartHeight, useMargin, useOffset }
+export { useChartWidth, useChartHeight, useMargin }
 
 /**
  * Returns whether the tooltip is currently active (visible).

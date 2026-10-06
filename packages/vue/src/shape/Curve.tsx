@@ -22,7 +22,7 @@ import {
   line as shapeLine,
 } from 'd3-shape'
 import { classProp } from '@/types'
-import type { LayoutType, VuePropsToType, WithSVGProps } from '@/types'
+import type { LayoutType, WithSVGProps } from '@/types'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils'
 import { svgAttrs } from '@/utils/VueUtils'
@@ -94,7 +94,7 @@ type GetPathProps = Pick<CurveProps, 'type' | 'points' | 'baseLine' | 'layout' |
  * Calculate the path of curve. Returns null if points is an empty array.
  * @return path or null
  */
-export function getPath({
+function getPath({
   type = 'linear',
   points = [],
   baseLine,
@@ -148,8 +148,6 @@ export const CurveVueProps = {
   path: { type: String },
   class: classProp,
 }
-
-export type CurvePropsWithOutSVG = VuePropsToType<typeof CurveVueProps>
 
 export type CurveProps = WithSVGProps<typeof CurveVueProps>
 export const Curve = defineComponent<CurveProps>({

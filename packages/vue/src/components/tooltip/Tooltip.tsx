@@ -27,9 +27,9 @@ function defaultUniqBy<TValue extends ValueType, TName extends NameType>(entry: 
 
 type UniqueFunc<T> = (entry: T) => unknown
 
-export type UniqueOption<T> = boolean | UniqueFunc<T>
+type UniqueOption<T> = boolean | UniqueFunc<T>
 
-export function getUniqPayload<T>(
+function getUniqPayload<T>(
   payload: ReadonlyArray<T>,
   option: UniqueOption<T>,
   defaultUniqBy: UniqueFunc<T>,
@@ -329,6 +329,4 @@ export type TooltipSlots = {
 // Explicit constructor slots survive declaration generation for Volar consumers.
 export const Tooltip: typeof _Tooltip & { new (): { $slots: TooltipSlots } } = _Tooltip
 
-export default Tooltip
-
-export type { TooltipContentProps, CursorSlotProps, CrossCursorSlotProps, RectangleCursorSlotProps, SectorCursorSlotProps, CurveCursorSlotProps, ContentType } from './types'
+export type { TooltipContentProps, CursorSlotProps, CrossCursorSlotProps, RectangleCursorSlotProps, SectorCursorSlotProps, CurveCursorSlotProps } from './types'

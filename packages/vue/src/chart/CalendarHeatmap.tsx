@@ -23,7 +23,7 @@ const WEEKDAY_BAND = 28
 /** Nominal cell step, only used to pick the default aspect ratio. */
 const NOMINAL_STEP = 14
 
-export const CalendarHeatmapVueProps = {
+const CalendarHeatmapVueProps = {
   ...cellGridSharedProps,
   data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   /** The field holding the day: a `YYYY-MM-DD` string or a `Date` (its local calendar date). */
