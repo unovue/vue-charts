@@ -14,7 +14,7 @@ test('visitor capture streams a recording larger than one transport string', asy
   const require = createRequire(await realpath(`${root}packages/vue/node_modules/@nuxt/test-utils/package.json`))
   const { chromium } = require('playwright-core')
   const browser = await chromium.launch({ headless: true, executablePath: process.env.MOTION_EXECUTABLE_PATH })
-  const out = `${root}.evidence/release-1.0/seen-stream-regression`
+  const out = `${root}.evidence/tooling/seen-stream-regression`
   await mkdir(out, { recursive: true })
   try {
     const page = await browser.newPage()

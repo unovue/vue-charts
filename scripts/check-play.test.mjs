@@ -8,7 +8,7 @@ import { test } from 'node:test'
 // Transparent shapes must neither satisfy an entrance nor fail geometry checks.
 test('the recorder judges only painted fill and stroke geometry', () => {
   const root = fileURLToPath(new URL('../', import.meta.url))
-  const out = '.evidence/release-1.0/play-paint-regression'
+  const out = '.evidence/tooling/play-paint-regression'
   const result = spawnSync(process.execPath, [
     'scripts/check-play.mjs',
     '--skip-build',
@@ -18,6 +18,13 @@ test('the recorder judges only painted fill and stroke geometry', () => {
   assert.equal(result.status, 0, result.stdout + result.stderr)
   const { results } = JSON.parse(readFileSync(`${root}${out}/results.json`, 'utf8'))
   const flags = results[0].scenarios[0].flags
+  // A hidden tooltip while hovering a real mark must still fail after probe retargeting.
+  const hover = results[0].scenarios.find(s => s.label === 'hover-0')
+  const tooltip = hover.flags.find(f => f.flag === 'tooltip')
+  assert.ok(tooltip, 'missing-tooltip positive control')
+  assert.ok(tooltip.numbers.hit.series, 'probe must hit a data series, not SVG whitespace')
+  const cellHover = results[0].scenarios.find(s => s.label === 'hover-2')
+  assert.equal(cellHover.flags.find(f => f.flag === 'tooltip')?.numbers.hit.class, 'cell-hit', 'cell overlay must receive a probe inside its painted mark')
   const frames = JSON.parse(readFileSync(`${root}${out}/fixture-1280-load.json`, 'utf8'))
   for (const [control, painted] of [
     ['opaque', true],

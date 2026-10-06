@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import { spawn, spawnSync } from 'node:child_process'
 import { mkdir, readdir, realpath, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -11,6 +12,83 @@ const require = createRequire(await realpath(join(root, 'packages/vue/node_modul
 const { chromium } = require('playwright-core')
 
 const seriesSelector = '.v-charts-bar,.v-charts-line,.v-charts-area,.v-charts-pie,.v-charts-radar,.v-charts-radial-bar,.v-charts-funnel,.v-charts-sankey,.v-charts-treemap,.v-charts-sunburst'
+const probeSelector = `${seriesSelector},.v-charts-scatter,.v-charts-tracker,.v-charts-calendar,.v-charts-heatmap,.v-charts-cohort,.v-charts-sparkline,.v-charts-journey`
+
+// Bounding-box centres can be holes in donuts or whitespace beside a line.
+// Choose the nearest painted mark whose shape actually receives the pointer.
+async function dataMarkPoint(chart) {
+  await chart.scrollIntoViewIfNeeded()
+  // Scrolling can start a clipped entrance. Keep recording it while waiting for
+  // a mark to receive the pointer rather than mistaking the empty clip for data.
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const point = await chart.evaluate((svg, selector) => {
+      const box = svg.getBoundingClientRect()
+      const points = []
+      for (const shape of svg.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line')) {
+        if (!shape.closest(selector) || shape.closest('defs,clipPath,mask,.v-charts-label-list,.v-charts-pie-labels,.v-charts-active-dot'))
+          continue
+        const style = getComputedStyle(shape)
+        if (!window.playHasPaint(style.fill, style.fillOpacity) && !(Number.parseFloat(style.strokeWidth) > 0 && window.playHasPaint(style.stroke, style.strokeOpacity)))
+          continue
+        let hidden = false
+        for (let parent = shape; parent && parent !== svg; parent = parent.parentElement)
+          hidden ||= Number(getComputedStyle(parent).opacity) === 0
+        if (hidden)
+          continue
+        const cell = shape.closest('.v-charts-cell')
+        const receivesPoint = (point) => {
+          const hit = document.elementFromPoint(point.x, point.y)
+          // Cells put a larger transparent gap target over their painted rect.
+          return hit === shape || (cell && hit?.closest('.v-charts-cell') === cell)
+        }
+        const b = shape.getBoundingClientRect()
+        for (let x = 1; x < 10; x++) {
+          for (let y = 1; y < 10; y++) {
+            const point = { x: b.x + b.width * x / 10, y: b.y + b.height * y / 10 }
+            if (receivesPoint(point))
+              points.push(point)
+          }
+        }
+        // Thin stroked curves may fall between the fill sampling points.
+        if (typeof shape.getTotalLength === 'function') {
+          const length = shape.getTotalLength()
+          for (let i = 1; i < 20; i++) {
+            const local = shape.getPointAtLength(length * i / 20)
+            const point = new DOMPoint(local.x, local.y).matrixTransform(shape.getScreenCTM())
+            if (receivesPoint(point))
+              points.push({ x: point.x, y: point.y })
+          }
+        }
+      }
+      const distance = p => (p.x - box.x - box.width / 2) ** 2 + (p.y - box.y - box.height / 2) ** 2
+      return points.sort((a, b) => distance(a) - distance(b))[0] ?? null
+    }, probeSelector)
+    if (point)
+      return point
+    await chart.page().waitForTimeout(50)
+  }
+  return null
+}
+
+async function portAvailable(port) {
+  const probe = createServer()
+  try {
+    await new Promise((resolve, reject) => {
+      probe.once('error', reject)
+      probe.listen(port, '127.0.0.1', resolve)
+    })
+    return true
+  }
+  catch (error) {
+    if (error.code !== 'EADDRINUSE')
+      throw error
+    return false
+  }
+  finally {
+    if (probe.listening)
+      await new Promise(resolve => probe.close(resolve))
+  }
+}
 
 // Runs before parser/hydration. WeakMap IDs survive updates but never merge replaced nodes.
 function installRecorder(seriesSelector) {
@@ -47,6 +125,7 @@ function installRecorder(seriesSelector) {
       ?? color.match(/^rgba\(.*?,\s*([\d.]+)\s*\)$/)
     return !alpha || Number(alpha[1]) > 0
   }
+  window.playHasPaint = hasPaint
   let exemptions = new WeakSet()
   window.playReadOnlyLegends = new WeakSet()
   function updateExemptions() {
@@ -288,7 +367,9 @@ try {
       throw new Error(`${filter} build exited ${build.status}; see build-${filter}.log`)
   }
   let base
-  for (let port = 4660; !process.argv.includes('--fixture-only') && port <= 4669; port++) {
+  for (let port = 4690; !process.argv.includes('--fixture-only') && port <= 4699; port++) {
+    if (!await portAvailable(port))
+      continue
     serverLog = ''
     server = spawn(process.execPath, ['.output/server/index.mjs'], { cwd: join(root, 'playground/nuxt'), env: { ...process.env, PORT: String(port), HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] })
     server.stdout.on('data', chunk => serverLog += chunk)
@@ -304,7 +385,7 @@ try {
     }
   }
   if (!base && !process.argv.includes('--fixture-only'))
-    throw new Error('No server started in ports 4660–4669')
+    throw new Error('No server started in ports 4690–4699')
   browser = await chromium.launch({ headless: true, ...(process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
   async function run(route, width, fixture = false) {
     const name = `${fixture ? 'fixture' : route.replaceAll('/', '') || 'index'}-${width}`
@@ -391,7 +472,10 @@ try {
           if (!await chart.isVisible())
             continue
           const hoverFrames = await capture(`hover-${i}`, 500, async () => {
-            await chart.hover({ position: { x: (await chart.boundingBox()).width / 2, y: (await chart.boundingBox()).height / 2 } })
+            const point = await dataMarkPoint(chart)
+            if (!point)
+              throw new Error(`Chart ${i}: no pointer-receiving data mark found`)
+            await page.mouse.move(point.x, point.y)
           })
           const last = hoverFrames.at(-1)
           const sampledChart = last.charts[i]
