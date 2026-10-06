@@ -44,11 +44,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 3.4 | Chart prop sets and chart-level animation | yes | phase 2 | todo | | |
 | 3.5 | Axis props | yes | phase 2 | todo | | |
 | 3.6 | Active state and Brush range | yes | phase 2 | todo | | |
-| 3.7 | Accessible names and the markup contract | yes | phase 2 | done | `a164398`, log commit | D-15/D-22 gate PASS. |
-| 3.8 | Series colors | yes | phase 2 | done | `ab9bfc6`, log commit | D-19 palette and contrast PASS. |
+| 3.7 | Accessible names and the markup contract | yes | phase 2 | done | `a164398`, `0ed00b0` | D-15/D-22 gate PASS. |
+| 3.8 | Series colors | yes | phase 2 | done | `ab9bfc6`, `8ee554d` | D-19 palette and contrast PASS. |
 | 3.9 | Typed rows | yes | phase 2, 3.2, 3.4–3.6 | done | `9eb6655`, `a7915fb` | Typed rows, zero real any, numeric Bar slot and step gate PASS. |
-| 3.10 | Renames, slots, events, deprecations | yes | phase 2, 3.2 | todo | | |
-| 3.11 | Docs, playground and stories on the 1.0 API | yes | 3.1–3.10 | todo | | |
+| 3.10 | Renames, slots, events, deprecations | yes | phase 2, 3.2 | done | `f1e3264`, `f5c5cea` | Unit/type/lint/code PASS; corrected strict consumer probes PASS; packed rebuild not repeated. |
+| 3.11 | Docs, playground and stories on the 1.0 API | yes | 3.1–3.10 | done | `6307828`, `ce80e4b`, `5f5840b`, this log commit | Fresh docs and isolated Line PASS; grep exceptions and raw gate failures recorded below. |
 | 4.1 | Test surgery | assess | phase 2 | todo | | |
 | 4.2 | Performance fixes | yes | phase 2, 1.11 | todo | | |
 | 4.3 | Size budgets | yes | phase 3, 4.2 | todo | | |
@@ -66,7 +66,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 0 | 2026-10-05 | Baseline FAIL retained (0.1) | A/A PASS; CPU control verified | 0.1–0.3 done; baseline metrics/report retained | PASS: setup/recording criteria; no claim of a green release verifier |
 | 1 | 2026-10-06 | Prior full run FAIL; repaired checks below | Prior PASS: 21 rounds / 18 metrics | Playground comparison PASS; visitor capture completes | DEFERRED: visitor timing remains unreliable |
 | 2 | | | | | |
-| 3 | | | | | |
+| 3 | 2026-10-06 | FAIL retained; focused corrections below | FAIL retry: 17/18 metrics | Part B complete; numeric/a11y/docs/isolated play PASS | Complete with recorded gate failures; no all-green claim |
 | 4 | | | | | |
 
 ## Step 0.1 evidence
@@ -534,7 +534,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 
 ## Phase 3 part B
 
-### 3.7 Accessible names and markup — done (a164398, this log commit)
+### 3.7 Accessible names and markup — done (a164398, 0ed00b0)
 - All charts accept title/desc; human defaults, native attributes and data-slot contract retained.
 - Gate: typecheck/lint/code/packed consumers PASS; Vitest 136 files / 1392 tests.
 - Strict packed guard: 299 declarations, zero vccs errors; 100 third-party diagnostics reported.
@@ -542,7 +542,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-b/3.7-*.log`; markup proof `.evidence/release-1.0/markup-*.log`.
 - Assumptions: neutral standalone plot group; Sparkline title overrides computed name; global pnpm cache required.
 
-### 3.8 Series colors — done (ab9bfc6, this log commit)
+### 3.8 Series colors — done (ab9bfc6, 8ee554d)
 - Numbered palette follows registration/entry order; default Treemap labels use known palette foregrounds.
 - Gate: typecheck/lint/code/consumers PASS; final Vitest 137 files / 1396 tests; check:a11y exit 0.
 - Reverse proofs fail numbered-token and default-foreground regressions; restored tests pass.
@@ -551,7 +551,7 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-b/3.8-*.log`, `.evidence/release-1.0/3.8-*-agent.log`.
 - Assumptions: custom Treemap palette precedence stays; explicit teal/orange calendar demos stay; token overrides supply label foreground.
 
-### 3.9 Typed rows — done (9eb6655, this log commit)
+### 3.9 Typed rows — done (9eb6655, a7915fb)
 - Curried selected components; standalone generic keys, slots and events retain source provenance.
 - Gate: typecheck/lint/code/consumers PASS; Vitest 138 files / 1404 tests; real any types zero.
 - Packed guard: 302 declarations, zero vccs errors, 100 external diagnostics; selected bundle and reverse proofs pass.
@@ -559,11 +559,125 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Bar baseline 39 captures / 2223 frames unchanged; motion 39/39 clean; evidence `.evidence/release-1.0/part-b/3.9-*`, `bar-null/`.
 - Assumptions: deep paths retain runtime tails; raw chart callbacks take unknown; Heatmap example aliases its shadowed active binding.
 
-### 3.10 Renames, slots, events and deprecations — implemented (f1e3264, this log commit)
+### 3.10 Renames, slots, events and deprecations — done (f1e3264, f5c5cea)
 - Renamed props without aliases; polar/grid slots, label formatter, indexed hover events and per-app warnings added.
 - Private Tooltip activation uses numeric targets; hierarchy payload keys and public output strings stay at their boundaries.
 - Gate: typecheck/lint/code PASS; Vitest 140 files / 1418 tests; zero cycles/unused/real any.
-- Packed run exposed fixture template laxness; corrected strict Vite/Nuxt focused declaration probes PASS; phase repack pending.
+- Packed run exposed fixture template laxness; corrected strict Vite/Nuxt probes PASS against final declarations; packed rebuild not repeated.
 - Reverse slot/formatter/grid/event/warning/resize proofs fail; restored regressions and SSR checks pass.
 - Evidence: `.evidence/release-1.0/part-b/3.10-*.log`, `3.10-api-*`, `events-*`, `consumers-strict-*`.
 - Assumptions: Recharts 3 slot geometry follows existing guards; Vue resize is an emit; native metadata allowlist is explicit.
+
+### 3.11 Guides and examples — done (6307828, ce80e4b, 5f5840b, this log commit)
+- Migration, theming, events, typed examples and stories use the final API; rendered migration/theming pages inspected.
+- Gate: final typecheck/changed-file lint/code PASS; full Vitest 140 files / 1418 tests (`phase-3-verify.log`).
+- Fresh Chromium/WebKit docs: 126 visits, zero findings/errors; isolated Line exits 0 with zero flags.
+- Legacy grep prints nothing after the explicit exceptions below; final strict Vite/Nuxt probes PASS.
+- Numeric comparison: 285 captures / 16245 frames unchanged; motion 285/285 clean with seven unchanged accepted flags.
+- Evidence: `.evidence/release-1.0/part-b/`; raw full-gate failures and substituted checks are recorded below.
+- Assumptions: factual prose follows existing Vue terminology; generated docs need rebuilding before their audit.
+
+## Phase 3 gate after part B
+
+Steps 3.7–3.11 are complete. The single full `pnpm verify` exits 1; its raw failures remain evidence. Focused corrections and retries below do not turn that original run into a pass. Browser checks ran sequentially, without full Vitest overlap. All `part-b/` paths below are under `.evidence/release-1.0/`.
+
+| Check (Node 22 PATH prefix throughout) | Verdict | Final result and evidence |
+| --- | --- | --- |
+| `pnpm --filter vccs typecheck` | PASS | Exit 0; `part-b/final-typecheck.log`. |
+| `pnpm --filter vccs exec vitest run --maxWorkers=2` | PASS | 140 files / 1418 tests; `part-b/phase-3-verify.log`. |
+| `pnpm exec eslint .` | FAIL, corrected in scope | Raw four errors, eight warnings; affected docs corrected. Final changed-file lint exits 0 with zero warnings; `part-b/final-changed-eslint.log`. |
+| Changed-file ESLint `--max-warnings 0` | PASS | Exact file selection/command in `part-b/final-commands.md`; repository-ignored internals excluded. |
+| `pnpm check:code` | PASS | Zero cycles/unused/real-any/disables/ts-ignore; longest production file 562 lines; `part-b/phase-3-verify.log`. |
+| `pnpm --filter vccs build` | PASS | Exit 0; `part-b/phase-3-verify.log`. |
+| `pnpm check:package` | PASS | Fresh tarball 550 files, three exports/declarations; strict publint/attw pass; `part-b/phase-3-verify.log`. |
+| `pnpm check:a11y` | PASS | 100 cases with new default colors; `part-b/a11y-final.json`. |
+| `pnpm motion:report --prod --check` | PASS | 285/285 clean; seven accepted Journey flags unchanged, zero page errors; `part-b/motion-final.json`, `motion-comparison.json`. |
+| `pnpm check:play` | FAIL, isolated retry PASS | Raw 22 views / 202 captures plus one execution row; desktop Line recorder timeout; `part-b/play-final.json`. |
+| `pnpm check:play --skip-build --route=/line-charts --out=.evidence/release-1.0/part-b/play-line-retry` | PASS | Exit 0; two views / 35 recordings, zero flags; combined coverage 22 views / 211 recordings, zero flags; `part-b/play-retry-comparison.json`. |
+| `node --test scripts/check-play.test.mjs` | PASS | Two tests; `part-b/phase-3-verify.log`. |
+| `pnpm check:docs` | FAIL, stale first artifact | Chromium/WebKit zero findings; Firefox launch error. Initial generated docs were stale; `part-b/docs-first-stale.json`. |
+| `pnpm check:docs --browser=chromium,webkit --out=.evidence/release-1.0/part-b/docs-final` | PASS | Fresh source: 126 visits, zero failed/engine errors; `part-b/docs-final/summary.json`, `docs-freshness.json`. |
+| `node --test scripts/check-docs.test.mjs` | PASS | One test; `part-b/phase-3-verify.log`. |
+| `pnpm check:seen` | Environment-limited | Exit 1; 322 rows, 19 flagged, 131 unreliable, zero errors; `part-b/seen-final.json`. |
+| `node --test scripts/check-seen.test.mjs` | PASS | Two tests; `part-b/phase-3-verify.log`. |
+| Strict consumer probes | PASS, limited substitute | Final Vite and Nuxt `vue-tsc --noEmit` exit 0; exact commands in `part-b/final-commands.md`, logs `final-strict-{vite,nuxt}.log`. |
+| `pnpm bench --compare=.evidence/baseline/dist` | FAIL (authorized retry) | Exit 1; 21 interleaved rounds, 17/18 metrics pass, zero sampling errors; `part-b/bench-final.json`, `benchmark-spread.json`. |
+| `pnpm check:bundle --assert-standalone` | PASS | 19 bundles, zero forbidden modules; BarList 8354 gzip bytes, within 8947 budget; `part-b/bundle-final.json`. |
+
+The initial 3.10 packed consumer run failed five unused negative directives because fixtures did not enable strict templates. Their actual Vite/Nuxt builds and tree-shaking check passed; the guard reported zero vccs errors and 100 third-party diagnostics (`part-b/3.10-consumers.log`). Fixtures now enable strict templates and explicit native metadata names. Final focused probes use freshly built declarations; the full pack/build consumer run was not repeated, as instructed. Steps 3.7–3.9 have passing full consumer runs.
+
+The repeated Line recorder timeout is tracked as P2 in `LATER.md`: full sweeps in 2.14 and 3B time out, isolated capture retries complete. The checker classifies the execution row as a product bug, but capture stall versus a page that never settles remains unknown. No full sweep was repeated. Firefox remains unavailable. Visitor-seen changed from Phase 2's 11 flagged / 134 unreliable to 19 / 131 (`step-2.14/seen-final.json` versus `part-b/seen-final.json`); unequal machine load prevents a timing conclusion.
+
+### Geometry, motion and colors
+
+`python3 .evidence/release-1.0/part-b/compare-numeric.py` compares complete frame JSON with Part A: 285 captures / 16245 frames, zero changed frames/captures/errors (`part-b/numeric-final/comparison.json`). The numeric Bar shape slot contract was retained: null in the middle through enter, leave, chase and exit matches default rectangle geometry and opacity across 450 frames (`part-b/bar-null/check.log`). Missing geometry receives no custom shape call while transition state is retained; no nullable fallback or decision amendment was needed.
+
+Default-color comparison (`part-b/colors/comparison.json`, `colors/summary.json`) changes Calendar's 361 rect fills, Treemap's six rect fills plus one text foreground, Sankey's seven rect fills plus six path strokes, and Sunburst's 18 path fills. The other 16 base scenarios are unchanged. Sankey shared node/link defaults and Treemap contrast explain the stroke/text changes beyond the brief's shorthand “fills”; numeric geometry is unchanged. All before/after screenshots were inspected. Motion flags are identical to Part A (`part-b/motion-comparison.json`); timings from unequal-load runs are not compared.
+
+### Before/after counts
+
+Source: `node .evidence/release-1.0/part-b/counts.mjs 4b885d0 889e765 HEAD`, `part-b/counts.json`. Production excludes tests, stories, storybook and fixtures; lines are physical, `watch(` is a text count, real any uses TypeScript AST AnyKeyword. Phase 2's published 25 word matches included comments; its three real types are recomputed with the same AST method as the final run. Tests come from `step-2.14/verify-final.log`, `part-a/3.6-vitest.log`, and `part-b/phase-3-verify.log` respectively.
+
+| Metric | Phase 2 `4b885d0` | Part A `889e765` | Part B final |
+| --- | ---: | ---: | ---: |
+| Production files | 296 | 300 | 303 |
+| Production lines | 28437 | 28649 | 29135 |
+| `watch(` | 36 | 27 | 27 |
+| Real any types | 3 | 3 | 0 |
+| Tests | 1302 | 1371 | 1418 |
+
+### Legacy grep exceptions
+
+`python3 .evidence/release-1.0/part-b/check-migration-grep.py` runs PLAN's legacy regex and prints nothing after these intentional exceptions (`part-b/3.11-grep.log`, `3.11-grep-exceptions.json`). The migration page necessarily shows old names; generated `.output`, `.nuxt`, `dist` and dependency copies are excluded.
+
+| Authored path | Retained match |
+| --- | --- |
+| `docs/app/components/ChartDemo.vue` | Native control aria-label |
+| `docs/app/components/InstallCommand.vue` | Native button aria-label |
+| `docs/app/components/LandingCodeCard.vue` | Native control aria-label |
+| `docs/app/components/LandingHeader.vue` | Native control/navigation aria-label |
+| `docs/app/pages/design-system.vue` | Native button aria-label |
+| `playground/nuxt/app/layouts/default.vue` | Native navigation/button aria-label |
+| `playground/nuxt/app/components/area-charts/AreaChartInteractive.vue` | Native select aria-label |
+| `playground/nuxt/app/components/line-charts/LineChartInteractive.vue` | Native select aria-label |
+| `playground/nuxt/app/components/pie-charts/PieChartInteractive.vue` | Native select aria-label |
+| `packages/vue/src/chart/BarList.tsx` | Native rendered aria-label |
+| `packages/vue/src/chart/CellGridLayer.tsx` | Native rendered aria-label |
+| `packages/vue/src/chart/ChartWrapper.tsx` | Native rendered aria-label |
+| `packages/vue/src/chart/JourneySankey.tsx` | Native rendered aria-label |
+| `packages/vue/src/chart/Sparkline.tsx` | Native rendered aria-label |
+| `packages/vue/src/chart/__tests__/accessibleNames.spec.tsx` | Public native-name assertions |
+| `packages/vue/src/components/legend/Legend.tsx` | Native rendered aria-label |
+| `packages/vue/src/cartesian/brush/components/TravellerLayer.tsx` | Native traveller aria-label |
+| `packages/vue/src/cartesian/brush/type.ts` | Distinct Brush traveller ariaLabel prop |
+
+### Benchmark baseline preparation
+
+The first `pnpm bench --compare=.evidence/baseline/dist` failed during baseline setup, before any sampling: the saved distribution could not resolve reselect (`part-b/phase-3-bench.log`, `bench-setup-failure.json`). Its locked reselect 5.1.1 from `83dc1b0:pnpm-lock.yaml` was restored from the local pnpm cache into the ignored baseline folder, with each file's cached SHA512 verified (`part-b/baseline-restoration.json`). Repository dependencies and lockfile are unchanged. Prepare that locked baseline dependency up front for the next gate. Opus authorized one benchmark retry; the failed attempt remains evidence and contributes no timings.
+
+### Benchmark medians and spread
+
+Source: `part-b/benchmark-spread.json`, derived from the final retry `bench-final.json`. A is the saved baseline; B is the current build. Equal-work samples are interleaved in the same browser without other verification processes. Ranges are min–max across the completed rounds. Static units are ms; animated units are CPU ms/frame. Values below are rounded for display; the gate uses unrounded values. No timing comparison is made with earlier unequal-load runs.
+
+| Case | Mode/metric | A median (range) | B median (range) | B/A | Gate |
+| --- | --- | ---: | ---: | ---: | --- |
+| LineChart 100 | static / mountMs | 12.000 (10.500–15.900) | 11.100 (9.800–12.900) | 0.9250 | PASS |
+| LineChart 100 | static / updateMs | 3.300 (2.900–4.200) | 3.200 (2.700–3.700) | 0.9697 | PASS |
+| LineChart 1000 | static / mountMs | 41.900 (37.000–50.200) | 42.500 (37.100–216.800) | 1.0143 | PASS |
+| LineChart 1000 | static / updateMs | 16.900 (14.800–23.700) | 17.300 (15.000–21.900) | 1.0237 | PASS |
+| LineChart 10000 | static / mountMs | 383.500 (354.200–515.400) | 379.000 (345.500–525.800) | 0.9883 | PASS |
+| LineChart 10000 | static / updateMs | 171.300 (155.800–183.500) | 176.500 (153.100–344.200) | 1.0304 | PASS |
+| BarChart 100 | static / mountMs | 9.500 (8.600–43.900) | 9.100 (8.100–13.900) | 0.9579 | PASS |
+| BarChart 100 | static / updateMs | 3.100 (2.500–3.700) | 2.900 (2.400–3.200) | 0.9355 | PASS |
+| BarChart 1000 | static / mountMs | 27.400 (25.200–34.000) | 28.800 (26.400–42.500) | 1.0511 | PASS |
+| BarChart 1000 | static / updateMs | 11.700 (10.600–15.300) | 12.400 (10.900–18.000) | 1.0598 | PASS |
+| BarChart 10000 | static / mountMs | 237.700 (216.900–345.200) | 261.400 (228.900–695.400) | 1.0997 | PASS |
+| BarChart 10000 | static / updateMs | 106.500 (99.500–138.000) | 118.300 (104.500–180.000) | 1.1108 | FAIL |
+| Heatmap 168 | static / mountMs | 5.300 (4.700–6.700) | 5.600 (4.900–9.200) | 1.0566 | PASS |
+| Heatmap 168 | static / updateMs | 3.100 (2.800–3.700) | 3.300 (2.800–4.200) | 1.0645 | PASS |
+| CalendarHeatmap 365 | static / mountMs | 20.500 (18.600–30.400) | 21.400 (19.500–66.000) | 1.0439 | PASS |
+| CalendarHeatmap 365 | static / updateMs | 17.600 (16.100–23.700) | 18.200 (16.400–27.900) | 1.0341 | PASS |
+| LineChart 1000 | animated / cpuMsPerFrame | 8.935 (7.793–10.980) | 8.574 (7.631–10.520) | 0.9596 | PASS |
+| BarChart 1000 | animated / cpuMsPerFrame | 5.916 (5.543–6.840) | 5.764 (5.210–9.328) | 0.9744 | PASS |
+
+Anomaly: the BarChart static update median at the largest case exceeds the unchanged 1.10 ratio limit (1.1108 observed); its baseline/current ranges overlap. The previous Phase 2 benchmark passed, but its load is not comparable. Sampling variation or added API work may contribute; cause is unproven and no performance conclusion is drawn from this run. The failed verdict is retained without another retry.
