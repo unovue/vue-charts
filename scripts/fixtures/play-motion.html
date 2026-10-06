@@ -14,11 +14,25 @@
 <defs><clipPath id="instant-clip"><rect id="clip-width" width="0" height="280" /></clipPath></defs>
   <g class="v-charts-line"><path class="v-charts-line-curve" clip-path="url(#instant-clip)" d="M10 260L100 260" stroke="black" /></g>
 </svg>
+<svg class="v-charts-surface" width="400" height="80" id="paint-controls" style="--clear: rgb(0 0 0 / 0)">
+  <g class="v-charts-bar"><rect data-control="opaque" width="20" height="20" fill="black" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke" x="30" width="20" height="20" fill="none" stroke="black" /></g>
+  <g class="v-charts-bar"><rect data-control="fill-opacity" x="60" width="20" height="20" fill-opacity="0" /></g>
+  <g class="v-charts-bar"><rect data-control="fill-alpha" x="90" width="20" height="20" fill="rgba(0,0,0,0)" /></g>
+  <g class="v-charts-bar"><rect data-control="css-alpha" x="120" width="20" height="20" style="fill: var(--clear)" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-opacity" x="150" width="20" height="20" fill="none" stroke="black" stroke-opacity="0" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-alpha" x="180" width="20" height="20" fill="none" stroke="rgb(0 0 0 / 0)" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-width" x="210" width="20" height="20" fill="none" stroke="black" stroke-width="0" /></g>
+  <g class="v-charts-bar" opacity="0"><rect data-control="ancestor" x="240" width="20" height="20" /></g>
+</svg>
 <div class="v-charts-tooltip-wrapper" style="visibility: hidden">Deliberately missing tooltip</div>
 <button class="v-charts-legend-item" onclick="if (this.dataset.clicked) document.querySelector('#static').setAttribute('d', 'M20 200L110 200'); this.dataset.clicked = 'yes'">Broken legend</button>
 </div>
 <svg class="v-charts-surface" width="0" height="0"></svg>
 <script>
+setTimeout(() => {
+  document.querySelectorAll('#paint-controls rect').forEach(rect => rect.setAttribute('y', '60'))
+}, 400)
 setTimeout(() => document.querySelector('#clip-width').setAttribute('width', '110'), 500)
 setTimeout(() => {
   document.querySelector('#teleport').setAttribute('x', '250')

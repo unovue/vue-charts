@@ -39,6 +39,14 @@ function installRecorder(seriesSelector) {
     }
     return true
   }
+  function hasPaint(color, opacity) {
+    if (color === 'none' || color === 'transparent' || Number(opacity) <= 0)
+      return false
+    // Computed colors retain alpha in rgb/rgba and modern slash notation.
+    const alpha = color.match(/\/\s*([\d.]+)%?\s*\)$/)
+      ?? color.match(/^rgba\(.*?,\s*([\d.]+)\s*\)$/)
+    return !alpha || Number(alpha[1]) > 0
+  }
   let exemptions = new WeakSet()
   window.playReadOnlyLegends = new WeakSet()
   function updateExemptions() {
@@ -127,7 +135,11 @@ function installRecorder(seriesSelector) {
               ancestors.push([p.getAttribute('transform'), clip, clipId ? document.getElementById(clipId)?.innerHTML : null, styleOf(p).opacity])
             }
             const box = rect(shape)
-            const painted = (box[2] > 0 && box[3] > 0) || ((box[2] > 0 || box[3] > 0) && style.stroke !== 'none' && Number.parseFloat(style.strokeWidth) > 0)
+            const fill = box[2] > 0 && box[3] > 0 && hasPaint(style.fill, style.fillOpacity)
+            const stroke = (box[2] > 0 || box[3] > 0)
+              && Number.parseFloat(style.strokeWidth) > 0
+              && hasPaint(style.stroke, style.strokeOpacity)
+            const painted = fill || stroke
             const core = !!series && !shape.closest('.v-charts-label-list,.v-charts-pie-labels') && shape.tagName !== 'text' && (series.classList.contains('v-charts-line') ? !!shape.closest('.v-charts-line-curve') : series.classList.contains('v-charts-area') ? !!shape.closest('.v-charts-area-area') : true)
             return {
               id: shape.tagName === 'text' ? `text:${text}:${occurrence}` : `${id(shape)}:${shape.tagName}`,
