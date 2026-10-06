@@ -9,6 +9,7 @@ Only ports 4690–4699 are used; servers and browsers are stopped on completion.
 Options: `--fixture` runs just the five synthetic controls; `--only=docs|landing|play`
 selects a site/scenario; `--route=/charts/area-chart,/bar-charts` filters exact routes (comma list);
 `--width=390` selects one width; `--skip-build` uses existing builds.
+`--out=.evidence/path` selects a git-ignored evidence directory.
 `--only=docs` includes landing scroll and landing clicks; `--only=landing` runs
 only landing clicks. An unmatched route is a failed empty run.
 
@@ -62,6 +63,10 @@ seenAt − 100 through seenAt + 1200 ms marks the row unreliable; unreliable row
 cannot pass the real release gate. The fixture requires exactly charts a–d to
 be flagged and chart e to pass, with all five rows reliable. A never-animated
 chart necessarily also meets the short-motion unseen threshold.
+
+Frames drain in batches during recording and stream to disk. Identical geometry
+is shared in memory for analysis; raw evidence retains every frame and attribute.
+Snapshots transfer one at a time, avoiding a recording-sized transport string.
 
 Evidence is git-ignored in `.evidence/seen/`: raw frames, summary with full sorted
 progress and duration distributions, flagged-first HTML, and ten-frame PNG

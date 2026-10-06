@@ -8,9 +8,10 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { analyzeSeen, installSeenRecorder } from './lib/seen-recorder.mjs'
 import { filmstrip } from './lib/seen-filmstrip.mjs'
+import { collectSeen } from './lib/seen-capture.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const evidence = join(root, '.evidence/seen')
+const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/seen')
 const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
 const { chromium } = require('playwright-core')
 
@@ -24,7 +25,7 @@ if (only && !['docs', 'landing', 'play'].includes(only))
   throw new Error('Expected --only=docs|landing|play')
 if (widths.some(w => !Number.isFinite(w) || w <= 0))
   throw new Error('Expected a positive --width')
-if (spawnSync('git', ['check-ignore', '.evidence/seen/summary.json'], { cwd: root }).status !== 0)
+if (spawnSync('git', ['check-ignore', join(evidence, 'summary.json')], { cwd: root }).status !== 0)
   throw new Error('Evidence must be git-ignored')
 await mkdir(evidence, { recursive: true })
 const rows = []
@@ -118,11 +119,19 @@ async function run(base, route, width, tabs = false) {
   await context.addInitScript(installSeenRecorder)
   const page = await context.newPage()
   page.on('pageerror', e => errors.push({ page: route, width, error: e.message }))
+  let finishRecording
+  function recordingLabel(trigger) {
+    return `${name}-${trigger.replaceAll(':', '-')}`
+  }
+  async function startRecording(trigger) {
+    finishRecording = await collectSeen(page, join(evidence, `${recordingLabel(trigger)}.json`))
+  }
   async function capture(trigger, previousIds = []) {
-    const { frames, shots } = await page.evaluate(() => ({ frames: window.seenRecording.frames, shots: window.seenRecording.shots }))
-    const label = `${name}-${trigger.replaceAll(':', '-')}`
+    const finish = finishRecording
+    finishRecording = null
+    const { frames, shots } = await finish()
+    const label = recordingLabel(trigger)
     const found = analyzeSeen(frames, { page: route, site: fixture ? 'fixture' : tabs || base === docsBase ? 'docs' : 'play', width, height, ...(trigger === 'scroll' ? {} : { trigger }) }).filter(row => !previousIds.includes(row.id))
-    await writeFile(join(evidence, `${label}.json`), JSON.stringify({ frames, shots }))
     if (tabs && !found.length)
       throw new Error(`No new chart recorded for ${trigger}`)
     const recording = { name: label, page: route, width, frames: frames.length, maximumGapMs: Math.max(0, ...frames.slice(1).map((f, i) => f.t - frames[i].t)), data: `${label}.json` }
@@ -156,7 +165,7 @@ async function run(base, route, width, tabs = false) {
               buttons.find(el => el.textContent.trim() === (label === 'Area' ? 'Radar' : 'Area')).click()
               return null
             }
-            const ids = window.seenRecording.frames.at(-1)?.charts.map(c => c.id) ?? []
+            const ids = window.seenRecording.lastFrame?.charts.map(c => c.id) ?? []
             window.seenReset(`tab:${label}`)
             // Selection check and click share one task, so rotation cannot intervene.
             // DOM click keeps the pointer away throughout the chart entrance.
@@ -166,11 +175,14 @@ async function run(base, route, width, tabs = false) {
           if (!previousIds)
             await page.waitForTimeout(700)
         }
+        const trigger = `tab:${tab}-${recordings.length}`
+        await startRecording(trigger)
         await page.waitForTimeout(2500)
-        await capture(`tab:${tab}-${recordings.length}`, previousIds)
+        await capture(trigger, previousIds)
       }
     }
     else {
+      await startRecording('scroll')
       await page.evaluate(() => {
         window.seenScrollDone = false
         const paused = new Set()
@@ -178,7 +190,7 @@ async function run(base, route, width, tabs = false) {
         let pauseUntil = previous + 1200
         let bottomAt = null
         function step(now) {
-          for (const chart of window.seenRecording.frames.at(-1)?.charts ?? []) {
+          for (const chart of window.seenRecording.lastFrame?.charts ?? []) {
             if (chart.visibleRatio >= 0.5 && !paused.has(chart.id)) {
               paused.add(chart.id)
               pauseUntil = now + 1200
@@ -209,6 +221,8 @@ async function run(base, route, width, tabs = false) {
     console.error(`${route} ${width}: ${error}`)
   }
   finally {
+    if (finishRecording)
+      await finishRecording().catch(error => errors.push({ page: route, width, error: String(error) }))
     if (video) {
       const file = await page.video().path()
       recordings.filter(r => r.name.startsWith(name)).forEach(r => r.video = relative(evidence, file))

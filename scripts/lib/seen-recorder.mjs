@@ -16,10 +16,14 @@ export function installSeenRecorder() {
   const attributes = ['d', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'cx', 'cy', 'r', 'rx', 'ry', 'points', 'transform', 'opacity', 'stroke-dasharray', 'stroke-dashoffset']
   let pointer = [-1, -1]
   document.addEventListener('pointermove', e => pointer = [e.clientX, e.clientY])
-  const state = { frames: [], shots: {}, seen: {}, evidenceAt: {}, trigger: 'load', done: false }
+  const state = { frames: [], shots: {}, seen: {}, evidenceAt: {}, trigger: 'load', done: false, lastFrame: null }
   window.seenRecording = state
   window.seenReset = (trigger) => {
+    if (state.done)
+      requestAnimationFrame(sample)
+    state.done = false
     state.frames = []
+    state.lastFrame = null
     state.shots = {}
     state.seen = {}
     state.evidenceAt = {}
@@ -98,6 +102,8 @@ export function installSeenRecorder() {
   }
   let lastShot = 0
   function sample() {
+    if (state.done)
+      return
     const t = performance.now()
     styles = new Map()
     const exemptions = disabledNodes()
@@ -165,7 +171,8 @@ export function installSeenRecorder() {
       }
       return { id: key, name: wrapper.getAttribute('data-chart') ?? `chart-${key}`, ...info, geometry, disabled, pointerOver: over, strayHover }
     })
-    state.frames.push({ t, trigger: state.trigger, scrollY, pointer: [...pointer], charts })
+    state.lastFrame = { t, trigger: state.trigger, scrollY, pointer: [...pointer], charts }
+    state.frames.push(state.lastFrame)
     if (t - lastShot >= 60)
       lastShot = t
     if (!state.done)
