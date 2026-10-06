@@ -262,3 +262,71 @@ it('treats start/end indexes without v-model as where the brush starts, like def
   expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(2)
   expect(traveller.getAttribute('aria-valuenow')).toBe('1')
 })
+
+it.each(['mouse slide', 'touch traveller', 'keyboard traveller'] as const)(
+  'updates the selected bars through a %s interaction',
+  async (interaction) => {
+    mockGetBoundingClientRect({ width: 400, height: 200 })
+    const change = vi.fn()
+    const end = vi.fn()
+    const { container } = render(() => (
+      <BarChart
+        width={400}
+        height={200}
+        data={[
+          { value: 10 },
+          { value: 20 },
+          { value: 30 },
+          { value: 40 },
+          { value: 50 },
+        ]}
+      >
+        <Bar dataKey="value" isAnimationActive={false} />
+        <Brush
+          x={0}
+          y={0}
+          width={405}
+          height={40}
+          startIndex={1}
+          endIndex={3}
+          onChange={change}
+          {...{ 'onDrag-end': end }}
+        />
+      </BarChart>
+    ))
+    await nextTick()
+    await nextTick()
+    const brush = container.querySelector('.v-charts-brush')!
+    const travellers = brush.querySelectorAll('[role="slider"]')
+    expect(container.querySelectorAll('.v-charts-bar-rectangle')).toHaveLength(3)
+    if (interaction === 'mouse slide') {
+      await fireEvent.mouseDown(brush.querySelector('.v-charts-brush-slide')!, { clientX: 200 })
+      await fireEvent.mouseMove(window, { clientX: 300 })
+      await fireEvent.mouseUp(window)
+    }
+    else if (interaction === 'touch traveller') {
+      await fireEvent.touchStart(travellers[0], { changedTouches: [{ pageX: 100 }] })
+      await fireEvent.touchMove(brush, { changedTouches: [{ pageX: 200 }] })
+      await fireEvent.touchEnd(window)
+    }
+    else {
+      await fireEvent.focus(travellers[0])
+      await fireEvent.keyDown(travellers[0], { key: 'ArrowRight' })
+    }
+    await nextTick()
+    await nextTick()
+    const range = interaction === 'mouse slide'
+      ? { startIndex: 2, endIndex: 4 }
+      : { startIndex: 2, endIndex: 3 }
+    expect(change.mock.calls).toEqual([[range]])
+    expect([...travellers].map(slider => slider.getAttribute('aria-valuenow')))
+      .toEqual(interaction === 'mouse slide' ? ['2', '4'] : ['2', '3'])
+    expect(container.querySelectorAll('.v-charts-bar-rectangle'))
+      .toHaveLength(interaction === 'mouse slide' ? 3 : 2)
+    if (interaction !== 'keyboard traveller') {
+      expect(end.mock.calls).toEqual([[range]])
+      await fireEvent.mouseMove(window, { clientX: 0 })
+      expect(change).toHaveBeenCalledTimes(1)
+    }
+  },
+)

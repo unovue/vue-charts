@@ -1,8 +1,9 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Line, LineChart, Sankey, SunburstChart, Treemap } from '@/index'
+import { Bar, BarChart, Line, LineChart, Sankey, SunburstChart, Treemap, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { getBarRects } from '@/test/helper'
 import { MockResizeObserver } from '@/test/MockResizeObserver'
 
 const data = [
@@ -88,22 +89,28 @@ describe('default responsive sizing', () => {
     expect(svg.getAttribute('height')).toBe('300')
   })
 
-  it('updates the chart size when the ResizeObserver reports a new size', async () => {
+  it('recomputes bar geometry when the ResizeObserver reports a new size', async () => {
     const { container } = render(() => (
-      <LineChart data={data}>
-        <Line dataKey="uv" isAnimationActive={false} />
-      </LineChart>
+      <BarChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }} data={[{ value: 50 }]}>
+        <YAxis hide domain={[0, 100]} />
+        <Bar dataKey="value" isAnimationActive={false} />
+      </BarChart>
     ))
     await nextTick()
-
-    expect(MockResizeObserver.instances.length).toBeGreaterThanOrEqual(1)
-    // The latest instance is the one actively observing the wrapper.
-    MockResizeObserver.instances.at(-1)!.trigger(640, 480)
     await nextTick()
-
-    const svg = container.querySelector('.v-charts-surface') as SVGElement
-    expect(svg.getAttribute('width')).toBe('640')
-    expect(svg.getAttribute('height')).toBe('480')
+    expect(getBarRects(container)[0].getAttribute('x')).toBe('50')
+    expect(getBarRects(container)[0].getAttribute('width')).toBe('400')
+    expect(getBarRects(container)[0].getAttribute('height')).toBe('150')
+    expect(MockResizeObserver.instances).toHaveLength(1)
+    MockResizeObserver.instances[0].trigger(800, 400)
+    await nextTick()
+    await nextTick()
+    const svg = container.querySelector('.v-charts-surface')!
+    expect(svg.getAttribute('width')).toBe('800')
+    expect(svg.getAttribute('height')).toBe('400')
+    expect(getBarRects(container)[0].getAttribute('x')).toBe('80')
+    expect(getBarRects(container)[0].getAttribute('width')).toBe('640')
+    expect(getBarRects(container)[0].getAttribute('height')).toBe('200')
   })
 
   it('renders at fixed px size and creates no ResizeObserver when both numeric dimensions are set', async () => {

@@ -4,7 +4,7 @@ import type { PropType } from 'vue'
 import type { SyncMethod } from '@/types'
 import { createSSRApp, defineComponent, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { Bar, BarChart, Tooltip, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Brush, Tooltip, XAxis, YAxis } from '@/index'
 import { eventCenter } from '@/utils/events'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -13,10 +13,17 @@ beforeEach(() => {
 })
 
 const Chart = defineComponent({
-  props: { syncId: String, syncMethod: { type: [String, Function] as PropType<SyncMethod>, default: 'index' } },
+  props: {
+    syncId: String,
+    syncMethod: { type: [String, Function] as PropType<SyncMethod>, default: 'index' },
+    data: {
+      type: Array as PropType<Array<{ name: string, value: number }>>,
+      default: () => [{ name: 'A', value: 10 }, { name: 'B', value: 20 }],
+    },
+  },
   setup(props, { slots }) {
     return () => (
-      <BarChart width={500} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]} syncId={props.syncId} syncMethod={props.syncMethod}>
+      <BarChart width={500} height={300} data={props.data} syncId={props.syncId} syncMethod={props.syncMethod}>
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip isAnimationActive={false} />
@@ -95,4 +102,102 @@ describe('chart synchronization lifetime', () => {
     expect(html.every(markup => markup.includes('v-charts-wrapper'))).toBe(true)
     expect(on).not.toHaveBeenCalled()
   })
+})
+
+it.each<{ method: SyncMethod, label: string, value: string }>([
+  { method: 'index', label: 'A', value: '100' },
+  { method: 'value', label: 'B', value: '200' },
+  { method: (ticks, message) => ticks.findIndex(tick => tick.value === message.activeLabel), label: 'B', value: '200' },
+])('syncs mismatched datasets using $method', async ({ method, label, value }) => {
+  const { container } = render(() => (
+    <div>
+      <Chart
+        syncId="mismatched"
+        data={[
+          { name: 'A', value: 10 },
+          { name: 'B', value: 20 },
+          { name: 'C', value: 30 },
+        ]}
+      />
+      <Chart
+        syncId="mismatched"
+        syncMethod={method}
+        data={[
+          { name: 'B', value: 200 },
+          { name: 'A', value: 100 },
+        ]}
+      />
+    </div>
+  ))
+  await nextTick()
+  await nextTick()
+  const source = container.querySelector('.v-charts-wrapper')!
+  await fireEvent.mouseMove(source, { clientX: 280, clientY: 150 })
+  await nextTick()
+  await nextTick()
+  const target = container.parentElement!.querySelectorAll<HTMLElement>('.v-charts-tooltip-wrapper')[1]
+  expect(target.style.visibility).toBe('visible')
+  expect(target.querySelector('.v-charts-tooltip-label')?.textContent).toBe(label)
+  expect(target.querySelector('.v-charts-tooltip-item-value')?.textContent).toBe(value)
+  if (method !== 'index') {
+    await fireEvent.mouseMove(source, { clientX: 423, clientY: 150 })
+    await nextTick()
+    await nextTick()
+    expect(target.style.visibility).toBe('hidden')
+  }
+})
+
+it('syncs a Brush range only to charts in the same group', async () => {
+  const data = [10, 20, 30, 40, 50].map(value => ({ value }))
+  const { container } = render(() => (
+    <div>
+      {['range', 'range', 'other'].map((syncId, index) => (
+        <BarChart key={index} width={500} height={300} data={data} syncId={syncId}>
+          <Bar dataKey="value" isAnimationActive={false} />
+          <Brush x={0} y={0} width={405} height={40} />
+        </BarChart>
+      ))}
+    </div>
+  ))
+  await nextTick()
+  await nextTick()
+  const charts = [...container.querySelectorAll('.v-charts-wrapper')]
+  const start = charts[0].querySelector('[role="slider"]')!
+  await fireEvent.focus(start)
+  await fireEvent.keyDown(start, { key: 'ArrowRight' })
+  await nextTick()
+  await nextTick()
+  expect(charts.map(chart => chart.querySelectorAll('.v-charts-bar-rectangle').length)).toEqual([4, 4, 5])
+  expect(charts.map(chart => chart.querySelector('[role="slider"]')?.getAttribute('aria-valuenow')))
+    .toEqual(['1', '1', '0'])
+})
+
+it('disposes synchronized chart registrations across repeated mount and unmount', async () => {
+  const mounted = ref(true)
+  const { container } = render(() => (
+    <div>
+      <Chart syncId="lifetime" />
+      {mounted.value && <Chart syncId="lifetime" />}
+    </div>
+  ))
+  await nextTick()
+  await nextTick()
+  const source = container.querySelector('.v-charts-wrapper')!
+  for (let cycle = 0; cycle < 3; cycle++) {
+    mounted.value = false
+    await nextTick()
+    await nextTick()
+    expect(container.parentElement!.querySelectorAll('.v-charts-tooltip-wrapper')).toHaveLength(1)
+    mounted.value = true
+    await nextTick()
+    await nextTick()
+    await fireEvent.mouseMove(source, { clientX: cycle % 2 ? 150 : 400, clientY: 150 })
+    await nextTick()
+    await nextTick()
+    const targets = container.parentElement!.querySelectorAll<HTMLElement>('.v-charts-tooltip-wrapper')
+    expect(targets).toHaveLength(2)
+    expect(targets[1].style.visibility).toBe('visible')
+    expect(targets[1].querySelector('.v-charts-tooltip-label')?.textContent).toBe(cycle % 2 ? 'A' : 'B')
+    expect(targets[1].querySelector('.v-charts-tooltip-item-value')?.textContent).toBe(cycle % 2 ? '10' : '20')
+  }
 })

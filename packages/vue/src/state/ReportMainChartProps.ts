@@ -32,7 +32,15 @@ export const ReportMainChartProps = defineComponent({
     *      to avoid circular dependency and infinite re-rendering.
     */
     const isPanorama = false
-    watch([() => props.width, () => props.height, () => props.layout, () => props.margin], () => {
+    watch([
+      () => props.width,
+      () => props.height,
+      () => props.layout,
+      () => props.margin.top,
+      () => props.margin.right,
+      () => props.margin.bottom,
+      () => props.margin.left,
+    ], () => {
       if (!isPanorama) {
         layout.setProps(props.layout, { width: props.width, height: props.height }, props.margin)
       }
