@@ -232,3 +232,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Assumption: retain unchanged product/package/docs/lab/benchmark results from `23dacb7`; [source diff is empty](../../../.evidence/release-1.0/unchanged-product.json). Full `pnpm verify` and benchmark were not rerun; prior Firefox launch limit remains.
 - Anomalies: one playground allocation ID differs but movement/role match; visitor flags vary 4 → 8. Initial row-order matching falsely resolved two charts; physical matching confirms five resolved and 130 still unreliable.
 - [Prior failed verifier and timing anomalies](../../../.evidence/release-1.0/phase-1-checks.md), [prior verdict snapshot](../../../.evidence/release-1.0/phase-1-progress-before-repair.md). Completed fixes are retained; no partial product changes require reverting.
+
+## Phase 1 decision (orchestrator)
+- Phase 1 is accepted. Visitor timing (`check:seen`) is environment-limited, like D-25a: it never ran at baseline, its unreliable rows trace to machine load (load average 12–13 during the run), and the capture now completes with 0 errors.
+- It must pass on an idle machine in the step 4.8 final verify. The 130 inherited playground flags are listed in play-flags.md and are reviewed in 4.2.
