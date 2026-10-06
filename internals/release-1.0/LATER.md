@@ -54,9 +54,10 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
   mounted helpers (~50 lines, 2.13). Rejected with evidence: Teleport `defer` (does not order
   series, so D-22a needs our own fix), lazy hydration (Nuxt 3.16+, and it delays interactivity),
   useElementVisibility (wrong predicate), numeric `watch` deep (misses nested edits D-7 needs).
-- **P3 Hydration detection reads `vnode.el`, a Vue internal** (`animation/renderPhase.ts:88–107`).
-  Vue has no public "is hydrating" API in 3.5. Keep it, cover it with a hydration test per Vue
-  minor, and watch vuejs/core for a public API.
+- **P3 Hydration detection reads `vnode.el`, a Vue internal** (`animation/renderPhase.ts`).
+  Scheduled in 2.13: replace it with the standard pattern (same first frame on every client
+  mount, open the gate one frame after mount). Fallback if the motion lab objects: keep it with
+  a regression test that fails when Vue changes the internal.
 
 - **Elegance pass, scheduled inside the run (step 2.13), not later:** model surfaces expose
   only what consumers read (5 of 10 AxisModel computeds have no outside reader); domain names
