@@ -35,7 +35,30 @@
 <button class="v-charts-legend-item" onclick="if (this.dataset.clicked) document.querySelector('#static').setAttribute('d', 'M20 200L110 200'); this.dataset.clicked = 'yes'">Broken legend</button>
 </div>
 <svg class="v-charts-surface" width="0" height="0"></svg>
+<div style="height: 900px"></div>
+<div class="v-charts-wrapper">
+<svg class="v-charts-surface" width="400" height="300" id="deferred-entrance">
+  <g class="v-charts-line"><path class="v-charts-line-curve" data-control="deferred-animated" d="M10 100L100 100" stroke="black" /></g>
+  <g class="v-charts-line"><path class="v-charts-line-curve" data-control="deferred-static" d="M10 200L100 200" stroke="black" /></g>
+</svg>
+</div>
 <script>
+const deferred = document.querySelector('#deferred-entrance')
+const observer = new IntersectionObserver((entries) => {
+  if (!entries.some(entry => entry.intersectionRatio >= 0.5))
+    return
+  observer.disconnect()
+  const path = deferred.querySelector('[data-control="deferred-animated"]')
+  const start = performance.now()
+  function animate(now) {
+    const progress = Math.min(1, (now - start) / 600)
+    path.setAttribute('d', `M10 100L${100 + progress * 200} 100`)
+    if (progress < 1) requestAnimationFrame(animate)
+  }
+  requestAnimationFrame(animate)
+}, { threshold: 0.5 })
+observer.observe(deferred)
+
 setTimeout(() => {
   document.querySelectorAll('#paint-controls rect').forEach(rect => rect.setAttribute('y', '60'))
 }, 400)

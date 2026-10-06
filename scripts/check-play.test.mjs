@@ -18,6 +18,16 @@ test('the recorder judges only painted fill and stroke geometry', () => {
   assert.equal(result.status, 0, result.stdout + result.stderr)
   const { results } = JSON.parse(readFileSync(`${root}${out}/results.json`, 'utf8'))
   const flags = results[0].scenarios[0].flags
+  const scroll = results[0].scenarios.find(s => s.label === 'scroll-4')
+  assert.ok(scroll, 'below-fold chart must be observed after scrolling')
+  const scrolledFrames = JSON.parse(readFileSync(`${root}${out}/${scroll.data}`, 'utf8'))
+  for (const [control, shouldFlag] of [['deferred-animated', false], ['deferred-static', true]]) {
+    const shape = scrolledFrames.flatMap(f => f.charts.flatMap(c => c.shapes))
+      .find(s => JSON.parse(s.geometry).some(([k, v]) => k === 'data-control' && v === control))
+    assert.ok(shape, control)
+    assert.equal(flags.some(f => f.shape === `series-${shape.series}`), false, `${control}: defer until in view`)
+    assert.equal(scroll.flags.some(f => f.flag === 'no-entrance' && f.shape === `series-${shape.series}`), shouldFlag, control)
+  }
   // A hidden tooltip while hovering a real mark must still fail after probe retargeting.
   const hover = results[0].scenarios.find(s => s.label === 'hover-0')
   const tooltip = hover.flags.find(f => f.flag === 'tooltip')

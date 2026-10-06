@@ -195,6 +195,13 @@ function installRecorder(seriesSelector) {
         id: id(el),
         box: rect(el),
         visible: visible(el),
+        inView: (() => {
+          // Match provideChartInView: the wrapper, not its SVG, must be half visible.
+          const b = (el.closest('.v-charts-wrapper') ?? el).getBoundingClientRect()
+          const width = Math.max(0, Math.min(b.right, innerWidth) - Math.max(b.left, 0))
+          const height = Math.max(0, Math.min(b.bottom, innerHeight) - Math.max(b.top, 0))
+          return b.width > 0 && b.height > 0 && (width * height / (b.width * b.height) >= 0.5 || (width > 0 && height >= innerHeight / 2))
+        })(),
         seriesTypes: [...el.querySelectorAll(seriesSelector)].map(s => s.getAttribute('class')),
         tooltip: (() => {
           const tooltip = el.closest('.v-charts-wrapper')?.querySelector('.v-charts-tooltip-wrapper')
@@ -333,7 +340,7 @@ function analyze(frames, entrance, settleMs = 2500, existingSeries = []) {
         disabledSeries.add(key)
         series.delete(key)
       }
-      if (entrance && !chart.legend) {
+      if (entrance && chart.inView && !chart.legend) {
         for (const sid of new Set(chart.shapes.filter(s => s.series && s.core && !s.disabled && s.visible).map(s => s.series))) {
           const key = `${chart.id}:${sid}`
           if (existingSeries.includes(key) || disabledSeries.has(key))
@@ -413,8 +420,10 @@ try {
     })
     const result = { name, route, width, scenarios: [] }
     results.push(result)
+    const observedEntrances = new Set()
+    const observedCharts = new Set()
     async function capture(label, duration, action, entrance = false) {
-      const existingSeries = action ? await page.evaluate(() => window.playMotion.frames.at(-1)?.charts.flatMap(chart => chart.shapes.filter(s => s.series).map(s => `${chart.id}:${s.series}`)) ?? []) : []
+      const existingSeries = label.startsWith('scroll-') ? [...observedEntrances] : action ? await page.evaluate(() => window.playMotion.frames.at(-1)?.charts.flatMap(chart => chart.shapes.filter(s => s.series).map(s => `${chart.id}:${s.series}`)) ?? []) : []
       if (action) {
         diagnosticStart = Date.now()
         await page.evaluate(ms => window.playMotionReset(ms), duration)
@@ -426,6 +435,11 @@ try {
       }
       await page.waitForFunction(() => window.playMotion?.done, null, { timeout: duration + 15000 })
       const frames = await page.evaluate(() => window.playMotion.frames)
+      for (const chart of frames.flatMap(frame => frame.charts).filter(chart => chart.inView)) {
+        observedCharts.add(chart.id)
+        for (const shape of chart.shapes.filter(shape => shape.series))
+          observedEntrances.add(`${chart.id}:${shape.series}`)
+      }
       const actionOffsetMs = action ? await page.evaluate(ms => window.playMotion.duration - ms, duration) : 0
       const flags = [...analyze(frames, entrance, action && !label.startsWith('hover') ? actionOffsetMs + duration - 250 : 2500, existingSeries), ...diagnostics]
       diagnostics = []
@@ -483,6 +497,9 @@ try {
             continue
           if (!await chart.isVisible())
             continue
+          const chartId = await page.evaluate(i => window.playMotion.frames.at(-1)?.charts[i]?.id, i)
+          if (!observedCharts.has(chartId))
+            await capture(`scroll-${i}`, 3000, () => chart.evaluate(el => (el.closest('.v-charts-wrapper') ?? el).scrollIntoView({ block: 'center', behavior: 'instant' })), true)
           const hoverFrames = await capture(`hover-${i}`, 500, async () => {
             await page.mouse.move(0, 0)
             const point = await dataMarkPoint(chart)
