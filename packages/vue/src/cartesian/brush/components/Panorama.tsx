@@ -9,7 +9,7 @@ export const Panorama = defineComponent({
     y: { type: Number, required: true },
     width: { type: Number, required: true },
     height: { type: Number, required: true },
-    data: { type: Array as PropType<any[]>, required: true },
+    data: { type: Array as PropType<unknown[]>, required: true },
     padding: { type: Object as PropType<Padding>, default: () => ({ top: 1, right: 1, bottom: 1, left: 1 }) },
   },
   setup(props, { slots }) {

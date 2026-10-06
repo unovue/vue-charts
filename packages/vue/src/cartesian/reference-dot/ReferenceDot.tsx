@@ -1,6 +1,6 @@
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
@@ -21,10 +21,10 @@ export interface ReferenceDotShapeProps extends SVGAttributes {
 }
 
 export interface ReferenceDotSlots {
-  shape?: (props: ReferenceDotShapeProps) => any
+  shape?: (props: ReferenceDotShapeProps) => VNodeChild
 }
 
-export const ReferenceDotVueProps = {
+const ReferenceDotVueProps = {
   x: { type: [Number, String] as PropType<number | string>, default: undefined },
   y: { type: [Number, String] as PropType<number | string>, default: undefined },
   r: { type: Number, default: 10 },
@@ -32,7 +32,7 @@ export const ReferenceDotVueProps = {
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   fill: { type: String, default: 'var(--v-charts-background, #fff)' },
   stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
 }
 

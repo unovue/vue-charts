@@ -17,7 +17,7 @@ import { SweepClip } from '@/animation/SweepClip'
 import { useChart } from '@/model/chart'
 import { getValueByDataKey } from '@/utils/chart'
 // Dots component
-export const Dots = defineComponent({
+const Dots = defineComponent({
   name: 'LineDots',
   props: {
     keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },

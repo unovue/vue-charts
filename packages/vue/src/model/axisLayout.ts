@@ -1,16 +1,16 @@
 import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 import type { AxisId } from '@/types/axis'
 import type { Size } from '@/types/common'
 import type { XAxisSettings, YAxisSettings } from '@/types/axisSettings'
-import type { AxisModel } from './axis'
-import type { AxisScaleSources } from './axisScale'
+import type { AxisScaleModel, AxisScaleSources } from './axisScale'
 import type { ChartRegistries } from './registries'
 import { gridAxis, xAxisPosition, yAxisPosition } from '@/core/axis/position'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 
-export function createAxisLayout(
+export function createAxisLayout<S extends XAxisSettings | YAxisSettings>(
   sources: AxisScaleSources & Pick<ChartRegistries, 'axes'> & { size: () => Size },
-  axis: AxisModel<XAxisSettings> | AxisModel<YAxisSettings>,
+  axis: AxisScaleModel<S> & { settings: ComputedRef<S> },
   type: 'xAxis' | 'yAxis',
   id: AxisId,
 ) {

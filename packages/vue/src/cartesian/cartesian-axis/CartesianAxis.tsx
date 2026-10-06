@@ -2,7 +2,8 @@ import { useCanMeasureText } from '@/model/runtime'
 /**
  * @fileOverview Cartesian Axis
  */
-import type { CartesianViewBox } from '@/types/viewBox'
+import type { LabelProps } from '@/components/label/types'
+import type { CartesianViewBox, CartesianViewBoxRequired } from '@/types/viewBox'
 import type { VueClassValue } from '@/types/common'
 import type { AxisInterval } from '@/types/axis'
 import type { RechartsScale } from '@/types/scale'
@@ -23,7 +24,7 @@ export type Orientation = 'top' | 'bottom' | 'left' | 'right'
 /** A unit to be appended to a value */
 export type Unit = string | number
 /** The formatter function of tick */
-export type TickFormatter = (value: any, index: number) => string
+export type TickFormatter = (value: unknown, index: number) => string
 
 export interface CartesianAxisProps {
   class?: VueClassValue
@@ -37,7 +38,7 @@ export interface CartesianAxisProps {
   mirror?: boolean
   tickMargin?: number
   hide?: boolean
-  label?: any
+  label?: string | number | LabelProps
   minTickGap?: number
   ticks?: ReadonlyArray<CartesianTickItem>
   tickSize?: number
@@ -56,8 +57,8 @@ export const CartesianAxis = defineComponent({
     width: { type: Number, default: 0 },
     height: { type: Number, default: 0 },
     unit: [String, Number],
-    orientation: { type: String, default: 'bottom' },
-    viewBox: { type: Object, default: () => ({ x: 0, y: 0, width: 0, height: 0 }) },
+    orientation: { type: String as PropType<Orientation>, default: 'bottom' },
+    viewBox: { type: Object as PropType<CartesianViewBoxRequired>, default: () => ({ x: 0, y: 0, width: 0, height: 0 }) },
     tick: { type: Boolean, default: true },
     axisLine: { type: [Boolean, Object] as PropType<boolean | SVGAttributes>, default: () => true },
     tickLine: { type: [Boolean, Object], default: () => true },
@@ -68,8 +69,8 @@ export const CartesianAxis = defineComponent({
     minTickGap: { type: Number, default: 5 },
     ticks: { type: Array as PropType<ReadonlyArray<CartesianTickItem>>, default: () => [] },
     tickSize: { type: Number, default: 6 },
-    tickFormatter: Function,
-    interval: { type: [String, Number], default: 'preserveEnd' },
+    tickFormatter: Function as PropType<TickFormatter>,
+    interval: { type: [String, Number] as PropType<AxisInterval>, default: 'preserveEnd' },
     angle: Number,
     scale: { type: [Function] as PropType<RechartsScale> },
     stroke: { type: String, default: 'var(--v-charts-axis, #666)' },
@@ -195,7 +196,7 @@ export const CartesianAxis = defineComponent({
       return <line {...lineProps} class={['v-charts-cartesian-axis-line', get(axisLine, 'class')]} />
     }
 
-    function renderTickItem(props: CartesianAxisProps, value: any) {
+    function renderTickItem(props: Partial<InstanceType<typeof Text>['$props']>, value: string) {
       const className = ['v-charts-cartesian-axis-tick-value', props.class]
       return (
         <Text
@@ -207,7 +208,12 @@ export const CartesianAxis = defineComponent({
       )
     }
 
-    const targetTicks = computed<readonly CartesianTickItem[]>(() => getTicks(props as any, state.fontSize, state.letterSpacing, canMeasureText.value))
+    const targetTicks = computed<readonly CartesianTickItem[]>(() => getTicks(
+      { ...props, angle: props.angle ?? 0 },
+      state.fontSize,
+      state.letterSpacing,
+      canMeasureText.value,
+    ))
     const { items: movingTicks } = useTickMotion(
       () => props.hide ? [] : targetTicks.value,
       () => props.scale,
@@ -216,7 +222,7 @@ export const CartesianAxis = defineComponent({
         : [props.x, props.x + props.width] as const,
     )
 
-    const renderTicks = (props: any) => {
+    function renderTicks() {
       const { tickLine, stroke, tick, tickFormatter, unit } = props
       const finalTicks = movingTicks.value
       const textAnchor = getTickTextAnchor()
@@ -261,7 +267,7 @@ export const CartesianAxis = defineComponent({
               slots.tick
                 ? slots.tick({ ...tickProps, value: entry.value })
                 : renderTickItem(
-                    tickProps as any,
+                    tickProps,
                     `${typeof tickFormatter === 'function' ? tickFormatter(entry.value, i) : entry.value}${unit || ''}`,
                   )
             )}
@@ -322,7 +328,7 @@ export const CartesianAxis = defineComponent({
           }}
         >
           {axisLine && renderAxisLine()}
-          {renderTicks(props)}
+          {renderTicks()}
           {renderLabel()}
         </Layer>
       )

@@ -1,12 +1,12 @@
+import type { ChartDataKey } from '@/types/base'
+import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
+import type { AxisTick, AxisTickSlotProps } from '@/types/tick'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { AngleAxisSettings } from '@/types/axisSettings'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
-import type { DataKey } from '@/types'
 import type { AxisDomain } from '@/types/axis'
-import type { AxisTick } from '@/types/tick'
 import Text from '@/components/Text.vue'
 
 const eps = 1e-5
@@ -31,19 +31,19 @@ function getTickVerticalAnchor(coordinate: number): string {
 }
 
 export interface PolarAngleAxisSlots {
-  tick?: (props: import('@/types/tick').AxisTickSlotProps & { cx: number, cy: number }) => import('vue').VNodeChild
+  tick?: (props: AxisTickSlotProps & { cx: number, cy: number }) => VNodeChild
 }
 
 const PolarAngleAxisViewProps = {
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: undefined },
   tick: { type: Boolean, default: true },
   tickLine: { type: Boolean, default: true },
   tickSize: { type: Number, default: 8 },
   axisLine: { type: Boolean, default: true },
   axisLineType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
   orientation: { type: String as PropType<'inner' | 'outer'>, default: 'outer' },
-  tickFormatter: { type: Function as PropType<(value: any, index: number) => string>, default: undefined },
+  tickFormatter: { type: Function as PropType<(value: unknown, index: number) => string>, default: undefined },
   ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
   stroke: { type: String, default: undefined },
   type: { type: String as PropType<'category' | 'number'>, default: 'category' },
@@ -59,7 +59,7 @@ const PolarAngleAxisView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   slots: Object as SlotsType<{
-    tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
+    tick?: (props: { x: number, y: number, value: unknown, index: number, textAnchor: string, payload: unknown, cx: number, cy: number }) => VNodeChild
   }>,
   setup(view, { slots }) {
     const chart = useChart()
@@ -154,7 +154,7 @@ const _PolarAngleAxis = defineComponent({
   name: 'PolarAngleAxis',
   props: PolarAngleAxisViewProps,
   slots: Object as SlotsType<{
-    tick?: (props: { x: number, y: number, value: any, index: number, textAnchor: string, payload: any, cx: number, cy: number }) => any
+    tick?: (props: { x: number, y: number, value: unknown, index: number, textAnchor: string, payload: unknown, cx: number, cy: number }) => VNodeChild
   }>,
   setup(props, { attrs, slots }) {
     const { angleAxis } = useChart().axes

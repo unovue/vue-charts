@@ -1,28 +1,22 @@
+import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { lineEvents } from '@/events/itemEvents'
-import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { ResolvedLineProps } from './type'
+import type { LineSlots, ResolvedLineProps } from './type'
 import { LineVueProps } from './type'
 import { useLine } from '@/cartesian/line/hooks/useLine'
 import { Layer } from '@/container/Layer'
 import { StaticLine } from '@/cartesian/line/StaticLine'
 import { ActivePoints } from '@/cartesian/line/ActivePoints'
-import type { ActivePointsSlots } from './ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 
-export type LineSlots = ActivePointsSlots & {
-  default?: () => import('vue').VNodeChild
-  shape?: (props: import('@/shape/Curve').CurveProps) => import('vue').VNodeChild
-  dot?: (props: { cx: number, cy: number, index: number, value?: number, payload?: unknown }) => import('vue').VNodeChild
-  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
-}
+export type { LineSlots } from './type'
 
 const LineView = defineComponent({
   name: 'LineView',

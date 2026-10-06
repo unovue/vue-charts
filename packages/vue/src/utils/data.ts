@@ -80,12 +80,3 @@ export function findEntryInArray<T>(
       entry && (typeof specifiedKey === 'function' ? specifiedKey(entry) : get(entry, specifiedKey)) === specifiedValue,
   )
 }
-
-/* @todo this function returns a function that is called immediately in all use-cases, make it just return the number and skip the anonymous function step */
-export function interpolateNumber(numberA: number | undefined, numberB: number | undefined, t: number) {
-  if (isNumber(numberA) && isNumber(numberB)) {
-    return numberA + t * (numberB - numberA)
-  }
-
-  return numberB
-}

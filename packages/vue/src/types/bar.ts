@@ -35,7 +35,7 @@ interface RectangleProps {
 export interface BarRectangleItem extends RectangleProps {
   value?: number | [number, number]
   /** the original data entry */
-  payload?: any
+  payload?: unknown
   /** the coordinate of background rectangle */
   background?: {
     x?: number | null

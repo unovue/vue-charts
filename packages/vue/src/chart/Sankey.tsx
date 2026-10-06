@@ -1,8 +1,8 @@
+import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, toRefs } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, computed, defineComponent, reactive, toRefs } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-v'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -44,9 +44,9 @@ export interface SankeyLinkSlotProps {
 }
 
 export interface SankeySlots {
-  node?: (props: SankeyNodeSlotProps) => any
-  link?: (props: SankeyLinkSlotProps) => any
-  default?: () => any
+  node?: (props: SankeyNodeSlotProps) => VNodeChild
+  link?: (props: SankeyLinkSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 export const sankeyPayloadSearcher: TooltipPayloadSearcher = (
@@ -193,7 +193,7 @@ function useSankey(
       // Strip circular source/target node refs — Immer can't handle them.
       const nodes = layout.value.nodes.map((n, i) => ({
         tooltipIndex: `nodes[${i}]`,
-        name: (n as any)[props.nameKey] ?? (n as any).name,
+        name: n[props.nameKey] ?? n.name,
         value: n.value,
         x0: n.x0,
         x1: n.x1,
@@ -205,7 +205,7 @@ function useSankey(
         const tgt = l.target as SankeyLayoutNode
         return {
           tooltipIndex: `links[${i}]`,
-          name: `${(src as any)[props.nameKey] ?? (src as any).name} - ${(tgt as any)[props.nameKey] ?? (tgt as any).name}`,
+          name: `${src[props.nameKey] ?? src.name} - ${tgt[props.nameKey] ?? tgt.name}`,
           value: l.value,
         }
       })

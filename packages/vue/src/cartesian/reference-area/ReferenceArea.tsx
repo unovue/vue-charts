@@ -1,6 +1,6 @@
+import type { ExtractPropTypes, PropType, SVGAttributes, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
 import { Layer } from '@/container/Layer'
@@ -12,7 +12,7 @@ import { isNumOrStr } from '@/utils'
 import { rangeMax, rangeMin, scaleValue } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
 
-export const ReferenceAreaVueProps = {
+const ReferenceAreaVueProps = {
   x1: { type: [Number, String] as PropType<number | string>, default: undefined },
   x2: { type: [Number, String] as PropType<number | string>, default: undefined },
   y1: { type: [Number, String] as PropType<number | string>, default: undefined },
@@ -23,7 +23,7 @@ export const ReferenceAreaVueProps = {
   strokeWidth: { type: [Number, String], default: 1 },
   fill: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   fillOpacity: { type: Number, default: 0.5 },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
   radius: { type: [Number, Array] as PropType<number | [number, number, number, number]>, default: 0 },
   class: classProp,
@@ -149,4 +149,4 @@ const _ReferenceArea = defineComponent({
 })
 
 // Preserve template slot inference in published declarations.
-export const ReferenceArea: typeof _ReferenceArea & { new (): { $slots: { shape?: (props: { x: number, y: number, width: number, height: number }) => import('vue').VNodeChild } } } = _ReferenceArea
+export const ReferenceArea: typeof _ReferenceArea & { new (): { $slots: { shape?: (props: { x: number, y: number, width: number, height: number }) => VNodeChild } } } = _ReferenceArea

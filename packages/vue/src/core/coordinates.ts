@@ -44,7 +44,7 @@ export function getNormalizedStackId(
   return publicStackId == null ? undefined : String(publicStackId)
 }
 
-export function getCateCoordinateOfLine<T extends Record<string, unknown>>({
+export function getCateCoordinateOfLine<T>({
   axis,
   ticks,
   bandSize,
@@ -60,15 +60,15 @@ export function getCateCoordinateOfLine<T extends Record<string, unknown>>({
   }
   ticks: Array<TickItem>
   bandSize: number
-  entry: T
+  entry: unknown
   index: number
   dataKey?: DataKey<T>
 }): number | null {
   if (axis.type === 'category') {
     // find coordinate of category axis by the value of category
-    // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
+    // @ts-expect-error Preserve direct lookup of consumer rows without a static index signature.
     if (!axis.allowDuplicatedCategory && axis.dataKey && !isNullish(entry[axis.dataKey])) {
-      // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
+      // @ts-expect-error Preserve direct lookup of consumer rows without a static index signature.
       const matchedTick = findEntryInArray(ticks, 'value', entry[axis.dataKey])
 
       if (matchedTick) {

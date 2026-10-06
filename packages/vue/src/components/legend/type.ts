@@ -54,7 +54,7 @@ export const LegendVueProps = {
   margin: Object as PropType<Margin>,
   chartWidth: Number,
   chartHeight: Number,
-  payloadUniqBy: [Boolean, Function] as PropType<boolean | ((item: LegendPayload) => any)>,
+  payloadUniqBy: [Boolean, Function] as PropType<boolean | ((item: LegendPayload) => unknown)>,
   /** Sort entries. By default they keep the order of the data (Pie) or of the series. */
   itemSorter: {
     type: [String, Function] as PropType<'value' | 'dataKey' | ((item: LegendPayload) => number | string)>,

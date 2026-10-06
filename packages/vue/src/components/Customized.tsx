@@ -1,13 +1,13 @@
+import type { ChartDataKey } from '@/types/base'
+import type { SlotsType, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
-import type { SlotsType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
-import type { DataKey } from '@/types'
 
 export interface FormattedGraphicalItem {
   type: string
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   props: CartesianGraphicalItemSettings | PolarGraphicalItemSettings
 }
 
@@ -19,7 +19,7 @@ export interface CustomizedSlotProps {
 }
 
 export interface CustomizedSlots {
-  default?: (props: CustomizedSlotProps) => any
+  default?: (props: CustomizedSlotProps) => VNodeChild
 }
 
 const _Customized = defineComponent({

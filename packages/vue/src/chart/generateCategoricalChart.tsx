@@ -1,8 +1,9 @@
+import type { ChartDataKey } from '@/types/base'
 import type { TooltipEventType, TooltipPayloadSearcher } from '@/types/tooltip'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideClipPathId, provideRenderPhase } from '@/model/runtime'
 import { classProp } from '@/types'
-import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType, WithSVGProps } from '@/types'
+import type { LayoutType, Margin, StackOffsetType, SyncMethod, VuePropsToType } from '@/types'
 import type { PropType, StyleValue } from 'vue'
 import { Fragment, defineComponent } from 'vue'
 import ChartSurface from '@/chart/ChartSurface.vue'
@@ -15,7 +16,7 @@ import { chartDefaults } from '@/model/defaults'
 import { chartSizeProps, useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useChartId } from '@/hooks/useChartId'
 
-export const CategoricalProps = {
+const CategoricalProps = {
   accessibilityLayer: {
     type: Boolean,
     default: chartDefaults.accessibilityLayer,
@@ -46,7 +47,7 @@ export const CategoricalProps = {
     default: () => [],
   },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
   },
   desc: {
     type: String,
@@ -113,9 +114,7 @@ export const CategoricalProps = {
   },
 }
 
-export type CategoricalChartPropsWithOutSvg = VuePropsToType<typeof CategoricalProps>
-
-export type CategoricalChartProps = WithSVGProps<CategoricalChartPropsWithOutSvg>
+type CategoricalChartPropsWithOutSvg = VuePropsToType<typeof CategoricalProps>
 
 export interface CategoricalChartOptions {
   chartName: string

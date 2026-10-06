@@ -94,6 +94,6 @@ export function getWidthOrHeight(
   return null
 }
 
-export function defaultUniqBy(entry: any) {
+export function defaultUniqBy(entry: import('@/types/legend').LegendPayload) {
   return entry.value
 }

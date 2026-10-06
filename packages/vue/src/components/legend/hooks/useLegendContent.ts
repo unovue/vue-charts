@@ -1,4 +1,4 @@
-import type { CSSProperties, Component } from 'vue'
+import type { CSSProperties, Component, VNodeChild } from 'vue'
 import type { LayoutType } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
@@ -13,7 +13,7 @@ interface LegendContentProps {
   contentStyle?: CSSProperties
   formatter?: (value: string | undefined, entry: LegendPayload) => string
   payload?: LegendPayload[]
-  content?: Component | ((props: any) => any)
+  content?: Component | ((props: LegendContentProps) => VNodeChild)
 }
 
 export function useLegendContent(props: LegendContentProps) {

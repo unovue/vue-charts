@@ -1,3 +1,4 @@
+import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h, provide } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
@@ -6,7 +7,7 @@ import type { RadiusAxisSettings } from '@/types/axisSettings'
 import { polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
 import type { AxisTick } from '@/types/tick'
-import type { DataKey, LayoutType } from '@/types'
+import type { LayoutType } from '@/types'
 import { isCategoricalAxis } from '@/utils'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { POLAR_LABEL_VIEW_BOX_KEY } from '@/context/polarLabelViewBoxContext'
@@ -25,12 +26,12 @@ function resolveAxisType(type: 'number' | 'category' | 'auto', layout: LayoutTyp
 
 const PolarRadiusAxisViewProps = {
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: undefined },
   angle: { type: Number, default: 0 },
   tick: { type: Boolean, default: true },
   axisLine: { type: Boolean, default: true },
   orientation: { type: String as PropType<'left' | 'right' | 'middle'>, default: 'right' },
-  tickFormatter: { type: Function as PropType<(value: any, index: number) => string>, default: undefined },
+  tickFormatter: { type: Function as PropType<(value: unknown, index: number) => string>, default: undefined },
   ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
   tickCount: { type: Number, default: 5 },
   domain: { type: Array as PropType<AxisDomain>, default: undefined },

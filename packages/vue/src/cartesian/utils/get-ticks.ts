@@ -9,7 +9,7 @@ import { getEquidistantTicks } from '@/utils/cartesian'
 import { mathSign } from '@/utils/data'
 import { getAngledTickWidth, getNumberIntervalTicks, getTickBoundaries } from '@/utils/tick'
 
-export type Sign = 0 | 1 | -1
+type Sign = 0 | 1 | -1
 
 function getTicksEnd(
   sign: Sign,
@@ -131,7 +131,7 @@ export type GetTicksInput = {
   tick: CartesianAxisSettings['tick']
   tickFormatter: CartesianAxisSettings['tickFormatter']
   ticks: ReadonlyArray<CartesianTickItem>
-  unit: CartesianAxisSettings['unit']
+  unit: string | number | undefined
   viewBox: CartesianViewBoxRequired
 }
 

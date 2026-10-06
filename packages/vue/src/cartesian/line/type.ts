@@ -1,10 +1,13 @@
-import type { DataKey, LayoutType, TooltipType, VueClassValue, VuePropsToType, WithSVGProps } from '@/types'
+import type { LinePointItem } from '@/types/line'
+import type { LabelListSlotProps } from '@/components/label/types'
+import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
+import type { ChartDataKey } from '@/types/base'
+import type { LayoutType, TooltipType, VueClassValue, VuePropsToType, WithSVGProps } from '@/types'
 import type { AxisId } from '@/types/axis'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
 import type { CurveType } from '@/shape/Curve'
-import type { ExtractPropTypes, PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
@@ -12,18 +15,18 @@ export type { LinePointItem } from '@/types/line'
 
 // Complete LineProps interface
 export interface LineProps {
-  activeDot?: any
+  activeDot?: unknown
   animateNewValues?: boolean
   animationId?: string
   class?: VueClassValue
   connectNulls?: boolean
-  data?: any[]
-  dataKey: DataKey<any>
-  dot?: any
+  data?: unknown[]
+  dataKey: ChartDataKey
+  dot?: unknown
   hide?: boolean
   id?: string
   isAnimationActive?: boolean
-  label?: any
+  label?: unknown
   legendType?: LegendType
   layout?: LayoutType
   name?: string | number
@@ -46,7 +49,7 @@ export const LineVueProps = {
   connectNulls: { type: Boolean, default: false },
   data: { type: Array, default: undefined },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
     required: true as const,
   },
   dot: { type: [Boolean, Object, Function], default: true },
@@ -80,3 +83,26 @@ export type LinePropsInternal = VuePropsToType<typeof LineVueProps>
 export type LinePropsWithSVG = WithSVGProps<typeof LineVueProps>
 
 export type ResolvedLineProps = ExtractPropTypes<typeof LineVueProps>
+type ActivePointSlotProps = {
+  'index': number
+  'dataKey': ChartDataKey
+  'cx': number
+  'cy': number
+  'r': number
+  'fill': string
+  'stroke-width': number
+  'stroke': string
+  'payload': LinePointItem['payload']
+  'value'?: number
+}
+
+export type ActivePointsSlots = {
+  activeDot?: (props: ActivePointSlotProps) => VNode
+}
+
+export type LineSlots = ActivePointsSlots & {
+  default?: () => VNode[]
+  shape?: (props: import('@/shape/Curve').CurveProps) => VNodeChild
+  dot?: (props: { cx: number, cy: number, index: number, value?: number, payload?: unknown }) => VNodeChild
+  label?: (props: LabelListSlotProps) => VNodeChild
+}

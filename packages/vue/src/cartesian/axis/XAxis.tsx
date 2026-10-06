@@ -1,3 +1,4 @@
+import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import type { AxisSlots, AxisTick, TickFormatter } from '@/types/tick'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -9,7 +10,6 @@ import { computed, defineComponent } from 'vue'
 import type { XAxisSettings } from '@/types/axisSettings'
 import { implicitXAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { DataKey } from '@/types'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 
 const XAxisImpl = defineComponent({
@@ -66,7 +66,7 @@ const XAxisSettingsDispatcher = defineComponent({
       type: Array as PropType<AxisDomain>,
     },
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
     },
     allowDuplicatedCategory: Boolean,
     allowDecimals: Boolean,
@@ -183,7 +183,7 @@ const _XAxis = defineComponent({
       default: 0,
     },
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
       default: undefined,
     },
     domain: {

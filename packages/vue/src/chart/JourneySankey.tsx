@@ -1,10 +1,11 @@
+import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
-import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
-import { type Reveal, useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import type { Reveal } from '@/animation/motion'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -34,9 +35,9 @@ export interface JourneyLabelSlotProps {
 }
 
 export interface JourneySankeySlots {
-  header?: (props: JourneyHeaderSlotProps) => any
-  label?: (props: JourneyLabelSlotProps) => any
-  default?: () => any
+  header?: (props: JourneyHeaderSlotProps) => VNodeChild
+  label?: (props: JourneyLabelSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 const HEADER_BAND = 28
@@ -48,7 +49,7 @@ export const JourneySankeyVueProps = {
   isAnimationActive: cellGridSharedProps.isAnimationActive,
   transition: cellGridSharedProps.transition,
   /** One row per journey: the pages (or events) in order and how many sessions took it. */
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
+  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   pathKey: { type: String, default: 'path' },
   dataKey: { type: String, default: 'count' },
   /** Columns to show; longer journeys are cut. Defaults to the longest journey. */

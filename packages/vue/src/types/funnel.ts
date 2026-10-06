@@ -9,7 +9,10 @@ export interface FunnelTrapezoidItem extends TrapezoidProps {
   lowerWidth: number
   height: number
   value?: number | string
-  payload?: any
+  name?: string | number
+  fill?: string
+  val?: number | string
+  payload?: unknown
   isActive: boolean
   tooltipPosition: Coordinate
   parentViewBox?: ViewBox

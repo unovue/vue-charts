@@ -1,8 +1,8 @@
+import type { Component, PropType, SlotsType, VNode, VNodeChild } from 'vue'
 import { useTooltipController, useTooltipSource } from '@/model/tooltip'
 import type { ChartTransition } from '@/animation/motion'
 import { useChartPresentation } from '@/model/presentation'
-import { Fragment, Teleport, computed, defineComponent, watch } from 'vue'
-import type { PropType, SlotsType } from 'vue'
+import { Fragment, Teleport, computed, defineComponent, h, watch } from 'vue'
 import { usePortal } from '@/model/runtime'
 import type { Formatter, TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry, TooltipTrigger } from '@/types/tooltip'
 import { useTimeoutFn } from '@vueuse/core'
@@ -155,9 +155,9 @@ const _Tooltip = defineComponent({
   emits: { 'update:activeIndex': (_index: TooltipActiveIndex) => true },
   props: TooltipVueProps,
   slots: Object as SlotsType<{
-    content?: (props: TooltipContentProps) => any
-    cursor?: (props: CursorSlotProps) => any
-    default?: () => any
+    content?: (props: TooltipContentProps) => VNodeChild
+    cursor?: (props: CursorSlotProps) => VNodeChild
+    default?: () => VNode[]
   }>,
   setup(props, { slots, emit }) {
     const tooltip = useTooltipController()
@@ -257,7 +257,7 @@ const _Tooltip = defineComponent({
     const hasPayload = computed(() => finalPayload.value.length > 0)
 
     // Content component resolution
-    const contentComponent = computed(() => {
+    const contentComponent = computed<Component>(() => {
       if (props.content) {
         return props.content
       }
@@ -299,7 +299,7 @@ const _Tooltip = defineComponent({
               >
                 {hasContentSlot.value
                   ? (slots.content ? slots.content(contentProps.value) : slots.default!())
-                  : <contentComponent.value {...contentProps.value} />}
+                  : h(contentComponent.value, contentProps.value)}
               </TooltipBoundingBox>
             </Teleport>
           </foreignObject>
@@ -321,9 +321,9 @@ const _Tooltip = defineComponent({
 })
 
 export type TooltipSlots = {
-  content?: (props: TooltipContentProps) => import('vue').VNodeChild
-  cursor?: (props: CursorSlotProps) => import('vue').VNodeChild
-  default?: () => import('vue').VNodeChild
+  content?: (props: TooltipContentProps) => VNodeChild
+  cursor?: (props: CursorSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 // Explicit constructor slots survive declaration generation for Volar consumers.

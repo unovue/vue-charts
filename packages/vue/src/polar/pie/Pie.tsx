@@ -1,6 +1,6 @@
+import type { ComputedRef, PropType, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { pieEvents } from '@/events/itemEvents'
-import type { ComputedRef, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -22,10 +22,10 @@ const LABEL_OFFSET = 20
 const ANCHOR_BLEND = 8
 
 export interface PieSlots {
-  label?: (props: PieSectorDataItem & { index: number }) => import('vue').VNodeChild
-  activeShape?: (props: PieSectorDataItem & { isActive: boolean }) => import('vue').VNodeChild
-  shape?: (props: PieSectorDataItem & { isActive: boolean }) => import('vue').VNodeChild
-  default?: () => import('vue').VNodeChild
+  label?: (props: PieSectorDataItem & { index: number }) => VNodeChild
+  activeShape?: (props: PieSectorDataItem & { isActive: boolean }) => VNodeChild
+  shape?: (props: PieSectorDataItem & { isActive: boolean }) => VNodeChild
+  default?: () => VNode[]
 }
 
 const PieView = defineComponent({
@@ -37,7 +37,7 @@ const PieView = defineComponent({
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
   },
-  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => import('vue').VNode[] }>,
+  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => VNode[] }>,
   setup(view, { slots }) {
     const emit = pieEvents.use()
     const props = view.item
@@ -165,7 +165,7 @@ const PieView = defineComponent({
       const children = slots.default?.() ?? []
       const cells = extractCellProps(children)
       const sectorList = cells.length
-        ? items.value.map(item => cells[item.value.index]?.fill != null ? { ...item, value: { ...item.value, fill: cells[item.value.index].fill } } : item)
+        ? items.value.map(item => cells[item.value.index]?.fill != null ? { ...item, value: { ...item.value, fill: cells[item.value.index].fill! } } : item)
         : items.value
       if (!sectorList || sectorList.length === 0) {
         return null
@@ -226,7 +226,7 @@ const _Pie = defineComponent({
   emits: pieEvents.emits,
   props: PieVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => import('vue').VNode[] }>,
+  slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => VNode[] }>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     pieEvents.provide(emit)

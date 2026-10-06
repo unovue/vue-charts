@@ -1,5 +1,5 @@
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -25,7 +25,7 @@ const NOMINAL_STEP = 14
 
 export const CalendarHeatmapVueProps = {
   ...cellGridSharedProps,
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
+  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   /** The field holding the day: a `YYYY-MM-DD` string or a `Date` (its local calendar date). */
   dateKey: { type: String, default: 'date' },
   /** The field holding the number to color by. Rows with the same day are summed. */
@@ -58,14 +58,14 @@ const _CalendarHeatmap = defineComponent({
   props: { ...CalendarHeatmapVueProps, ...chartSizeProps },
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
-  slots: Object as SlotsType<CellGridSlots<CalendarDay> & { default?: () => any }>,
+  slots: Object as SlotsType<CellGridSlots<CalendarDay> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
     const rows = useTrackedData(() => props.data)
 
     const valuesByDay = computed(() => {
       const values = new Map<number, number>()
       for (const row of rows.value ?? []) {
-        const day = toDayNumber(row?.[props.dateKey])
+        const day = toDayNumber(row?.[props.dateKey] as string | Date | null | undefined)
         const value = Number(row?.[props.dataKey])
         if (day === undefined || !Number.isFinite(value))
           continue
@@ -77,7 +77,7 @@ const _CalendarHeatmap = defineComponent({
     const range = computed(() => {
       let latest: number | undefined
       for (const row of rows.value ?? []) {
-        const day = toDayNumber(row?.[props.dateKey])
+        const day = toDayNumber(row?.[props.dateKey] as string | Date | null | undefined)
         if (day !== undefined && (latest === undefined || day > latest))
           latest = day
       }
@@ -246,5 +246,5 @@ const _CalendarHeatmap = defineComponent({
  * ```
  */
 export const CalendarHeatmap = _CalendarHeatmap as typeof _CalendarHeatmap & {
-  new (): { $slots: CellGridSlots<CalendarDay> & { default?: () => any } }
+  new (): { $slots: CellGridSlots<CalendarDay> & { default?: () => VNode[] } }
 }

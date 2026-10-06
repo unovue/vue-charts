@@ -1,42 +1,23 @@
+import type { BarRectangleItem } from '@/types/bar'
+import type { LabelListSlotProps } from '@/components/label/types'
+import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
+import type { ChartDataKey } from '@/types/base'
 import type { ChartData } from '@/types/chartData'
 import type {
-  Coordinate,
-  DataKey,
   TooltipType,
-  VuePropsToType,
-  WithSVGProps,
 } from '@/types'
 import type { ChartTransition } from '@/animation/motion'
 import type { AxisId } from '@/types/axis'
-import type { ExtractPropTypes, PropType } from 'vue'
 import type { LegendType } from '@/types/legend'
 import type { MinPointSize } from '@/shape'
 import { classProp } from '@/types'
-
-export type Rectangle = {
-  x: number | null
-  y: number | null
-  width: number
-  height: number
-}
-
-export type BarRectangleItem = {
-  value?: number | [number, number]
-  background?: Rectangle
-  tooltipPosition: Coordinate
-  readonly payload?: any
-  x: number | null
-  y: number | null
-  width: number
-  height: number
-}
 
 export const BarVueProps = {
   class: classProp,
   barSize: { type: [String, Number] as PropType<string | number> },
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
     required: true as const,
   },
   fill: { type: String, default: undefined },
@@ -53,7 +34,7 @@ export const BarVueProps = {
   maxBarSize: { type: Number },
   hide: { type: Boolean, default: false },
   background: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: false,
   },
   radius: {
@@ -61,7 +42,7 @@ export const BarVueProps = {
     default: undefined,
   },
   isAnimationActive: { type: Boolean, default: true },
-  activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, any> | boolean>, default: false },
+  activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, unknown> | boolean>, default: false },
   activeIndex: { type: Number as PropType<number | null>, default: undefined },
   id: { type: String, default: undefined },
   stackId: {
@@ -77,14 +58,16 @@ export const BarVueProps = {
   },
   needClip: { type: Boolean, default: false },
   label: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: false,
   },
 }
 
-export type BarProps = VuePropsToType<typeof BarVueProps>
-export type BarPropsWithSVG = WithSVGProps<typeof BarVueProps>
-
-export type { BarSettings } from '@/types/bar'
-
 export type ResolvedBarProps = ExtractPropTypes<typeof BarVueProps>
+
+export interface BarSlots {
+  label?: (props: LabelListSlotProps) => VNodeChild
+  default?: () => VNode[]
+  shape?: (props: BarRectangleItem & { index: number, isActive: boolean }) => VNodeChild
+  activeBar?: (props: BarRectangleItem & { index: number, isActive: boolean }) => VNodeChild
+}

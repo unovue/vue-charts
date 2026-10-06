@@ -1,6 +1,6 @@
 import type { AngleAxisSettings, RadiusAxisSettings } from '@/types/axisSettings'
 
-export const defaultPolarAngleAxisProps = {
+const defaultPolarAngleAxisProps = {
   allowDuplicatedCategory: true,
   angleAxisId: 0,
   axisLine: true,
@@ -33,7 +33,7 @@ export const implicitAngleAxis: AngleAxisSettings = {
   unit: undefined,
 }
 
-export const defaultPolarRadiusAxisProps = {
+const defaultPolarRadiusAxisProps = {
   allowDataOverflow: false,
   allowDuplicatedCategory: true,
   angle: 0,

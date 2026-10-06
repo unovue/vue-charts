@@ -1,13 +1,13 @@
+import type { SVGAttributes, ShallowRef, VNode } from 'vue'
 import { Fragment } from 'vue'
-import type { ShallowRef, VNode } from 'vue'
 import { Cell } from '@/components/Cell'
 
 /**
  * Extract Cell VNode props from a VNode tree.
  * Handles Fragment wrapping from v-for.
  */
-export function extractCellProps(vnodes: VNode[]): Record<string, any>[] {
-  const result: Record<string, any>[] = []
+export function extractCellProps(vnodes: VNode[]): Array<SVGAttributes & Record<string, unknown>> {
+  const result: Array<SVGAttributes & Record<string, unknown>> = []
   for (const vnode of vnodes) {
     if (vnode.type === Cell) {
       result.push(vnode.props ?? {})
@@ -43,7 +43,7 @@ export function filterOutCells(vnodes: VNode[]): VNode[] {
  * Stores the Cell props read during a render, but only when they changed: a new but equal array
  * would re-run everything that reads it (legend payloads, geometry) on every render.
  */
-export function assignCells(target: ShallowRef<Record<string, any>[]>, cells: Record<string, any>[]) {
+export function assignCells(target: ShallowRef<Array<SVGAttributes & Record<string, unknown>>>, cells: Array<SVGAttributes & Record<string, unknown>>) {
   const current = target.value
   const same = current.length === cells.length && cells.every((cell, i) => {
     const before = current[i]

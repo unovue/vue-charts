@@ -1,7 +1,3 @@
-export type Unit = string | number
-
-export type Orientation = 'top' | 'bottom' | 'left' | 'right'
-
 export interface PolarViewBox {
   cx?: number
   cy?: number

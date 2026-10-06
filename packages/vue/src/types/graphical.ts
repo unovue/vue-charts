@@ -1,7 +1,7 @@
+import type { ChartDataKey } from '@/types/base'
 import type { ChartData } from './chartData'
 import type { AxisId } from './axis'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { DataKey } from '@/types'
 import type { MinPointSize, NormalizedStackId } from '@/shape'
 import type { StackId } from '@/types/tick'
 
@@ -20,7 +20,7 @@ export type ErrorBarsSettings = {
    * If it so happens that the ErrorBar data are bigger than the axis domain,
    * the error bar data will stretch the axis domain.
    */
-  dataKey: DataKey<any>
+  dataKey: ChartDataKey
   /*
    * ErrorBar props say that it has explicit xAxis and yAxis props,
    * but actually it always inherits the xAxis and yAxis defined on the parent graphical item.
@@ -28,11 +28,11 @@ export type ErrorBarsSettings = {
 }
 
 export type CartesianGraphicalItemType = 'area' | 'bar' | 'line' | 'scatter'
-export type PolarGraphicalItemType = 'pie' | 'radar' | 'radialBar' | 'funnel'
+type PolarGraphicalItemType = 'pie' | 'radar' | 'radialBar' | 'funnel'
 
 export interface GraphicalItemSettings extends MaybeStackedGraphicalItem {
   data: ChartData | undefined
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   /**
    * Why not just stop pushing the graphical items to state when they are hidden?
    * Well some components decide to continue showing them anyway.
@@ -78,27 +78,8 @@ export type PolarGraphicalItemSettings = GraphicalItemSettings & {
   maxBarSize?: number
 }
 
-export type GraphicalItemsState = {
-  /**
-   * This is an array of all cartesian graphical items and their settings.
-   * Graphical item is a visual representation of data on the chart.
-   * Some examples are: Line, Bar.
-   *
-   * Setup order is stable across prop changes and keyed DOM reorders.
-   */
-  cartesianItems: ReadonlyArray<CartesianGraphicalItemSettings>
-  /**
-   * This is an array of all polar graphical items and their settings.
-   * Graphical item is a visual representation of data on the chart.
-   * Some examples are: Pie, Radar, RadialBar
-   *
-   * Setup order is stable across prop changes and keyed DOM reorders.
-   */
-  polarItems: ReadonlyArray<PolarGraphicalItemSettings>
-}
-
 export interface MaybeStackedGraphicalItem {
   stackId: StackId | undefined
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   barSize: number | string | undefined
 }

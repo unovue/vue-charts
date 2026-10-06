@@ -11,18 +11,18 @@ export interface TreemapLayoutNode {
   depth: number
   name: string
   value: number
-  payload: Record<string, any>
+  payload: Record<string, unknown>
   color?: string
   root: number
 }
 
 export interface TreemapLayoutOptions {
-  data: Record<string, any>[]
+  data: Record<string, unknown>[]
   width: number
   height: number
-  dataKey: DataKey<Record<string, any>>
+  dataKey: DataKey<Record<string, unknown>>
   aspectRatio?: number
-  nameKey?: DataKey<Record<string, any>>
+  nameKey?: DataKey<Record<string, unknown>>
   colorPanel?: string[]
 }
 

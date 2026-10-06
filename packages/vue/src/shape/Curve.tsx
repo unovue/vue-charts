@@ -68,7 +68,7 @@ export type CurveType =
 export interface Point {
   readonly x: number
   readonly y: number
-  readonly payload?: any
+  readonly payload?: unknown
 }
 
 const defined = (p: Point) => p.x === +p.x && p.y === +p.y

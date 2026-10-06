@@ -1,5 +1,5 @@
+import type { CSSProperties, PropType, VNodeChild } from 'vue'
 import { defineComponent, isVNode } from 'vue'
-import type { CSSProperties, PropType } from 'vue'
 import type { Formatter, TooltipPayload } from '@/types/tooltip'
 import type {
   NameType,
@@ -77,8 +77,8 @@ export const DefaultTooltipContent = defineComponent({
               }
               const finalFormatter = entry.formatter || formatter || defaultFormatter
               const { value, name } = entry
-              let finalValue: React.ReactNode = value
-              let finalName: React.ReactNode = name
+              let finalValue: VNodeChild = value
+              let finalName: VNodeChild = name
               if (finalFormatter) {
                 const formatted = finalFormatter(value!, name!, entry, index, payload)
                 if (Array.isArray(formatted)) {

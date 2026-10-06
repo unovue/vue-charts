@@ -1,6 +1,6 @@
+import type { PropType, VNodeChild } from 'vue'
 import { useChartPresentation } from '@/model/presentation'
 import { Teleport, computed, defineComponent } from 'vue'
-import type { PropType, VNode } from 'vue'
 import { useCursorLayerRef } from '@/model/runtime'
 import type { TooltipPayload } from '@/types/tooltip'
 import type {
@@ -20,7 +20,7 @@ export const Cursor = defineComponent({
   name: 'Cursor',
   props: {
     cursor: [Boolean, Object],
-    cursorSlot: Function as PropType<(props: CursorSlotProps) => VNode>,
+    cursorSlot: Function as PropType<(props: CursorSlotProps) => VNodeChild>,
     tooltipEventType: String,
     coordinate: Object as PropType<ChartCoordinate>,
     payload: Array as PropType<TooltipPayload>,
@@ -46,7 +46,7 @@ export const Cursor = defineComponent({
       // Extract user-provided SVG props when cursor is a plain object (not boolean)
       const cursorSvgProps = (typeof cursor === 'object') ? cursor : {}
 
-      let cursorElement: VNode
+      let cursorElement: VNodeChild
       if (isScatterChart) {
         const { offset: _offset, ...coord } = props.coordinate!
         const off = offset.value

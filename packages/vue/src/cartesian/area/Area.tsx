@@ -1,9 +1,10 @@
+import type { PropType, SVGAttributes, ShallowRef, SlotsType, VNodeChild } from 'vue'
+import type { LabelListSlotProps } from '@/components/label/types'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { useSeriesPointEvents } from '@/events/usePointEvents'
 import { areaEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
-import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { AreaDotSlotProps, ResolvedAreaProps } from './type'
 import { AreaVueProps } from './type'
@@ -16,8 +17,8 @@ import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { useGraphicalLayerRef } from '@/model/runtime'
 
 export type AreaSlots = ActivePointsSlots & {
-  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
-  dot?: (props: AreaDotSlotProps) => any
+  label?: (props: LabelListSlotProps) => VNodeChild
+  dot?: (props: AreaDotSlotProps) => VNodeChild
 }
 
 // Geometry and rendering, deferred so every sibling has registered first (see useDeferredView).

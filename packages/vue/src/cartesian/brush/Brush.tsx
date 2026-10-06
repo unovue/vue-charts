@@ -1,6 +1,6 @@
+import type { CSSProperties, PropType, VNode } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, getCurrentInstance, h, nextTick, reactive, shallowRef, watch } from 'vue'
-import type { CSSProperties, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { BrushProps, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
@@ -166,7 +166,7 @@ const BrushView = defineComponent({
         x: xVal,
         y: yVal,
         width: wVal,
-        data: data as any[],
+        data: data as unknown[],
         startIndex: startIndex.value,
         endIndex: endIndex.value,
       }
@@ -192,7 +192,7 @@ const BrushView = defineComponent({
             y={yVal}
             width={wVal}
             height={hVal}
-            data={data as any[]}
+            data={data as unknown[]}
             padding={props.padding}
           >
             {{ default: slots.default }}
@@ -247,7 +247,7 @@ const BrushView = defineComponent({
               stroke={props.stroke}
               tickFormatter={props.tickFormatter}
               dataKey={props.dataKey}
-              data={data as any[]}
+              data={data as unknown[]}
               startX={startX}
               endX={endX}
             />
@@ -281,4 +281,4 @@ const _Brush = defineComponent({
 })
 
 // Preserve template slot inference in published declarations.
-export const Brush: typeof _Brush & { new (): { $slots: { default?: () => import('vue').VNodeChild } } } = _Brush
+export const Brush: typeof _Brush & { new (): { $slots: { default?: () => VNode[] } } } = _Brush

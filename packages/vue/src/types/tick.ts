@@ -1,8 +1,8 @@
+import type { SVGAttributes, VNode, VNodeChild } from 'vue'
 import type { CartesianViewBox } from '@/types/viewBox'
 import type { AxisType, CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
-import type { TickItem } from '@/types/common'
+import type { TickItem } from '@/types/base'
 import type { RechartsScale } from '@/types/scale'
-import type { SVGAttributes, VNode } from 'vue'
 
 /**
  * Ticks can be any type when the axis is the type of category.
@@ -19,10 +19,10 @@ export type TicksSettings = {
    * Ticks must be numbers when the axis is the type of number
    */
   ticks: ReadonlyArray<AxisTick> | undefined
-  tick: SVGAttributes | ((props: any) => VNode) | boolean
+  tick: SVGAttributes | ((props: unknown) => VNode) | boolean
 }
 
-export type TickFormatter = (value: any, index: number) => string
+export type TickFormatter = (value: unknown, index: number) => string
 
 export type AxisPropsNeededForTicksGenerator = {
   axisType?: AxisType
@@ -71,5 +71,5 @@ export interface AxisTickSlotProps {
 }
 
 export interface AxisSlots {
-  tick?: (props: AxisTickSlotProps) => import('vue').VNodeChild
+  tick?: (props: AxisTickSlotProps) => VNodeChild
 }

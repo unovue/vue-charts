@@ -1,8 +1,4 @@
-import { CartesianGridDefaultProps } from '@/cartesian/cartesian-grid/const'
-import type { AxisPropsForCartesianGridTicksGeneration } from '@/cartesian/cartesian-grid/type'
-import { getTicks } from '@/cartesian/utils/get-ticks'
-import type { ChartOffset, TickItem } from '@/types'
-import { getTicksOfAxis } from '@/core/axis/ticks'
+import type { TickItem } from '@/types'
 
 /**
  * Calculate the Coordinates of grid
@@ -38,58 +34,4 @@ export function getCoordinatesOfGrid(ticks: ReadonlyArray<TickItem>, minValue: n
   }
 
   return values
-}
-
-export type HorizontalCoordinatesGenerator = (
-  props: {
-    yAxis: AxisPropsForCartesianGridTicksGeneration
-    width: number
-    height: number
-    offset: ChartOffset
-  },
-  syncWithTicks: boolean,
-) => number[]
-
-export const defaultHorizontalCoordinatesGenerator: HorizontalCoordinatesGenerator = (
-  { yAxis, width, height, offset },
-  syncWithTicks,
-) => {
-  return getCoordinatesOfGrid(
-    getTicks({
-      ...CartesianGridDefaultProps,
-      ...yAxis,
-      ticks: getTicksOfAxis(yAxis, true)!,
-      viewBox: { x: 0, y: 0, width, height },
-    }),
-    offset.top!,
-    offset.top! + offset.height!,
-    syncWithTicks,
-  )
-}
-
-export type VerticalCoordinatesGenerator = (
-  props: {
-    xAxis: AxisPropsForCartesianGridTicksGeneration
-    width: number
-    height: number
-    offset: ChartOffset
-  },
-  syncWithTicks: boolean,
-) => number[]
-
-export const defaultVerticalCoordinatesGenerator: VerticalCoordinatesGenerator = (
-  { xAxis, width, height, offset },
-  syncWithTicks,
-) => {
-  return getCoordinatesOfGrid(
-    getTicks({
-      ...CartesianGridDefaultProps,
-      ...xAxis,
-      ticks: getTicksOfAxis(xAxis, true)!,
-      viewBox: { x: 0, y: 0, width, height },
-    }),
-    offset.left!,
-    offset.left! + offset.width!,
-    syncWithTicks,
-  )
 }

@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
+import { type PropType, type SlotsType, type VNode, computed, defineComponent } from 'vue'
 import { chartEmits } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
@@ -7,7 +7,7 @@ import { Heatmap, type HeatmapCell } from './Heatmap'
 export const CohortChartVueProps = {
   ...cellGridSharedProps,
   /** One row per cohort, oldest first. */
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
+  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   /** Field naming the cohort, e.g. its signup month. */
   cohortKey: { type: String, default: 'cohort' },
   /**
@@ -40,7 +40,7 @@ const _CohortChart = defineComponent({
   props: { ...CohortChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
-  slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => any }>,
+  slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
     const numbers = computed(() => new Intl.NumberFormat(props.locale))
 
@@ -115,5 +115,5 @@ const _CohortChart = defineComponent({
 })
 
 export const CohortChart = _CohortChart as typeof _CohortChart & {
-  new (): { $slots: CellGridSlots<HeatmapCell> & { default?: () => any } }
+  new (): { $slots: CellGridSlots<HeatmapCell> & { default?: () => VNode[] } }
 }

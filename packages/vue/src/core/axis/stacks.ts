@@ -121,12 +121,12 @@ const STACK_OFFSET_MAP: Record<string, OffsetAccessor> = {
 }
 
 export function getStackedData<T>(
-  data: ReadonlyArray<T>,
+  data: ReadonlyArray<unknown>,
   dataKeys: ReadonlyArray<DataKey<T>>,
   offsetType: StackOffsetType,
-): ReadonlyArray<Series<T, DataKey<T>>> {
+): ReadonlyArray<Series<unknown, DataKey<T>>> {
   const offsetAccessor: OffsetAccessor = STACK_OFFSET_MAP[offsetType]
-  const stack = shapeStack<T, DataKey<T>>()
+  const stack = shapeStack<unknown, DataKey<T>>()
     .keys(dataKeys)
     .value((d, key) => toFiniteNumber(getValueByDataKey(d, key)) ?? 0)
     .order(stackOrderNone)

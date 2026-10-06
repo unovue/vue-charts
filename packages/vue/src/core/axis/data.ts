@@ -82,7 +82,7 @@ export function appliedValues(
   return data.map(entry => ({ value: entry }))
 }
 
-export function isErrorBarRelevantForAxisType(
+function isErrorBarRelevantForAxisType(
   axisType: AxisType,
   errorBar: ErrorBarsSettings,
 ): boolean {
@@ -117,7 +117,7 @@ export function onlyAllowNumbers(data: ReadonlyArray<unknown>): ReadonlyArray<nu
     .filter(Number.isFinite)
 }
 
-export function getErrorDomainByDataKey(
+function getErrorDomainByDataKey(
   entry: unknown,
   appliedValue: unknown,
   relevantErrorBars: ReadonlyArray<ErrorBarsSettings> | undefined,

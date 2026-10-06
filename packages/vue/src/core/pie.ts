@@ -1,4 +1,5 @@
-import type { ChartOffset, Coordinate, DataKey } from '@/types/common'
+import type { ChartDataKey } from '@/types/base'
+import type { ChartOffset, Coordinate } from '@/types/common'
 import type { TooltipType } from '@/types/tooltip'
 import type { ChartData } from '@/types/chartData'
 import type { LegendPayload, LegendType } from '@/types/legend'
@@ -9,9 +10,9 @@ import { toFiniteNumber } from '@/utils/validate'
 
 export type ResolvedPieSettings = {
   name?: string | number | undefined
-  nameKey: DataKey<any>
+  nameKey: ChartDataKey
   data?: ChartData | undefined
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   tooltipType?: TooltipType | undefined
 
   legendType?: LegendType
@@ -24,12 +25,12 @@ export type ResolvedPieSettings = {
   paddingAngle?: number
   minAngle?: number
   innerRadius?: number | string
-  outerRadius?: number | string | ((element: any) => number)
+  outerRadius?: number | string | ((element: unknown) => number)
   cornerRadius?: number | string
   presentationProps?: Record<string, string>
 }
 
-export type PieCoordinate = {
+type PieCoordinate = {
   cx: number
   cy: number
   innerRadius: number
@@ -48,10 +49,10 @@ export type PieSectorDataItem = ResolvedPieSettings &
     midAngle: number
     middleRadius: number
     paddingAngle: number
-    payload: any
+    payload: unknown
     fill: string
     tooltipPosition: Coordinate
-    dataKey: DataKey<any>
+    dataKey: ChartDataKey
   }
 
 function parseDeltaAngle(startAngle: number, endAngle: number) {
@@ -60,7 +61,7 @@ function parseDeltaAngle(startAngle: number, endAngle: number) {
   return sign * deltaAngle
 }
 
-function getOuterRadius(dataPoint: unknown, outerRadius: number | string | ((element: any) => number) | undefined, maxPieRadius: number): number {
+function getOuterRadius(dataPoint: unknown, outerRadius: number | string | ((element: unknown) => number) | undefined, maxPieRadius: number): number {
   if (typeof outerRadius === 'function') {
     return getPercentValue(outerRadius(dataPoint), maxPieRadius, maxPieRadius * 0.8)
   }

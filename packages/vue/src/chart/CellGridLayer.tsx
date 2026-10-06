@@ -1,5 +1,5 @@
+import { type PropType, type SlotsType, type StyleValue, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
-import { type PropType, type SlotsType, type StyleValue, computed, defineComponent, ref, useId, watch } from 'vue'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { get } from 'es-toolkit/compat'
 import { useTooltipController } from '@/model/tooltip'
@@ -24,7 +24,7 @@ export interface CellSlotProps<P = unknown> {
 }
 
 export interface CellGridSlots<P = unknown> {
-  cell?: (props: CellSlotProps<P>) => any
+  cell?: (props: CellSlotProps<P>) => VNodeChild
 }
 
 export function isFocusVisible(element: Element) {

@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -24,7 +24,7 @@ const trackerStatusLabels: Record<string, string> = {
 
 const NO_DATA_COLOR = 'var(--v-charts-muted, #e5e5e5)'
 
-export type TrackerRow = Record<string, any>
+export type TrackerRow = Record<string, unknown>
 
 export const TrackerVueProps = {
   ...cellGridSharedProps,
@@ -49,7 +49,7 @@ const _Tracker = defineComponent({
   props: { ...TrackerVueProps, ...chartSizeProps },
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
-  slots: Object as SlotsType<CellGridSlots<TrackerRow> & { default?: () => any }>,
+  slots: Object as SlotsType<CellGridSlots<TrackerRow> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
     // A tracker is a strip: without a height or aspect it is 32px tall, not the 360px chart default.
     const size = useChartShell(reactive({
@@ -93,11 +93,11 @@ const _Tracker = defineComponent({
           y: 0,
           width: step,
           height,
-          fill: status == null ? NO_DATA_COLOR : colors[status] ?? NO_DATA_COLOR,
+          fill: status == null ? NO_DATA_COLOR : colors[status as string] ?? NO_DATA_COLOR,
           row: 0,
           column: index,
           label: labelOf(name, index),
-          value: status == null ? 'No data' : labels[status] ?? String(status),
+          value: status == null ? 'No data' : labels[status as string] ?? String(status),
           payload: row,
         }
       })
@@ -142,5 +142,5 @@ const _Tracker = defineComponent({
  * ```
  */
 export const Tracker = _Tracker as typeof _Tracker & {
-  new (): { $slots: CellGridSlots<TrackerRow> & { default?: () => any } }
+  new (): { $slots: CellGridSlots<TrackerRow> & { default?: () => VNode[] } }
 }

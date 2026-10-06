@@ -1,18 +1,19 @@
+import type { ChartDataKey } from '@/types/base'
 import type { PropType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-v'
 import { classProp } from '@/types'
-import type { DataKey, VuePropsToType, WithSVGProps } from '@/types'
+import type { VuePropsToType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 
 export const PieVueProps = {
   data: { type: Array as PropType<Array<Record<string, unknown>>>, default: undefined },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
+  nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   cx: { type: [Number, String], default: '50%' },
   cy: { type: [Number, String], default: '50%' },
   innerRadius: { type: [Number, String], default: 0 },
-  outerRadius: { type: [Number, String, Function] as PropType<number | string | ((element: any) => number)>, default: '80%' },
+  outerRadius: { type: [Number, String, Function] as PropType<number | string | ((element: unknown) => number)>, default: '80%' },
   startAngle: { type: Number, default: 0 },
   endAngle: { type: Number, default: 360 },
   paddingAngle: { type: Number, default: 0 },

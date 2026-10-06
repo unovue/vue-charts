@@ -72,7 +72,7 @@ export const LegendSymbol = defineComponent({
               cy={halfSize}
               size={SIZE}
               sizeType="diameter"
-              type={type as any}
+              type={type as import('@/shape/Symbols').SymbolType}
             />
           )
       }

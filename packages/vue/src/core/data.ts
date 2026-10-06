@@ -3,7 +3,7 @@ import { get } from 'es-toolkit/compat'
 import { isNullish, isNumOrStr } from '@/utils/validate'
 
 export function getValueByDataKey<T>(
-  obj: T,
+  obj: unknown,
   dataKey: DataKey<T> | undefined,
   defaultValue?: unknown,
 ) {
@@ -21,7 +21,8 @@ export function getValueByDataKey<T>(
   }
 
   if (typeof dataKey === 'function') {
-    return dataKey(obj)
+    // Data accessors operate on consumer-owned rows at this runtime boundary.
+    return Reflect.apply(dataKey, undefined, [obj])
   }
 
   return defaultValue

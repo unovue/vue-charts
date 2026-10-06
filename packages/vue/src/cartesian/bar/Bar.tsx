@@ -1,10 +1,10 @@
+import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { barEvents } from '@/events/itemEvents'
-import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { ResolvedBarProps } from './type'
+import type { BarSlots, ResolvedBarProps } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
 import { Layer } from '@/container/Layer'
@@ -36,12 +36,7 @@ const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> =
   }
 }
 
-export interface BarSlots {
-  label?: (props: import('@/components/label/types').LabelListSlotProps) => import('vue').VNodeChild
-  default?: () => import('vue').VNode[]
-  shape?: (props: BarRectangleItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
-  activeBar?: (props: BarRectangleItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
-}
+export type { BarSlots } from './type'
 
 const BarView = defineComponent({
   name: 'BarView',
@@ -84,7 +79,7 @@ const BarView = defineComponent({
     // Labels ride along with the bars as drawn on this frame and show the new value at once;
     // labels of entering and leaving bars fade with them.
     const labelListData = computed(() => drawn.value.map(({ bar: entry, index, opacity, key }) => {
-      const fill = cellPropsRef.value?.[index]?.fill ?? entry.payload?.fill ?? props.fill
+      const fill = cellPropsRef.value?.[index]?.fill ?? getValueByDataKey(entry.payload, 'fill') ?? props.fill
       return {
         x: entry.x,
         y: entry.y,

@@ -115,4 +115,17 @@ export default antfu(
       ],
     },
   },
+  {
+    files: ['packages/vue/src/**/*.{ts,tsx,vue}'],
+    ignores: [
+      '**/__tests__/**',
+      '**/__stories__/**',
+      '**/storybook/**',
+      '**/test/**',
+      '**/__breakit__/**',
+      '**/*.stories.*',
+      '**/*.story.*',
+    ],
+    rules: { 'ts/no-explicit-any': 'error' },
+  },
 )

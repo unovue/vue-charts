@@ -1,7 +1,7 @@
 import { getValueByDataKey } from '../../utils/chart'
 import type { BrushStartEndIndex } from './type'
 
-export function getIndexInRange(valueRange: number[], x: number) {
+function getIndexInRange(valueRange: number[], x: number) {
   const len = valueRange.length
   let start = 0
   let end = len - 1
@@ -30,7 +30,7 @@ export function getIndex({
   endX: number
   scaleValues: number[]
   gap: number
-  data: any[]
+  data: unknown[]
 }): BrushStartEndIndex {
   const lastIndex = data.length - 1
   const min = Math.min(startX, endX)
@@ -51,9 +51,9 @@ export function getTextOfTick({
   dataKey,
 }: {
   index: number
-  data: any[] | undefined
-  tickFormatter?: (value: any, index: number) => number | string
-  dataKey: any
+  data: unknown[] | undefined
+  tickFormatter?: (value: unknown, index: number) => number | string
+  dataKey: import('@/types').DataKey<Record<string, unknown>> | undefined
 }): number | string {
   const text = getValueByDataKey(data?.[index], dataKey, index)
   return typeof tickFormatter === 'function' ? tickFormatter(text, index) : text

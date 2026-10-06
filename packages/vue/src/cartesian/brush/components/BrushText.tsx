@@ -1,9 +1,9 @@
+import type { ChartDataKey } from '@/types/base'
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import { Layer } from '../../../container/Layer'
 import Text from '../../../components/Text.vue'
 import { getTextOfTick } from '../utils'
-import type { DataKey } from '../../../types/common'
 
 export const BrushText = defineComponent({
   name: 'BrushText',
@@ -14,9 +14,9 @@ export const BrushText = defineComponent({
     height: Number,
     travellerWidth: Number,
     stroke: String,
-    tickFormatter: Function as PropType<(value: any, index: number) => number | string>,
-    dataKey: [String, Function] as PropType<DataKey<any>>,
-    data: Array as PropType<any[]>,
+    tickFormatter: Function as PropType<(value: unknown, index: number) => number | string>,
+    dataKey: [String, Function] as PropType<ChartDataKey>,
+    data: Array as PropType<unknown[]>,
     startX: Number,
     endX: Number,
   },

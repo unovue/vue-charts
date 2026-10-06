@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { CSSProperties } from 'vue'
+
 import { useCanMeasureText } from '@/model/runtime'
 import { computed, useAttrs } from 'vue'
 import { getStringSize } from '@/utils/attrs'
@@ -34,7 +36,7 @@ const canMeasureText = useCanMeasureText()
 
 const BREAKING_SPACES = /[ \f\n\r\t\v\u2028\u2029]+/
 
-function calculateWordWidths(children: string | number, breakAll: boolean, style: any) {
+function calculateWordWidths(children: string | number, breakAll: boolean, style: CSSProperties) {
   let words: string[] = []
   if (children !== undefined && children !== null) {
     words = breakAll ? children.toString().split('') : children.toString().split(BREAKING_SPACES)
@@ -47,7 +49,7 @@ function calculateWordWidths(children: string | number, breakAll: boolean, style
 function calculateWordsByLines(
   maxLines: number | undefined,
   value: string | number,
-  style: any,
+  style: CSSProperties,
   breakAll: boolean,
   initialWordsWithComputedWidth: Array<{ word: string, width: number }>,
   spaceWidth: number,
@@ -57,7 +59,7 @@ function calculateWordsByLines(
   const shouldLimitLines = typeof maxLines === 'number'
   const text = value as string
   const calculate = (words: Array<{ word: string, width: number }> = []) => {
-    return words.reduce((result: any[], { word, width }) => {
+    return words.reduce((result: Array<{ words: string[], width: number }>, { word, width }) => {
       const currentLine = result[result.length - 1]
       if (
         currentLine
@@ -83,7 +85,7 @@ function calculateWordsByLines(
     return originalResult
   }
   const suffix = '…'
-  const checkOverflow = (index: number): [boolean, any[]] => {
+  const checkOverflow = (index: number): [boolean, Array<{ words: string[], width: number }>] => {
     const tempText = text.slice(0, index)
     const { wordsWithComputedWidth } = calculateWordWidths(tempText + suffix, breakAll, style)
     const result = calculate(wordsWithComputedWidth)
@@ -114,7 +116,12 @@ function calculateWordsByLines(
   return trimmedResult || originalResult
 }
 
-function getWordsByLines({ width, scaleToFit, value, style, breakAll, maxLines }: any) {
+function getWordsByLines(
+  { width, scaleToFit, value, style, breakAll, maxLines }: Pick<
+    typeof props,
+'width' | 'scaleToFit' | 'value' | 'style' | 'breakAll' | 'maxLines'
+  >,
+): Array<{ words: string[], width?: number }> {
   if ((width || scaleToFit)) {
     const wordWidths = calculateWordWidths(value, breakAll, style)
     const wordsWithComputedWidth = wordWidths.wordsWithComputedWidth

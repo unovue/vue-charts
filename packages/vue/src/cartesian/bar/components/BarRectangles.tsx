@@ -146,7 +146,7 @@ export const BarRectangles = defineComponent({
             const isActive = phase !== 'exit' && activeEnabled && index === activeIndex.value
             const activeBarProps = isActive && typeof props.activeBar === 'object' ? props.activeBar : {}
             // A per-row `fill` in the data and Cell props apply without a #shape slot, as in Recharts.
-            const entryFill = bar.payload?.fill
+            const entryFill = getValueByDataKey(bar.payload, 'fill')
             const barRectangleProps = {
               ...baseProps,
               ...(entryFill ? { fill: entryFill } : {}),

@@ -73,7 +73,7 @@ export interface SymbolsProps {
   sizeType?: SizeType
   fill?: string
   stroke?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 const pathCache = new Map<string, string | undefined>()

@@ -35,7 +35,7 @@ function getRealWidthHeight({ customWidth }: { customWidth?: number | string }, 
   }
 }
 
-export function computeFunnelTrapezoids({
+function computeFunnelTrapezoids({
   dataKey,
   nameKey,
   displayedData,

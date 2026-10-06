@@ -24,7 +24,7 @@ interface Rectangle {
  * @param defaultValue default minPointSize
  * @returns minPointSize
  */
-export function minPointSizeCallback(minPointSize: MinPointSize, defaultValue = 0) {
+function minPointSizeCallback(minPointSize: MinPointSize, defaultValue = 0) {
   return (value: unknown, index: number): number => {
     if (isNumber(minPointSize))
       return minPointSize

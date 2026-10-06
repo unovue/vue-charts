@@ -1,17 +1,18 @@
-import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
+import type { ChartDataKey } from '@/types/base'
+import type { LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
 
 export interface CategoricalChartProps {
   accessibilityLayer?: boolean
   barCategoryGap?: number | string
   barGap?: number | string
   barSize?: number | string
-  children?: any
+  children?: unknown
   class?: VueClassValue
   compact?: boolean
   cx?: number | string
   cy?: number | string
-  data?: any[]
-  dataKey?: DataKey<any>
+  data?: unknown[]
+  dataKey?: ChartDataKey
   desc?: string
   endAngle?: number
   height?: number
@@ -25,7 +26,7 @@ export interface CategoricalChartProps {
   role?: string
   stackOffset?: StackOffsetType
   startAngle?: number
-  style?: any
+  style?: unknown
   syncId?: number | string
   syncMethod?: SyncMethod
   tabIndex?: number

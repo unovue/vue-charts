@@ -1,6 +1,1 @@
-export {
-  isWellFormedNumberDomain,
-  extendDomain,
-  numericalDomainSpecifiedWithoutRequiringData,
-  parseNumericalUserDomain,
-} from '@/core/axis/userDomain'
+export { isWellFormedNumberDomain } from '@/core/axis/userDomain'

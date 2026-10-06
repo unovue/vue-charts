@@ -132,7 +132,7 @@ export function tooltipTicks(layout: LayoutType, axis: AxisWithTicksSettings, re
   // When axis is a categorical axis, but the type of axis is number or the scale of axis is not "auto"
   if (isCategorical && categoricalDomain) {
     return categoricalDomain.map(
-      (entry: any, index: number): TickItem => ({
+      (entry, index: number): TickItem => ({
         coordinate: scale(entry) + offset,
         value: entry,
         index,
@@ -143,9 +143,9 @@ export function tooltipTicks(layout: LayoutType, axis: AxisWithTicksSettings, re
 
   // When axis has duplicated text, serial numbers are used to generate scale
   return scale.domain().map(
-    (entry: any, index: number): TickItem => ({
+    (entry, index: number): TickItem => ({
       coordinate: scale(entry) + offset,
-      value: duplicateDomain ? duplicateDomain[entry] : entry,
+      value: duplicateDomain ? duplicateDomain[entry as number] : entry,
       index,
       offset,
     }),

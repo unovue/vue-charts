@@ -1,6 +1,7 @@
+import type { ChartDataKey, DataKey } from '@/types/base'
 import type { Series } from 'd3-shape'
 import type { BaseAxisWithScale } from '@/types/axisSettings'
-import type { DataKey, LayoutType, TickItem } from '@/types/common'
+import type { LayoutType, TickItem } from '@/types/common'
 import type { BarPositionPosition } from '@/types/bar'
 import type { StackId } from '@/types/tick'
 import type { MaybeStackedGraphicalItem } from '@/types/graphical'
@@ -12,7 +13,7 @@ import { mathSign } from '@/utils/data'
 import { toFiniteNumber } from '@/utils/validate'
 
 export interface RadialBarSettings extends MaybeStackedGraphicalItem {
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   minPointSize: number
   stackId: StackId | undefined
   maxBarSize: number | undefined
@@ -42,7 +43,7 @@ export function computeRadialBarDataItems({
   stackedData: Series<unknown, DataKey<unknown>> | undefined
   dataStartIndex: number
   stackedDomain: ReadonlyArray<unknown> | null
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   baseValue: number | unknown
   layout: LayoutType
   radiusAxis: BaseAxisWithScale

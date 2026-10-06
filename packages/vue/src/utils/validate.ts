@@ -1,7 +1,7 @@
 import type { LayoutType } from '@/types'
 import type { AxisType } from '@/types/axis'
 
-export function isNan(value: any): boolean {
+export function isNan(value: unknown): boolean {
   // eslint-disable-next-line eqeqeq
   return typeof value == 'number' && value != +value
 }
@@ -38,6 +38,8 @@ export function flushTiny(value: number): number {
 /**
  * validate the width and height props of a chart element
  * @param  {object} el A chart element
+ * @param {number} el.width Chart width
+ * @param {number} el.height Chart height
  * @return {boolean}   true If the props width and height are number, and greater than 0
  */
 export function validateWidthHeight({ width, height }: { width?: number, height?: number }): boolean {

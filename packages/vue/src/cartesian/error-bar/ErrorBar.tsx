@@ -10,7 +10,7 @@ import type { ErrorBarDirection } from '@/types/bar'
 import type { ErrorBarsSettings } from '@/types/graphical'
 
 export const ErrorBarVueProps = {
-  dataKey: { type: [String, Number, Function] as PropType<string | number | ((obj: any) => any)>, required: true as const },
+  dataKey: { type: [String, Number, Function] as PropType<string | number | ((obj: unknown) => unknown)>, required: true as const },
   width: { type: Number, default: 5 },
   direction: { type: String as PropType<ErrorBarDirection> },
   stroke: { type: String, default: 'var(--v-charts-axis, black)' },

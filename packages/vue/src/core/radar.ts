@@ -1,6 +1,6 @@
+import type { ChartDataKey } from '@/types/base'
 import { last } from 'es-toolkit/compat'
 import type { AngleAxisForRadar, RadarComposedData, RadiusAxisForRadar } from '@/types/radar'
-import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/core/data'
 import { polarToCartesian } from '@/utils/polar'
 import { toFiniteNumber } from '@/utils/validate'
@@ -14,13 +14,13 @@ export function computeRadarPoints({
 }: {
   radiusAxis: RadiusAxisForRadar
   angleAxis: AngleAxisForRadar
-  displayedData: any[]
-  dataKey: DataKey<any>
+  displayedData: unknown[]
+  dataKey: ChartDataKey
   bandSize: number
 }): RadarComposedData {
   const { cx, cy } = angleAxis
   let isRange = false
-  const points: any[] = []
+  const points: RadarComposedData['points'] = []
   const angleBandSize = angleAxis.type !== 'number' ? (bandSize ?? 0) : 0
 
   displayedData.forEach((entry, i) => {
@@ -46,17 +46,17 @@ export function computeRadarPoints({
     })
   })
 
-  const baseLinePoints: any[] = []
+  const baseLinePoints: RadarComposedData['baseLinePoints'] = []
 
   if (isRange) {
-    points.forEach((point: any) => {
+    points.forEach((point) => {
       if (Array.isArray(point.value)) {
         const baseValue = toFiniteNumber(point.value[0])
         const radius: number = baseValue == null ? 0 : (radiusAxis.scale(baseValue) ?? 0)
         baseLinePoints.push({
           ...point,
           radius,
-          ...polarToCartesian(cx, cy, radius, point.angle),
+          ...polarToCartesian(cx, cy, radius, point.angle!),
         })
       }
       else {

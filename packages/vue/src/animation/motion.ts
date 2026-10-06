@@ -1,9 +1,13 @@
 import type { ValueAnimationTransition } from 'motion-v'
 import { cubicBezier } from 'motion-v'
-import type { Reveal } from './useKeyedTransition'
 
 /** Options for a chart element's `transition` prop: duration, ease, delay, or a spring. */
 export type ChartTransition = ValueAnimationTransition<number>
+
+export interface Reveal<T> {
+  from?: (to: T) => T
+  order?: (to: T) => number
+}
 
 export interface PhaseTiming {
   /** Seconds. */

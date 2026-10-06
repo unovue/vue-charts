@@ -1,4 +1,4 @@
-import type { AxisRange, BaseCartesianAxis } from '@/types/axis'
+import type { AxisRange, BaseCartesianAxis, XAxisPadding, YAxisPadding } from '@/types/axis'
 import type { AppliedChartData } from '@/types/chartData'
 import type { ChartOffsetRequired, LayoutType } from '@/types/common'
 import { onlyAllowNumbers } from './data'
@@ -49,7 +49,7 @@ export function axisRangeWithReverse(
 
 export function xAxisRange(
   offset: ChartOffsetRequired,
-  padding: import('@/types/axis').XAxisPadding,
+  padding: XAxisPadding,
   calculated: number,
 ): AxisRange {
   const sides = typeof padding === 'string' ? { left: calculated, right: calculated } : padding
@@ -59,7 +59,7 @@ export function xAxisRange(
 export function yAxisRange(
   offset: ChartOffsetRequired,
   layout: LayoutType,
-  padding: import('@/types/axis').YAxisPadding,
+  padding: YAxisPadding,
   calculated: number,
 ): AxisRange {
   const sides = typeof padding === 'string' ? { top: calculated, bottom: calculated } : padding

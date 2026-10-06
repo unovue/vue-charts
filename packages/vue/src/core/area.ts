@@ -24,7 +24,7 @@ export type ComputedArea = {
   isRange: boolean
 }
 
-export function getBaseValue(layout: 'horizontal' | 'vertical', chartBaseValue: BaseValue | undefined, itemBaseValue: BaseValue | undefined, xAxis: BaseAxisWithScale, yAxis: BaseAxisWithScale): number {
+function getBaseValue(layout: 'horizontal' | 'vertical', chartBaseValue: BaseValue | undefined, itemBaseValue: BaseValue | undefined, xAxis: BaseAxisWithScale, yAxis: BaseAxisWithScale): number {
   // The baseValue can be defined both on the AreaChart, and on the Area.
   // The value for the item takes precedence.
   const baseValue = itemBaseValue ?? chartBaseValue

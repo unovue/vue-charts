@@ -1,3 +1,4 @@
+import type { Component, VNodeChild } from 'vue'
 import type { TooltipPayload } from '@/types/tooltip'
 import type {
   ChartCoordinate,
@@ -7,8 +8,8 @@ import type { Point } from '@/shape'
 
 // Types
 export type ContentType =
-  | any
-  | ((props: TooltipContentProps) => any)
+  | Component
+  | ((props: TooltipContentProps) => VNodeChild)
 
 export type TooltipContentProps = {
   label?: string | number
@@ -17,7 +18,7 @@ export type TooltipContentProps = {
   active: boolean
   accessibilityLayer: boolean
   // Other tooltip props
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export type AllowInDimension = { x: boolean, y: boolean }
@@ -35,7 +36,7 @@ type CursorSlotCommon = {
   payload: TooltipPayload
   /** Active tooltip index — named payloadIndex to match Recharts */
   payloadIndex: string | undefined
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export type CrossCursorSlotProps = CursorSlotCommon & {

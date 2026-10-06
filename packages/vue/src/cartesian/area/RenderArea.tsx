@@ -19,7 +19,7 @@ import { useOffset } from '@/context/chartLayoutContext'
 import { LabelList } from '@/components/label/LabelList'
 
 // 简化的 Dots 组件 - 使用 context
-export const Dots = defineComponent({
+const Dots = defineComponent({
   name: 'Dots',
   props: {
     keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },

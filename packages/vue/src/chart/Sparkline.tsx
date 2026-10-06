@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, computed, defineComponent, reactive, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, ref, useId, watch } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
@@ -15,7 +15,7 @@ import { CellGridLayer, cellChartOptions, cellGridSharedProps, isFocusVisible } 
 import type { GridCell } from './cellGridUtils'
 
 type SparkValue = number | null | undefined
-type SparkRow = SparkValue | Record<string, any>
+type SparkRow = SparkValue | Record<string, unknown>
 
 interface SparkPoint {
   x: number
@@ -315,7 +315,7 @@ const _Sparkline = defineComponent({
   props: { ...SparklineVueProps, ...chartSizeProps },
   inheritAttrs: false,
   emits: { ...chartEmits, ...sparklineEmits },
-  slots: Object as SlotsType<{ default?: () => any }>,
+  slots: Object as SlotsType<{ default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
     const size = useChartShell(reactive({
       width: computed(() => props.width),
@@ -353,5 +353,5 @@ const _Sparkline = defineComponent({
  * ```
  */
 export const Sparkline = _Sparkline as typeof _Sparkline & {
-  new (): { $slots: { default?: () => any } }
+  new (): { $slots: { default?: () => VNode[] } }
 }

@@ -1,6 +1,6 @@
+import type { ExtractPropTypes, PropType, SVGAttributes, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SVGAttributes } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
 import { Layer } from '@/container/Layer'
@@ -12,7 +12,7 @@ import { isNumOrStr, isWellBehavedNumber } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
 
-export const ReferenceLineVueProps = {
+const ReferenceLineVueProps = {
   x: { type: [Number, String] as PropType<number | string>, default: undefined },
   y: { type: [Number, String] as PropType<number | string>, default: undefined },
   xAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
@@ -20,7 +20,7 @@ export const ReferenceLineVueProps = {
   stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   strokeWidth: { type: [Number, String], default: 1 },
   fill: { type: String, default: 'none' },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
   class: classProp,
 }
@@ -165,4 +165,4 @@ const _ReferenceLine = defineComponent({
 })
 
 // Preserve template slot inference in published declarations.
-export const ReferenceLine: typeof _ReferenceLine & { new (): { $slots: { shape?: (props: { x1: number, y1: number, x2: number, y2: number }) => import('vue').VNodeChild } } } = _ReferenceLine
+export const ReferenceLine: typeof _ReferenceLine & { new (): { $slots: { shape?: (props: { x1: number, y1: number, x2: number, y2: number }) => VNodeChild } } } = _ReferenceLine

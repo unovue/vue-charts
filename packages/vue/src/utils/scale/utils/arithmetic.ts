@@ -1,5 +1,4 @@
 import Decimal from 'decimal.js-light'
-import { curry } from './utils'
 
 /**
  * 获取数值的位数
@@ -47,50 +46,5 @@ function rangeStep(start: Decimal, end: Decimal, step: Decimal) {
 
   return result
 }
-/**
- * 对数值进行线性插值
- *
- * @param  {number} a  定义域的极点
- * @param  {number} b  定义域的极点
- * @param  {number} t  [0, 1]内的某个值
- * @return {number}    定义域内的某个值
- */
-const interpolateNumber = curry((a: number, b: number, t: number) => {
-  const newA = +a
-  const newB = +b
 
-  return newA + t * (newB - newA)
-})
-/**
- * 线性插值的逆运算
- *
- * @param  {number} a 定义域的极点
- * @param  {number} b 定义域的极点
- * @param  {number} x 可以认为是插值后的一个输出值
- * @return {number}   当x在 a ~ b这个范围内时，返回值属于[0, 1]
- */
-const uninterpolateNumber = curry((a: number, b: number, x: number) => {
-  let diff = b - +a
-
-  diff = diff || Infinity
-
-  return (x - a) / diff
-})
-/**
- * 线性插值的逆运算，并且有截断的操作
- *
- * @param  {number} a 定义域的极点
- * @param  {number} b 定义域的极点
- * @param  {number} x 可以认为是插值后的一个输出值
- * @return {number}   当x在 a ~ b这个区间内时，返回值属于[0, 1]，
- * 当x不在 a ~ b这个区间时，会截断到 a ~ b 这个区间
- */
-const uninterpolateTruncation = curry((a: number, b: number, x: number) => {
-  let diff = b - +a
-
-  diff = diff || Infinity
-
-  return Math.max(0, Math.min(1, (x - a) / diff))
-})
-
-export { rangeStep, getDigitCount, interpolateNumber, uninterpolateNumber, uninterpolateTruncation }
+export { rangeStep, getDigitCount }

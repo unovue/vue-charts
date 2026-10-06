@@ -1,4 +1,4 @@
-import type { DataKey } from '@/types/common'
+import type { ChartDataKey } from '@/types/base'
 
 export type LegendType =
   | 'circle'
@@ -22,8 +22,8 @@ export interface LegendPayload {
   color?: string
   payload?: {
     strokeDasharray?: number | string
-    value?: any
+    value?: unknown
   }
   inactive?: boolean
-  dataKey?: DataKey<any>
+  dataKey?: ChartDataKey
 }

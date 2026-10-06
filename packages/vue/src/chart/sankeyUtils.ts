@@ -4,14 +4,14 @@ import { warn } from '@/utils/log'
 
 export interface SankeyInputNode {
   name?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface SankeyInputLink {
   source: number | string
   target: number | string
   value: number
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export type SankeyLayoutNode = SankeyNode<SankeyInputNode, SankeyInputLink>
@@ -124,4 +124,4 @@ export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSanke
 }
 
 export const linkPathGenerator: (link: SankeyLayoutLink) => string | null
-  = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>() as any
+  = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>()

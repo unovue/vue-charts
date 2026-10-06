@@ -1,5 +1,5 @@
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { type PropType, type SlotsType, computed, defineComponent, reactive } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -16,7 +16,7 @@ export interface HeatmapCell {
   /** Sum of the rows for this x and y; `null` when there are none. */
   value: number | null
   /** The rows behind this cell. */
-  rows: Record<string, any>[]
+  rows: Record<string, unknown>[]
 }
 
 const LABEL_GAP = 6
@@ -28,7 +28,7 @@ const CHAR_WIDTH = 6
 
 export const HeatmapVueProps = {
   ...cellGridSharedProps,
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
+  data: { type: Array as PropType<Record<string, unknown>[]>, required: true as const },
   /** Field for the column. */
   xKey: { type: String, default: 'x' },
   /** Field for the row. */
@@ -67,7 +67,7 @@ const _Heatmap = defineComponent({
   props: { ...HeatmapVueProps, ...chartSizeProps },
   inheritAttrs: false,
   emits: { ...chartEmits, ...cellGridEmits },
-  slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => any }>,
+  slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
     const rows = useTrackedData(() => props.data)
 
@@ -263,5 +263,5 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  * ```
  */
 export const Heatmap = _Heatmap as typeof _Heatmap & {
-  new (): { $slots: CellGridSlots<HeatmapCell> & { default?: () => any } }
+  new (): { $slots: CellGridSlots<HeatmapCell> & { default?: () => VNode[] } }
 }

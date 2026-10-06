@@ -5,7 +5,7 @@ import type { InjectionKey, Ref } from 'vue'
 import { isServer } from '@/utils/env'
 import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, onScopeDispose, provide, ref, ssrContextKey } from 'vue'
 
-export interface ChartRuntime {
+interface ChartRuntime {
   readonly renderPhase: Readonly<Ref<boolean>>
   readonly seriesMotion: Set<() => boolean>
   readonly gesture: Ref<boolean>

@@ -1,3 +1,4 @@
+import type { ChartDataKey } from '@/types/base'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
@@ -20,7 +21,6 @@ import { interpolate } from '@/utils/data-utils'
 import { ActivePoints } from '@/cartesian/line/ActivePoints'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import type { DataKey } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 import type { RadarPoint } from '@/types/radar'
@@ -30,7 +30,7 @@ function getLegendItemColor(stroke: string | undefined, fill: string | undefined
 }
 
 const RadarViewProps = {
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
   name: { type: String, default: undefined },
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
@@ -39,12 +39,12 @@ const RadarViewProps = {
   fillOpacity: { type: Number, default: 0.6 },
   strokeWidth: { type: Number, default: undefined },
   strokeDasharray: { type: String, default: undefined },
-  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
   hide: { type: Boolean, default: false },
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   connectNulls: { type: Boolean, default: false },
-  label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  label: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,

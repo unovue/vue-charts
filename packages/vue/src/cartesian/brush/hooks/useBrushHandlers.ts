@@ -15,14 +15,14 @@ export interface UseBrushHandlersProps {
   leaveTimeOut: number
   onChange?: (index: BrushStartEndIndex) => void
   onDragEnd?: (index: BrushStartEndIndex) => void
-  data?: any[]
+  data?: unknown[]
 }
 
 export function useBrushHandlers(
   brushState: Ref<BrushState>,
   props: UseBrushHandlersProps,
   onChange: (index: BrushStartEndIndex) => void,
-  chartData: () => any[],
+  chartData: () => unknown[],
 ) {
   const leaveTimer = useTimeoutFn(handleDragEnd, () => props.leaveTimeOut, { immediate: false })
   let stopDragListeners: (() => void)[] = []

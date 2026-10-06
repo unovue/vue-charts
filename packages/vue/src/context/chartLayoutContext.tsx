@@ -20,8 +20,6 @@ export function useChartHeight() {
   return useChartPresentation().height
 }
 
-export const useOffsetInternal = useOffset
-
 export function useMargin() {
   return useChartPresentation().margin
 }

@@ -1,9 +1,9 @@
+import type { InjectionKey, Ref, SVGAttributes, ShallowRef, VNodeChild } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartPresentation } from '@/model/presentation'
 import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
-import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeArea } from '@/core/area'
 import { getNormalizedStackId, isClipDot } from '@/core/coordinates'
@@ -23,12 +23,12 @@ export interface AreaContext {
   attrs: SVGAttributes
 
   // 计算属性
-  dot: any
+  dot: unknown
   clipDot: boolean
   dotSize: number
 
   // dot slot for custom rendering
-  dotSlot?: (props: AreaDotSlotProps) => any
+  dotSlot?: (props: AreaDotSlotProps) => VNodeChild
 
   areaData: Readonly<ShallowRef<ComputedArea | undefined>>
 
@@ -37,10 +37,10 @@ export interface AreaContext {
 }
 
 // Injection Key
-export const AreaContextKey: InjectionKey<AreaContext> = Symbol('AreaContext')
+const AreaContextKey: InjectionKey<AreaContext> = Symbol('AreaContext')
 
 // 提供 Area Context
-export function provideAreaContext(context: AreaContext) {
+function provideAreaContext(context: AreaContext) {
   provide(AreaContextKey, context)
 }
 
@@ -53,7 +53,7 @@ export function useAreaContext() {
   return context
 }
 
-export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => any) {
+export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => VNodeChild) {
   const chart = useChart()
   const layout = useChartLayout()
   const chartName = useChartPresentation().name
@@ -121,7 +121,7 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
   const dot = props.dot
   const clipDot = isClipDot(dot)
   const { r = 3, strokeWidth = 2 } = filterProps(dot, false) ?? { r: 3, strokeWidth: 2 }
-  const dotSize = r * 2 + strokeWidth
+  const dotSize = (r as number) * 2 + (strokeWidth as number)
 
   // Create Area Context - 保持响应式
   const areaContext: AreaContext = {

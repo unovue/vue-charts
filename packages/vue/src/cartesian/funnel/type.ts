@@ -1,15 +1,16 @@
+import type { ChartDataKey } from '@/types/base'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { PropType } from 'vue'
 import { classProp } from '@/types'
-import type { DataKey, TooltipType, WithSVGProps } from '@/types'
+import type { TooltipType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 
 export type { FunnelTrapezoidItem, FunnelComposedData } from '@/types/funnel'
 
 export interface FunnelProps {
   // activeShape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
-  data?: any[]
-  dataKey: DataKey<any>
+  data?: unknown[]
+  dataKey: ChartDataKey
   hide?: boolean
   id?: string
   isAnimationActive?: boolean
@@ -17,7 +18,7 @@ export interface FunnelProps {
   // label?: ImplicitLabelListType<any>
   lastShapeType?: 'triangle' | 'rectangle'
   legendType?: LegendType
-  nameKey?: DataKey<any>
+  nameKey?: ChartDataKey
   reversed?: boolean
   // shape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
   tooltipType?: TooltipType
@@ -25,8 +26,8 @@ export interface FunnelProps {
 
 export const FunnelVueProps = {
   data: { type: Array as PropType<Array<Record<string, unknown>>>, default: undefined },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
+  nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
   lastShapeType: { type: String as PropType<'triangle' | 'rectangle'>, default: 'triangle' },
   reversed: { type: Boolean, default: false },
   fill: { type: String, default: 'var(--v-charts-series, #808080)' },

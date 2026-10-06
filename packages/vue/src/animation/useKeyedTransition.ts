@@ -4,11 +4,11 @@ import { isEqual } from 'es-toolkit'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import type { ShallowRef } from 'vue'
 import { getCurrentInstance, nextTick, onMounted, onScopeDispose, shallowRef, watch } from 'vue'
-import type { ChartTransition, PhaseTiming } from './motion'
+import type { ChartTransition, PhaseTiming, Reveal } from './motion'
 import { cascadeTiming, motionTokens } from './motion'
 import { isServerRender, shouldSkipEntrance, useChartGesture, useChartInView, useChartSize, useSeriesMotion } from '@/model/runtime'
 
-export type TransitionPhase = 'enter' | 'update' | 'exit'
+type TransitionPhase = 'enter' | 'update' | 'exit'
 
 export interface DisplayItem<T> {
   key: PropertyKey
@@ -64,11 +64,6 @@ export interface KeyedTransitionOptions<T> {
   reveal?: () => Reveal<T> | undefined
   onStart?: () => void
   onEnd?: () => void
-}
-
-export interface Reveal<T> {
-  from?: (to: T) => T
-  order?: (to: T) => number
 }
 
 export interface Neighbors<T> {

@@ -1,7 +1,7 @@
+import type { LinePointItem, LineSlots, ResolvedLineProps } from '../type'
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartPresentation } from '@/model/presentation'
-import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
 import { useChart } from '@/model/chart'
@@ -21,14 +21,14 @@ export interface LineContext {
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
   isAnimating: Ref<boolean>
   needClip: ComputedRef<boolean>
-  dot: any
+  dot: unknown
   clipDot: boolean
   dotSize: number
-  shapeSlot?: (props: any) => any
-  dotSlot?: (props: any) => any
-  labelSlot?: (props: any) => any
+  shapeSlot?: LineSlots['shape']
+  dotSlot?: LineSlots['dot']
+  labelSlot?: LineSlots['label']
   /** The labels as drawn on this frame; LabelList children read them. */
-  labelData: ShallowRef<readonly any[] | undefined>
+  labelData: ShallowRef<readonly import('@/components/label/types').Data[] | undefined>
 }
 
 // Injection Key
@@ -48,7 +48,13 @@ export function useLineContext() {
   return context
 }
 
-export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
+export function useLine(
+  props: ResolvedLineProps,
+  attrs: SVGAttributes = {},
+  shapeSlot?: LineSlots['shape'],
+  dotSlot?: LineSlots['dot'],
+  labelSlot?: LineSlots['label'],
+) {
   const chart = useChart()
   const layout = useChartLayout()
   const chartName = useChartPresentation().name
@@ -90,7 +96,7 @@ export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, sha
   const dot = props.dot
   const clipDot = isClipDot(dot)
   const { r = 3, strokeWidth = 2 } = filterProps(dot, false) ?? { r: 3, strokeWidth: 2 }
-  const dotSize = r * 2 + strokeWidth
+  const dotSize = (r as number) * 2 + (strokeWidth as number)
 
   // Create Line Context - 保持响应式
   const lineContext: LineContext = {

@@ -3,7 +3,7 @@ import { getValueByDataKey as readDataKey } from '@/core/data'
 import { toRaw } from 'vue'
 
 export function getValueByDataKey<T>(
-  obj: T,
+  obj: unknown,
   dataKey: DataKey<T> | undefined,
   defaultValue?: unknown,
 ) {

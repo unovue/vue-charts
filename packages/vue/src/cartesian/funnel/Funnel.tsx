@@ -1,6 +1,6 @@
+import type { ComputedRef, ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { funnelEvents } from '@/events/itemEvents'
-import type { ComputedRef, ExtractPropTypes, PropType, ShallowRef, SlotsType } from 'vue'
 import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useTrackedData } from '@/hooks/useTrackedData'
@@ -17,8 +17,8 @@ import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 
 export interface FunnelSlots {
-  shape?: (props: FunnelTrapezoidItem) => import('vue').VNodeChild
-  default?: () => import('vue').VNodeChild
+  shape?: (props: FunnelTrapezoidItem) => VNodeChild
+  default?: () => VNode[]
 }
 
 const FunnelView = defineComponent({
@@ -32,8 +32,8 @@ const FunnelView = defineComponent({
     cellPropsRef: { type: Object as PropType<ShallowRef<ReturnType<typeof extractCellProps>>>, required: true },
   },
   slots: Object as SlotsType<{
-    shape?: (props: FunnelTrapezoidItem) => any
-    default?: () => any
+    shape?: (props: FunnelTrapezoidItem) => VNodeChild
+    default?: () => VNode[]
   }>,
   setup(view, { slots }) {
     const emit = funnelEvents.use()
@@ -69,7 +69,7 @@ const FunnelView = defineComponent({
 
     const tooltipConfiguration = computed(() => ({
       dataDefinedOnItem: data.value ?? [],
-      positions: trapezoids.value.map((t: any) => t.tooltipPosition),
+      positions: trapezoids.value.map(t => t.tooltipPosition),
       settings: {
         dataKey: props.dataKey,
         nameKey: props.nameKey,
@@ -90,7 +90,7 @@ const FunnelView = defineComponent({
       if (items.value.length === 0)
         return undefined
       return items.value.map((item) => {
-        const trap = item.value as any
+        const trap = item.value
         const opacity = labelOpacity(item)
         return {
           x: trap.x,
@@ -142,7 +142,7 @@ const FunnelView = defineComponent({
         <Layer class={['v-charts-funnel', props.class]}>
           {items.value.map(({ key, value: trap }) => {
             const cellProps = cells[trap.index] ?? {}
-            const trapFill = cellProps.fill ?? trap.payload?.fill ?? props.fill
+            const trapFill = cellProps.fill ?? getValueByDataKey(trap.payload, 'fill') ?? props.fill
             const trapStroke = cellProps.stroke ?? stroke
 
             const trapezoidProps = {
@@ -195,14 +195,14 @@ const _Funnel = defineComponent({
   props: FunnelVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
-    shape?: (props: FunnelTrapezoidItem) => any
-    default?: () => any
+    shape?: (props: FunnelTrapezoidItem) => VNodeChild
+    default?: () => VNode[]
   }>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     funnelEvents.provide(emit)
     const data = useTrackedData(() => props.data)
-    const cellPropsRef = shallowRef<Record<string, any>[]>([])
+    const cellPropsRef = shallowRef<Array<SVGAttributes & Record<string, unknown>>>([])
     const funnelSettings = computed<ResolvedFunnelSettings>(() => ({
       data: data.value,
       dataKey: props.dataKey,
@@ -242,11 +242,11 @@ const _Funnel = defineComponent({
       if (!trapList || trapList.length === 0)
         return []
       const cells = cellPropsRef.value
-      return trapList.map((trap: any, i: number) => ({
+      return trapList.map((trap, i: number) => ({
         type: props.legendType,
         value: String(trap.name ?? ''),
         color: cells[i]?.fill ?? trap.fill ?? props.fill,
-        payload: trap.payload,
+        payload: trap.payload as import('@/types/legend').LegendPayload['payload'],
         dataKey: props.dataKey,
         inactive: props.hide,
       }))

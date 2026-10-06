@@ -1,7 +1,8 @@
+import type { ChartDataKey } from '@/types/base'
+import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { scatterEvents } from '@/events/itemEvents'
-import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -15,7 +16,6 @@ import { Curve } from '@/shape/Curve'
 import type { CurveType } from '@/shape/Curve'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { LabelList } from '@/components/label/LabelList'
-import type { DataKey } from '@/types'
 import type { TooltipType } from '@/types/tooltip'
 import type { ScatterPointItem } from '@/types/common'
 import type { ErrorBarDirection } from '@/types/bar'
@@ -32,7 +32,7 @@ const interpolateNumber = (from: number, to: number) => (t: number) => from + (t
 
 const errorBarDataPointFormatter: ErrorBarDataPointFormatter<ScatterPointItem> = (
   dataPoint: ScatterPointItem,
-  dataKey: DataKey<any>,
+  dataKey: ChartDataKey,
   direction: ErrorBarDirection,
 ) => ({
   x: dataPoint.cx,
@@ -45,8 +45,8 @@ const ScatterVueProps = {
   xAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   zAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
-  data: { type: Array as PropType<ReadonlyArray<Record<string, any>>>, default: undefined },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: undefined },
+  data: { type: Array as PropType<ReadonlyArray<Record<string, unknown>>>, default: undefined },
   name: { type: [String, Number] as PropType<string | number>, default: undefined },
   hide: { type: Boolean, default: false },
   fill: { type: String, default: undefined },
@@ -56,7 +56,7 @@ const ScatterVueProps = {
   lineType: { type: String as PropType<'fitting' | 'joint'>, default: 'joint' },
   lineJointType: { type: [String, Function] as PropType<CurveType>, default: 'linear' },
   label: { type: [Boolean, Object], default: false },
-  legendType: { type: String, default: 'circle' },
+  legendType: { type: String as PropType<import('@/types/legend').LegendType>, default: 'circle' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
   transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
@@ -70,8 +70,8 @@ const ScatterView = defineComponent({
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
   slots: Object as SlotsType<{
-    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
-    default?: () => any
+    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild
+    default?: () => VNode[]
   }>,
   setup(view, { slots }) {
     const chart = useChart()
@@ -297,18 +297,18 @@ const _Scatter = defineComponent({
   props: ScatterVueProps,
   inheritAttrs: false,
   slots: Object as SlotsType<{
-    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild
-    default?: () => any
+    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild
+    default?: () => VNode[]
   }>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useLegendHiddenProps(inputProps)
     scatterEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    const data = useSetupGraphicalItem(props, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
     return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
 
 // Preserve template slot inference in published declarations.
-export const Scatter: typeof _Scatter & { new (): { $slots: { default?: () => import('vue').VNode[], shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => import('vue').VNodeChild } } } = _Scatter
+export const Scatter: typeof _Scatter & { new (): { $slots: { default?: () => VNode[], shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild } } } = _Scatter

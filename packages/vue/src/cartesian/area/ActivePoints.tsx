@@ -1,8 +1,8 @@
+import type { ChartDataKey, DataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent } from 'vue'
 import { parseTooltipIndex } from '@/core/tooltip'
 import type { PropType, SlotsType, VNode } from 'vue'
-import type { DataKey, VuePropsToType } from '@/types'
 import type { AreaPointItem } from '@/core/area'
 import type { Point } from '@/shape/Curve'
 import { isNullish } from '@/utils'
@@ -13,19 +13,17 @@ import { ActiveDot } from '@/animation/ActiveDot'
 export interface PointType {
   readonly x: number
   readonly y: number
-  readonly value?: any
-  readonly payload?: any
+  readonly value?: number | number[]
+  readonly payload?: unknown
 }
 
 const ActivePointsVueProps = {
   isAnimationActive: { type: Boolean, default: true },
   points: { type: Array as PropType<ReadonlyArray<Point>>, required: true },
   mainColor: { type: String, required: true },
-  itemDataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true },
-  activeDot: { type: [Object, Boolean, Function] as PropType<any>, required: true },
+  itemDataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true },
+  activeDot: { type: [Object, Boolean, Function] as PropType<boolean | object | Function | undefined>, required: true },
 }
-
-export type ActivePointsProps = VuePropsToType<typeof ActivePointsVueProps>
 
 export type ActivePointSlotProps = {
   'index': number
@@ -37,7 +35,7 @@ export type ActivePointSlotProps = {
   'stroke-width': number
   'stroke': string
   'payload': AreaPointItem['payload']
-  'value'?: AreaPointItem['value']
+  'value'?: number | number[]
 }
 
 export type ActivePointsSlots = {
@@ -85,10 +83,10 @@ function renderActivePoint({
   slots,
 }: {
   point: PointType
-  activeDot: any
+  activeDot: boolean | object | Function | undefined
   isAnimationActive: boolean
   childIndex: number
-  dataKey: DataKey<any>
+  dataKey: ChartDataKey
   /**
    * Different graphical elements have different opinion on what is their main color.
    * Sometimes stroke, sometimes fill, sometimes combination.
@@ -99,7 +97,7 @@ function renderActivePoint({
   if (activeDot === false) {
     return null
   }
-  const dotProps: any = {
+  const dotProps = {
     'index': childIndex,
     dataKey,
     'cx': point.x,

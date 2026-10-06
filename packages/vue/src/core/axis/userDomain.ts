@@ -16,7 +16,7 @@ export function isWellFormedNumberDomain(v: unknown): v is NumberDomain {
   return false
 }
 
-export function extendDomain(
+function extendDomain(
   providedDomain: NumberDomain,
   boundaryDomain: NumberDomain,
   allowDataOverflow: boolean,

@@ -4,7 +4,7 @@ import type { Size } from '@/types'
  * @param {number} angle Angle in degrees.
  * @return {number} the normalized angle with a value of at least 0 and never greater or equal to 180.
  */
-export function normalizeAngle(angle: number) {
+function normalizeAngle(angle: number) {
   return ((angle % 180) + 180) % 180
 }
 

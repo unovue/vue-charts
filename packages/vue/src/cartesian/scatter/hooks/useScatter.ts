@@ -1,14 +1,15 @@
+import type { ChartDataKey } from '@/types/base'
 import { computed } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeScatterPoints } from '@/core/scatter'
 import type { ResolvedScatterSettings } from '@/core/scatter'
-import type { DataKey, TooltipType } from '@/types'
+import type { TooltipType } from '@/types'
 
 export interface ScatterProps {
   xAxisId?: string | number
   yAxisId?: string | number
   zAxisId?: string | number
-  dataKey?: DataKey<any>
+  dataKey?: ChartDataKey
   data?: ReadonlyArray<unknown>
   name?: string | number
   hide?: boolean

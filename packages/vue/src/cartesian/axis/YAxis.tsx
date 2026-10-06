@@ -1,3 +1,4 @@
+import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import type { AxisSlots, TickFormatter } from '@/types/tick'
 import { useCanMeasureText } from '@/model/runtime'
@@ -7,7 +8,6 @@ import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } 
 import type { YAxisSettings } from '@/types/axisSettings'
 import { implicitYAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { DataKey } from '@/types'
 import type { AxisDomain, AxisInterval } from '@/types/axis'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
@@ -144,7 +144,7 @@ const YAxisSettingsDispatcher = defineComponent({
     tickFormatter: Function as PropType<TickFormatter>,
     domain: Array as PropType<AxisDomain>,
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
       default: undefined,
     },
   },
@@ -243,7 +243,7 @@ const _YAxis = defineComponent({
       type: [String, Number],
     },
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
       default: undefined,
     },
     tickFormatter: {

@@ -1,7 +1,7 @@
+import type { BarSlots, ResolvedBarProps } from '../type'
 import { computed, inject, provide, ref, shallowRef } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
-import type { ResolvedBarProps } from '../type'
 import { getNormalizedStackId } from '@/core/coordinates'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
@@ -18,9 +18,9 @@ export interface BarContext {
   attrs: SVGAttributes
   data: Readonly<ShallowRef<readonly BarRectangleItem[] | undefined>>
   isAnimating: Ref<boolean>
-  shapeSlot?: (props: any) => any
-  activeBarSlot?: (props: any) => any
-  cellProps: ShallowRef<Record<string, any>[]>
+  shapeSlot?: BarSlots['shape']
+  activeBarSlot?: BarSlots['shape']
+  cellProps: ShallowRef<Record<string, unknown>[]>
   /** Where the bars sit in their category band, so bars can enter and leave between categories. */
   band: Readonly<Ref<{ offset: number, size: number } | undefined>>
   /** The bars as drawn on this frame, so labels can ride along with them. */
@@ -38,7 +38,7 @@ export interface DrawnBar {
 }
 const barKey: InjectionKey<BarContext> = Symbol('v-charts-bar-context')
 
-export function provideBarContext(value: BarContext) {
+function provideBarContext(value: BarContext) {
   provide(barKey, value)
   return value
 }
@@ -52,7 +52,12 @@ export function useBarContext(fallback?: BarContext | null) {
   return value
 }
 
-export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
+export function useBar(
+  props: ResolvedBarProps,
+  attrs: SVGAttributes,
+  shapeSlot?: BarSlots['shape'],
+  activeBarSlot?: BarSlots['activeBar'],
+) {
   const chart = useChart()
   const layout = useChartLayout()
   const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
@@ -130,7 +135,7 @@ export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?
 
   const clipPathId = useChartId('v-charts-bar')
   const isAnimating = ref(false)
-  const cellPropsRef = shallowRef<Record<string, any>[]>([])
+  const cellPropsRef = shallowRef<Record<string, unknown>[]>([])
   const drawn = shallowRef<readonly DrawnBar[]>([])
 
   provideBarContext({

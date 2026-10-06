@@ -1,12 +1,13 @@
+import type { ChartDataKey } from '@/types/base'
 import type { PropType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-v'
-import type { DataKey, WithSVGProps } from '@/types'
+import type { WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 import type { StackId } from '@/types/tick'
 
 export const RadialBarVueProps = {
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
   name: { type: String, default: undefined },
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
@@ -18,8 +19,8 @@ export const RadialBarVueProps = {
   hide: { type: Boolean, default: false },
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  background: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-  label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
+  background: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  label: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
   isAnimationActive: { type: Boolean, default: true },
   transition: {
     type: Object as PropType<ValueAnimationTransition<number>>,

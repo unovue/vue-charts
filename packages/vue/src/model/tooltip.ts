@@ -78,7 +78,7 @@ export function useTooltipController() {
 const sourceKey: InjectionKey<TooltipSource> = Symbol('vccs-tooltip-source')
 const entryKey: InjectionKey<Entry> = Symbol('vccs-tooltip-entry')
 
-export function provideTooltipSource(source: TooltipSource) {
+function provideTooltipSource(source: TooltipSource) {
   provide(sourceKey, source)
 }
 

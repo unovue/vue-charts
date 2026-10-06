@@ -1,17 +1,15 @@
 import { createAxisLayout } from './axisLayout'
 import { createAxisScale } from './axisScale'
-import type { AxisScaleModel, AxisScaleSources } from './axisScale'
+import type { AxisModel, AxisScaleSources } from './axisScale'
 import { createPolarAxis } from './polarAxis'
 import type { PolarLayout } from './polar'
 import { calculatedPadding, smallestDistance, xAxisRange, yAxisRange } from '@/core/axis/range'
-import type { CategoricalDomain } from '@/types/categorical'
 import type { ComputedRef, EffectScope } from 'vue'
 import { computed, onScopeDispose } from 'vue'
-import type { AxisId, AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/types/axis'
+import type { AxisId, AxisRange, AxisType, BaseCartesianAxis } from '@/types/axis'
 import type { XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
-import type { AppliedChartData, ChartData, ChartDataState } from '@/types/chartData'
+import type { AppliedChartData, ChartDataState } from '@/types/chartData'
 import type { LayoutType, StackOffsetType } from '@/types/common'
-import type { StackGroup } from '@/core/axis/stacks'
 import {
   filterGraphicalNotStackedItems,
   appliedValues as getAppliedValues,
@@ -37,14 +35,7 @@ import { stackDomain as getStackDomain, stackGroups as getStackGroups } from '@/
 import { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
 import type { AxisRegistry, ChartRegistries } from './registries'
 
-export type CartesianAxisType = 'xAxis' | 'yAxis' | 'zAxis'
-
-export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> extends AxisScaleModel<S> {
-  readonly settings: ComputedRef<S>
-  readonly displayedData: ComputedRef<ChartData>
-  readonly stackGroups: ComputedRef<Record<string, StackGroup>>
-  readonly domain: ComputedRef<NumberDomain | CategoricalDomain | undefined>
-}
+type CartesianAxisType = 'xAxis' | 'yAxis' | 'zAxis'
 
 interface AxisModels {
   angleAxis: ReturnType<typeof createPolarAxis>

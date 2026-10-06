@@ -1,10 +1,9 @@
+import type { ChartDataKey } from '@/types/base'
 import type { ChartData } from '@/types/chartData'
 import type {
-  DataKey,
   TooltipType,
   VueClassValue,
   VuePropsToType,
-  WithSVGProps,
 } from '@/types'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { BaseValue } from '@/types/area'
@@ -24,7 +23,7 @@ export const AreaVueProps = {
   connectNulls: { type: Boolean, default: false },
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
     required: true as const,
   },
   dot: { type: Boolean, default: false },
@@ -42,7 +41,7 @@ export const AreaVueProps = {
    * - VNode: custom Vue element
    */
   label: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: undefined,
   },
   legendType: { type: String as PropType<LegendType>, default: 'line' },
@@ -63,7 +62,7 @@ export const AreaVueProps = {
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   activeIndex: { type: Number, default: undefined },
-  activePoint: { type: Object as PropType<any>, default: undefined },
+  activePoint: { type: Object as PropType<import('./ActivePoints').PointType>, default: undefined },
   id: { type: String, default: undefined },
   left: { type: Number, default: 0 },
   top: { type: Number, default: 0 },
@@ -74,9 +73,6 @@ export const AreaVueProps = {
 }
 
 export type AreaProps = VuePropsToType<typeof AreaVueProps>
-export type AreaPropsWithSVG = WithSVGProps<
-  typeof AreaVueProps
->
 
 export interface AreaDotSlotProps {
   cx: number

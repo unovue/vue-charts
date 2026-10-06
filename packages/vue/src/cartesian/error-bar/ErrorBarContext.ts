@@ -1,7 +1,7 @@
+import type { ChartDataKey } from '@/types/base'
 import { inject, provide, shallowRef } from 'vue'
 import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { DataKey } from '@/types'
 import type { AxisId } from '@/types/axisSettings'
 import type { ErrorBarsSettings } from '@/types/graphical'
 
@@ -11,14 +11,16 @@ export type { ErrorBarDataItem } from '@/core/errorBar'
 
 export type ErrorBarDataPointFormatter<T> = (
   entry: T,
-  dataKey: DataKey<any>,
+  dataKey: ChartDataKey,
   direction: ErrorBarDirection,
 ) => ErrorBarDataItem
 
 export interface ErrorBarContextType {
-  data: Readonly<ShallowRef<readonly any[] | undefined>>
+  data: Readonly<ShallowRef<readonly unknown[] | undefined>>
   xAxisId: AxisId
   yAxisId: AxisId
+  // This injection boundary accepts geometry from several independent series shapes.
+  // eslint-disable-next-line ts/no-explicit-any -- The injection boundary accepts geometry from independent series shapes.
   dataPointFormatter: ErrorBarDataPointFormatter<any>
   errorBarOffset: Ref<number>
 }

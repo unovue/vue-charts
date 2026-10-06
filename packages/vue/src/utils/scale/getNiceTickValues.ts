@@ -1,15 +1,15 @@
 import { getDigitCount, rangeStep } from '@/utils/scale/utils/arithmetic'
-import { compose, map, memoize, range, reverse } from '@/utils/scale/utils/utils'
+import { memoize, range } from '@/utils/scale/utils/utils'
 import Decimal from 'decimal.js-light'
 
 /**
  * Calculate a interval of a minimum value and a maximum value
  *
- * @param  {number} min       The minimum value
- * @param  {number} max       The maximum value
+ * @param  interval The minimum and maximum values
  * @return {Array} An interval
  */
-export function getValidInterval([min, max]: [number, number]) {
+function getValidInterval(interval: [number, number]) {
+  const [min, max] = interval
   let [validMin, validMax] = [min, max]
 
   // exchange
@@ -29,7 +29,7 @@ export function getValidInterval([min, max]: [number, number]) {
  * @param  {Integer} correctionFactor A correction factor
  * @return {Decimal} The step which is easy to understand between two ticks
  */
-export function getFormatStep(roughStep: Decimal, allowDecimals: boolean, correctionFactor: number) {
+function getFormatStep(roughStep: Decimal, allowDecimals: boolean, correctionFactor: number) {
   if (roughStep.lte(0)) {
     return new Decimal(0)
   }
@@ -58,7 +58,7 @@ export function getFormatStep(roughStep: Decimal, allowDecimals: boolean, correc
  * @param  allowDecimals Allow the ticks to be decimals or not
  * @return array of ticks
  */
-export function getTickOfSingleValue(value: number, tickCount: number, allowDecimals: boolean): Array<number> {
+function getTickOfSingleValue(value: number, tickCount: number, allowDecimals: boolean): Array<number> {
   let step: Decimal = new Decimal(1)
   // calculate the middle value of ticks
   let middle = new Decimal(value)
@@ -86,12 +86,9 @@ export function getTickOfSingleValue(value: number, tickCount: number, allowDeci
 
   const middleIndex = Math.floor((tickCount - 1) / 2)
 
-  const fn = compose(
-    map((n: number) => middle.add(new Decimal(n - middleIndex).mul(step)).toNumber()),
-    range,
+  return range(0, tickCount).map(n =>
+    middle.add(new Decimal(n - middleIndex).mul(step)).toNumber(),
   )
-
-  return fn(0, tickCount)
 }
 
 /**
@@ -104,7 +101,13 @@ export function getTickOfSingleValue(value: number, tickCount: number, allowDeci
  * @param  {number}  correctionFactor A correction factor
  * @return {object}  The step, minimum value of ticks, maximum value of ticks
  */
-export function calculateStep(min: number, max: number, tickCount: number, allowDecimals: boolean, correctionFactor = 0): any {
+function calculateStep(
+  min: number,
+  max: number,
+  tickCount: number,
+  allowDecimals: boolean,
+  correctionFactor = 0,
+): { step: Decimal, tickMin: Decimal, tickMax: Decimal } {
   // dirty hack (for recharts' test)
   if (!Number.isFinite((max - min) / (tickCount - 1))) {
     return {
@@ -175,7 +178,7 @@ function getNiceTickValuesFn([min, max]: [number, number], tickCount = 6, allowD
         ? [cormin, ...range(0, tickCount - 1).map(() => Infinity)]
         : [...range(0, tickCount - 1).map(() => -Infinity), cormax]
 
-    return min > max ? reverse(values) : values
+    return min > max ? values.reverse() : values
   }
 
   if (cormin === cormax) {
@@ -187,7 +190,7 @@ function getNiceTickValuesFn([min, max]: [number, number], tickCount = 6, allowD
 
   const values = rangeStep(tickMin, tickMax.add(new Decimal(0.1).mul(step)), step)
 
-  return min > max ? reverse(values) : values
+  return min > max ? values.reverse() : values
 }
 
 /**
@@ -222,7 +225,7 @@ function getTickValuesFixedDomainFn([min, max]: readonly [number, number], tickC
     cormax,
   ]
 
-  return min > max ? reverse(values) : values
+  return min > max ? values.reverse() : values
 }
 
 export const getNiceTickValues = memoize(getNiceTickValuesFn)

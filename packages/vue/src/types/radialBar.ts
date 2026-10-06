@@ -7,8 +7,10 @@ export interface RadialBarDataItem {
   outerRadius: number | undefined
   startAngle: number | null
   endAngle: number
-  value?: any
-  payload?: any
+  index: number
+  fill?: string
+  value?: unknown
+  payload?: unknown
   background?: SectorProps
-  [key: string]: any
+  [key: string]: unknown
 }

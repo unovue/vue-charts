@@ -1,5 +1,5 @@
-import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
+import { defineComponent } from 'vue'
 import { renderLineItem } from '@/cartesian/cartesian-grid/utils'
 
 const HorizontalGridLines = defineComponent({
@@ -9,7 +9,7 @@ const HorizontalGridLines = defineComponent({
     x: Number,
     width: Number,
     horizontal: [Boolean, Object],
-    horizontalPoints: Array,
+    horizontalPoints: Array as PropType<number[]>,
     /** Per-line opacity while lines fade in or out with their ticks. */
     pointOpacity: Array as PropType<number[]>,
     xAxisId: {

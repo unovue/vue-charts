@@ -1,3 +1,4 @@
+import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, toRaw, toRefs } from 'vue'
 import { useCanMeasureText } from '@/model/runtime'
 import { labelColor } from '@/utils/labelColor'
 import type { Coordinate, DataKey } from '@/types'
@@ -7,7 +8,6 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, computed, defineComponent, reactive, ref, toRaw, toRefs } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-v'
 import { labelOpacity } from '@/animation/ridingLabels'
@@ -20,6 +20,10 @@ import { ChartShell, useChartShell } from './ChartShell'
 import type { ChartOptions } from '@/model/options'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
+
+interface TreemapData extends Record<string, unknown> {
+  children?: TreemapData[]
+}
 
 const DEFAULT_COLORS = [
   '#8889DD',
@@ -39,21 +43,21 @@ export interface TreemapContentSlotProps extends TreemapLayoutNode {
 }
 
 export interface TreemapSlots {
-  content?: (props: TreemapContentSlotProps) => any
-  default?: () => any
+  content?: (props: TreemapContentSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 interface BreadcrumbEntry {
   name: string
-  data: Record<string, any>[]
+  data: TreemapData[]
 }
 
 /**
  * Recursively sum all descendant values for a given dataKey.
  */
-function sumValues(item: Record<string, any>, dataKey: DataKey<Record<string, any>>): number {
+function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
   if (item.children && item.children.length > 0) {
-    return item.children.reduce((sum: number, child: Record<string, any>) => sum + sumValues(child, dataKey), 0)
+    return item.children.reduce((sum: number, child: TreemapData) => sum + sumValues(child, dataKey), 0)
   }
   const val = toFiniteNumber(getValueByDataKey(item, dataKey))
   return val != null && val > 0 ? val : 0
@@ -84,11 +88,11 @@ const treemapOptions: ChartOptions = {
  * Build a hierarchical node structure with tooltipIndex paths for tooltip lookup.
  */
 function buildNodeTree(
-  data: Record<string, any>[],
-  dataKey: DataKey<Record<string, any>>,
-  nameKey: DataKey<Record<string, any>>,
+  data: TreemapData[],
+  dataKey: DataKey<TreemapData>,
+  nameKey: DataKey<TreemapData>,
   parentIndex: string = '',
-): Record<string, any> {
+): TreemapData {
   const children = data.map((item, i) => {
     const tooltipIndex = `${parentIndex}children[${i}]`
     if (item.children && item.children.length > 0) {
@@ -111,9 +115,9 @@ function buildNodeTree(
 export const TreemapVueProps = {
   title: { type: String, default: 'Treemap' },
   desc: String,
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
+  data: { type: Array as PropType<TreemapData[]>, required: true as const },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<TreemapData>>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<DataKey<TreemapData>>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   aspectRatio: { type: Number, default: 4 / 3 },
@@ -144,7 +148,7 @@ function useTreemap(
 
   // Nest mode state
   const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
-  const currentData = ref<Record<string, any>[] | null>(null)
+  const currentData = ref<TreemapData[] | null>(null)
   const trackedData = useTrackedData(() => props.type === 'nest' ? currentData.value ?? props.data : props.data)
 
   const isNestMode = computed(() => props.type === 'nest')
@@ -155,7 +159,7 @@ function useTreemap(
     return trackedData.value ?? []
   })
 
-  function computeNestLevelData(data: Record<string, any>[]): Record<string, any>[] {
+  function computeNestLevelData(data: TreemapData[]): TreemapData[] {
     return data.map((item) => {
       const aggregatedValue = sumValues(item, props.dataKey)
       const { children: _, ...rest } = item
@@ -181,7 +185,7 @@ function useTreemap(
 
   const nodePaths = computed(() => {
     const paths = new Map<object, string>()
-    const visit = (data: Record<string, unknown>[], parent: string) => {
+    const visit = (data: TreemapData[], parent: string) => {
       data.forEach((item, index) => {
         const path = `${parent}/${String(getValueByDataKey(item, props.nameKey) ?? index)}`
         paths.set(toRaw(item), path)
@@ -251,7 +255,7 @@ function useTreemap(
   // Map layout node name → tooltipIndex from nodeTree
   function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
     const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-    function findPath(items: Record<string, unknown>[], parent: string): TooltipIndex {
+    function findPath(items: TreemapData[], parent: string): TooltipIndex {
       for (const [index, item] of items.entries()) {
         const path = `${parent}children[${index}]`
         if (toRaw(item) === toRaw(node.payload)

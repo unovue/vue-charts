@@ -1,3 +1,4 @@
+import { getValueByDataKey } from '@/utils/chart'
 import { useLegendHiddenProps } from '@/hooks/useLegendHiddenProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
@@ -134,7 +135,7 @@ const RadialBarView = defineComponent({
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
-      key: (sector, index) => sector.payload?.name ?? index,
+      key: (sector, index) => getValueByDataKey(sector.payload, 'name') ?? index,
       interpolate: (from, to, t) => ({
         ...to,
         startAngle: interpolate(from.startAngle ?? 0, to.startAngle ?? 0, t),
@@ -166,7 +167,7 @@ const RadialBarView = defineComponent({
           value: sector.value ?? '',
           payload: sector.payload,
           parentViewBox: undefined,
-          fill: (sector as any).fill ?? defaultFill,
+          fill: sector.fill ?? defaultFill,
           cx: sector.cx,
           cy: sector.cy,
           innerRadius: sector.innerRadius,
@@ -192,7 +193,7 @@ const RadialBarView = defineComponent({
             const bg = sector.background
             return (
               <Sector
-                key={`bg-${sector.payload?.name ?? i}`}
+                key={`bg-${getValueByDataKey(sector.payload, 'name') ?? i}`}
                 cx={bg.cx}
                 cy={bg.cy}
                 innerRadius={bg.innerRadius}
@@ -213,7 +214,7 @@ const RadialBarView = defineComponent({
               || sector.startAngle == null || sector.endAngle == null) {
               return null
             }
-            const sectorFill = (sector as any).fill ?? defaultFill
+            const sectorFill = sector.fill ?? defaultFill
             const onMouseenter = (event: MouseEvent) => {
               tooltip.setActiveMouseOverItemIndex({
                 activeIndex: String(sector.index),

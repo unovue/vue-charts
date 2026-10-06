@@ -1,9 +1,9 @@
+import { type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent } from 'vue'
 import type { Coordinate, DataKey } from '@/types'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { type PropType, type SlotsType, computed, defineComponent } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { ChartTransition } from '@/animation/motion'
@@ -31,8 +31,8 @@ export interface SunburstContentSlotProps extends SunburstLayoutNode {
 }
 
 export interface SunburstSlots {
-  content?: (props: SunburstContentSlotProps) => any
-  default?: () => any
+  content?: (props: SunburstContentSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 export const sunburstPayloadSearcher: TooltipPayloadSearcher = (
@@ -56,8 +56,8 @@ export const SunburstChartVueProps = {
   title: { type: String, default: 'Sunburst chart' },
   desc: String,
   data: { type: Object as PropType<SunburstData>, required: true as const },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'value' },
-  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, any>>>, default: 'name' },
+  dataKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, unknown>>>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<DataKey<Record<string, unknown>>>, default: 'name' },
   width: { type: Number, required: true as const },
   height: { type: Number, required: true as const },
   cx: { type: Number, default: undefined },

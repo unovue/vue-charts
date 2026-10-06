@@ -13,7 +13,7 @@ const eventKeys = new Set(EventKeys)
  * @param {boolean} svgElementType checks against map of SVG element types to attributes
  * @returns {boolean} is prop valid
  */
-export function isValidSpreadableProp(property: unknown, key: string, includeEvents?: boolean, svgElementType?: FilteredSvgElementType) {
+function isValidSpreadableProp(property: unknown, key: string, includeEvents?: boolean, svgElementType?: FilteredSvgElementType) {
   /**
    * If the svg element type is explicitly included, check against the filtered element key map
    * to determine if there are attributes that should only exist on that element type.
@@ -29,18 +29,18 @@ export function isValidSpreadableProp(property: unknown, key: string, includeEve
   )
 }
 
-export function filterProps(props: Record<string, any> | boolean | unknown, includeEvents: boolean, svgElementType?: FilteredSvgElementType) {
+export function filterProps(props: Record<string, unknown> | boolean | unknown, includeEvents: boolean, svgElementType?: FilteredSvgElementType) {
   if (!props || typeof props === 'function' || typeof props === 'boolean') {
     return null
   }
 
-  const inputProps = props as Record<string, any>
+  const inputProps = props as Record<string, unknown>
 
   if (typeof inputProps !== 'object' && typeof inputProps !== 'function') {
     return null
   }
 
-  const out: Record<string, any> = {}
+  const out: Record<string, unknown> = {}
 
   /**
    * Props are blindly spread onto SVG elements. This loop filters out properties that we don't want to spread.
@@ -86,8 +86,8 @@ function kindOf(key: string): KeyKind {
  * passed along as props (payload, dataKey, tooltipPosition…) never reaches the DOM.
  * Vue listeners (onClick, onMouseenter) are kept.
  */
-export function svgAttrs(source: Record<string, any> | null | undefined): Record<string, any> {
-  const out: Record<string, any> = {}
+export function svgAttrs(source: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
   if (!source)
     return out
   for (const key in source) {

@@ -1,10 +1,10 @@
+import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import type { PropType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { ZAxisSettings } from '@/types/axisSettings'
 import { implicitZAxis } from '@/core/axis/settings'
 import type { AxisDomain, AxisRange } from '@/types/axis'
-import type { DataKey } from '@/types'
 import type { ScaleType } from '@/types/scale'
 
 export const ZAxis = defineComponent({
@@ -15,7 +15,7 @@ export const ZAxis = defineComponent({
       default: 0,
     },
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
       default: undefined,
     },
     type: {

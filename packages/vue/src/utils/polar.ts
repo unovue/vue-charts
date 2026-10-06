@@ -3,9 +3,9 @@ import type { ChartOffset, Coordinate } from '@/types'
 
 export const RADIAN = Math.PI / 180
 
-export const radianToDegree = (angleInRadian: number) => (angleInRadian * 180) / Math.PI
+const radianToDegree = (angleInRadian: number) => (angleInRadian * 180) / Math.PI
 
-export function distanceBetweenPoints(point: Coordinate, anotherPoint: Coordinate) {
+function distanceBetweenPoints(point: Coordinate, anotherPoint: Coordinate) {
   const { x: x1, y: y1 } = point
   const { x: x2, y: y2 } = anotherPoint
 

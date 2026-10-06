@@ -1,4 +1,5 @@
-import type { ChartCoordinate, Coordinate, DataKey, VueClassValue } from '@/types/common'
+import type { ChartCoordinate, ChartDataKey, Coordinate, VueClassValue } from '@/types/base'
+import type { VNodeChild } from 'vue'
 
 /**
  * null means no active index
@@ -25,7 +26,7 @@ export type Formatter<TValue extends ValueType, TName extends NameType> = (
   item: Payload<TValue, TName>,
   index: number,
   payload: ReadonlyArray<Payload<TValue, TName>>,
-) => any
+) => VNodeChild
 
 export interface Payload<TValue extends ValueType, TName extends NameType> {
   type?: TooltipType
@@ -35,9 +36,9 @@ export interface Payload<TValue extends ValueType, TName extends NameType> {
   value?: TValue
   unit?: string | number
   fill?: string
-  dataKey?: DataKey<any>
-  nameKey?: DataKey<any>
-  payload?: any
+  dataKey?: ChartDataKey
+  nameKey?: ChartDataKey
+  payload?: unknown
   chartType?: string
   stroke?: string
   strokeDasharray?: string | number
@@ -65,7 +66,7 @@ export type TooltipPayloadEntry = Payload<ValueType, NameType>
  * So this type is all the settings, other than the data + dataKey complications.
  */
 export type TooltipEntrySettings = Omit<TooltipPayloadEntry, 'payload' | 'value'> & {
-  nameKey: DataKey<any> | undefined
+  nameKey: ChartDataKey | undefined
 }
 
 /**
@@ -87,13 +88,15 @@ export type TooltipActiveIndex = number | null
  * the only requirement is that the chart also provides a searcher function
  * that accepts the data, and a key, and returns whatever the payload in Tooltip should be.
  */
+// Payload searchers form a runtime boundary for array and hierarchy data.
+// eslint-disable-next-line ts/no-explicit-any -- Searcher providers accept either arrays or hierarchy data at this runtime boundary.
 export type TooltipPayloadSearcher<T = any, R = T> = (
   data: T,
   index: TooltipIndex,
-  nameKey?: DataKey<any>,
+  nameKey?: ChartDataKey,
 ) => R | undefined
 
-export type TooltipKeyboardItem = {
+type TooltipKeyboardItem = {
   /** Stable identity, independent of the current payload lookup path. */
   identity?: unknown
   index: string
@@ -147,7 +150,7 @@ export type ActiveTooltipProps = {
  *
  * Charts that only allow one tooltip event type, will ignore the shared prop.
  */
-export type SharedTooltipSettings = boolean | undefined
+type SharedTooltipSettings = boolean | undefined
 
 export type TooltipSettingsState = {
   activeIndex?: TooltipActiveIndex
@@ -207,7 +210,7 @@ export type TooltipInteractionState = {
    * If we want to interact with all the graphical items, then this is undefined.
    * This is the case for eventTooltipType === 'axis' for example.
    */
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   /**
    * The Coordinate where user last interacted with the chart. This needs saved so we can continue to render the tooltip at that point.
    * This is undefined on several occasions:
@@ -233,6 +236,6 @@ export type TooltipActionPayload = {
   configuration?: TooltipPayloadConfiguration
 
   activeIndex: TooltipIndex
-  activeDataKey: DataKey<any> | undefined
+  activeDataKey: ChartDataKey | undefined
   activeCoordinate?: ChartCoordinate | undefined
 }

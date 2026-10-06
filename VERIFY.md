@@ -7,6 +7,7 @@ Real-clock browser checks (`check:seen`, the report's frame timing) are sensitiv
 | Claim | Check (command) | Threshold | Baseline (2026-10-05) | Judge | Status |
 | --- | --- | --- | --- | --- | --- |
 | Behaviour and public API stay intact; every fixed bug stays fixed | `pnpm test` | all pass | 1,232 pass in 126 files (an earlier "1,830" also counted git-excluded local scratch tests) | script | works |
+| Production code stays small, typed and reachable | `pnpm check:code` | 0 cycles/unused code; longest file ≤ 600 lines; ≤ 40 reasoned boundary any disables; 0 ts-ignore; expect-error reasons required | Phase 2 gate | script | enforced; JSON and lint evidence in `.evidence/code/` |
 | Code style | `pnpm exec eslint .` | 0 errors | clean | script | works |
 | The published package resolves and typechecks for consumers | `pnpm check:package` | publint + attw clean | PASS, 565 files | script | works |
 | Every transition is smooth frame by frame: no jumps, reversals, stalls, overlaps, unsettled shapes, page errors | `pnpm motion:report --prod --check` (lab, fake clock, every frame) | 0 flags | dev and prod 230/230 clean before the cell charts; cell charts 2026-10-05: 53/55 clean, the 2 flags are one journey node's fold-out when journeys re-rank (a quick fold, no overlap; see `.evidence/motion-report/journey`) | script; Opus reviews the videos | works (proved by `node --test packages/vue/test/lab/report-metrics.test.mjs`: a synthetic 40 px jump fires) |

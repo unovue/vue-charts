@@ -55,7 +55,7 @@ export function calculateTooltipPos(rangeObj: RangeObj, layout: LayoutType): num
   return rangeObj.radius
 }
 
-export function inRangeOfSector(
+function inRangeOfSector(
   { x, y }: Coordinate,
   viewBox: PolarViewBoxRequired,
 ): RangeObj | null {

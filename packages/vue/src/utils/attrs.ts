@@ -21,8 +21,8 @@ const SPAN_STYLE = {
 }
 const MEASUREMENT_SPAN_ID = 'v-charts_measurement_span'
 
-function removeInvalidKeys(obj: Record<string, any>) {
-  const copyObj = { ...obj }
+function removeInvalidKeys(obj: CSSProperties) {
+  const copyObj: Record<string, unknown> = { ...obj }
   Object.keys(copyObj).forEach((key) => {
     if (!copyObj[key]) {
       delete copyObj[key]
@@ -46,7 +46,7 @@ export function clearStringSizeCache() {
   appliedStyleKey = undefined
 }
 
-export function getStringSize(text: string | number, style: CSSProperties = {}, canMeasure = !isServer()): Size {
+export function getStringSize(text: unknown, style: CSSProperties = {}, canMeasure = !isServer()): Size {
   if (text === undefined || text === null || !canMeasure) {
     return { width: 0, height: 0 }
   }

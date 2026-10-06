@@ -1,14 +1,20 @@
-import type { ViewBox } from '@/types/viewBox'
+import type { PropType, VNode, VNodeChild } from 'vue'
+import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/types/viewBox'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType } from '@/types'
 import { last } from 'es-toolkit/compat'
-import type { PropType, VNode } from 'vue'
 
 export type { ViewBox }
 
-export interface Data {
-  value?: number | string | Array<number | string>
-  payload?: any
+export interface Data extends
+  Omit<CartesianViewBox, 'x' | 'y'>,
+  Omit<PolarViewBox, 'innerRadius' | 'startAngle'> {
+  x?: number | null
+  y?: number | null
+  innerRadius?: number | null
+  startAngle?: number | null
+  value?: unknown
+  payload?: unknown
   parentViewBox?: ViewBox
   fill?: string
   /** Set by a series while the shape behind the label fades in or out. */
@@ -60,7 +66,7 @@ export const LabelListVueProps = {
     type: Boolean,
   },
   dataKey: {
-    type: [String, Function] as PropType<DataKey<Record<string, any>>>,
+    type: [String, Function] as PropType<DataKey<Record<string, unknown>>>,
   },
   textBreakAll: {
     type: Boolean,
@@ -126,6 +132,6 @@ export type LabelListSlotProps = Omit<LabelProps, 'viewBox'> & ViewBox & {
 }
 
 export interface LabelListSlots {
-  content?: (props: LabelListSlotProps) => import('vue').VNodeChild
-  label?: (props: LabelListSlotProps) => import('vue').VNodeChild
+  content?: (props: LabelListSlotProps) => VNodeChild
+  label?: (props: LabelListSlotProps) => VNodeChild
 }

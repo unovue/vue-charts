@@ -1,8 +1,9 @@
+import type { StackGroup } from '@/core/axis/stacks'
+import type { AppliedChartData, ChartData } from '@/types/chartData'
 import type { ComputedRef } from 'vue'
 import { computed } from 'vue'
 import type { AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/types/axis'
 import type { CategoricalDomain } from '@/types/categorical'
-import type { AppliedChartData } from '@/types/chartData'
 import type { ChartOffsetRequired, LayoutType } from '@/types/common'
 import type { TicksSettings } from '@/types/axisSettings'
 import { axisTicks } from '@/core/axis/ticks'
@@ -69,3 +70,10 @@ export function createAxisScale<S extends BaseCartesianAxis & Partial<TicksSetti
 
 export type AxisScaleModel<S extends BaseCartesianAxis & Partial<TicksSettings> = BaseCartesianAxis> =
   ReturnType<typeof createAxisScale<S>>
+
+export interface AxisModel<S extends BaseCartesianAxis = BaseCartesianAxis> extends AxisScaleModel<S> {
+  readonly settings: ComputedRef<S>
+  readonly displayedData: ComputedRef<ChartData>
+  readonly stackGroups: ComputedRef<Record<string, StackGroup>>
+  readonly domain: ComputedRef<NumberDomain | CategoricalDomain | undefined>
+}

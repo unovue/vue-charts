@@ -1,11 +1,11 @@
-import { type ComponentPublicInstance, type PropType, type SlotsType, computed, defineComponent, getCurrentInstance, ref } from 'vue'
+import { type ComponentPublicInstance, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/model/runtime'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { cellGridSharedProps } from './cellGridProps'
 
-export type BarListRow = Record<string, any>
+export type BarListRow = Record<string, unknown>
 
 export interface BarListSlotProps {
   row: BarListRow
@@ -18,8 +18,8 @@ export interface BarListSlotProps {
 }
 
 export interface BarListSlots {
-  name?: (props: BarListSlotProps) => any
-  value?: (props: BarListSlotProps) => any
+  name?: (props: BarListSlotProps) => VNodeChild
+  value?: (props: BarListSlotProps) => VNodeChild
 }
 
 interface RowState {
@@ -161,7 +161,7 @@ const BarListInner = defineComponent({
         {items.value.map(({ key, value: state, phase }) => {
           const index = state.index
           const slotProps: BarListSlotProps = { row: state.row, index, name: state.name, value: state.value, ratio: state.ratio, formatted: format(state) }
-          const href = props.hrefKey ? state.row[props.hrefKey] : undefined
+          const href = props.hrefKey ? state.row[props.hrefKey] as string | undefined : undefined
           return (
             <li
               key={key as string}

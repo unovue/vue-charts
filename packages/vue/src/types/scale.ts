@@ -23,6 +23,6 @@ export interface RechartsScale {
   domain: (() => ReadonlyArray<unknown>) & ((newDomain: ReadonlyArray<unknown>) => this)
   range: (() => ReadonlyArray<unknown>) & ((newRange: ReadonlyArray<unknown>) => this)
   bandwidth?: () => number
-  ticks?: (count?: number) => any
-  (args: any): number
+  ticks?: (count?: number) => number[]
+  (args: unknown): number
 }

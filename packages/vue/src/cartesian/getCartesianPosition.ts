@@ -5,9 +5,9 @@ import { isNumber, isPercent } from '@/utils/validate'
 export type TextAnchor = 'start' | 'middle' | 'end' | 'inherit'
 export type TextVerticalAnchor = 'start' | 'middle' | 'end'
 
-export function cartesianViewBoxToTrapezoid(box: undefined): undefined
-export function cartesianViewBoxToTrapezoid(box: CartesianViewBoxRequired | TrapezoidViewBox): TrapezoidViewBox
-export function cartesianViewBoxToTrapezoid(
+function cartesianViewBoxToTrapezoid(box: undefined): undefined
+function cartesianViewBoxToTrapezoid(box: CartesianViewBoxRequired | TrapezoidViewBox): TrapezoidViewBox
+function cartesianViewBoxToTrapezoid(
   box: CartesianViewBoxRequired | TrapezoidViewBox | undefined,
 ): TrapezoidViewBox | undefined {
   if (!box) {

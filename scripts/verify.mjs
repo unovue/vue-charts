@@ -10,8 +10,9 @@ const docsCommand = `pnpm check:docs${docsBrowsers ? ` --browser=${docsBrowsers}
 
 const quick = process.argv.includes('--quick')
 const checks = [
-  ['unit and regression tests', 'pnpm test'],
+  ['unit and regression tests', 'pnpm --filter vccs exec vitest run --maxWorkers=2'],
   ['lint', 'pnpm exec eslint .'],
+  ['code health', 'pnpm check:code'],
   ['library build', 'pnpm --filter vccs build'],
   ['package exports and types', 'pnpm check:package'],
   ...(quick

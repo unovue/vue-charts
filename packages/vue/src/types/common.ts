@@ -1,29 +1,10 @@
-import type { TooltipPayload, TooltipPayloadSearcher } from '@/types/tooltip'
-import type { TooltipEventType, TooltipIndex } from './tooltip'
+import type { ChartDataKey } from '@/types/base'
+import type { ChartOffset, Coordinate, TickItem, VueClassValue } from './base'
+
+export type { DataKey, Coordinate, ChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
+import type { TooltipPayload } from '@/types/tooltip'
+import type { TooltipIndex } from './tooltip'
 import type { PropType, SVGAttributes } from 'vue'
-
-export type DataKey<T> = string | number | ((obj: T) => any)
-
-export interface Coordinate {
-  x: number
-  y: number
-}
-
-export interface ChartCoordinate extends Coordinate {
-  xAxis?: any
-  yAxis?: any
-  width?: any
-  height?: any
-  offset?: ChartOffset
-  angle?: number
-  radius?: number
-  cx?: number
-  cy?: number
-  startAngle?: number
-  endAngle?: number
-  innerRadius?: number
-  outerRadius?: number
-}
 
 export type LayoutType = 'horizontal' | 'vertical' | 'centric' | 'radial'
 
@@ -35,14 +16,6 @@ export interface Margin {
 }
 
 export type StackOffsetType = 'sign' | 'expand' | 'none' | 'wiggle' | 'silhouette' | 'positive'
-
-export interface TickItem {
-  value?: any
-  coordinate: number
-  index?: number
-  offset?: number
-
-}
 
 export type SyncMethod = 'index' | 'value' | ((ticks: ReadonlyArray<TickItem>, data: MouseHandlerDataParam) => number)
 
@@ -60,7 +33,7 @@ export type MouseHandlerDataParam = {
    */
   activeIndex: number | TooltipIndex | undefined
   activeLabel: string | number | undefined
-  activeDataKey: DataKey<any> | undefined
+  activeDataKey: ChartDataKey | undefined
   activeCoordinate: Coordinate | undefined
 }
 
@@ -69,16 +42,6 @@ export interface Padding {
   bottom?: number
   left?: number
   right?: number
-}
-
-export interface ChartOffset {
-  top: number
-  bottom: number
-  left: number
-  right: number
-  height: number
-  width: number
-  brushBottom: number
 }
 
 export type ChartOffsetRequired = Required<ChartOffset>
@@ -114,17 +77,9 @@ export interface ScatterPointItem {
   width: number
   height: number
   node: ScatterPointNode
-  payload?: any
+  payload?: unknown
   tooltipPayload?: TooltipPayload
   tooltipPosition: Coordinate
-}
-
-export interface CategoricalChartOptions {
-  chartName: string
-  defaultTooltipEventType?: TooltipEventType
-  validateTooltipEventTypes?: ReadonlyArray<TooltipEventType>
-  defaultProps?: any
-  tooltipPayloadSearcher: TooltipPayloadSearcher
 }
 
 type UnwrapPropType<T> =
@@ -146,9 +101,6 @@ export type AllowInDimension = {
   x?: boolean
   y?: boolean
 }
-
-/** Vue class binding type: string, string[], or { [className]: boolean } */
-export type VueClassValue = string | string[] | Record<string, boolean>
 
 /** Shared Vue prop definition for `class` — use in VueProps objects to avoid repetition */
 export const classProp = {

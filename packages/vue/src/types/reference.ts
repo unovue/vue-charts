@@ -24,9 +24,3 @@ export type ReferenceLineSettings = ReferenceElementSettings & {
   x: unknown
   y: unknown
 }
-
-export type ReferenceElementState = {
-  dots: ReadonlyArray<ReferenceDotSettings>
-  areas: ReadonlyArray<ReferenceAreaSettings>
-  lines: ReadonlyArray<ReferenceLineSettings>
-}
