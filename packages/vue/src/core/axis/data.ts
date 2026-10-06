@@ -1,4 +1,4 @@
-import type { AppliedChartData, ChartData, ChartDataState } from '@/types/chartData'
+import type { AppliedChartData, ChartData } from '@/types/chartData'
 import type {
   CartesianGraphicalItemSettings,
   ErrorBarsSettings,
@@ -55,29 +55,18 @@ export function graphicalItemsData(cartesianItems: ReadonlyArray<GraphicalItemSe
     .flat(1)
 }
 
-export function displayedData(
-  graphicalItemsData: ChartData,
-  { chartData = [], dataStartIndex, dataEndIndex }: ChartDataState,
-): ChartData {
-  if (graphicalItemsData.length > 0) {
-    // Brush ranges apply to chart data; series-owned data uses its full range.
-    return graphicalItemsData
-  }
-  return chartData.slice(dataStartIndex, dataEndIndex + 1)
-}
-
 export function appliedValues(
   data: ChartData,
   axisSettings: BaseCartesianAxis,
   items: ReadonlyArray<GraphicalItemSettings>,
 ): AppliedChartData {
   if (axisSettings?.dataKey != null) {
-    return data.map(item => ({ value: getValueByDataKey(item, axisSettings.dataKey!) }))
+    return data.map(item => ({ value: getValueByDataKey(item, axisSettings.dataKey) }))
   }
   if (items.length > 0) {
     return items
       .map(item => item.dataKey)
-      .flatMap(dataKey => data.map(entry => ({ value: getValueByDataKey(entry, dataKey!) })))
+      .flatMap(dataKey => data.map(entry => ({ value: getValueByDataKey(entry, dataKey) })))
   }
   return data.map(entry => ({ value: entry }))
 }
@@ -170,7 +159,7 @@ export function numericalValuesWithErrors(
   if (axisSettings?.dataKey != null) {
     return data.map(
       (item): AppliedChartDataWithErrorDomain => ({
-        value: getValueByDataKey(item, axisSettings.dataKey!),
+        value: getValueByDataKey(item, axisSettings.dataKey),
         errorDomain: [],
       }),
     )

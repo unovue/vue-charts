@@ -105,8 +105,7 @@ export function useBar(
     const xTicks = xAxis.value.graphicalTicks.value
     const yTicks = yAxis.value.graphicalTicks.value
     const pos = position.value
-    const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
-    const displayedData = props.data?.length ? props.data : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+    const displayedData = chart.dataRange.displayedData(props)
     const type = layout.value
     if (!pos || !x || !y || !xTicks || !yTicks || !displayedData
       || (type !== 'horizontal' && type !== 'vertical')) {

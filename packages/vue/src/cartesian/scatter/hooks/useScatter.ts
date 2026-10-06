@@ -36,8 +36,7 @@ export function useScatter(props: ScatterProps) {
     const y = yAxis.value.withScale.value
     const xTicks = xAxis.value.graphicalTicks.value
     const yTicks = yAxis.value.graphicalTicks.value
-    const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
-    const displayedData = props.data?.length ? props.data : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+    const displayedData = chart.dataRange.displayedData(props)
     if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData)
       return undefined
     return computeScatterPoints({

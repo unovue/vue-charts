@@ -26,5 +26,24 @@ export function createChartData(source: () => ChartData | undefined) {
       range.value = { startIndex, endIndex }
   }
 
-  return { state, setRange }
+  function displayedData<T extends readonly unknown[]>(
+    item: { data?: T },
+    range: 'brush' | 'all' = 'brush',
+  ) {
+    if (item.data?.length)
+      return item.data
+    const { chartData, dataStartIndex, dataEndIndex } = state.value
+    return range === 'all' ? chartData : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+  }
+
+  // React tooltip payloads keep empty item arrays and slice item-owned data too.
+  function tooltipData(itemData: unknown): unknown {
+    const { chartData, dataStartIndex, dataEndIndex } = state.value
+    const data = itemData ?? chartData
+    return Array.isArray(data) && dataStartIndex + dataEndIndex !== 0
+      ? data.slice(dataStartIndex, dataEndIndex + 1)
+      : data
+  }
+
+  return { state, setRange, displayedData, tooltipData }
 }

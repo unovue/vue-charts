@@ -4,10 +4,10 @@ import { computed, inject, provide, shallowRef, toRaw, watch } from 'vue'
 import type { AxisLookup } from './axis'
 import type { Registry } from './registry'
 import { createRegistry } from './registry'
-import { parseTooltipIndex, sliceTooltipData, tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
+import type { createChartData } from './dataRange'
+import { parseTooltipIndex, tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
-import type { ChartDataState } from '@/types/chartData'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
 import type { TooltipActionPayload, TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipSyncState } from '@/types/tooltip'
 
@@ -34,7 +34,7 @@ export interface TooltipBinding {
 interface TooltipInputs {
   axis?: AxisLookup
   entries: Registry<TooltipPayloadConfiguration>
-  data: ComputedRef<ChartDataState>
+  dataRange: ReturnType<typeof createChartData>
   options: () => ChartOptions
   layout: () => LayoutType
   size: () => Size
@@ -187,10 +187,9 @@ export function createTooltip(inputs: TooltipInputs) {
         identity: identity[localIndex],
       }))
     }
-    const range = inputs.data.value
     const data = configuration.dataDefinedOnItem == null
       ? displayedData.value
-      : sliceTooltipData(configuration.dataDefinedOnItem, range.dataStartIndex, range.dataEndIndex)
+      : inputs.dataRange.tooltipData(configuration.dataDefinedOnItem)
     if (!Array.isArray(data))
       return []
     const identity = identities(data, configuration.settings.nameKey ?? axis.value?.settings.value.dataKey)
@@ -279,15 +278,22 @@ export function createTooltip(inputs: TooltipInputs) {
     target.value,
     controlled.value !== undefined ? undefined : selection.value?.coordinate,
   ))
-  const payload = computed(() => tooltipPayload(
-    eventType.value === 'item' ? target.value?.entry?.value ? [target.value.entry.value] : [] : inputs.entries.entries.value,
-    target.value?.index ?? null,
-    inputs.data.value,
-    axis.value?.settings.value,
-    label.value,
-    inputs.options().tooltipPayloadSearcher,
-    eventType.value,
-  ) ?? [])
+  const payload = computed(() => {
+    const entries = eventType.value === 'item'
+      ? target.value?.entry?.value ? [target.value.entry.value] : []
+      : inputs.entries.entries.value
+    return tooltipPayload(
+      entries.map(entry => ({
+        ...entry,
+        dataDefinedOnItem: inputs.dataRange.tooltipData(entry.dataDefinedOnItem),
+      })),
+      target.value?.index ?? null,
+      axis.value?.settings.value,
+      label.value,
+      inputs.options().tooltipPayloadSearcher,
+      eventType.value,
+    ) ?? []
+  })
   const source: TooltipSource = { active, index, label, payload, coordinate }
 
   let lastRequest: { index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target?: Target } | undefined

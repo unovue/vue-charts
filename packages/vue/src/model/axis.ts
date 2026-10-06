@@ -2,18 +2,18 @@ import { createAxisLayout } from './axisLayout'
 import { createAxisScale } from './axisScale'
 import type { AxisModel, AxisScaleSources } from './axisScale'
 import { createPolarAxis } from './polarAxis'
+import type { createChartData } from './dataRange'
 import type { PolarLayout } from './polar'
 import { calculatedPadding, smallestDistance, xAxisRange, yAxisRange } from '@/core/axis/range'
-import type { ComputedRef, EffectScope } from 'vue'
+import type { EffectScope } from 'vue'
 import { computed, onScopeDispose } from 'vue'
 import type { AxisId, AxisRange, AxisType, BaseCartesianAxis } from '@/types/axis'
 import type { XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
-import type { AppliedChartData, ChartDataState } from '@/types/chartData'
+import type { AppliedChartData } from '@/types/chartData'
 import type { LayoutType, StackOffsetType } from '@/types/common'
 import {
   filterGraphicalNotStackedItems,
   appliedValues as getAppliedValues,
-  displayedData as getDisplayedData,
   graphicalItemsData,
   graphicalItemsSettings,
   itemAxisPredicate,
@@ -49,7 +49,7 @@ interface AxisSources extends AxisScaleSources, Pick<ChartRegistries, 'items' | 
   size: () => import('@/types/common').Size
   barCategoryGap: () => number | string
   polarLayout: PolarLayout
-  dataWithIndexes: ComputedRef<ChartDataState>
+  dataRange: ReturnType<typeof createChartData>
   layout: () => LayoutType
   stackOffset: () => StackOffsetType
 }
@@ -71,9 +71,9 @@ function createAxis<S extends BaseCartesianAxis>(
     itemAxisPredicate(type, id),
   ))
   const unstacked = computed(() => filterGraphicalNotStackedItems(items.value))
-  const dataWithIndexes = sources.dataWithIndexes
+  const dataWithIndexes = sources.dataRange.state
   const graphicalData = computed(() => graphicalItemsData(items.value))
-  const displayedData = computed(() => getDisplayedData(graphicalData.value, dataWithIndexes.value))
+  const displayedData = computed(() => sources.dataRange.displayedData({ data: graphicalData.value }) ?? [])
   const appliedValues = computed(() => getAppliedValues(displayedData.value, settings.value, items.value))
   const domainDefinition = computed(() => getDomainDefinition(settings.value))
   const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))

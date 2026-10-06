@@ -1,6 +1,5 @@
 import type { AxisRange, AxisType } from '@/types/axis'
 import type { AxisWithTicksSettings } from '@/types/axisSettings'
-import type { ChartDataState } from '@/types/chartData'
 import type { TooltipEntrySettings, TooltipIndex, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher } from '@/types/tooltip'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TickItem, TooltipEventType, ValueType } from '@/types'
 import type { RechartsScale } from '@/types/scale'
@@ -9,42 +8,15 @@ import { findEntryInArray, mathSign } from '@/utils/data'
 
 import { getValueByDataKey } from '@/core/data'
 
-export function sliceTooltipData<T>(
-  arr: unknown | ReadonlyArray<T>,
-  startIndex: number,
-  endIndex: number,
-): ReadonlyArray<T> | unknown {
-  if (!Array.isArray(arr)) {
-    return arr
-  }
-  if (arr && startIndex + endIndex !== 0) {
-    return arr.slice(startIndex, endIndex + 1)
-  }
-  return arr
-}
-function dataForTooltip(dataDefinedOnItem: unknown, dataDefinedOnChart: ReadonlyArray<unknown>) {
-  /*
-   * If a payload has data specified directly from the graphical item, prefer that.
-   * Otherwise, fill in data from the chart level, using the same index.
-   */
-  if (dataDefinedOnItem != null) {
-    return dataDefinedOnItem
-  }
-  return dataDefinedOnChart
-}
-
-export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
+export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
   if (activeIndex == null || tooltipPayloadSearcher == null) {
     return undefined
   }
-  const { chartData, dataStartIndex, dataEndIndex } = chartDataState
 
   const init: Array<TooltipPayloadEntry> = []
 
   return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values }): Array<TooltipPayloadEntry> => {
-    const finalData = dataForTooltip(dataDefinedOnItem, chartData!)
-
-    const sliced = sliceTooltipData(finalData, dataStartIndex, dataEndIndex)
+    const sliced = dataDefinedOnItem
 
     const finalDataKey = settings?.dataKey ?? tooltipAxis?.dataKey
     const finalNameKey = settings?.nameKey

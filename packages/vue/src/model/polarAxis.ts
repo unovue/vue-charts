@@ -1,14 +1,13 @@
 import { computed } from 'vue'
 import type { AxisId } from '@/types/axis'
 import type { AngleAxisSettings } from '@/types/axisSettings'
-import type { ChartDataState } from '@/types/chartData'
 import type { StackOffsetType } from '@/types/common'
-import type { ComputedRef } from 'vue'
 import type { ChartRegistries } from './registries'
 import type { AxisScaleSources } from './axisScale'
 import { createAxisScale } from './axisScale'
+import type { createChartData } from './dataRange'
 import type { PolarLayout } from './polar'
-import { appliedValues as getAppliedValues, displayedData as getDisplayedData, graphicalItemsData, graphicalItemsSettings, itemAxisPredicate } from '@/core/axis/data'
+import { appliedValues as getAppliedValues, graphicalItemsData, graphicalItemsSettings, itemAxisPredicate } from '@/core/axis/data'
 import { axisDomain, getDomainDefinition, numericalDomain as getNumericalDomain } from '@/core/axis/domain'
 import { stackDomain as getStackDomain, stackGroups as getStackGroups } from '@/core/axis/stacks'
 import { implicitAngleAxis, implicitRadialBarAngleAxis, implicitRadialBarRadiusAxis, implicitRadiusAxis } from '@/core/axis/polarSettings'
@@ -16,7 +15,7 @@ import { getValueByDataKey } from '@/core/data'
 
 export function createPolarAxis(
   sources: AxisScaleSources & Pick<ChartRegistries, 'items' | 'axes'> & {
-    dataWithIndexes: ComputedRef<ChartDataState>
+    dataRange: ReturnType<typeof createChartData>
     stackOffset: () => StackOffsetType
     polarLayout: PolarLayout
   },
@@ -37,10 +36,7 @@ export function createPolarAxis(
     itemAxisPredicate(type, id),
   ))
   const graphicalData = computed(() => graphicalItemsData(items.value))
-  const displayedData = computed(() => {
-    const { chartData = [] } = sources.dataWithIndexes.value
-    return getDisplayedData(graphicalData.value, { chartData, dataStartIndex: 0, dataEndIndex: chartData.length - 1 })
-  })
+  const displayedData = computed(() => sources.dataRange.displayedData({ data: graphicalData.value }, 'all') ?? [])
   const appliedValues = computed(() => getAppliedValues(displayedData.value, settings.value, items.value))
   const domainDefinition = computed(() => getDomainDefinition(settings.value))
   const numericalValues = computed(() => {
@@ -48,14 +44,14 @@ export function createPolarAxis(
     const axis = settings.value
     if (items.value.length) {
       return data.flatMap(row => items.value.map(item => ({
-        value: getValueByDataKey(row, axis.dataKey ?? item.dataKey!),
+        value: getValueByDataKey(row, axis.dataKey ?? item.dataKey),
         errorDomain: [],
       })))
     }
     return data.map(row => ({ value: axis.dataKey == null ? row : getValueByDataKey(row, axis.dataKey), errorDomain: [] }))
   })
   const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))
-  const stackDomain = computed(() => getStackDomain(stackGroups.value, sources.dataWithIndexes.value, type))
+  const stackDomain = computed(() => getStackDomain(stackGroups.value, sources.dataRange.state.value, type))
   const numericalDomain = computed(() => getNumericalDomain(settings.value, domainDefinition.value, stackDomain.value, numericalValues.value, undefined))
   const domain = computed(() => axisDomain(settings.value, sources.layout(), displayedData.value, appliedValues.value, sources.stackOffset(), type, numericalDomain.value))
   const range = type === 'angleAxis' ? sources.polarLayout.angleRange : sources.polarLayout.radiusRange

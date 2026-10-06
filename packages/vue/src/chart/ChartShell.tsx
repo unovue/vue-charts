@@ -1,3 +1,4 @@
+import { createChartData } from '@/model/dataRange'
 import type { PropType, VNodeChild } from 'vue'
 import { computed, defineComponent } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -46,7 +47,7 @@ export function useChartShell(
   }))
   const tooltip = createTooltip({
     entries: createRegistry<TooltipPayloadConfiguration>(),
-    data: computed(() => ({ chartData: undefined, dataStartIndex: 0, dataEndIndex: 0 })),
+    dataRange: createChartData(() => undefined),
     options: () => options,
     layout: () => 'horizontal',
     size: () => dimensions.value,

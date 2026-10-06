@@ -96,14 +96,14 @@ export function createChart(inputs: ChartInputs): Chart {
       || registries.items.polar.entries.value.some(item => item.type === 'radialBar'),
     barCategoryGap: () => options.value.barCategoryGap,
     ...registries,
-    dataWithIndexes: dataRange.state,
+    dataRange,
     layout: inputs.layout,
     stackOffset: () => options.value.stackOffset,
   })
   const tooltip = createTooltip({
     axis,
     entries: registries.tooltipEntries,
-    data: dataRange.state,
+    dataRange,
     layout: inputs.layout,
     size: inputs.size,
     offset: () => geometry.offset.value,

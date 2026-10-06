@@ -96,8 +96,8 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
     const y = yAxis.value.withScale.value
     const xTicks = xAxis.value.graphicalTicks.value
     const yTicks = yAxis.value.graphicalTicks.value
-    const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
-    const displayedData = props.data?.length ? props.data : chartData?.slice(dataStartIndex, dataEndIndex + 1)
+    const { dataStartIndex } = chart.dataRange.state.value
+    const displayedData = chart.dataRange.displayedData(props)
     const type = layout.value
     if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData
       || (type !== 'horizontal' && type !== 'vertical')) {

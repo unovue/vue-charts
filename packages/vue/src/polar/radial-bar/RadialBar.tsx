@@ -86,7 +86,7 @@ const RadialBarView = defineComponent({
       const radius = radiusAxis.value.withScale.value
       const angle = angleAxis.value.withScale.value
       const viewport = chart.polarLayout.viewBox.value
-      const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
+      const { chartData, dataStartIndex } = chart.dataRange.state.value
       const band = bandSize.value
       const pos = position.value
       const radialTicks = radiusTicks.value
@@ -106,7 +106,7 @@ const RadialBarView = defineComponent({
         cy: viewport.cy,
         dataKey: props.dataKey,
         dataStartIndex,
-        displayedData: chartData.slice(dataStartIndex, dataEndIndex + 1),
+        displayedData: chart.dataRange.displayedData({}) ?? [],
         endAngle: viewport.endAngle,
         layout,
         minPointSize: props.minPointSize,
