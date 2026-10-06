@@ -44,7 +44,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 3.4 | Chart prop sets and chart-level animation | yes | phase 2 | todo | | |
 | 3.5 | Axis props | yes | phase 2 | todo | | |
 | 3.6 | Active state and Brush range | yes | phase 2 | todo | | |
-| 3.7 | Accessible names and the markup contract | yes | phase 2 | todo | | |
+| 3.7 | Accessible names and the markup contract | yes | phase 2 | done | `a164398`, log commit | D-15/D-22 gate PASS. |
 | 3.8 | Series colors | yes | phase 2 | todo | | |
 | 3.9 | Typed rows | yes | phase 2, 3.2, 3.4–3.6 | todo | | |
 | 3.10 | Renames, slots, events, deprecations | yes | phase 2, 3.2 | todo | | |
@@ -531,3 +531,13 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Evidence: `.evidence/release-1.0/part-a/`; browser checks ran after Vitest and sequentially.
 - Limits: machine load was not equal across runs, so timings were not compared; check:seen remains environment-limited.
 - Next: Opus review, then Part B and its phase gate; private Tooltip transport remains for 3.10.
+
+## Phase 3 part B
+
+### 3.7 Accessible names and markup — done (a164398, this log commit)
+- All charts accept title/desc; human defaults, native attributes and data-slot contract retained.
+- Gate: typecheck/lint/code/packed consumers PASS; Vitest 136 files / 1392 tests.
+- Strict packed guard: 299 declarations, zero vccs errors; 100 third-party diagnostics reported.
+- Reverse proofs fail old categorical names and missing chart markers; restored tests pass.
+- Evidence: `.evidence/release-1.0/part-b/3.7-*.log`; markup proof `.evidence/release-1.0/markup-*.log`.
+- Assumptions: neutral standalone plot group; Sparkline title overrides computed name; global pnpm cache required.
