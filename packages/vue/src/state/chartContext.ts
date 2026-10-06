@@ -1,3 +1,5 @@
+import { createAxes } from '@/model/axis'
+import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
 import { createLayout } from '@/model/layout'
 import type { ChartGeometry } from '@/model/layout'
 import { createRegistries } from '@/model/registries'
@@ -7,7 +9,6 @@ import type { AxisId } from './chartCartesianAxis'
 import type { ChartOptions } from './chartOptions'
 import { createChartLegend } from './chartLegend'
 import { createChartBrush } from './chartBrush'
-import { computed, inject, provide, shallowRef } from 'vue'
 import type { Chart } from '@/model/chart'
 import { chartDefaults } from '@/model/defaults'
 import type { InjectionKey } from 'vue'
@@ -42,7 +43,7 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
   const radiusAxis = axisSettings(axes.radiusAxis)
   const brush = chart?.brush ?? createChartBrush()
   const legend = chart?.legend ?? createChartLegend(registries.legendEntries)
-  const data = createChartData(() => chart?.data.value)
+  const data = chart?.dataRange ?? createChartData(() => undefined)
   const tooltip = createChartTooltip(registries.tooltipEntries)
   const geometry = chart ?? createLayout({
     layout: () => root.layout.value,
@@ -51,8 +52,18 @@ export function provideChartContext(initialOptions?: ChartOptions, chart?: Chart
     legendSize: () => legend.state.value.size,
     axes,
   })
+  const scope = getCurrentScope()
+  if (!scope)
+    throw new Error('vccs: chart context requires an active scope.')
+  const axis = chart?.axis ?? createAxes(scope, {
+    ...registries,
+    dataWithIndexes: data.state,
+    layout: () => root.layout.value.layoutType,
+    stackOffset: () => root.rootProps.value.stackOffset,
+  })
   // A stable view lets Vue track only the domains each selector reads.
   const view: RechartsRootState = Object.freeze({
+    axis,
     get offset() { return geometry.offset.value },
     get viewBox() { return geometry.viewBox.value },
     get axisViewBox() { return geometry.axisViewBox.value },
@@ -110,6 +121,10 @@ function useChartContext() {
     throw new Error('Chart state must be used inside a chart component.')
   }
   return context
+}
+
+export function useChartAxes() {
+  return useChartContext().view.axis
 }
 
 export function useChartGeometry() {

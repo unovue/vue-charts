@@ -1,14 +1,69 @@
+export type { AppliedChartDataWithErrorDomain } from '@/core/axis/data'
+import {
+  combineAppliedNumericalValuesIncludingErrorValues,
+  combineAppliedValues,
+  combineDisplayedData,
+  combineGraphicalItemsData,
+  combineGraphicalItemsSettings,
+  filterGraphicalNotStackedItems,
+  itemAxisPredicate,
+  onlyAllowNumbers,
+} from '@/core/axis/data'
+
+export {
+  itemAxisPredicate,
+  combineGraphicalItemsSettings,
+  filterGraphicalNotStackedItems,
+  combineGraphicalItemsData,
+  combineDisplayedData,
+  combineAppliedValues,
+  isErrorBarRelevantForAxisType,
+  getErrorDomainByDataKey,
+  combineAppliedNumericalValuesIncludingErrorValues,
+} from '@/core/axis/data'
+import {
+  combineAreasDomain,
+  combineDotsDomain,
+  combineLinesDomain,
+  filterReferenceElements,
+} from '@/core/axis/references'
+
+export {
+  filterReferenceElements,
+  combineDotsDomain,
+  combineAreasDomain,
+  combineLinesDomain,
+} from '@/core/axis/references'
+import {
+  combineAxisDomain,
+  combineNumericalDomain,
+  getDomainDefinition,
+  mergeDomains,
+} from '@/core/axis/domain'
+
+export {
+  getDomainDefinition,
+  mergeDomains,
+  combineNumericalDomain,
+  combineAxisDomain,
+} from '@/core/axis/domain'
+import type { StackGroup } from '@/core/axis/stacks'
+
+export type { StackGroup } from '@/core/axis/stacks'
+import { combineDomainOfStackGroups, combineStackGroups } from '@/core/axis/stacks'
+
+export { combineStackGroups, combineDomainOfStackGroups } from '@/core/axis/stacks'
+
+export { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
 import { combineAxisTicks } from '@/core/axis/ticks'
 
 import { createSelector } from '../createSelector'
-import { range, upperFirst } from 'es-toolkit/compat'
-import type { Series } from 'd3-shape'
+import { upperFirst } from 'es-toolkit/compat'
 import * as d3Scales from 'd3-scale'
 import type {
   AxisId,
   BaseCartesianAxis,
   CartesianAxisSettings,
-  TicksSettings,
   XAxisOrientation,
   XAxisSettings,
   YAxisOrientation,
@@ -17,17 +72,13 @@ import type {
 } from '../chartCartesianAxis'
 import type { RechartsRootState } from '../chartState'
 import { selectChartDataWithIndexes } from './dataSelectors'
-import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
+import type { AppliedChartData, ChartData } from '../chartData'
 import type {
   CartesianGraphicalItemSettings,
-  ErrorBarsSettings,
-  GraphicalItemSettings,
-  PolarGraphicalItemSettings,
 } from '../chartGraphicalItems'
 import type {
   ReferenceAreaSettings,
   ReferenceDotSettings,
-  ReferenceElementSettings,
   ReferenceLineSettings,
 } from '../chartReferenceElements'
 import { selectChartHeight, selectChartWidth } from './containerSelectors'
@@ -35,28 +86,40 @@ import { selectAllXAxes, selectAllYAxes } from './selectAllAxes'
 import { selectChartOffset } from './selectChartOffset'
 // import type { AxisPropsForCartesianGridTicksGeneration } from '../../cartesian/CartesianGrid'
 import { selectBarCategoryGap, selectChartName, selectStackOffsetType } from './rootPropsSelectors'
-import { selectAngleAxis, selectAngleAxisRange, selectRadiusAxis, selectRadiusAxisRange } from './polarAxisSelectors'
+import {
+  selectAngleAxis,
+  selectAngleAxisRange,
+  selectRadiusAxis,
+  selectRadiusAxisRange,
+} from './polarAxisSelectors'
 import type { AngleAxisSettings, RadiusAxisSettings } from '../chartPolarAxis'
 import { pickAxisType } from './pickAxisType'
 import { pickAxisId } from './pickAxisId'
-import type { MaybeStackedGraphicalItem } from './barSelectors'
 import { combineAxisRangeWithReverse } from './combiners/combineAxisRangeWithReverse'
 import type { AxisDomain, AxisType, NumberDomain } from '@/types/axis'
-import { checkDomainOfScale, getDomainOfStackGroups, getStackedData, getValueByDataKey } from '@/utils/chart'
+import { checkDomainOfScale } from '@/utils/chart'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
-import { flushTiny, isCategoricalAxis, isNan, isNumOrStr, isNumber, isWellBehavedNumber } from '@/utils'
-import type { CategoricalDomain, ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, StackOffsetType, TickItem } from '@/types'
+import { flushTiny, isCategoricalAxis, isWellBehavedNumber } from '@/utils'
+import type {
+  CategoricalDomain,
+  ChartOffsetRequired,
+  Coordinate,
+  LayoutType,
+  Size,
+  TickItem,
+} from '@/types'
 import type { StackId } from '@/types/tick'
 import { getPercentValue, hasDuplicate, mathSign } from '@/utils/data'
-import { isWellFormedNumberDomain, numericalDomainSpecifiedWithoutRequiringData, parseNumericalUserDomain } from '@/utils/isDomainSpecifiedByUser'
+import { isWellFormedNumberDomain } from '@/utils/isDomainSpecifiedByUser'
 import type { RechartsScale } from '@/types/scale'
-import { combineInverseScaleFunction, createCategoricalInverse } from '@/utils/createCategoricalInverse'
+import {
+  combineInverseScaleFunction,
+  createCategoricalInverse,
+} from '@/utils/createCategoricalInverse'
 import type { InverseScaleFunction } from '@/utils/createCategoricalInverse'
 import type { AxisPropsForCartesianGridTicksGeneration } from '@/cartesian/cartesian-grid/type'
 import { selectChartLayout } from '@/state/selectors/common'
 import { getNiceTickValues, getTickValuesFixedDomain } from '@/utils/scale/getNiceTickValues'
-
-const defaultNumericDomain: AxisDomain = [0, 'auto']
 
 /**
  * angle, radius, X, Y, and Z axes all have domain and range and scale and associated settings
@@ -71,110 +134,23 @@ export type XorYType = 'xAxis' | 'yAxis' | 'angleAxis' | 'radiusAxis'
 
 export type AxisWithTicksSettings = XAxisSettings | YAxisSettings | AngleAxisSettings | RadiusAxisSettings
 
-/**
- * If an axis is not explicitly defined as an element,
- * we still need to render something in the chart and we need
- * some object to hold the domain and default settings.
- */
-export const implicitXAxis: XAxisSettings = {
-  allowDataOverflow: false,
-  allowDecimals: true,
-  allowDuplicatedCategory: true,
-  angle: 0,
-  dataKey: undefined,
-  domain: undefined,
-  height: 30,
-  hide: true,
-  id: undefined,
-  includeHidden: false,
-  interval: 'preserveEnd',
-  minTickGap: 5,
-  mirror: false,
-  name: undefined,
-  orientation: 'bottom',
-  padding: { left: 0, right: 0 },
-  reversed: false,
-  scale: 'auto',
-  tick: true,
-  tickCount: 5,
-  tickFormatter: undefined,
-  ticks: undefined,
-  type: 'category',
-  unit: undefined,
-}
-
 export function selectXAxisSettings(state: RechartsRootState, axisId: AxisId): XAxisSettings {
-  const axis = state.cartesianAxis.xAxis[axisId]
-  if (axis == null) {
-    return implicitXAxis
-  }
-  return axis
-}
-
-/**
- * If an axis is not explicitly defined as an element,
- * we still need to render something in the chart and we need
- * some object to hold the domain and default settings.
- */
-export const implicitYAxis: YAxisSettings = {
-  allowDataOverflow: false,
-  allowDecimals: true,
-  allowDuplicatedCategory: true,
-  angle: 0,
-  dataKey: undefined,
-  domain: defaultNumericDomain,
-  hide: true,
-  id: undefined,
-  includeHidden: false,
-  interval: 'preserveEnd',
-  minTickGap: 5,
-  mirror: false,
-  name: undefined,
-  orientation: 'left',
-  padding: { top: 0, bottom: 0 },
-  reversed: false,
-  scale: 'auto',
-  tick: true,
-  tickCount: 5,
-  tickFormatter: undefined,
-  ticks: undefined,
-  type: 'number',
-  unit: undefined,
-  width: 60,
+  return state.axis('xAxis', axisId).settings.value
 }
 
 export function selectYAxisSettings(state: RechartsRootState, axisId: AxisId): YAxisSettings {
-  const axis = state.cartesianAxis.yAxis[axisId]
-  if (axis == null) {
-    return implicitYAxis
-  }
-  return axis
-}
-
-export const implicitZAxis: ZAxisSettings = {
-  domain: [0, 'auto'],
-  includeHidden: false,
-  reversed: false,
-  allowDataOverflow: false,
-  allowDuplicatedCategory: false,
-  dataKey: undefined,
-  id: undefined,
-  name: '',
-  range: [64, 64],
-  scale: 'auto',
-  type: 'number',
-  unit: '',
+  return state.axis('yAxis', axisId).settings.value
 }
 
 export function selectZAxisSettings(state: RechartsRootState, axisId: AxisId): ZAxisSettings {
-  const axis = state.cartesianAxis.zAxis[axisId]
-  if (axis == null) {
-    return implicitZAxis
-  }
-  return axis
+  return state.axis('zAxis', axisId).settings.value
 }
 
-export function selectBaseAxis(state: RechartsRootState, axisType: XorYorZType, axisId: AxisId): BaseCartesianAxis {
+export function selectBaseAxis(
+  state: RechartsRootState,
+  axisType: XorYorZType,
+  axisId: AxisId,
+): BaseCartesianAxis {
   switch (axisType) {
     case 'xAxis': {
       return selectXAxisSettings(state, axisId)
@@ -196,7 +172,11 @@ export function selectBaseAxis(state: RechartsRootState, axisType: XorYorZType, 
   }
 }
 
-function selectCartesianAxisSettings(state: RechartsRootState, axisType: 'xAxis' | 'yAxis', axisId: AxisId): XAxisSettings | YAxisSettings {
+function selectCartesianAxisSettings(
+  state: RechartsRootState,
+  axisType: 'xAxis' | 'yAxis',
+  axisId: AxisId,
+): XAxisSettings | YAxisSettings {
   switch (axisType) {
     case 'xAxis': {
       return selectXAxisSettings(state, axisId)
@@ -216,7 +196,11 @@ function selectCartesianAxisSettings(state: RechartsRootState, axisType: 'xAxis'
  * @param axisId xAxisId | yAxisId
  * @returns axis settings object
  */
-export function selectAxisSettings(state: RechartsRootState, axisType: XorYType, axisId: AxisId = 0): AxisWithTicksSettings {
+export function selectAxisSettings(
+  state: RechartsRootState,
+  axisType: XorYType,
+  axisId: AxisId = 0,
+): AxisWithTicksSettings {
   switch (axisType) {
     case 'xAxis': {
       return selectXAxisSettings(state, axisId)
@@ -244,33 +228,6 @@ export function selectHasBar(state: RechartsRootState): boolean {
     || state.graphicalItems.polarItems.some(item => item.type === 'radialBar')
 }
 
-/**
- * Filters CartesianGraphicalItemSettings by the relevant axis ID
- * @param axisType 'xAxis' | 'yAxis' | 'zAxis' | 'radiusAxis' | 'angleAxis'
- * @param axisId from props, defaults to 0
- *
- * @returns Predicate function that return true for CartesianGraphicalItemSettings that are relevant to the specified axis
- */
-export function itemAxisPredicate(axisType: XorYorZType, axisId: AxisId) {
-  return (item: CartesianGraphicalItemSettings | PolarGraphicalItemSettings) => {
-    switch (axisType) {
-      case 'xAxis':
-        // This is sensitive to the data type, as 0 !== '0'. I wonder if we should be more flexible. How does 2.x branch behave? TODO write test for that
-        return 'xAxisId' in item && item.xAxisId === axisId
-      case 'yAxis':
-        return 'yAxisId' in item && item.yAxisId === axisId
-      case 'zAxis':
-        return 'zAxisId' in item && item.zAxisId === axisId
-      case 'angleAxis':
-        return 'angleAxisId' in item && item.angleAxisId === axisId
-      case 'radiusAxis':
-        return 'radiusAxisId' in item && item.radiusAxisId === axisId
-      default:
-        return false
-    }
-  }
-}
-
 export function selectUnfilteredCartesianItems(state: RechartsRootState) {
   return state.graphicalItems.cartesianItems
 }
@@ -280,35 +237,16 @@ const selectAxisPredicate: (
   axisType: XorYorZType,
   axisId: AxisId,
 ) => (item: CartesianGraphicalItemSettings) => boolean = createSelector([pickAxisType, pickAxisId], itemAxisPredicate)
-export function combineGraphicalItemsSettings<T extends GraphicalItemSettings>(graphicalItems: ReadonlyArray<T>, axisSettings: BaseCartesianAxis, axisPredicate: (item: T) => boolean | AxisType) {
-  return graphicalItems.filter(axisPredicate).filter((item) => {
-    if (axisSettings?.includeHidden === true) {
-      return true
-    }
-    return !item.hide
-  })
-}
 
 const selectCartesianItemsSettings = createSelector(
   [selectUnfilteredCartesianItems, selectBaseAxis, selectAxisPredicate],
   combineGraphicalItemsSettings,
 )
 
-export function filterGraphicalNotStackedItems<T extends { stackId?: StackId }>(cartesianItems: ReadonlyArray<T>): ReadonlyArray<T> {
-  return cartesianItems.filter(item => item.stackId === undefined)
-}
-
 const selectCartesianItemsSettingsExceptStacked = createSelector(
   [selectCartesianItemsSettings],
   filterGraphicalNotStackedItems,
 )
-
-export function combineGraphicalItemsData(cartesianItems: ReadonlyArray<GraphicalItemSettings>) {
-  return cartesianItems
-    .map(item => item.data)
-    .filter(Boolean)
-    .flat(1)
-}
 
 /**
  * This is a "cheap" selector - it returns the data but doesn't iterate them, so it is not sensitive on the array length.
@@ -316,32 +254,20 @@ export function combineGraphicalItemsData(cartesianItems: ReadonlyArray<Graphica
  * @param state RechartsRootState
  * @returns data defined on the chart graphical items, such as Line or Scatter or Pie, and filtered with appropriate dataKey
  */
-export const selectCartesianGraphicalItemsData: (
+const legacyselectCartesianGraphicalItemsData: (
   state: RechartsRootState,
   axisType: XorYorZType,
   axisId: AxisId,
 ) => ChartData = createSelector([selectCartesianItemsSettings], combineGraphicalItemsData)
 
-export function combineDisplayedData(graphicalItemsData: ChartData, { chartData = [], dataStartIndex, dataEndIndex }: ChartDataState): ChartData {
-  if (graphicalItemsData.length > 0) {
-    /*
-     * There is no slicing when data is defined on graphical items. Why?
-     * Because Brush ignores data defined on graphical items,
-     * and does not render.
-     * So Brush will never show up in a Scatter chart for example.
-     * This is something we will need to fix.
-     *
-     * Now, when the root chart data is not defined, the dataEndIndex is 0,
-     * which means the itemsData will be sliced to an empty array anyway.
-     * But that's an implementation detail, and we can fix that too.
-     *
-     * Also, in absence of Axis dataKey, we use the dataKey from each item, respectively.
-     * This is the usual pattern for numerical axis, that is the one where bars go up:
-     * users don't specify any dataKey by default and expect the axis to "just match the data".
-     */
-    return graphicalItemsData
-  }
-  return chartData.slice(dataStartIndex, dataEndIndex + 1)
+export function selectCartesianGraphicalItemsData(
+  state: RechartsRootState,
+  axisType: AxisType,
+  axisId: AxisId,
+) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectCartesianGraphicalItemsData(state, axisType, axisId)
+  return state.axis(axisType, axisId).graphicalData.value
 }
 
 /**
@@ -351,7 +277,7 @@ export function combineDisplayedData(graphicalItemsData: ChartData, { chartData 
  *
  * This function will discard the original indexes, so it is also not useful for anything that depends on ordering.
  */
-export const selectDisplayedData: (
+const legacyselectDisplayedData: (
   state: RechartsRootState,
   axisType: XorYorZType,
   axisId: AxisId,
@@ -360,16 +286,10 @@ export const selectDisplayedData: (
   combineDisplayedData,
 )
 
-export function combineAppliedValues(data: ChartData, axisSettings: BaseCartesianAxis, items: ReadonlyArray<GraphicalItemSettings>): AppliedChartData {
-  if (axisSettings?.dataKey != null) {
-    return data.map(item => ({ value: getValueByDataKey(item, axisSettings.dataKey!) }))
-  }
-  if (items.length > 0) {
-    return items
-      .map(item => item.dataKey)
-      .flatMap(dataKey => data.map(entry => ({ value: getValueByDataKey(entry, dataKey!) })))
-  }
-  return data.map(entry => ({ value: entry }))
+export function selectDisplayedData(state: RechartsRootState, axisType: AxisType, axisId: AxisId) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectDisplayedData(state, axisType, axisId)
+  return state.axis(axisType, axisId).displayedData.value
 }
 
 /**
@@ -378,7 +298,7 @@ export function combineAppliedValues(data: ChartData, axisSettings: BaseCartesia
  *
  * This is an expensive selector - it will iterate all data and compute their value using the provided dataKey.
  */
-export const selectAllAppliedValues: (
+const legacyselectAllAppliedValues: (
   state: RechartsRootState,
   axisType: XorYorZType,
   axisId: AxisId,
@@ -387,126 +307,21 @@ export const selectAllAppliedValues: (
   combineAppliedValues,
 )
 
-export function isErrorBarRelevantForAxisType(axisType: XorYorZType, errorBar: ErrorBarsSettings): boolean {
-  switch (axisType) {
-    case 'xAxis':
-      return errorBar.direction === 'x'
-    case 'yAxis':
-      return errorBar.direction === 'y'
-    default:
-      return false
-  }
-}
-
-export type AppliedChartDataWithErrorDomain = {
-  /**
-   * This is the value after the dataKey has been applied. Presumably a number? But no guarantees.
-   */
-  value: unknown
-  /**
-   * This is the error domain, if any, for the current value.
-   * This may be either x or y direction, whatever is applicable.
-   * Assumption is that we're looking at this data from the point of view of a single axis,
-   * and that axis dictates the relevant direction.
-   */
-  errorDomain: ReadonlyArray<number> | undefined
-}
-
-/**
- * This is type of "error" in chart. It is set by using ErrorBar, and it can represent confidence interval,
- * or gap in the data, or standard deviation, or quartiles in boxplot, or whiskers or whatever.
- *
- * We will internally represent it as a tuple of two numbers, where the first number is the lower bound and the second number is the upper bound.
- *
- * It is also true that the first number should be lower than or equal to the associated "main value",
- * and the second number should be higher than or equal to the associated "main value".
- */
-export type ErrorValue = [number, number]
-
-function onlyAllowNumbers(data: ReadonlyArray<unknown>): ReadonlyArray<number> {
-  return data
-    .filter(v => isNumOrStr(v) || v instanceof Date)
-    .map(Number)
-    .filter(Number.isFinite)
-}
-
-/**
- * @param entry One item in the 'data' array. Could be anything really - this is defined externally. This is the raw, before dataKey application
- * @param appliedValue This is the result of applying the 'main' dataKey on the `entry`.
- * @param relevantErrorBars Error bars that are relevant for the current axis and layout and all that.
- * @return either undefined or an array of ErrorValue
- */
-export function getErrorDomainByDataKey(
-  entry: unknown,
-  appliedValue: unknown,
-  relevantErrorBars: ReadonlyArray<ErrorBarsSettings>,
-): ReadonlyArray<number> {
-  if (!relevantErrorBars || typeof appliedValue !== 'number' || isNan(appliedValue)) {
-    return []
-  }
-
-  if (!relevantErrorBars.length) {
-    return []
-  }
-
-  return onlyAllowNumbers(
-    relevantErrorBars.flatMap((eb) => {
-      const errorValue = getValueByDataKey(entry, eb.dataKey)
-      let lowBound, highBound: unknown
-
-      if (Array.isArray(errorValue)) {
-        [lowBound, highBound] = errorValue
-      }
-      else {
-        lowBound = highBound = errorValue
-      }
-      if (!isWellBehavedNumber(lowBound) || !isWellBehavedNumber(highBound)) {
-        return undefined
-      }
-      return [appliedValue - lowBound, appliedValue + highBound]
-    }),
-  )
-}
-
-export type StackGroup = {
-  readonly stackedData: ReadonlyArray<Series<Record<string, unknown>, DataKey<any>>>
-  readonly graphicalItems: ReadonlyArray<MaybeStackedGraphicalItem>
-}
-
-export function combineStackGroups(displayedData: ChartData | undefined, items: ReadonlyArray<MaybeStackedGraphicalItem>, stackOffsetType: StackOffsetType): Record<StackId, StackGroup> {
-  const initialItemsGroups: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
-  const itemsGroup: Record<StackId, ReadonlyArray<MaybeStackedGraphicalItem>> = items.reduce(
-    (acc: Record<StackId, Array<MaybeStackedGraphicalItem>>, item: MaybeStackedGraphicalItem) => {
-      if (item.stackId == null) {
-        return acc
-      }
-      if (acc[item.stackId] == null) {
-        acc[item.stackId] = []
-      }
-      acc[item.stackId].push(item)
-      return acc
-    },
-    initialItemsGroups,
-  )
-  return Object.fromEntries(
-    Object.entries(itemsGroup).map(([stackId, graphicalItems]): [StackId, StackGroup] => {
-      const dataKeys = graphicalItems.map(i => i.dataKey!)
-      return [
-        stackId,
-        {
-          stackedData: getStackedData(displayedData as any, dataKeys, stackOffsetType),
-          graphicalItems,
-        },
-      ]
-    }),
-  )
+export function selectAllAppliedValues(
+  state: RechartsRootState,
+  axisType: AxisType,
+  axisId: AxisId,
+) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectAllAppliedValues(state, axisType, axisId)
+  return state.axis(axisType, axisId).appliedValues.value
 }
 /**
  * Stack groups are groups of graphical items that stack on each other.
  * Stack is a function of axis type (X, Y), axis ID, and stack ID.
  * Graphical items that do not have a stack ID are not going to be present in stack groups.
  */
-export const selectStackGroups: (
+const legacyselectStackGroups: (
   state: RechartsRootState,
   axisType: XorYorZType,
   axisId: AxisId,
@@ -515,52 +330,28 @@ export const selectStackGroups: (
   combineStackGroups,
 )
 
-export function combineDomainOfStackGroups(stackGroups: Record<StackId, StackGroup> | undefined, { dataStartIndex, dataEndIndex }: ChartDataState, axisType: XorYorZType): NumberDomain | undefined {
-  if (axisType === 'zAxis') {
-    // ZAxis ignores stacks
-    return undefined
-  }
-  const domainOfStackGroups = getDomainOfStackGroups(stackGroups, dataStartIndex, dataEndIndex)
-  if (domainOfStackGroups != null && domainOfStackGroups[0] === 0 && domainOfStackGroups[1] === 0) {
-    return undefined
-  }
-  return domainOfStackGroups
+export function selectStackGroups(state: RechartsRootState, axisType: AxisType, axisId: AxisId) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectStackGroups(state, axisType, axisId)
+  return state.axis(axisType, axisId).stackGroups.value
 }
 
-export const selectDomainOfStackGroups = createSelector(
+const legacyselectDomainOfStackGroups = createSelector(
   [selectStackGroups, selectChartDataWithIndexes, pickAxisType],
   combineDomainOfStackGroups,
 )
 
-export function combineAppliedNumericalValuesIncludingErrorValues(data: ChartData, axisSettings: BaseCartesianAxis, items: ReadonlyArray<GraphicalItemSettings & { errorBars?: ReadonlyArray<ErrorBarsSettings> }>, axisType: XorYorZType): ReadonlyArray<AppliedChartDataWithErrorDomain> {
-  if (items.length > 0) {
-    return data
-      .flatMap((entry) => {
-        return items.flatMap((item): AppliedChartDataWithErrorDomain | undefined => {
-          const relevantErrorBars = item.errorBars?.filter(errorBar =>
-            isErrorBarRelevantForAxisType(axisType, errorBar),
-          )
-          const valueByDataKey: unknown = getValueByDataKey(entry, axisSettings.dataKey || item.dataKey!)
-          return {
-            value: valueByDataKey,
-            errorDomain: getErrorDomainByDataKey(entry, valueByDataKey, relevantErrorBars!),
-          }
-        })
-      })
-      .filter(Boolean) as ReadonlyArray<AppliedChartDataWithErrorDomain>
-  }
-  if (axisSettings?.dataKey != null) {
-    return data.map(
-      (item): AppliedChartDataWithErrorDomain => ({
-        value: getValueByDataKey(item, axisSettings.dataKey!),
-        errorDomain: [],
-      }),
-    )
-  }
-  return data.map((entry): AppliedChartDataWithErrorDomain => ({ value: entry, errorDomain: [] }))
+export function selectDomainOfStackGroups(
+  state: RechartsRootState,
+  axisType: AxisType,
+  axisId: AxisId,
+) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectDomainOfStackGroups(state, axisType, axisId)
+  return state.axis(axisType, axisId).stackDomain.value
 }
 
-export const selectAllAppliedNumericalValuesIncludingErrorValues = createSelector(
+const legacyselectAllAppliedNumericalValuesIncludingErrorValues = createSelector(
   selectDisplayedData,
   selectBaseAxis,
   selectCartesianItemsSettingsExceptStacked,
@@ -568,93 +359,18 @@ export const selectAllAppliedNumericalValuesIncludingErrorValues = createSelecto
   combineAppliedNumericalValuesIncludingErrorValues,
 )
 
-function onlyAllowNumbersAndStringsAndDates(item: { value: unknown }): string | number | Date | undefined {
-  const { value } = item
-  if (isNumOrStr(value) || value instanceof Date) {
-    return value
-  }
-  return undefined
-}
-
-function computeNumericalDomain(dataWithErrorDomains: ReadonlyArray<AppliedChartDataWithErrorDomain>): NumberDomain | undefined {
-  const allDataSquished = dataWithErrorDomains
-    // This flatMap has to be flat because we're creating a new array in the return value
-    .flatMap(d => [d.value, d.errorDomain])
-    // This flat is needed because a) errorDomain is an array, and b) value may be a number, or it may be a range (for Area, for example)
-    .flat(1)
-  const onlyNumbers = onlyAllowNumbers(allDataSquished)
-  if (onlyNumbers.length === 0) {
-    return undefined
-  }
-  return [Math.min(...onlyNumbers), Math.max(...onlyNumbers)]
-}
-
-function computeDomainOfTypeCategory(allDataSquished: AppliedChartData, axisSettings: BaseCartesianAxis, isCategorical: boolean): CategoricalDomain {
-  const categoricalDomain = allDataSquished.map(onlyAllowNumbersAndStringsAndDates).filter(v => v != null)
-  if (
-    isCategorical
-    && (axisSettings.dataKey == null || (axisSettings.allowDuplicatedCategory && hasDuplicate(categoricalDomain)))
-  ) {
-    /*
-     * 1. In an absence of dataKey, Recharts will use array indexes as its categorical domain
-     * 2. When category axis has duplicated text, serial numbers are used to generate scale
-     */
-    return range(0, allDataSquished.length)
-  }
-  if (axisSettings.allowDuplicatedCategory) {
-    return categoricalDomain
-  }
-  return Array.from(new Set(categoricalDomain))
-}
-
-export function getDomainDefinition(axisSettings: BaseCartesianAxis & Partial<TicksSettings>): AxisDomain {
-  if (axisSettings == null || !('domain' in axisSettings)) {
-    return defaultNumericDomain
-  }
-
-  if (axisSettings.domain != null) {
-    return axisSettings.domain
-  }
-  if (axisSettings.ticks != null) {
-    if (axisSettings.type === 'number') {
-      const allValues = onlyAllowNumbers(axisSettings.ticks)
-      return [Math.min(...allValues), Math.max(...allValues)]
-    }
-    if (axisSettings.type === 'category') {
-      return axisSettings.ticks.map(String)
-    }
-  }
-  return axisSettings?.domain ?? defaultNumericDomain
-}
-
-export function mergeDomains(...domains: ReadonlyArray<NumberDomain | undefined>): NumberDomain | undefined {
-  const allDomains = domains.filter(Boolean)
-  if (allDomains.length === 0) {
-    return undefined
-  }
-  const allValues = allDomains.flat()
-  const allNumbers = allValues.filter(isNumber)
-  if (allNumbers.length === 0) {
-    return undefined
-  }
-  const min = Math.min(...allNumbers)
-  const max = Math.max(...allNumbers)
-  return [min, max]
+export function selectAllAppliedNumericalValuesIncludingErrorValues(
+  state: RechartsRootState,
+  axisType: AxisType,
+  axisId: AxisId,
+) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectAllAppliedNumericalValuesIncludingErrorValues(state, axisType, axisId)
+  return state.axis(axisType, axisId).numericalValues.value
 }
 
 export function selectReferenceDots(state: RechartsRootState): ReadonlyArray<ReferenceDotSettings> {
   return state.referenceElements.dots
-}
-
-export function filterReferenceElements<T extends ReferenceElementSettings>(elements: ReadonlyArray<T>, axisType: XorYorZType, axisId: AxisId): ReadonlyArray<T> {
-  return elements
-    .filter(el => el.ifOverflow === 'extendDomain')
-    .filter((el) => {
-      if (axisType === 'xAxis') {
-        return el.xAxisId === axisId
-      }
-      return el.yAxisId === axisId
-    })
 }
 
 export const selectReferenceDotsByAxis = createSelector(
@@ -662,7 +378,9 @@ export const selectReferenceDotsByAxis = createSelector(
   filterReferenceElements,
 )
 
-export function selectReferenceAreas(state: RechartsRootState): ReadonlyArray<ReferenceAreaSettings> {
+export function selectReferenceAreas(
+  state: RechartsRootState,
+): ReadonlyArray<ReferenceAreaSettings> {
   return state.referenceElements.areas
 }
 
@@ -675,7 +393,9 @@ export const selectReferenceAreasByAxis: (
   filterReferenceElements,
 )
 
-export function selectReferenceLines(state: RechartsRootState): ReadonlyArray<ReferenceLineSettings> {
+export function selectReferenceLines(
+  state: RechartsRootState,
+): ReadonlyArray<ReferenceLineSettings> {
   return state.referenceElements.lines
 }
 
@@ -688,35 +408,9 @@ export const selectReferenceLinesByAxis: (
   filterReferenceElements,
 )
 
-export function combineDotsDomain(dots: ReadonlyArray<ReferenceDotSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
-  const allCoords = onlyAllowNumbers((dots ?? []).map(dot => (axisType === 'xAxis' ? dot.x : dot.y)))
-  if (allCoords.length === 0) {
-    return undefined
-  }
-  return [Math.min(...allCoords), Math.max(...allCoords)]
-}
-
 const selectReferenceDotsDomain = createSelector(selectReferenceDotsByAxis, pickAxisType, combineDotsDomain)
 
-export function combineAreasDomain(areas: ReadonlyArray<ReferenceAreaSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
-  const allCoords = onlyAllowNumbers(
-    (areas ?? []).flatMap(area => [axisType === 'xAxis' ? area.x1 : area.y1, axisType === 'xAxis' ? area.x2 : area.y2]),
-  )
-  if (allCoords.length === 0) {
-    return undefined
-  }
-  return [Math.min(...allCoords), Math.max(...allCoords)]
-}
-
 const selectReferenceAreasDomain = createSelector([selectReferenceAreasByAxis, pickAxisType], combineAreasDomain)
-
-export function combineLinesDomain(lines: ReadonlyArray<ReferenceLineSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
-  const allCoords = onlyAllowNumbers((lines ?? []).map(line => (axisType === 'xAxis' ? line.x : line.y)))
-  if (allCoords.length === 0) {
-    return undefined
-  }
-  return [Math.min(...allCoords), Math.max(...allCoords)]
-}
 
 const selectReferenceLinesDomain = createSelector(selectReferenceLinesByAxis, pickAxisType, combineLinesDomain)
 
@@ -729,24 +423,16 @@ const selectReferenceElementsDomain = createSelector(
   },
 )
 
-export const selectDomainDefinition = createSelector([selectBaseAxis], getDomainDefinition)
+const legacyselectDomainDefinition = createSelector([selectBaseAxis], getDomainDefinition)
 
-export function combineNumericalDomain(axisSettings: BaseCartesianAxis, domainDefinition: AxisDomain | undefined, domainOfStackGroups: NumberDomain | undefined, allDataWithErrorDomains: ReadonlyArray<AppliedChartDataWithErrorDomain>, referenceElementsDomain: NumberDomain | undefined): NumberDomain | undefined {
-  const domainFromUserPreference: NumberDomain | undefined = numericalDomainSpecifiedWithoutRequiringData(
-    domainDefinition,
-    axisSettings.allowDataOverflow,
-  )
-  if (domainFromUserPreference != null) {
-    // We're done! No need to compute anything else.
-    return domainFromUserPreference
-  }
-
-  const domain = parseNumericalUserDomain(
-    domainDefinition,
-    mergeDomains(domainOfStackGroups, referenceElementsDomain, computeNumericalDomain(allDataWithErrorDomains)),
-    axisSettings.allowDataOverflow,
-  )
-  return domain && [flushTiny(domain[0]), flushTiny(domain[1])]
+export function selectDomainDefinition(
+  state: RechartsRootState,
+  axisType: AxisType,
+  axisId: AxisId,
+) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectDomainDefinition(state, axisType, axisId)
+  return state.axis(axisType, axisId).domainDefinition.value
 }
 
 const selectNumericalDomain: (
@@ -764,46 +450,7 @@ const selectNumericalDomain: (
   combineNumericalDomain,
 )
 
-/**
- * Expand by design maps everything between 0 and 1,
- * there is nothing to compute.
- * See https://d3js.org/d3-shape/stack#stack-offsets
- */
-const expandDomain: NumberDomain = [0, 1]
-
-export function combineAxisDomain(
-  axisSettings: BaseCartesianAxis,
-  layout: LayoutType,
-  displayedData: ChartData | undefined,
-  allAppliedValues: AppliedChartData,
-  stackOffsetType: StackOffsetType,
-  axisType: XorYorZType,
-  numericalDomain: NumberDomain | undefined,
-): NumberDomain | CategoricalDomain | undefined {
-  if ((axisSettings == null || displayedData == null || displayedData.length === 0) && numericalDomain === undefined) {
-    return undefined
-  }
-
-  const { dataKey, type } = axisSettings
-  const isCategorical = isCategoricalAxis(layout, axisType)
-  if (isCategorical && dataKey == null) {
-    // Recharts v2 compat: PolarRadiusAxis defaults domain=[0,'auto'] (2 entries).
-    // When forced to band scale, parseSpecifiedDomain extends the data-derived domain
-    // to match the specified domain length, creating extra bands that make bars thinner.
-    const domainLen = Array.isArray(axisSettings.domain) ? axisSettings.domain.length : 0
-    return range(0, Math.max(displayedData?.length ?? 0, domainLen))
-  }
-
-  if (type === 'category') {
-    return computeDomainOfTypeCategory(allAppliedValues, axisSettings, isCategorical)
-  }
-  if (stackOffsetType === 'expand') {
-    return expandDomain
-  }
-  return numericalDomain
-}
-
-export const selectAxisDomain: (
+const legacyselectAxisDomain: (
   state: RechartsRootState,
   axisType: XorYorZType,
   axisId: AxisId,
@@ -820,7 +467,17 @@ export const selectAxisDomain: (
   combineAxisDomain,
 )
 
-export function combineRealScaleType(axisConfig: BaseCartesianAxis | undefined, hasBar: boolean, chartType: string): string | undefined {
+export function selectAxisDomain(state: RechartsRootState, axisType: AxisType, axisId: AxisId) {
+  if (axisType === 'angleAxis' || axisType === 'radiusAxis')
+    return legacyselectAxisDomain(state, axisType, axisId)
+  return state.axis(axisType, axisId).domain.value
+}
+
+export function combineRealScaleType(
+  axisConfig: BaseCartesianAxis | undefined,
+  hasBar: boolean,
+  chartType: string,
+): string | undefined {
   if (axisConfig == null) {
     return undefined
   }
@@ -916,7 +573,11 @@ export function combineScaleFunction(
   return guardScale(scale)
 }
 
-export function combineNiceTicks(axisDomain: NumberDomain | CategoricalDomain | undefined, axisSettings: AxisWithTicksSettings, realScaleType: string | undefined): ReadonlyArray<number> | undefined {
+export function combineNiceTicks(
+  axisDomain: NumberDomain | CategoricalDomain | undefined,
+  axisSettings: AxisWithTicksSettings,
+  realScaleType: string | undefined,
+): ReadonlyArray<number> | undefined {
   const domainDefinition: AxisDomain = getDomainDefinition(axisSettings)
   if (realScaleType !== 'auto' && realScaleType !== 'linear') {
     return undefined
@@ -943,7 +604,12 @@ export const selectNiceTicks = createSelector(
   combineNiceTicks,
 )
 
-export function combineAxisDomainWithNiceTicks(axisSettings: BaseCartesianAxis, domain: NumberDomain | CategoricalDomain | undefined, niceTicks: ReadonlyArray<number> | undefined, axisType: XorYType): NumberDomain | CategoricalDomain | undefined {
+export function combineAxisDomainWithNiceTicks(
+  axisSettings: BaseCartesianAxis,
+  domain: NumberDomain | CategoricalDomain | undefined,
+  niceTicks: ReadonlyArray<number> | undefined,
+  axisType: XorYType,
+): NumberDomain | CategoricalDomain | undefined {
   if (
     /*
      * Angle axis for some reason uses nice ticks when rendering axis tick labels,
@@ -1131,7 +797,11 @@ export const combineYAxisRange: (
   },
 )
 
-export function selectAxisRange(state: RechartsRootState, axisType: XorYorZType, axisId: AxisId): AxisRange | undefined {
+export function selectAxisRange(
+  state: RechartsRootState,
+  axisType: XorYorZType,
+  axisId: AxisId,
+): AxisRange | undefined {
   switch (axisType) {
     case 'xAxis':
       return combineXAxisRange(state, axisId)
@@ -1264,7 +934,11 @@ export const selectXAxisSize: (state: RechartsRootState, xAxisId: AxisId) => Siz
 
 type AxisOffsetSteps = Record<AxisId, number>
 
-function combineXAxisPositionStartingPoint(offset: ChartOffsetRequired, orientation: XAxisOrientation, chartHeight: number) {
+function combineXAxisPositionStartingPoint(
+  offset: ChartOffsetRequired,
+  orientation: XAxisOrientation,
+  chartHeight: number,
+) {
   switch (orientation) {
     case 'top':
       return offset.top
@@ -1275,7 +949,11 @@ function combineXAxisPositionStartingPoint(offset: ChartOffsetRequired, orientat
   }
 }
 
-function combineYAxisPositionStartingPoint(offset: ChartOffsetRequired, orientation: YAxisOrientation, chartWidth: number) {
+function combineYAxisPositionStartingPoint(
+  offset: ChartOffsetRequired,
+  orientation: YAxisOrientation,
+  chartWidth: number,
+) {
   switch (orientation) {
     case 'left':
       return offset.left
@@ -1338,7 +1016,10 @@ export const selectAllYAxesOffsetSteps: (
   },
 )
 
-export function selectXAxisPosition(state: RechartsRootState, axisId: AxisId): Coordinate | undefined {
+export function selectXAxisPosition(
+  state: RechartsRootState,
+  axisId: AxisId,
+): Coordinate | undefined {
   const offset = selectChartOffset(state)
   const axisSettings = selectXAxisSettings(state, axisId)
   if (axisSettings == null) {
@@ -1352,7 +1033,10 @@ export function selectXAxisPosition(state: RechartsRootState, axisId: AxisId): C
   return { x: offset.left, y: stepOfThisAxis }
 }
 
-export function selectYAxisPosition(state: RechartsRootState, axisId: AxisId): Coordinate | undefined {
+export function selectYAxisPosition(
+  state: RechartsRootState,
+  axisId: AxisId,
+): Coordinate | undefined {
   const offset = selectChartOffset(state)
   const axisSettings: YAxisSettings = selectYAxisSettings(state, axisId)
   if (axisSettings == null) {
@@ -1378,7 +1062,11 @@ export const selectYAxisSize: (state: RechartsRootState, yAxisId: AxisId) => Siz
   },
 )
 
-export function selectCartesianAxisSize(state: RechartsRootState, axisType: XorYType, axisId: AxisId): number | undefined {
+export function selectCartesianAxisSize(
+  state: RechartsRootState,
+  axisType: XorYType,
+  axisId: AxisId,
+): number | undefined {
   switch (axisType) {
     case 'xAxis': {
       return selectXAxisSize(state, axisId).width
@@ -1392,7 +1080,12 @@ export function selectCartesianAxisSize(state: RechartsRootState, axisType: XorY
   }
 }
 
-export function combineDuplicateDomain(chartLayout: LayoutType, appliedValues: AppliedChartData, axis: BaseCartesianAxis, axisType: XorYorZType): ReadonlyArray<unknown> | undefined {
+export function combineDuplicateDomain(
+  chartLayout: LayoutType,
+  appliedValues: AppliedChartData,
+  axis: BaseCartesianAxis,
+  axisType: XorYorZType,
+): ReadonlyArray<unknown> | undefined {
   if (axis == null) {
     return undefined
   }
@@ -1414,7 +1107,12 @@ export const selectDuplicateDomain: (
   combineDuplicateDomain,
 )
 
-export function combineCategoricalDomain(layout: LayoutType, appliedValues: AppliedChartData, axis: AxisWithTicksSettings, axisType: XorYType): ReadonlyArray<unknown> | undefined {
+export function combineCategoricalDomain(
+  layout: LayoutType,
+  appliedValues: AppliedChartData,
+  axis: AxisWithTicksSettings,
+  axisType: XorYType,
+): ReadonlyArray<unknown> | undefined {
   if (axis == null || axis.dataKey == null) {
     return undefined
   }
@@ -1523,7 +1221,15 @@ export const selectAxisInverseTickSnapScale: (
   },
 )
 
-export function combineGraphicalItemTicks(layout: LayoutType, axis: Pick<AxisWithTicksSettings, 'tickCount'> | undefined, scale: RechartsScale | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYType): TickItem[] | null {
+export function combineGraphicalItemTicks(
+  layout: LayoutType,
+  axis: Pick<AxisWithTicksSettings, 'tickCount'> | undefined,
+  scale: RechartsScale | undefined,
+  axisRange: AxisRange | undefined,
+  duplicateDomain: ReadonlyArray<unknown> | undefined,
+  categoricalDomain: ReadonlyArray<unknown> | undefined,
+  axisType: XorYType,
+): TickItem[] | null {
   if (axis == null || scale == null || axisRange == null || axisRange[0] === axisRange[1]) {
     return null
   }

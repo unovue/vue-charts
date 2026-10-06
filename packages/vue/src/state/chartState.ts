@@ -1,3 +1,4 @@
+import type { AxisLookup } from '@/model/axis'
 import type { ChartGeometry } from '@/model/layout'
 import type { ReferenceElementState } from './chartReferenceElements'
 import type { PolarAxisState } from './chartPolarAxis'
@@ -13,6 +14,7 @@ import type { CartesianAxisState } from './chartCartesianAxis'
 import type { GraphicalItemsState } from './chartGraphicalItems'
 
 export type RechartsRootState = Readonly<{
+  axis: AxisLookup
   offset: ChartGeometry['offset']['value']
   viewBox: ChartGeometry['viewBox']['value']
   axisViewBox: ChartGeometry['axisViewBox']['value']

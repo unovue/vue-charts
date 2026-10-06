@@ -1,3 +1,6 @@
+import type { MaybeStackedGraphicalItem } from '@/types/graphical'
+
+export type { MaybeStackedGraphicalItem } from '@/types/graphical'
 import { createSelector } from '../createSelector'
 import type { Series } from 'd3-shape'
 import type { RechartsRootState } from '../chartState'
@@ -16,7 +19,12 @@ import type { AxisId } from '../chartCartesianAxis'
 import type { ChartData } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
 import { selectChartOffset } from './selectChartOffset'
-import { selectBarCategoryGap, selectBarGap, selectRootBarSize, selectRootMaxBarSize } from './rootPropsSelectors'
+import {
+  selectBarCategoryGap,
+  selectBarGap,
+  selectRootBarSize,
+  selectRootMaxBarSize,
+} from './rootPropsSelectors'
 import type { DataKey, LayoutType, TickItem } from '@/types'
 import type { MinPointSize, NormalizedStackId } from '@/shape'
 import { isNullish } from '@/utils'
@@ -40,20 +48,40 @@ const pickXAxisId = (_state: RechartsRootState, xAxisId: AxisId) => xAxisId
 
 const pickYAxisId = (_state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId) => yAxisId
 
-function pickBarSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, barSettings: BarSettings): BarSettings {
+function pickBarSettings(
+  _state: RechartsRootState,
+  _xAxisId: AxisId,
+  _yAxisId: AxisId,
+  barSettings: BarSettings,
+): BarSettings {
   return barSettings
 }
 
-function pickMaxBarSize(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, barSettings: BarSettings): number | undefined {
+function pickMaxBarSize(
+  _state: RechartsRootState,
+  _xAxisId: AxisId,
+  _yAxisId: AxisId,
+  barSettings: BarSettings,
+): number | undefined {
   return barSettings.maxBarSize
 }
 
-function pickCells(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, _barSettings: BarSettings, cells: ReadonlyArray<any> | undefined): ReadonlyArray<any> | undefined {
+function pickCells(
+  _state: RechartsRootState,
+  _xAxisId: AxisId,
+  _yAxisId: AxisId,
+  _barSettings: BarSettings,
+  cells: ReadonlyArray<any> | undefined,
+): ReadonlyArray<any> | undefined {
   return []
   // return cells
 }
 
-function getBarSize(globalSize: number | string | undefined, totalSize: number | undefined, selfSize: number | string | undefined): number | undefined {
+function getBarSize(
+  globalSize: number | string | undefined,
+  totalSize: number | undefined,
+  selfSize: number | string | undefined,
+): number | undefined {
   const barSize = selfSize ?? globalSize
 
   return isNullish(barSize) ? undefined : getPercentValue(barSize!, totalSize!, 0)
@@ -92,7 +120,11 @@ type BarCategory = {
 
 export type SizeList = ReadonlyArray<BarCategory>
 
-function selectBarStackGroups(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId): Record<StackId, StackGroup> | undefined {
+function selectBarStackGroups(
+  state: RechartsRootState,
+  xAxisId: AxisId,
+  yAxisId: AxisId,
+): Record<StackId, StackGroup> | undefined {
   const layout = selectChartLayout(state)
   if (layout === 'horizontal') {
     return selectStackGroups(state, 'yAxis', yAxisId)
@@ -100,7 +132,11 @@ function selectBarStackGroups(state: RechartsRootState, xAxisId: AxisId, yAxisId
   return selectStackGroups(state, 'xAxis', xAxisId)
 }
 
-export function selectBarCartesianAxisSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId) {
+export function selectBarCartesianAxisSize(
+  state: RechartsRootState,
+  xAxisId: AxisId,
+  yAxisId: AxisId,
+) {
   const layout = selectChartLayout(state)
   if (layout === 'horizontal') {
     return selectCartesianAxisSize(state, 'xAxis', xAxisId)
@@ -108,17 +144,11 @@ export function selectBarCartesianAxisSize(state: RechartsRootState, xAxisId: Ax
   return selectCartesianAxisSize(state, 'yAxis', yAxisId)
 }
 
-/**
- * Some graphical items allow data stacking. The stacks are optional,
- * so all props here are optional too.
- */
-export interface MaybeStackedGraphicalItem {
-  stackId: StackId | undefined
-  dataKey: DataKey<any> | undefined
-  barSize: number | string | undefined
-}
-
-export function combineBarSizeList(allBars: ReadonlyArray<MaybeStackedGraphicalItem>, globalSize: string | number | undefined, totalSize?: number) {
+export function combineBarSizeList(
+  allBars: ReadonlyArray<MaybeStackedGraphicalItem>,
+  globalSize: string | number | undefined,
+  totalSize?: number,
+) {
   const initialValue: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
 
   const stackedBars = allBars.filter(b => b.stackId != null)
@@ -151,7 +181,12 @@ export const selectBarSizeList = createSelector(
   combineBarSizeList,
 )
 
-export function selectBarBandSize(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, barSettings: BarSettings) {
+export function selectBarBandSize(
+  state: RechartsRootState,
+  xAxisId: AxisId,
+  yAxisId: AxisId,
+  barSettings: BarSettings,
+) {
   const layout = selectChartLayout(state)
   const globalMaxBarSize: number | undefined = selectRootMaxBarSize(state)
   const { maxBarSize: childMaxBarSize } = barSettings
@@ -286,7 +321,15 @@ export type BarWithPosition = {
   position: BarPositionPosition
 }
 
-export function combineAllBarPositions(sizeList: SizeList | undefined, globalMaxBarSize: number, barGap: string | number, barCategoryGap: string | number, barBandSize: number | undefined, bandSize: number | undefined, childMaxBarSize: number | undefined) {
+export function combineAllBarPositions(
+  sizeList: SizeList | undefined,
+  globalMaxBarSize: number,
+  barGap: string | number,
+  barCategoryGap: string | number,
+  barBandSize: number | undefined,
+  bandSize: number | undefined,
+  childMaxBarSize: number | undefined,
+) {
   const maxBarSize: number = isNullish(childMaxBarSize) ? globalMaxBarSize : childMaxBarSize!
 
   let allBarPositions = getBarPositions(
@@ -351,7 +394,10 @@ export const selectBarPosition = createSelector(
   },
 )
 
-export function combineStackedData(stackGroups: Record<StackId, StackGroup> | undefined, barSettings: MaybeStackedGraphicalItem | undefined): Series<Record<number, number>, DataKey<any>> | undefined {
+export function combineStackedData(
+  stackGroups: Record<StackId, StackGroup> | undefined,
+  barSettings: MaybeStackedGraphicalItem | undefined,
+): Series<Record<number, number>, DataKey<any>> | undefined {
   if (!stackGroups || barSettings?.dataKey == null) {
     return undefined
   }

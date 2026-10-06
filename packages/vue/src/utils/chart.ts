@@ -1,17 +1,33 @@
+export { getDomainOfStackGroups, getStackedData } from '@/core/axis/stacks'
+export { MIN_VALUE_REG, MAX_VALUE_REG } from '@/core/axis/userDomain'
+import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { BaseAxisProps } from '@/cartesian/axis/type'
 import type { PolarViewBoxRequired } from '@/cartesian/type'
 import type { NormalizedStackId } from '@/shape'
-import type { BaseAxisWithScale, StackGroup } from '@/state/selectors/axisSelectors'
+import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
 import type { TooltipEntrySettings, TooltipPayloadEntry } from '@/state/chartTooltip'
-import type { ChartCoordinate, ChartOffsetRequired, ChartPointer, Coordinate, DataKey, LayoutType, StackOffsetType, TickItem, ValueType } from '@/types'
-import type { AxisRange, AxisType, NumberDomain } from '@/types/axis'
+import type {
+  ChartCoordinate,
+  ChartOffsetRequired,
+  ChartPointer,
+  Coordinate,
+  DataKey,
+  LayoutType,
+  TickItem,
+  ValueType,
+} from '@/types'
+import type { AxisRange, AxisType } from '@/types/axis'
 import type { AxisPropsNeededForTicksGenerator, AxisTick, StackId } from '@/types/tick'
 import { findEntryInArray, mathSign } from '@/utils/data'
-import { formatAngleOfSector, getAngleOfPoint, polarToCartesian, reverseFormatAngleOfSector } from '@/utils/polar'
-import { isNan, isNullish, isNumOrStr, isNumber, toFiniteNumber } from '@/utils/validate'
-import { get, isNaN, sortBy } from 'es-toolkit/compat'
-import type { Series, SeriesPoint } from 'd3-shape'
-import { stack as shapeStack, stackOffsetExpand, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderNone } from 'd3-shape'
+import {
+  formatAngleOfSector,
+  getAngleOfPoint,
+  polarToCartesian,
+  reverseFormatAngleOfSector,
+} from '@/utils/polar'
+import { isNullish, isNumber, toFiniteNumber } from '@/utils/validate'
+import { isNaN, sortBy } from 'es-toolkit/compat'
+import type { SeriesPoint } from 'd3-shape'
 import { toRaw } from 'vue'
 
 /**
@@ -21,7 +37,11 @@ import { toRaw } from 'vue'
  * @param {boolean} isAll Return the ticks of all the points or not
  * @return {Array}  Ticks
  */
-export function getTicksOfAxis(axis: null | AxisPropsNeededForTicksGenerator, isGrid?: boolean, isAll?: boolean): ReadonlyArray<TickItem> | null {
+export function getTicksOfAxis(
+  axis: null | AxisPropsNeededForTicksGenerator,
+  isGrid?: boolean,
+  isAll?: boolean,
+): ReadonlyArray<TickItem> | null {
   if (!axis) {
     return null
   }
@@ -97,32 +117,6 @@ export function getTicksOfAxis(axis: null | AxisPropsNeededForTicksGenerator, is
   )
 }
 
-export function getValueByDataKey<T>(obj: T, dataKey: DataKey<T> | undefined, defaultValue?: any) {
-  if (isNullish(obj) || isNullish(dataKey)) {
-    return defaultValue
-  }
-
-  if (isNumOrStr(dataKey)) {
-    // 使用 toRaw 获取原始对象，避免与 Vue 响应式系统冲突
-    const rawObj = toRaw(obj)
-    // An exact own key takes precedence, including an explicitly undefined value.
-    if (Object.prototype.hasOwnProperty.call(rawObj, dataKey)) {
-      const value = Reflect.get(Object(rawObj), dataKey)
-      return value === undefined ? defaultValue : value
-    }
-    return get(rawObj, dataKey, defaultValue)
-  }
-
-  if (typeof dataKey === 'function') {
-    return dataKey(obj)
-  }
-
-  return defaultValue
-}
-
-export const MIN_VALUE_REG = /^dataMin\s*-\s*(\d+(\.\d+)?)$/
-export const MAX_VALUE_REG = /^dataMax\s*\+\s*(\d+(\.\d+)?)$/
-
 /**
  * Calculate the size between two category
  * @param  {object} axis  The options of axis
@@ -130,7 +124,11 @@ export const MAX_VALUE_REG = /^dataMax\s*\+\s*(\d+(\.\d+)?)$/
  * @param  {boolean} isBar if items in axis are bars
  * @return {number} Size
  */
-export function getBandSizeOfAxis(axis?: BaseAxisWithScale, ticks?: ReadonlyArray<TickItem>, isBar?: boolean): number | undefined {
+export function getBandSizeOfAxis(
+  axis?: BaseAxisWithScale,
+  ticks?: ReadonlyArray<TickItem>,
+  isBar?: boolean,
+): number | undefined {
   if (axis && axis.scale && axis.scale.bandwidth) {
     const bandWidth = axis.scale.bandwidth()
 
@@ -163,7 +161,10 @@ export function getBandSizeOfAxis(axis?: BaseAxisWithScale, ticks?: ReadonlyArra
  * @param domain boundaries
  * @returns tuple of two numbers
  */
-export function truncateByDomain(value: SeriesPoint<Record<number, number>>, domain: ReadonlyArray<number>): [number, number] | SeriesPoint<Record<number, number>> {
+export function truncateByDomain(
+  value: SeriesPoint<Record<number, number>>,
+  domain: ReadonlyArray<number>,
+): [number, number] | SeriesPoint<Record<number, number>> {
   if (!domain || domain.length !== 2 || !isNumber(domain[0]) || !isNumber(domain[1])) {
     return value
   }
@@ -191,7 +192,9 @@ export function truncateByDomain(value: SeriesPoint<Record<number, number>>, dom
   return result
 }
 
-export function getNormalizedStackId(publicStackId: StackId | undefined): NormalizedStackId | undefined {
+export function getNormalizedStackId(
+  publicStackId: StackId | undefined,
+): NormalizedStackId | undefined {
   return publicStackId == null ? undefined : String(publicStackId)
 }
 
@@ -236,7 +239,9 @@ export function getCateCoordinateOfLine<T extends Record<string, unknown>>({
   return number != null ? axis.scale(number) : null
 }
 
-export function getChartPointer(event: Pick<MouseEvent, 'clientX' | 'clientY' | 'currentTarget'>): ChartPointer | undefined {
+export function getChartPointer(
+  event: Pick<MouseEvent, 'clientX' | 'clientY' | 'currentTarget'>,
+): ChartPointer | undefined {
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   const scaleX = rect.width / target.offsetWidth
@@ -302,7 +307,10 @@ export function calculateTooltipPos(rangeObj: RangeObj, layout: LayoutType): num
   return rangeObj.radius
 }
 
-export function inRangeOfSector({ x, y }: Coordinate, viewBox: PolarViewBoxRequired): RangeObj | null {
+export function inRangeOfSector(
+  { x, y }: Coordinate,
+  viewBox: PolarViewBoxRequired,
+): RangeObj | null {
   const { radius, angle } = getAngleOfPoint({ x, y }, viewBox)
   const { innerRadius, outerRadius } = viewBox
 
@@ -365,7 +373,13 @@ export function inRange(
   return null
 }
 
-export function calculateActiveTickIndex(coordinate: number, ticks: ReadonlyArray<TickItem>, unsortedTicks: ReadonlyArray<TickItem>, axisType: AxisType | undefined, range: AxisRange | undefined): number {
+export function calculateActiveTickIndex(
+  coordinate: number,
+  ticks: ReadonlyArray<TickItem>,
+  unsortedTicks: ReadonlyArray<TickItem>,
+  axisType: AxisType | undefined,
+  range: AxisRange | undefined,
+): number {
   let index = -1
   const len = ticks?.length ?? 0
 
@@ -442,7 +456,12 @@ export function calculateActiveTickIndex(coordinate: number, ticks: ReadonlyArra
   return index
 }
 
-export function getActiveCoordinate(layout: LayoutType, tooltipTicks: readonly TickItem[], activeIndex: number, rangeObj: RangeObj): ChartCoordinate {
+export function getActiveCoordinate(
+  layout: LayoutType,
+  tooltipTicks: readonly TickItem[],
+  activeIndex: number,
+  rangeObj: RangeObj,
+): ChartCoordinate {
   const entry = tooltipTicks.find(tick => tick && tick.index === activeIndex)
 
   if (entry) {
@@ -476,40 +495,6 @@ export function getActiveCoordinate(layout: LayoutType, tooltipTicks: readonly T
   }
 
   return { x: 0, y: 0 }
-}
-
-function makeDomainFinite(domain: NumberDomain): NumberDomain {
-  return [domain[0] === Infinity ? 0 : domain[0], domain[1] === -Infinity ? 0 : domain[1]]
-}
-
-function getDomainOfSingle(data: Array<Array<any>>): number[] {
-  const flat = data.flat(2).filter(isNumber)
-  return [Math.min(...flat), Math.max(...flat)]
-}
-
-export function getDomainOfStackGroups(stackGroups: Record<StackId, StackGroup> | undefined, startIndex: number, endIndex: number): NumberDomain | undefined {
-  if (stackGroups == null) {
-    return undefined
-  }
-  return makeDomainFinite(
-    Object.keys(stackGroups).reduce(
-      (result, stackId): NumberDomain => {
-        const group = stackGroups[stackId]
-        const { stackedData } = group
-        const domain = stackedData.reduce(
-          (res, entry) => {
-            const s = getDomainOfSingle(entry.slice(startIndex, endIndex + 1))
-
-            return [Math.min(res[0], s[0]), Math.max(res[1], s[1])]
-          },
-          [Infinity, -Infinity],
-        )
-
-        return [Math.min(domain[0], result[0]), Math.max(domain[1], result[1])]
-      },
-      [Infinity, -Infinity],
-    ),
-  )
 }
 
 const EPS = 1e-4
@@ -553,92 +538,9 @@ export function isClipDot(dot: any): boolean {
   return true
 }
 
-type OffsetAccessor = (series: Array<Series<Record<string, unknown>, string>>, order: number[]) => void
-
-const offsetSign: OffsetAccessor = (series) => {
-  const n = series.length
-  if (n <= 0) {
-    return
-  }
-
-  for (let j = 0, m = series[0].length; j < m; ++j) {
-    let positive = 0
-    let negative = 0
-
-    for (let i = 0; i < n; ++i) {
-      const value = isNan(series[i][j][1]) ? series[i][j][0] : series[i][j][1]
-
-      if (value >= 0) {
-        series[i][j][0] = positive
-        series[i][j][1] = positive + value
-        positive = series[i][j][1]
-      }
-      else {
-        series[i][j][0] = negative
-        series[i][j][1] = negative + value
-        negative = series[i][j][1]
-      }
-    }
-  }
-}
-/**
- * Replaces all negative values with zero when stacking data.
- *
- * If all values in the series are positive then this behaves the same as 'none' stacker.
- *
- * @param {Array} series from d3-shape Stack
- * @return {Array} series with applied offset
- */
-const offsetPositive: OffsetAccessor = (series) => {
-  const n = series.length
-  if (n <= 0) {
-    return
-  }
-
-  for (let j = 0, m = series[0].length; j < m; ++j) {
-    let positive = 0
-
-    for (let i = 0; i < n; ++i) {
-      const value = isNan(series[i][j][1]) ? series[i][j][0] : series[i][j][1]
-
-      if (value >= 0) {
-        series[i][j][0] = positive
-        series[i][j][1] = positive + value
-        positive = series[i][j][1]
-      }
-      else {
-        series[i][j][0] = 0
-        series[i][j][1] = 0
-      }
-    }
-  }
-}
-
-const STACK_OFFSET_MAP: Record<string, OffsetAccessor> = {
-  sign: offsetSign,
-  // @ts-expect-error definitelytyped types are incorrect
-  expand: stackOffsetExpand,
-  // @ts-expect-error definitelytyped types are incorrect
-  none: stackOffsetNone,
-  // @ts-expect-error definitelytyped types are incorrect
-  silhouette: stackOffsetSilhouette,
-  // @ts-expect-error definitelytyped types are incorrect
-  wiggle: stackOffsetWiggle,
-  positive: offsetPositive,
-}
-export function getStackedData(data: ReadonlyArray<Record<string, unknown>>, dataKeys: ReadonlyArray<DataKey<any>>, offsetType: StackOffsetType): ReadonlyArray<Series<Record<string, unknown>, DataKey<any>>> {
-  const offsetAccessor: OffsetAccessor = STACK_OFFSET_MAP[offsetType]
-  const stack = shapeStack<Record<string, unknown>, DataKey<any>>()
-    .keys(dataKeys)
-    .value((d, key) => toFiniteNumber(getValueByDataKey(d, key)) ?? 0)
-    .order(stackOrderNone)
-    // @ts-expect-error definitelytyped types are incorrect
-    .offset(offsetAccessor)
-
-  return stack(data)
-}
-
-export function getBaseValueOfBar({ numericAxis }: { numericAxis: BaseAxisWithScale }): number | unknown {
+export function getBaseValueOfBar(
+  { numericAxis }: { numericAxis: BaseAxisWithScale },
+): number | unknown {
   const domain = numericAxis.scale.domain()
 
   if (numericAxis.type === 'number') {
@@ -682,4 +584,12 @@ export function getCateCoordinateOfBar({
 
   const number = toFiniteNumber(value instanceof Date ? Number(value) : value)
   return number != null ? axis.scale(number) - bandSize / 2 + offset : null
+}
+
+export function getValueByDataKey<T>(
+  obj: T,
+  dataKey: DataKey<T> | undefined,
+  defaultValue?: unknown,
+) {
+  return readDataKey(typeof dataKey === 'function' ? obj : toRaw(obj), dataKey, defaultValue)
 }

@@ -1,5 +1,4 @@
 import { createSelector } from '../createSelector'
-import type { Series } from 'd3-shape'
 import type {
   StackGroup,
 } from './axisSelectors'
@@ -66,7 +65,12 @@ const selectBandSize = createSelector(
   },
 )
 
-function selectGraphicalItemStackedData(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, areaSettings: AreaSettings) {
+function selectGraphicalItemStackedData(
+  state: RechartsRootState,
+  xAxisId: AxisId,
+  yAxisId: AxisId,
+  areaSettings: AreaSettings,
+) {
   const layout = selectChartLayout(state)
   const isXAxisCategorical = isCategoricalAxis(layout, 'xAxis')
   let stackGroups: Record<StackId, StackGroup> | undefined
@@ -80,11 +84,16 @@ function selectGraphicalItemStackedData(state: RechartsRootState, xAxisId: AxisI
     return undefined
   }
   const { dataKey, stackId } = areaSettings
-  const groups: ReadonlyArray<Series<Record<string, unknown>, DataKey<any>>> = stackGroups[stackId!]?.stackedData
+  const groups = stackGroups[stackId!]?.stackedData
   return groups?.find(v => v.key === dataKey)
 }
 
-function pickAreaSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxisId: AxisId, areaSettings: AreaSettings) {
+function pickAreaSettings(
+  _state: RechartsRootState,
+  _xAxisId: AxisId,
+  _yAxisId: AxisId,
+  areaSettings: AreaSettings,
+) {
   return areaSettings
 }
 

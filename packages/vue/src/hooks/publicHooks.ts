@@ -1,8 +1,24 @@
 import { type ComputedRef, computed } from 'vue'
-import { useAppSelector } from '@/state/chartContext'
-import { selectActiveLabel, selectActiveTooltipCoordinate, selectIsTooltipActive } from '@/state/selectors/tooltipSelectors'
-import { selectAxisDomain, selectAxisInverseDataSnapScale, selectAxisInverseScale, selectAxisInverseTickSnapScale, selectAxisScale, selectTicksOfAxis } from '@/state/selectors/axisSelectors'
-import { useChartHeight, useChartWidth, useMargin, useOffset, useViewBox } from '@/context/chartLayoutContext'
+import { useAppSelector, useChartAxes } from '@/state/chartContext'
+import {
+  selectActiveLabel,
+  selectActiveTooltipCoordinate,
+  selectIsTooltipActive,
+} from '@/state/selectors/tooltipSelectors'
+import {
+  selectAxisInverseDataSnapScale,
+  selectAxisInverseScale,
+  selectAxisInverseTickSnapScale,
+  selectAxisScale,
+  selectTicksOfAxis,
+} from '@/state/selectors/axisSelectors'
+import {
+  useChartHeight,
+  useChartWidth,
+  useMargin,
+  useOffset,
+  useViewBox,
+} from '@/context/chartLayoutContext'
 import type { AxisId } from '@/state/chartCartesianAxis'
 import type { Coordinate } from '@/types/common'
 
@@ -70,7 +86,7 @@ export function usePlotArea() {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useXAxisDomain(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisDomain(state, 'xAxis', axisId))
+  return useChartAxes()('xAxis', axisId).domain
 }
 
 /**
@@ -80,7 +96,7 @@ export function useXAxisDomain(axisId: AxisId = 0) {
  * @returns A reactive domain (categorical or numerical) or undefined
  */
 export function useYAxisDomain(axisId: AxisId = 0) {
-  return useAppSelector(state => selectAxisDomain(state, 'yAxis', axisId))
+  return useChartAxes()('yAxis', axisId).domain
 }
 
 /**

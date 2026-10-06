@@ -1,3 +1,6 @@
+import { createAxes } from './axis'
+import type { AxisLookup } from './axis'
+import { createChartData } from '@/state/chartData'
 import { createLayout } from './layout'
 import type { ChartGeometry } from './layout'
 import { createChartBrush } from '@/state/chartBrush'
@@ -25,6 +28,8 @@ export interface ChartInputs {
 }
 
 export interface Chart extends ChartRegistries, ChartGeometry {
+  readonly axis: AxisLookup
+  readonly dataRange: ReturnType<typeof createChartData>
   readonly inputs: ChartInputs
   readonly scope: EffectScope
   readonly data: ComputedRef<ChartData | undefined>
@@ -61,6 +66,7 @@ export function createChart(inputs: ChartInputs): Chart {
     scale.value = value
   }
 
+  const dataRange = createChartData(() => data.value)
   const registries = createRegistries()
   const brush = createChartBrush()
   const legend = createChartLegend(registries.legendEntries)
@@ -71,7 +77,15 @@ export function createChart(inputs: ChartInputs): Chart {
     legendSize: () => legend.state.value.size,
     axes: registries.axes,
   })
+  const axis = createAxes(scope, {
+    ...registries,
+    dataWithIndexes: dataRange.state,
+    layout: inputs.layout,
+    stackOffset: () => rootProps.value.stackOffset,
+  })
   return {
+    axis,
+    dataRange,
     inputs,
     scope,
     data,
