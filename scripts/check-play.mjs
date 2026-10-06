@@ -6,6 +6,8 @@ import { createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { stopProcess, waitForServer } from './lib/check-process.mjs'
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B9')
 const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
@@ -187,6 +189,8 @@ function installRecorder(seriesSelector) {
     window.playMotion = { frames: [], snapshots: [], start: performance.now(), duration, done: false }
   }
   function sample(now) {
+    // Keep the loop alive after a sampling error; the pageerror still fails the capture.
+    requestAnimationFrame(sample)
     const state = window.playMotion
     if (!state.done) {
       styles = new Map()
@@ -272,7 +276,6 @@ function installRecorder(seriesSelector) {
       state.frames.push({ pointer: window.playPointer, hit: target ? { tag: target.tagName, class: target.getAttribute('class'), series: target.closest(seriesSelector)?.getAttribute('class') ?? null, itemSector: window.playItemSectors.has(target) } : null, t: Math.round(now - state.start), overflow: document.documentElement.scrollWidth - innerWidth, charts })
       state.done = now - state.start >= state.duration
     }
-    requestAnimationFrame(sample)
   }
   requestAnimationFrame(sample)
 }
@@ -393,15 +396,11 @@ try {
     server = spawn(process.execPath, ['.output/server/index.mjs'], { cwd: join(root, 'playground/nuxt'), env: { ...process.env, PORT: String(port), HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] })
     server.stdout.on('data', chunk => serverLog += chunk)
     server.stderr.on('data', chunk => serverLog += chunk)
-    await new Promise(resolve => setTimeout(resolve, 1200))
-    if (server.exitCode === null && serverLog.includes('Listening')) {
+    if (await waitForServer(server, `http://127.0.0.1:${port}`, 10000, () => serverLog.includes('Listening'))) {
       base = `http://127.0.0.1:${port}`
       break
     }
-    if (server.exitCode === null) {
-      server.kill('SIGTERM')
-      await new Promise(resolve => server.once('exit', resolve))
-    }
+    await stopProcess(server)
   }
   if (!base && !process.argv.includes('--fixture-only'))
     throw new Error('No server started in ports 4690–4699')
@@ -558,7 +557,7 @@ try {
       }
     }
     catch (error) {
-      result.scenarios.push({ label: 'execution', flags: [{ flag: 'execution', chart: 'page', t: null, shape: 'runner', numbers: { message: String(error) } }] })
+      result.scenarios.push({ label: 'execution', flags: [{ flag: 'execution', chart: 'page', t: null, shape: 'runner', numbers: { message: String(error), recorder: await page.evaluate(() => ({ done: window.playMotion?.done, frames: window.playMotion?.frames.length, elapsed: performance.now() - window.playMotion?.start, duration: window.playMotion?.duration })).catch(() => null) } }, ...diagnostics] })
     }
     finally {
       result.video = await page.video().path()
@@ -592,11 +591,8 @@ catch (error) {
 }
 finally {
   await browser?.close()
-  if (server && server.exitCode === null) {
-    const exited = new Promise(resolve => server.once('exit', resolve))
-    server.kill('SIGTERM')
-    await exited
-  }
+  if (server)
+    await stopProcess(server)
   await writeFile(join(evidence, 'server.log'), serverLog ?? '')
   const lines = ['# Playground motion findings', '', `Fixture detectors verified: ${fixturePassed}. All times are milliseconds since navigation or interaction.`, '', 'Every scenario has raw frame JSON, a screenshot, and a context video. Load screenshots cover the full page; interaction screenshots show the current viewport. IDs are DOM identities; text IDs include content. Rectangles use document coordinates, so scrolling does not create teleports.', '', 'Classification: synthetic flags are check artifacts by design. Runtime errors, overflow and nonzero-area bar intersections are product bugs. Geometry flags initially classify as product bugs; review their consecutive frames and video for deliberate example behavior or sampling artifacts. Disabled Vue series are exempt from entrance checks. Effective clip definitions, opacity and dash state are included in geometry. This check cannot certify aesthetic quality.', '']
   for (const r of results) {

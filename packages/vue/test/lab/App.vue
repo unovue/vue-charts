@@ -42,6 +42,8 @@ import {
 } from 'vccs'
 
 const scenario = new URLSearchParams(location.search).get('s') || 'bar'
+// The static control supplies target geometry independently of the recorded animation.
+const staticTarget = new URLSearchParams(location.search).has('static')
 const dark = new URLSearchParams(location.search).get('dark') === '1'
 if (dark)
   document.documentElement.classList.add('dark')
@@ -288,10 +290,11 @@ if (scenario === 'stress') {
       <template v-if="scenario === 'stress'">
         <LineChart
           v-if="stressType === 'line'"
+          :is-animation-active="staticTarget ? false : undefined"
           :height="360"
           :data="stressRows"
         >
-          <XAxis data-key="name" /><YAxis /><Tooltip />
+          <XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
           <Line
             v-for="key in stressSeries"
             :key="key"
@@ -302,10 +305,11 @@ if (scenario === 'stress') {
         </LineChart>
         <AreaChart
           v-else-if="stressType === 'area'"
+          :is-animation-active="staticTarget ? false : undefined"
           :height="360"
           :data="stressRows"
         >
-          <XAxis data-key="name" /><YAxis /><Tooltip />
+          <XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
           <Area
             v-for="key in stressSeries"
             :key="key"
@@ -317,10 +321,11 @@ if (scenario === 'stress') {
         </AreaChart>
         <BarChart
           v-else-if="stressType === 'bar'"
+          :is-animation-active="staticTarget ? false : undefined"
           :height="360"
           :data="stressRows"
         >
-          <XAxis data-key="name" /><YAxis /><Tooltip />
+          <XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
           <Bar
             v-for="key in stressSeries"
             :key="key"
@@ -330,6 +335,7 @@ if (scenario === 'stress') {
         </BarChart>
         <ScatterChart
           v-else
+          :is-animation-active="staticTarget ? false : undefined"
           :height="360"
         >
           <XAxis
@@ -338,7 +344,7 @@ if (scenario === 'stress') {
           /><YAxis
             :data-key="stressSeries[0]"
             type="number"
-          /><Tooltip />
+          /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
           <Scatter
             :data="stressRows"
             :fill="palette.a"
@@ -347,10 +353,11 @@ if (scenario === 'stress') {
       </template>
       <BarChart
         v-if="scenario === 'bar'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip /><Legend v-model:hidden="hidden" />
+        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" /><Legend v-model:hidden="hidden" />
         <Bar
           data-key="a"
           :fill="palette.a"
@@ -366,6 +373,7 @@ if (scenario === 'stress') {
       </BarChart>
       <Tracker
         v-else-if="scenario === 'tracker'"
+        :is-animation-active="staticTarget ? false : undefined"
         :data="trackerRows"
         name-key="date"
         :width="720"
@@ -373,6 +381,7 @@ if (scenario === 'stress') {
       />
       <CalendarHeatmap
         v-else-if="scenario === 'calendar'"
+        :is-animation-active="staticTarget ? false : undefined"
         :data="calendarRows"
         :start="isoDay(calendarStart)"
         :end="isoDay(calendarEnd)"
@@ -380,12 +389,14 @@ if (scenario === 'stress') {
       />
       <Heatmap
         v-else-if="scenario === 'heatmap'"
+        :is-animation-active="staticTarget ? false : undefined"
         :data="heatRows"
         :x-domain="heatX"
         :height="240"
       />
       <CohortChart
         v-else-if="scenario === 'cohort'"
+        :is-animation-active="staticTarget ? false : undefined"
         :data="cohortRows"
         :mode="cohortMode"
         :height="240"
@@ -397,6 +408,7 @@ if (scenario === 'stress') {
         <Sparkline
           v-for="type in ['line', 'area', 'bar']"
           :key="type"
+          :is-animation-active="staticTarget ? false : undefined"
           :type="type"
           :data="sparkRows"
           name-key="date"
@@ -408,10 +420,14 @@ if (scenario === 'stress') {
         v-else-if="scenario === 'barList'"
         style="height: 252px"
       >
-        <BarList :data="listRows" />
+        <BarList
+          :is-animation-active="staticTarget ? false : undefined"
+          :data="listRows"
+        />
       </div>
       <BarChart
         v-else-if="scenario === 'barStacked'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
@@ -430,6 +446,7 @@ if (scenario === 'stress') {
       </BarChart>
       <BarChart
         v-else-if="scenario === 'barHorizontal'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
         layout="vertical"
@@ -448,6 +465,7 @@ if (scenario === 'stress') {
       </BarChart>
       <BarChart
         v-else-if="scenario === 'barNegative'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
@@ -458,10 +476,11 @@ if (scenario === 'stress') {
       </BarChart>
       <LineChart
         v-else-if="scenario === 'line' || scenario === 'lineMonotone'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip /><Legend v-model:hidden="hidden" />
+        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" /><Legend v-model:hidden="hidden" />
         <Line
           data-key="a"
           :type="scenario === 'line' ? 'linear' : 'monotone'"
@@ -478,10 +497,11 @@ if (scenario === 'stress') {
       </LineChart>
       <AreaChart
         v-else-if="scenario === 'area'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip /><Legend v-model:hidden="hidden" />
+        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" /><Legend v-model:hidden="hidden" />
         <Area
           data-key="a"
           type="monotone"
@@ -501,6 +521,7 @@ if (scenario === 'stress') {
       </AreaChart>
       <AreaChart
         v-else-if="scenario === 'areaStacked'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
@@ -524,10 +545,11 @@ if (scenario === 'stress') {
       </AreaChart>
       <ComposedChart
         v-else-if="scenario === 'composed'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Legend v-model:hidden="hidden" /><Tooltip />
+        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Legend v-model:hidden="hidden" /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
         <Area
           data-key="b"
           type="monotone"
@@ -549,6 +571,7 @@ if (scenario === 'stress') {
       </ComposedChart>
       <ScatterChart
         v-else-if="scenario === 'scatter'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
       >
         <CartesianGrid /><XAxis
@@ -569,9 +592,10 @@ if (scenario === 'stress') {
       </ScatterChart>
       <PieChart
         v-else-if="scenario === 'pie' || scenario === 'donut'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
       >
-        <Legend v-model:hidden="hidden" /><Tooltip />
+        <Legend v-model:hidden="hidden" /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
         <Pie
           :data="pieRows"
           data-key="value"
@@ -585,6 +609,7 @@ if (scenario === 'stress') {
       </PieChart>
       <RadarChart
         v-else-if="scenario === 'radar'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
@@ -606,6 +631,7 @@ if (scenario === 'stress') {
       </RadarChart>
       <RadialBarChart
         v-else-if="scenario === 'radial'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
         :inner-radius="30"
@@ -621,9 +647,10 @@ if (scenario === 'stress') {
       </RadialBarChart>
       <FunnelChart
         v-else-if="scenario === 'funnel'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
       >
-        <Tooltip /><Funnel
+        <Tooltip :is-animation-active="staticTarget ? false : undefined" /><Funnel
           :data="funnelRows"
           data-key="value"
           name-key="name"
@@ -637,6 +664,7 @@ if (scenario === 'stress') {
       </FunnelChart>
       <Treemap
         v-else-if="scenario === 'treemap'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="treeRows"
         data-key="size"
@@ -645,26 +673,30 @@ if (scenario === 'stress') {
       />
       <JourneySankey
         v-else-if="scenario === 'journey'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="480"
         :data="journeyRows"
         :steps="journeySteps"
       />
       <Sankey
         v-else-if="scenario === 'sankey'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="sankeyData"
       />
       <SunburstChart
         v-else-if="scenario === 'sunburst'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="sunData"
       />
       <LineChart
         v-else-if="scenario === 'tooltip'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip />
+        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
         <Line
           data-key="a"
           type="monotone"
@@ -677,10 +709,11 @@ if (scenario === 'stress') {
       </LineChart>
       <BarChart
         v-else-if="scenario === 'brush'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip />
+        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" />
         <Bar
           data-key="a"
           :fill="palette.a"
@@ -693,10 +726,11 @@ if (scenario === 'stress') {
       </BarChart>
       <BarChart
         v-else-if="scenario === 'barMany'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip /><Legend v-model:hidden="hidden" />
+        <CartesianGrid :vertical="false" /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" /><Legend v-model:hidden="hidden" />
         <Bar
           data-key="a"
           :fill="palette.a"
@@ -707,10 +741,11 @@ if (scenario === 'stress') {
       </BarChart>
       <LineChart
         v-else-if="scenario === 'lineMany'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >
-        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip /><Legend v-model:hidden="hidden" />
+        <CartesianGrid /><XAxis data-key="name" /><YAxis /><Tooltip :is-animation-active="staticTarget ? false : undefined" /><Legend v-model:hidden="hidden" />
         <Line
           data-key="a"
           type="monotone"
@@ -725,6 +760,7 @@ if (scenario === 'stress') {
       </LineChart>
       <BarChart
         v-else-if="scenario === 'resize'"
+        :is-animation-active="staticTarget ? false : undefined"
         :height="360"
         :data="rows"
       >

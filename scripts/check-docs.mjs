@@ -8,6 +8,8 @@ import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { emptySurface } from './lib/check-verdicts.mjs'
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(root, 'docs/.output/public')
 const output = process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B12/docs'
@@ -132,8 +134,8 @@ async function audit(browser, engine, route, mobile) {
         return { width: box.width, height: box.height, shapes: node.querySelectorAll('path,rect,circle,polygon,line,text,.v-charts-bar-list-row').length }
       }))
       result.demos.push({ index: i + 1, surfaces })
-      if (!surfaces.length || surfaces.some(surface => surface.width <= 0 || surface.height <= 0))
-        result.findings.push({ kind: 'demo', text: `Demo ${i + 1}: missing or zero-sized surface ${JSON.stringify(surfaces)}` })
+      if (!surfaces.length || surfaces.some(emptySurface))
+        result.findings.push({ kind: 'demo', text: `Demo ${i + 1}: missing, empty or zero-sized surface ${JSON.stringify(surfaces)}` })
     }
     const hrefs = await page.locator('a[href]').evaluateAll(nodes => nodes.map(node => node.href))
     for (const href of new Set(hrefs)) {

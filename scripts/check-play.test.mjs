@@ -17,7 +17,9 @@ test('the recorder judges only painted fill and stroke geometry', () => {
   ], { cwd: root, encoding: 'utf8' })
   assert.equal(result.status, 0, result.stdout + result.stderr)
   const { results } = JSON.parse(readFileSync(`${root}${out}/results.json`, 'utf8'))
+  assert.deepEqual(results[0].scenarios.filter(s => s.label === 'execution'), [])
   const flags = results[0].scenarios[0].flags
+  assert.ok(flags.some(flag => flag.flag === 'page-error' && flag.numbers.message === 'Deliberate recorder sampling error'))
   const scroll = results[0].scenarios.find(s => s.label === 'scroll-4')
   assert.ok(scroll, 'below-fold chart must be observed after scrolling')
   const scrolledFrames = JSON.parse(readFileSync(`${root}${out}/${scroll.data}`, 'utf8'))

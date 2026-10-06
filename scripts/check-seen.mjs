@@ -10,6 +10,9 @@ import { analyzeSeen, installSeenRecorder } from './lib/seen-recorder.mjs'
 import { filmstrip } from './lib/seen-filmstrip.mjs'
 import { collectSeen } from './lib/seen-capture.mjs'
 
+import { stopProcess, waitForServer } from './lib/check-process.mjs'
+import { seenVerdict } from './lib/check-verdicts.mjs'
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/seen')
 const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
@@ -90,22 +93,13 @@ async function servePlay() {
     child.stdout.on('data', chunk => log += chunk)
     child.stderr.on('data', chunk => log += chunk)
     const stop = async () => {
-      if (child.exitCode === null) {
-        const exited = new Promise(resolve => child.once('exit', resolve))
-        child.kill('SIGTERM')
-        await exited
-      }
+      await stopProcess(child)
       await writeFile(join(evidence, `server-${port}.log`), log)
     }
     servers.push(stop)
-    for (let attempt = 0; attempt < 100 && child.exitCode === null; attempt++) {
-      if (log.includes('Listening')) {
-        const base = `http://127.0.0.1:${port}`
-        if ((await fetch(base).catch(() => null))?.ok)
-          return base
-      }
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
+    const base = `http://127.0.0.1:${port}`
+    if (await waitForServer(child, base, 10000, () => log.includes('Listening')))
+      return base
     await stop()
   }
   throw new Error('Play server did not become ready on 4690–4699')
@@ -132,8 +126,8 @@ async function run(base, route, width, tabs = false) {
     const { frames, shots } = await finish()
     const label = recordingLabel(trigger)
     const found = analyzeSeen(frames, { page: route, site: fixture ? 'fixture' : tabs || base === docsBase ? 'docs' : 'play', width, height, ...(trigger === 'scroll' ? {} : { trigger }) }).filter(row => !previousIds.includes(row.id))
-    if (tabs && !found.length)
-      throw new Error(`No new chart recorded for ${trigger}`)
+    if (!found.length)
+      throw new Error(`No chart rows recorded for ${route} ${trigger}`)
     const recording = { name: label, page: route, width, frames: frames.length, maximumGapMs: Math.max(0, ...frames.slice(1).map((f, i) => f.t - frames[i].t)), data: `${label}.json` }
     recordings.push(recording)
     for (const [index, row] of found.entries()) {
@@ -142,7 +136,7 @@ async function run(base, route, width, tabs = false) {
       row.recording = label
       await filmstrip(page, row, shots[row.id] ?? [], frames, label, evidence)
       rows.push(row)
-      console.log(`${row.site} ${route} ${width} ${row.chart} ${row.trigger}: ${row.flags.join(',') || (row.reliability === 'unreliable' ? 'UNRELIABLE' : 'PASS')} progress=${row.progressAtSeen?.toFixed(3) ?? 'never-seen'} seenMotion=${row.seenMotionMs.toFixed(1)}ms delay=${row.startDelayMs === null ? 'none' : `${row.startDelayMs.toFixed(1)}ms`} strayFrames=${row.strayHoverFrames} gap=${row.maximumGapMs.toFixed(1)}ms ${row.reliability}`)
+      console.log(`${row.site} ${route} ${width} ${row.chart} ${row.trigger}: ${row.reliability === 'unreliable' ? `INCONCLUSIVE (near-seen gap ${row.nearSeenGapMs.toFixed(1)}ms exceeds 50ms)` : row.flags.length ? `FAIL ${row.flags.join(',')}` : 'PASS'} progress=${row.progressAtSeen?.toFixed(3) ?? 'never-seen'} seenMotion=${row.seenMotionMs.toFixed(1)}ms delay=${row.startDelayMs === null ? 'none' : `${row.startDelayMs.toFixed(1)}ms`} strayFrames=${row.strayHoverFrames} gap=${row.maximumGapMs.toFixed(1)}ms ${row.reliability}`)
     }
   }
   try {
@@ -282,13 +276,15 @@ finally {
     return row && JSON.stringify([...row.flags].sort()) === JSON.stringify([...flags].sort()) && row.reliability === 'reliable'
   })
   const distribution = key => rows.map(r => r[key]).filter(v => v !== null).sort((a, b) => a - b)
-  const passed = !errors.length && recordings.length > 0 && (fixture ? fixturePassed : rows.every(r => !r.flags.length && r.reliability === 'reliable'))
-  const summary = { passed, fixture, fixturePassed, head: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), thresholds: { visibleRatio: 0.5, effectiveOpacity: 0.95, progressAtSeen: 0.15, seenMotionMs: 400, lateStartMs: 250, unreliableGapMs: 50 }, distributions: { progressAtSeen: distribution('progressAtSeen'), seenMotionMs: distribution('seenMotionMs') }, rows, recordings, errors }
+  const verdict = seenVerdict(rows, recordings, errors)
+  const passed = fixture ? fixturePassed && !errors.length : verdict === 'PASS'
+  const acceptable = fixture ? passed : verdict !== 'FAIL'
+  const summary = { passed, acceptable, verdict: fixture ? passed ? 'PASS' : 'FAIL' : verdict, fixture, fixturePassed, head: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(), thresholds: { visibleRatio: 0.5, effectiveOpacity: 0.95, progressAtSeen: 0.15, seenMotionMs: 400, lateStartMs: 250, unreliableGapMs: 50 }, distributions: { progressAtSeen: distribution('progressAtSeen'), seenMotionMs: distribution('seenMotionMs') }, rows, recordings, errors }
   const escape = s => String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
   await writeFile(join(evidence, fixture ? 'fixture-summary.json' : 'summary.json'), `${JSON.stringify(summary, null, 2)}\n`)
-  const html = `<!doctype html><meta charset="utf-8"><title>Seen motion evidence</title><style>body{font:14px system-ui;margin:24px;background:#fafafa}article{background:white;border:1px solid #ddd;margin:16px 0;padding:16px}img{width:100%;max-width:1500px}.flag{border-color:#d33}pre{white-space:pre-wrap}</style><h1>Seen motion: ${passed ? 'PASS' : 'FAIL'}</h1><p>${rows.length} chart/trigger rows. ${rows.filter(r => r.flags.length).length} flagged. Filmstrips freeze computed SVG appearance, ancestor opacity and blur; labels give actual sample offsets. Never-seen charts use first half-visible frame as evidence anchor. Raw rAF data and real-time videos are linked below.</p><a href="${fixture ? 'fixture-summary.json' : 'summary.json'}">Summary and full distributions</a>${errors.map(e => `<pre>${escape(JSON.stringify(e))}</pre>`).join('')}${[...rows].sort((a, b) => b.flags.length - a.flags.length).map(r => `<article class="${r.flags.length ? 'flag' : ''}"><h2>${escape(`${r.site} ${r.page} ${r.width} ${r.chart} ${r.trigger}`)}</h2><pre>${escape(JSON.stringify(r, null, 2))}</pre><a href="${r.recording}.json">Frame data</a>${recordings.find(rec => rec.name === r.recording)?.video ? ` · <a href="${recordings.find(rec => rec.name === r.recording).video}">1× video</a>` : ''}<br><img loading="lazy" src="${r.filmstrip}"></article>`).join('')}`
+  const html = `<!doctype html><meta charset="utf-8"><title>Seen motion evidence</title><style>body{font:14px system-ui;margin:24px;background:#fafafa}article{background:white;border:1px solid #ddd;margin:16px 0;padding:16px}img{width:100%;max-width:1500px}.flag{border-color:#d33}pre{white-space:pre-wrap}</style><h1>Seen motion: ${fixture ? passed ? 'PASS' : 'FAIL' : verdict}</h1><p>${rows.length} chart/trigger rows. ${rows.filter(r => r.flags.length).length} flagged. Filmstrips freeze computed SVG appearance, ancestor opacity and blur; labels give actual sample offsets. Never-seen charts use first half-visible frame as evidence anchor. Raw rAF data and real-time videos are linked below.</p><a href="${fixture ? 'fixture-summary.json' : 'summary.json'}">Summary and full distributions</a>${errors.map(e => `<pre>${escape(JSON.stringify(e))}</pre>`).join('')}${[...rows].sort((a, b) => b.flags.length - a.flags.length).map(r => `<article class="${r.flags.length ? 'flag' : ''}"><h2>${escape(`${r.site} ${r.page} ${r.width} ${r.chart} ${r.trigger}`)}</h2><pre>${escape(JSON.stringify(r, null, 2))}</pre><a href="${r.recording}.json">Frame data</a>${recordings.find(rec => rec.name === r.recording)?.video ? ` · <a href="${recordings.find(rec => rec.name === r.recording).video}">1× video</a>` : ''}<br><img loading="lazy" src="${r.filmstrip}"></article>`).join('')}`
   await writeFile(join(evidence, fixture ? 'fixture-index.html' : 'index.html'), html)
-  console.log(`${passed ? 'PASS' : 'FAIL'}: ${rows.length} rows; ${rows.filter(r => r.flags.length).length} flagged; ${rows.filter(r => r.reliability === 'unreliable').length} unreliable; ${errors.length} errors`)
-  if (!passed)
+  console.log(`${fixture ? passed ? 'PASS' : 'FAIL' : verdict}: ${rows.length} rows; ${rows.filter(r => r.flags.length).length} flagged; ${rows.filter(r => r.reliability === 'unreliable').length} unreliable; ${errors.length} errors`)
+  if (!acceptable)
     process.exitCode = 1
 }

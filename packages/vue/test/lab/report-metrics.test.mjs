@@ -138,3 +138,44 @@ test('a synchronous bar list height change is flagged', () => {
     'height jump ul.v-charts-bar-list#barList0 @0ms 212→176px',
   ])
 })
+
+// Normalizing to the final recorded sample must not hide a cut-off transition.
+test('a cut-off recording fails against the independently settled target', () => {
+  const frames = [0, 5, 10, 15, 20, 25, 30].map((x, i) => ({
+    t: i * 16,
+    shapes: { bar: `|${x}|0|10|20` },
+    overlap: 0,
+  }))
+  assert.deepEqual(flags(curves(frames), frames, { bar: '|100|0|10|20' }).issues, ['unsettled bar'])
+  assert.deepEqual(flags(curves(frames), frames, { bar: '|30|0|10|20' }).issues, [])
+})
+
+// A typo in a focused release check must not produce a successful empty report.
+test('the motion CLI rejects an unknown step filter', async () => {
+  const { spawnSync } = await import('node:child_process')
+  const result = spawnSync(process.execPath, [
+    'packages/vue/test/lab/report.mjs',
+    'bar',
+    '--steps=missing-step',
+    '--out=.evidence/release-1.0/phase-4/unknown-step',
+  ], { cwd: new URL('../../../../', import.meta.url), encoding: 'utf8', timeout: 60000 })
+  assert.equal(result.status, 1, result.stdout + result.stderr)
+  assert.ok(result.stderr.includes('No motion transitions matched'), result.stderr)
+})
+
+// User arguments must never permit deletion outside the evidence directory.
+test('the motion CLI rejects unsafe output paths and scenario names', async () => {
+  const { spawnSync } = await import('node:child_process')
+  for (const [args, message] of [
+    [['bar', '--out=.'], 'Motion output must be contained'],
+    [['../bar'], 'Unknown motion scenario'],
+  ]) {
+    const result = spawnSync(process.execPath, ['packages/vue/test/lab/report.mjs', ...args], {
+      cwd: new URL('../../../../', import.meta.url),
+      encoding: 'utf8',
+      timeout: 60000,
+    })
+    assert.equal(result.status, 1, result.stdout + result.stderr)
+    assert.ok(result.stderr.includes(message), result.stderr)
+  }
+})

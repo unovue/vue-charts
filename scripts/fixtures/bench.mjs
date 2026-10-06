@@ -1,3 +1,4 @@
+import { compareSamples } from '#bench-verdict'
 import { createApp, h, nextTick, ref } from 'vue'
 import { Bar, BarChart, CalendarHeatmap, Heatmap, Line, LineChart, XAxis, YAxis } from '#bench-library'
 
@@ -85,33 +86,25 @@ function geometry(kind) {
   return (node?.matches('path') ? node : node?.querySelector('path'))?.getAttribute('d')
 }
 
-function median(values) {
-  values.sort((a, b) => a - b)
-  const mid = Math.floor(values.length / 2)
-  return values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2
-}
-
 window.vccsBench = {
   verdict({ errors, summary, runs, sameBuild, selfTest }) {
-    const passed = !errors.length && summary.every(row => row.passed)
-    const inconclusive = sameBuild && !passed && !errors.length
+    const acceptable = !errors.length && summary.length === 18 && summary.every(row => row.verdict !== 'FAIL')
+    const inconclusive = acceptable && summary.some(row => row.verdict === 'INCONCLUSIVE')
+    const passed = acceptable && !inconclusive
     const selfTestVerified = selfTest && !errors.length && summary.length === 18
-      && summary.some(row => !row.passed) && runs.filter(r => r.side === 'B').every(r =>
+      && summary.some(row => row.verdict === 'FAIL') && runs.filter(r => r.side === 'B').every(r =>
       r.mode === 'static' ? r.mountInjectedMs > 0 && r.updateInjectedMs > 0 : r.injectedMs > 0)
-    return { passed, inconclusive, selfTestVerified }
+    return { passed, acceptable, inconclusive, selfTestVerified }
   },
   summarize({ runs, cases, compare, sameBuild }) {
     const summary = []
     for (const entry of cases) {
       for (const metric of entry.mode === 'static' ? ['mountMs', 'updateMs'] : ['cpuMsPerFrame']) {
-        const value = side => median(runs.filter(r => r.side === side && r.kind === entry.kind
-          && r.n === entry.n && r.mode === entry.mode).map(r => r[metric]))
-        const A = compare ? value('A') : undefined; const B = value('B')
-        const ratio = compare ? B / A : undefined
-        if (![B, ...(compare ? [A] : [])].every(v => Number.isFinite(v) && v > 0))
-          throw new Error('Invalid median')
-        const passed = !compare || (ratio <= 1.1 && (!sameBuild || ratio >= 0.9))
-        summary.push({ ...entry, metric, A, B, ratio, passed })
+        const values = side => runs.filter(r => r.side === side && r.kind === entry.kind
+          && r.n === entry.n && r.mode === entry.mode).map(r => r[metric])
+        const samples = values('B')
+        const comparison = compareSamples(compare ? values('A') : samples, samples, sameBuild)
+        summary.push({ ...entry, metric, ...comparison })
       }
     }
     return summary

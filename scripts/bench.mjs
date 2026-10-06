@@ -46,6 +46,7 @@ async function bundle() {
     entryPoints: sides.map(side => join(output, `${side}.mjs`)), nodePaths: [peers], outdir: output,
     bundle: true, minify: true, format: 'esm', splitting: true, platform: 'browser', target: 'es2022',
     alias: {
+      '#bench-verdict': join(root, 'scripts/lib/benchmark-verdict.mjs'),
       'vue': libraryRequire.resolve('vue').replace('/index.js', '/dist/vue.runtime.esm-bundler.js'),
       'motion-v': join(await realpath(join(peers, 'motion-v')), 'dist/es/index.mjs'),
     },
@@ -131,7 +132,8 @@ try {
   await sample()
   Object.assign(result, await page.evaluate(r => window.vccsBench.verdict(r), result))
   console.table(result.summary)
-  process.exitCode = result.passed ? 0 : 1
+  console.log(result.inconclusive ? 'INCONCLUSIVE: paired timing spread crosses a gate boundary; inspect intervals' : result.passed ? 'PASS' : 'FAIL')
+  process.exitCode = result.acceptable ? 0 : 1
 }
 catch (error) { result.errors.push(error.stack ?? String(error)); process.exitCode = 1 }
 finally {

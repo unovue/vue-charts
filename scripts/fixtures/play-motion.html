@@ -72,3 +72,15 @@ setTimeout(() => {
 }, 400)
 </script>
 </html>
+
+<script>
+// A sampler exception must remain a reported defect without killing later recordings.
+setTimeout(() => {
+  const rect = document.querySelector('#clip-width')
+  const original = rect.getBBox
+  rect.getBBox = function () {
+    rect.getBBox = original
+    throw new Error('Deliberate recorder sampling error')
+  }
+}, 450)
+</script>

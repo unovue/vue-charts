@@ -48,7 +48,7 @@ function hidden(frames, id, t) {
   return shape.endsWith('|~faint') || (parts[3] !== '' && parts[4] !== '' && (Math.abs(width) < 2 || Math.abs(height) < 2))
 }
 
-export function flags(curveList, frames) {
+export function flags(curveList, frames, target) {
   const issues = []
   for (const c of curveList) {
     for (let i = 1; i < c.pts.length; i++) {
@@ -67,9 +67,18 @@ export function flags(curveList, frames) {
       if (still === 3)
         issues.push(`stall ${c.id} @${Math.round(c.pts[i][0])}ms at ${(p * 100).toFixed(0)}%`)
     }
-    const settle = c.pts.find(([, p]) => Math.abs(1 - p) < 0.01)
-    if (!settle)
-      issues.push(`unsettled ${c.id}`)
+  }
+  // The recording endpoint is not the target: compare with an independent static control.
+  if (target) {
+    const last = frames.at(-1)?.shapes ?? {}
+    for (const id of new Set([...Object.keys(last), ...Object.keys(target)])) {
+      const actual = nums(last[id] ?? '')
+      const expected = nums(target[id] ?? '')
+      if (actual.length !== expected.length
+        || expected.some((value, i) => Math.abs(value - actual[i]) > 0.01)) {
+        issues.push(`unsettled ${id}`)
+      }
+    }
   }
   // A synchronous height snap happens before the first animation frame.
   for (const [id, shape] of Object.entries(frames[0]?.before ?? {})) {
