@@ -33,7 +33,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.7 | Slice 3d: tooltip model | yes | 2.6 | done | `2c627f4`, this log | 132 files / 1,294 tests; typing, lint and 285 motion transitions PASS. |
 | 2.8 | Slice 3e: cartesian series | yes | 2.7 | done | `b41413e`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
 | 2.9 | Slice 3f: polar series | yes | 2.8 | done | `a6b7c9d`, this log commit | 132 files / 1,296 tests; typing, lint and 285 motion transitions PASS. |
-| 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | todo | | |
+| 2.11 | Slice 5: standalone charts on TooltipSource and ChartShell | yes | 2.9 | done | `7300c14`, this log commit | Step gate, bundle assertion and 285 motion transitions PASS; evidence below. |
 | 2.10 | Slice 4: delete the store shell | yes | 2.11 | todo | | |
 | 2.12 | Slice 6: context ownership | yes | 2.10 | todo | | |
 | 2.13 | Remaining architecture findings | assess | 2.12 | todo | | |
@@ -326,3 +326,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Geometry PASS: 456 exact polar frames at verified 720/360px widths; corrected narrow sampler, servers closed.
 - Evidence: `.evidence/release-1.0/step-2.9/checks.md`; raw 20 captures / 1,031 frames differ; 70 throttled intervals faster; no conclusion.
 - Assumptions: Node 22, two workers, six frozen fixtures; preserve tick semantics and public payload types; one tracked adapter remains.
+
+## Step 2.11: standalone charts on TooltipSource and ChartShell
+- Done: `7300c14`; nine roots share lightweight selection and shell; Treemap/Sankey forwarders removed; one adapter remains.
+- Gate PASS: 132 files / 1,301 tests (148.17 s), typecheck, build and lint on 30 files with zero warnings; bundle assertion PASS.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; refill regression reverse proof fails as expected.
+- Geometry: 513 exact settled frames per width; narrow Journey differs only in 84 faint markers across two frames; servers closed.
+- Evidence and gzip: `.evidence/release-1.0/step-2.11/checks.md`; anomalies: 23 raw captures / 1,089 frames, resize 0 → 6, 105 faster throttled intervals.
+- Assumptions: Node 22, two workers, six frozen sources; preserve legacy viewport and surface-scope geometry lifetime; Chromium only.
