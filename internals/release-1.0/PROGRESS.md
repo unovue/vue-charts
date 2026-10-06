@@ -28,7 +28,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 2.2 | Slice 1: root inputs as getters | yes | 2.1 | todo | | |
 | 2.3 | Slice 2: registries | yes | 2.2 | done | `d933af2`, this log commit | Registry, unit, typing, lint, SSR and motion gates PASS; evidence below. |
 | 2.4 | Slice 3a: layout math | yes | 2.3 | done | `49a7c42`, this log commit | Shared layout, step gate and 285/285 motion PASS; evidence below. |
-| 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | todo | | |
+| 2.5 | Slice 3b: axis model part 1 | yes | 2.4 | done | `efad585`, this log commit | Shared Cartesian axis models, step gate and 285/285 motion PASS; evidence below. |
 | 2.6 | Slice 3c: axis model part 2 | yes | 2.5 | todo | | |
 | 2.7 | Slice 3d: tooltip model | yes | 2.6 | todo | | |
 | 2.8 | Slice 3e: cartesian series | yes | 2.7 | todo | | |
@@ -278,3 +278,11 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 - Geometry PASS: all 114 Bar/Area numeric frames match step 2.3; Bar images inspected.
 - Evidence: `.evidence/release-1.0/step-2.4/`; anomalies: suite 126.57 → 212.51 → 122.74 s; 92 throttled intervals faster.
 - Assumptions: Node 22, two workers; retain Brush/Legend interaction owners and the single adapter fallback.
+
+## Step 2.5 evidence
+- Done: `efad585`; cached Cartesian axis models own settings, data, domains and stacks; pure math in core.
+- Gate PASS: strict typing; 131 files / 1,281 tests; lint on 26 files, zero warnings; build PASS.
+- Motion PASS: 285/285, nine unchanged accepted flags, zero errors, 570 videos; no curve-count changes.
+- SSR PASS: 1/1 test, four byte-identical HTML comparisons; Bar 57/57 frames match; servers closed.
+- Evidence: `.evidence/release-1.0/step-2.5/`; anomalies: Area 56/57 frames differ, max 0.733 px; 105 throttled intervals faster.
+- Assumptions: Node 22, two workers; polar/scales/ticks in 2.6; retain strict IDs and the single tracked adapter.
