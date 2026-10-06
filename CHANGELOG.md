@@ -15,6 +15,10 @@ every breaking change with a before and after example.
 
 - Models use `v-model`: `v-model:active-index` (`number | null`) on charts and series, and one
   `v-model:range` on `Brush` instead of `start-index` and `end-index`.
+- Callback props such as `:onClick` and `onAnimationEnd` are Vue events (`@click`).
+- Charts are responsive by default; the `responsive` prop and the size injection of
+  `ResponsiveContainer` are removed.
+- All classes use the `v-charts-` prefix in kebab case (`vcharts-surface` → `v-charts-surface`).
 - Explicit exports: internal contexts, `*VueProps` objects, path helpers and `useOffset` are no
   longer exported. Use `usePlotArea` instead of `useOffset`.
 - Internal geometry props are gone from Line, Area, Bar, Legend and Label.
