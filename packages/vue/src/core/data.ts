@@ -1,29 +1,33 @@
 import type { DataKey } from '@/types/common'
-import { get } from 'es-toolkit/compat'
-import { isNullish, isNumOrStr } from '@/utils/validate'
+
+const keyPaths = new Map<string | number, readonly string[] | null>()
 
 export function getValueByDataKey<T>(
   obj: unknown,
   dataKey: DataKey<T> | undefined,
   defaultValue?: unknown,
 ) {
-  if (isNullish(obj) || isNullish(dataKey)) {
+  if (obj == null || dataKey == null)
     return defaultValue
-  }
 
-  if (isNumOrStr(dataKey)) {
-    // An exact own key takes precedence, including an explicitly undefined value.
-    if (Object.prototype.hasOwnProperty.call(obj, dataKey)) {
-      const value = Reflect.get(Object(obj), dataKey)
-      return value === undefined ? defaultValue : value
-    }
-    return get(obj, dataKey, defaultValue)
-  }
-
-  if (typeof dataKey === 'function') {
-    // Data accessors operate on consumer-owned rows at this runtime boundary.
+  // Preserve the existing untyped boundary for consumer-owned accessors.
+  if (typeof dataKey === 'function')
     return Reflect.apply(dataKey, undefined, [obj])
-  }
 
-  return defaultValue
+  let path = keyPaths.get(dataKey)
+  if (path === undefined) {
+    path = typeof dataKey === 'string' && /[.[]/.test(dataKey)
+      ? dataKey.replace(/\[(\d+)\]/g, '.$1').split('.')
+      : null
+    keyPaths.set(dataKey, path)
+  }
+  // Property access also preserves JavaScript's boxing of primitive rows.
+  const row = obj as Record<PropertyKey, unknown>
+  let value = row[dataKey]
+  if (value === undefined && path && !Object.hasOwn(row, dataKey)) {
+    value = row
+    for (const segment of path)
+      value = (value as Record<PropertyKey, unknown> | null | undefined)?.[segment]
+  }
+  return value === undefined ? defaultValue : value
 }

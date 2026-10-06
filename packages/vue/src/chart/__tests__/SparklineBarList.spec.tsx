@@ -169,14 +169,29 @@ describe('<BarList />', () => {
     expect(click).toHaveBeenCalledWith({ name: 'A', value: 5 }, 1, expect.any(MouseEvent))
   })
 
-  it('ranks rows by value with bars relative to the largest and formatted values', () => {
-    const { container } = render(() => <BarList data={data} href-key="url" isAnimationActive={false} valueFormatter={v => `${v} visits`} />)
-    expect(rows(container).sort((a, b) => a.y.localeCompare(b.y, undefined, { numeric: true }))).toEqual([
-      { name: '/', value: '100 visits', width: '100%', y: 'translateY(0px)' },
-      { name: '/docs', value: '50 visits', width: '50%', y: 'translateY(36px)' },
-      { name: '/blog', value: '25 visits', width: '25%', y: 'translateY(72px)' },
-    ])
-    expect(container.querySelector('a')!.getAttribute('href')).toBe('/home')
+  it('ranks typed key forms with relative bars, formatted values and links', () => {
+    const nested = data.map(row => ({
+      label: { text: row.name },
+      metrics: [{ total: row.value }],
+      link: { url: row.url },
+    }))
+    const indexed = data.map(row => [row.name, row.value, row.url])
+    const cases = [
+      () => <BarList data={data} hrefKey="url" isAnimationActive={false} valueFormatter={v => `${v} visits`} />,
+      () => <BarList data={nested} nameKey="label.text" dataKey="metrics[0].total" hrefKey="link.url" isAnimationActive={false} valueFormatter={v => `${v} visits`} />,
+      () => <BarList data={nested} nameKey={row => row.label.text} dataKey={row => row.metrics[0].total} hrefKey={row => row.link.url} isAnimationActive={false} valueFormatter={v => `${v} visits`} />,
+      () => <BarList data={indexed} nameKey={0} dataKey={1} hrefKey={2} isAnimationActive={false} valueFormatter={v => `${v} visits`} />,
+    ]
+    for (const view of cases) {
+      const { container, unmount } = render(view)
+      expect(rows(container).sort((a, b) => a.y.localeCompare(b.y, undefined, { numeric: true }))).toEqual([
+        { name: '/', value: '100 visits', width: '100%', y: 'translateY(0px)' },
+        { name: '/docs', value: '50 visits', width: '50%', y: 'translateY(36px)' },
+        { name: '/blog', value: '25 visits', width: '25%', y: 'translateY(72px)' },
+      ])
+      expect(container.querySelector('a')!.getAttribute('href')).toBe('/home')
+      unmount()
+    }
   })
 
   it('keeps each row\'s element when ranks change', async () => {
