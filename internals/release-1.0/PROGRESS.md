@@ -469,11 +469,11 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 
 ## Phase 3 part A
 
-### 3.1 Strict declarations — deferred
-- Existing strict nullability probe retained; library typecheck/build pass.
-- Gate: Vitest 130 files / 1310 tests; check:code passes (`part-a/3.1-*.log`).
-- Packed check fails: Vite dependency declarations (motion-v/framer-motion, VueUse); Nuxt builds.
-- Attempts: offline missing archive; fetch existing locks; rerun with prepared store.
-- No partial implementation to revert; no check or dependency contract weakened.
-- Evidence: `.evidence/release-1.0/part-a/3.1-consumers.log`.
-- Assumption: dependency declaration failures defer packed acceptance, not independent API steps.
+### 3.1 Strict declarations — done
+- Supersedes deferred entry in 94d517b; packed consumers and nullable-coordinate probe pass.
+- Gate: typecheck/build/lint/code pass; Vitest 130 files / 1310 tests (`3.1-*.log`).
+- Strict packed guard: 294 declarations, zero vccs errors; reports 100 third-party diagnostics.
+- Guard retains missing-dependency/malformed-declaration checks with skipLibCheck false.
+- Reverse packed scale-type patch fails guard; restoring the callable type passes.
+- Evidence: `.evidence/release-1.0/part-a/` (`3.1-guard-*.log`, `3.1-consumers.log`).
+- Assumptions: template skipLibCheck defaults; guard runs in Nuxt to supply optional Nuxt types.

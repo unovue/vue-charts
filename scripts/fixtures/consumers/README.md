@@ -40,3 +40,10 @@ sandbox-exec -p '(version 1)(allow default)(deny network*)' node scripts/check-c
 On other systems, run it in a network-disabled container after preparation. `--offline` alone
 proves pnpm's install mode; it does not prove a framework build made no network request.
 Temporary applications are removed on success or failure. No server starts during these checks.
+
+Consumer templates use `strict: true` and `skipLibCheck: true`. The nullability probe still
+checks consumer source against packed declarations. A separate guard checks every packed
+vccs declaration with `skipLibCheck: false` in the Nuxt fixture (which supplies Nuxt's optional
+integration types). Errors located in vccs fail the guard; dependency diagnostics are reported.
+This retains detection of missing declaration dependencies and malformed library types while
+matching the official templates' treatment of third-party declaration errors.

@@ -84,6 +84,6 @@ export interface BrushState {
   movingTravellerId?: BrushTravellerId
   isTextActive: boolean
   brushMoveStartX?: number
-  scale?: import('d3-scale').ScalePoint<number>
+  scale?: (index: number) => number | undefined
   scaleValues?: number[]
 }

@@ -1,13 +1,12 @@
-import type { ComponentResolver } from 'unplugin-vue-components'
 import { componentNames } from './componentNames'
 
-export function VccsResolver(options: { prefix?: string } = {}): ComponentResolver {
+export function VccsResolver(options: { prefix?: string } = {}) {
   const prefix = options.prefix ?? ''
   const names: ReadonlySet<string> = new Set(componentNames)
 
   return {
-    type: 'component',
-    resolve(name) {
+    type: 'component' as const,
+    resolve(name: string) {
       if (!name.startsWith(prefix))
         return
 

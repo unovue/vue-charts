@@ -70,6 +70,12 @@ try {
           throw new Error(`Nuxt ${context} must use strict: true`)
         console.log(`Nuxt ${context}: strict=true, default skipLibCheck=${config.compilerOptions.skipLibCheck}`)
       }
+      const guard = spawnSync(process.execPath, [join(root, 'scripts/check-consumer-declarations.mjs'), app], {
+        env,
+        stdio: 'inherit',
+      })
+      if (guard.status !== 0)
+        failures.push(new Error('Strict packed vccs declaration guard failed'))
       check(app, ['exec', 'nuxi', 'typecheck'])
       check(app, ['exec', 'nuxi', 'build'])
     }
