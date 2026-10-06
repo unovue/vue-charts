@@ -3,7 +3,7 @@
  * The index is the position of the element in the data array.
  * This can be either a number (for array-based charts) or a string (for the charts that have a matrix-shaped data).
  */
-export const DATA_ITEM_INDEX_ATTRIBUTE_NAME = 'data-recharts-item-index'
+export const DATA_ITEM_INDEX_ATTRIBUTE_NAME = 'data-v-charts-item-index'
 /**
  * We use this attribute to identify which element is the one that the user is touching.
  * DataKey works here as a kind of identifier for the element. It's not a perfect identifier for ~two~ three reasons:
@@ -26,6 +26,6 @@ export const DATA_ITEM_INDEX_ATTRIBUTE_NAME = 'data-recharts-item-index'
  * because if dataKey is undefined then graphical elements assume the dataKey of the axes.
  * Which makes it a convenient way of using recharts to render a chart but horrible identifier.
  */
-export const DATA_ITEM_DATAKEY_ATTRIBUTE_NAME = 'data-recharts-item-data-key'
+export const DATA_ITEM_DATAKEY_ATTRIBUTE_NAME = 'data-v-charts-item-data-key'
 
 export const DEFAULT_Y_AXIS_WIDTH = 60

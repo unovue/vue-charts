@@ -49,7 +49,7 @@ const LineView = defineComponent({
 
       const lineContent = (
         <Fragment>
-          <Layer class={['v-charts-line', attrs.class]}>
+          <Layer data-slot="series" class={['v-charts-line', attrs.class]}>
             {needClip.value && (
               <defs>
                 <GraphicalItemClipPath clipPathId={clipPathId.value} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />

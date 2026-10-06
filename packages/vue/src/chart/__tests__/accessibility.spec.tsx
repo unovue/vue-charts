@@ -47,7 +47,7 @@ describe('chart accessibility', () => {
       const wrapper = container.querySelector<HTMLElement>('.v-charts-wrapper')!
       const live = container.querySelector('[aria-live="polite"]')!
       expect(container.querySelectorAll('[aria-live]')).toHaveLength(1)
-      expect(wrapper.getAttribute('aria-label')).toBe('BarChart chart')
+      expect(wrapper.getAttribute('aria-label')).toBe('Bar chart')
       await fireEvent.mouseMove(wrapper, { clientX: 150, clientY: 100 })
       await vi.advanceTimersByTimeAsync(200)
       expect(live.textContent?.trim()).toBe('')

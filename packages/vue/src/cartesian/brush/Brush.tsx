@@ -153,6 +153,7 @@ const BrushView = defineComponent({
 
       return (
         <Layer
+          data-slot="brush"
           class={['v-charts-brush', props.class]}
           style={{ userSelect: 'none', ...attrs.style as CSSProperties }}
           onMouseleave={handlers.handleLeaveWrapper}

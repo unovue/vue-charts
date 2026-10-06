@@ -99,6 +99,7 @@ const ShellContent = defineComponent({
       <>
         {content?.before?.() ?? slots.before?.()}
         <Surface
+          data-slot="surface"
           {...props.root === 'surface' ? rootAttrs(attrs) : {}}
           title={props.title}
           desc={props.desc}
@@ -106,7 +107,9 @@ const ShellContent = defineComponent({
           height={props.size.effectiveHeight.value}
           style={{ width: '100%', height: '100%', overflow: props.overflow }}
         >
-          {content ? content.svg() : slots.svg?.()}
+          <g data-slot="plot">
+            {content ? content.svg() : slots.svg?.()}
+          </g>
         </Surface>
       </>
     )

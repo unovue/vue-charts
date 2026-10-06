@@ -165,6 +165,7 @@ export const ChartWrapper = defineComponent({
     return () => (
       <div
         {...attrs}
+        data-slot="chart"
         class={['v-charts-wrapper', props.class]}
         style={[
           props.boxStyle,

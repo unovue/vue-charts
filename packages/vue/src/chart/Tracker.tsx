@@ -41,7 +41,8 @@ const TrackerVueProps = {
   gap: { type: Number, default: 2 },
   /** Locale for dates in tooltips. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
-  ariaLabel: { type: String, default: 'Status history' },
+  desc: String,
+  title: { type: String, default: 'Status history' },
 }
 
 const _Tracker = defineComponent({
@@ -104,7 +105,7 @@ const _Tracker = defineComponent({
     })
 
     return () => (
-      <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+      <ChartShell {...attrs} {...chartListeners(emit)} size={size} title={props.title} desc={props.desc} overflow="visible">
         {{ svg: () => (
           <Layer class="v-charts-tracker">
             <CellGridLayer
@@ -114,7 +115,7 @@ const _Tracker = defineComponent({
               radius={props.radius}
               activeStyle="dim"
               grow="bottom"
-              ariaLabel={props.ariaLabel}
+              title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               entrance="slide"

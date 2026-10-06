@@ -49,7 +49,8 @@ const SparklineVueProps = {
   activeIndex: { type: Number as PropType<number | null>, default: undefined },
   gap: { type: Number, default: 1 },
   radius: { type: Number, default: 1 },
-  ariaLabel: { type: String, default: 'Trend' },
+  desc: String,
+  title: { type: String, default: undefined },
 }
 
 const sparklineEmits = {
@@ -250,14 +251,14 @@ const SparklineInner = defineComponent({
     const activePoint = computed(() => active.value == null ? undefined : points.value[active.value])
     const summary = computed(() => {
       const finite = values.value.filter((value): value is number => value !== null)
-      return finite.length ? `${props.ariaLabel}: ${finite.length} values from ${finite[0]} to ${finite.at(-1)}` : props.ariaLabel
+      return props.title ?? (finite.length ? `Trend: ${finite.length} values from ${finite[0]} to ${finite.at(-1)}` : 'Trend')
     })
 
     return () => {
       const width = props.width
       const height = props.height
       return (
-        <Layer class="v-charts-sparkline" data-type={props.type}>
+        <Layer data-slot="series" class="v-charts-sparkline" data-type={props.type}>
           {props.type === 'bar'
             ? (
                 <CellGridLayer
@@ -266,7 +267,7 @@ const SparklineInner = defineComponent({
                   radius={props.radius}
                   activeStyle="dim"
                   grow="bottom"
-                  ariaLabel={summary.value}
+                  title={summary.value}
                   isAnimationActive={props.isAnimationActive}
                   transition={props.transition}
                   activeIndex={props.activeIndex}
@@ -339,7 +340,7 @@ const _Sparkline = defineComponent({
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} desc={props.desc} overflow="visible">
           {{ svg: () => (
             <SparklineInner
               {...inner}

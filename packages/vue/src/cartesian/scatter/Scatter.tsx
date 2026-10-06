@@ -281,7 +281,7 @@ const ScatterView = defineComponent({
       if (props.hide)
         return null
       return teleport((
-        <Layer class="v-charts-scatter">
+        <Layer data-slot="series" class="v-charts-scatter">
           {slots.default?.()}
           {h(Geometry)}
         </Layer>

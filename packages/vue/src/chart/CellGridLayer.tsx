@@ -147,7 +147,7 @@ export const CellGridLayer = defineComponent({
     entrance: { type: String as PropType<'cascade' | 'slide'>, default: 'cascade' },
     /** Where cells entering after the first appearance grow from. */
     grow: { type: String as PropType<'center' | 'bottom'>, default: 'center' },
-    ariaLabel: { type: String, default: undefined },
+    title: { type: String, default: undefined },
   },
   emits: cellGridEmits,
   slots: Object as SlotsType<CellGridSlots>,
@@ -415,10 +415,11 @@ export const CellGridLayer = defineComponent({
       const activeCell = active === undefined ? undefined : items.value.find(item => item.value.key === active && item.phase !== 'exit')?.value
       return (
         <g
+          data-slot="series"
           class="v-charts-cell-grid"
           role="listbox"
           tabindex={0}
-          aria-label={props.ariaLabel}
+          aria-label={props.title}
           aria-activedescendant={active === undefined ? undefined : cellId(active)}
           style={{ outline: 'none' }}
           onFocus={onFocus}
@@ -448,6 +449,7 @@ export const CellGridLayer = defineComponent({
                 <g
                   key={key as string}
                   id={interactive ? cellId(cell.key) : undefined}
+                  data-slot="cell"
                   class="v-charts-cell"
                   role="option"
                   aria-selected={isActive}
@@ -462,6 +464,7 @@ export const CellGridLayer = defineComponent({
                     : <rect class="v-charts-cell-rect" x={cell.x} y={cell.y} width={cell.width} height={cell.height} rx={radius} fill-opacity={fade} style={{ fill: cell.fill, transition: fillTransition }} />}
                   {cell.text && !slots.cell && cell.width >= cell.text.length * 6.2 + 4 && cell.height >= 13 && (
                     <text
+                      data-slot="label"
                       class="v-charts-cell-text"
                       x={cell.x + cell.width / 2}
                       y={cell.y + cell.height / 2}

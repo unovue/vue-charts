@@ -43,7 +43,7 @@ provideLabelLayerRef(labelLayerRef)
 
 <template>
   <svg
-    v-bind="$attrs"
+    v-bind="{ ...$attrs, 'data-slot': 'surface' }"
     class="v-charts-surface"
     :class="[props.class]"
     :width="width"
@@ -60,6 +60,7 @@ provideLabelLayerRef(labelLayerRef)
     />
     <g
       ref="graphicalLayerRef"
+      v-bind="{ 'data-slot': 'plot' }"
       class="v-charts-graphical-layer"
     />
     <g

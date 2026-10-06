@@ -158,7 +158,7 @@ const RadarView = defineComponent({
       const isClosed = pathD.endsWith('Z')
 
       return (
-        <Layer class="v-charts-radar">
+        <Layer data-slot="series" class="v-charts-radar">
           <g class="v-charts-radar-polygon" {...seriesListeners}>
             {isRange && baseLinePoints.length > 0
               ? (

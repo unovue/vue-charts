@@ -243,7 +243,7 @@ const CartesianGridView = defineComponent({
         return null
       }
       return (
-        <g class="v-charts-cartesian-grid">
+        <g data-slot="grid" class="v-charts-cartesian-grid">
           <Background
             fill={propsIncludingDefaults.fill}
             fillOpacity={propsIncludingDefaults.fillOpacity}

@@ -24,7 +24,8 @@ const CohortChartVueProps = {
   /** Locale for numbers. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
   gap: { type: Number, default: 2 },
-  ariaLabel: { type: String, default: 'Cohort retention' },
+  desc: String,
+  title: { type: String, default: 'Cohort retention' },
 }
 
 /**
@@ -104,7 +105,8 @@ const _CohortChart = defineComponent({
         radius={props.radius}
         isAnimationActive={props.isAnimationActive}
         transition={props.transition}
-        ariaLabel={props.ariaLabel}
+        title={props.title}
+        desc={props.desc}
         width={props.width}
         height={props.height}
         aspect={props.aspect}

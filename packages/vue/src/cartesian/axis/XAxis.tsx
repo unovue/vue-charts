@@ -46,6 +46,7 @@ const XAxisImpl = defineComponent({
           width={axisSize.value?.width}
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
+          data-slot="x-axis"
           class="v-charts-x-axis"
           v-slots={slots.tick ? { tick: slots.tick } : undefined}
         />

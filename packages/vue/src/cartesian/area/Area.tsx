@@ -47,7 +47,7 @@ const AreaView = defineComponent({
 
       const areaContent = (
         <Fragment>
-          <Layer class={['v-charts-area', attrs.class]}>
+          <Layer data-slot="series" class={['v-charts-area', attrs.class]}>
             <StaticArea v-slots={{ label: slots.label }} />
           </Layer>
           <Layer {...activeListeners}>

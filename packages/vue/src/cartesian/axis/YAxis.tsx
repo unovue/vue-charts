@@ -105,6 +105,7 @@ const YAxisImpl = defineComponent({
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
           tickTextProps={isAutoWidth() ? { width: undefined } : { width: axisSize.value?.width }}
+          data-slot="y-axis"
           class="v-charts-y-axis"
           ref={cartesianAxisRef}
           v-slots={{ tick: slots.tick }}

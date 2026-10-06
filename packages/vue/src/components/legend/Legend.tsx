@@ -162,6 +162,7 @@ const LegendView = defineComponent({
 
       const legendElement = (
         <div
+          data-slot="legend"
           class="v-charts-legend-wrapper"
           style={outerStyle.value}
           ref={legendRef}

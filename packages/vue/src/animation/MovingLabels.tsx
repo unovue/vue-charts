@@ -39,6 +39,7 @@ export const MovingLabels = defineComponent({
       <g {...attrs} aria-hidden="true">
         {items.value.map(item => (
           <text
+            data-slot="label"
             key={String(item.key)}
             x={item.value.x}
             y={item.value.y}

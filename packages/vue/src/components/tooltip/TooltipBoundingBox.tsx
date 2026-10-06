@@ -181,6 +181,7 @@ export const TooltipBoundingBox = defineComponent({
       }
       return (
         <div
+          data-slot="tooltip"
           role="tooltip"
           tabindex={-1}
           class={cssClasses}

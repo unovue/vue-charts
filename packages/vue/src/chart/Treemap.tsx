@@ -459,7 +459,7 @@ function useTreemap(
   }
 
   const renderChart = () => (
-    <Layer class="v-charts-treemap">
+    <Layer data-slot="series" class="v-charts-treemap">
       {items.value.map((item, index) => renderNode(item.value, index, item.key, labelOpacity(item)))}
     </Layer>
   )

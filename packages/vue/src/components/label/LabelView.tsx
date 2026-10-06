@@ -54,6 +54,7 @@ export const LabelView = defineComponent({
 
       return (
         <Text
+          data-slot="label"
           class={['v-charts-label', props.class]}
           {...attrs}
           {...positionAttrs}

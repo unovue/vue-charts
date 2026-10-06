@@ -74,7 +74,8 @@ const JourneySankeyVueProps = {
   formatSubtitle: { type: Function as PropType<(node: JourneyNode) => string>, default: undefined },
   /** Locale for numbers. Fixed by default so server and client render the same. */
   locale: { type: String, default: 'en-US' },
-  ariaLabel: { type: String, default: undefined },
+  desc: String,
+  title: { type: String, default: undefined },
 }
 
 const journeyEmits = {
@@ -392,7 +393,7 @@ const JourneySankeyInner = defineComponent({
       const steps = layout.value.steps
       return steps.length > 1 ? steps[1].x - steps[0].x : props.width
     })
-    const summary = computed(() => props.ariaLabel ?? `Journeys of ${numbers.value.format(layout.value.steps[0]?.total ?? 0)} sessions over ${layout.value.steps.length} steps`)
+    const summary = computed(() => props.title ?? `Journeys of ${numbers.value.format(layout.value.steps[0]?.total ?? 0)} sessions over ${layout.value.steps.length} steps`)
     const focusedLabel = computed(() => {
       const node = focused.value ? nodeById.value.get(focused.value) : undefined
       return node ? `${node.name}, step ${node.step + 1}: ${subtitleOf(node)}` : summary.value
@@ -418,6 +419,7 @@ const JourneySankeyInner = defineComponent({
       const labelChars = Math.floor((columnWidth.value - props.nodeWidth - 16) / CHAR_WIDTH)
       return (
         <g
+          data-slot="series"
           class="v-charts-journey"
           role="group"
           tabindex={0}
@@ -538,7 +540,7 @@ const _JourneySankey = defineComponent({
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (
-        <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} desc={props.desc} overflow="visible">
           {{ svg: () => (
             <JourneySankeyInner
               {...inner}

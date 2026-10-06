@@ -52,7 +52,8 @@ const BarListVueProps = {
   locale: { type: String, default: 'en-US' },
   rowHeight: { type: Number, default: 32 },
   gap: { type: Number, default: 4 },
-  ariaLabel: { type: String, default: undefined },
+  desc: String,
+  title: { type: String, default: 'Bar list' },
 }
 
 const barListEmits = {
@@ -154,8 +155,10 @@ const BarListInner = defineComponent({
 
     return () => (
       <ul
+        data-slot="chart"
         class="v-charts-bar-list"
-        aria-label={props.ariaLabel}
+        aria-label={props.title}
+        aria-description={props.desc}
         style={{ position: 'relative', height: `${height.value}px`, margin: 0, padding: 0, listStyle: 'none' }}
       >
         {items.value.map(({ key, value: state, phase }) => {
@@ -165,6 +168,7 @@ const BarListInner = defineComponent({
           return (
             <li
               key={key as string}
+              data-slot="series"
               class="v-charts-bar-list-row"
               aria-hidden={phase === 'exit' ? 'true' : undefined}
               style={{

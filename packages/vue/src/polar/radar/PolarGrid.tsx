@@ -60,7 +60,7 @@ const PolarGridView = defineComponent({
       const renderBackground = fill && fill !== 'none'
 
       return (
-        <g class="v-charts-polar-grid">
+        <g data-slot="grid" class="v-charts-polar-grid">
           {/* Concentric grid shapes */}
           <g class="v-charts-polar-grid-concentric">
             {/* Background fill — single shape at max radius, rendered first so rings draw on top */}

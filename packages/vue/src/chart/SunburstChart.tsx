@@ -256,7 +256,7 @@ const SunburstInner = defineComponent({
     }
 
     return () => (
-      <Layer class="v-charts-sunburst">
+      <Layer data-slot="series" class="v-charts-sunburst">
         {items.value.map(({ key, value, phase }, index) => renderSector(value, index, key, phase === 'exit'))}
       </Layer>
     )

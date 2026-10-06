@@ -31,6 +31,9 @@ function createChartSetup({
   validateTooltipEventTypes = ['axis'],
   tooltipPayloadSearcher,
 }: CategoricalChartOptions) {
+  const defaultTitle = chartName === 'ComposedChart'
+    ? 'Chart'
+    : chartName.replace(/Chart$/, ' chart').replace('RadialBar', 'Radial bar')
   return function setup(props: CategoricalChartPropsWithOutSvg, { attrs, slots, emit }: SetupContext<typeof chartEmits>) {
     provideChartAnimation(props)
     const {
@@ -121,7 +124,7 @@ function createChartSetup({
           <ChartsWrapper
             accessibilityLayer={props.accessibilityLayer}
             tabIndex={props.tabIndex}
-            title={title ?? `${chartName} chart`}
+            title={title ?? defaultTitle}
             descriptionId={desc ? descriptionId : undefined}
             isResponsive={isResponsive.value}
             boxStyle={boxStyle.value}
@@ -139,7 +142,7 @@ function createChartSetup({
                 {...{
                   ...svgAttributes,
                   'role': props.accessibilityLayer ? undefined : 'img',
-                  'aria-label': props.accessibilityLayer ? undefined : title ?? `${chartName} chart`,
+                  'aria-label': props.accessibilityLayer ? undefined : title ?? defaultTitle,
                   'aria-describedby': desc ? descriptionId : undefined,
                 }}
                 descriptionId={descriptionId}

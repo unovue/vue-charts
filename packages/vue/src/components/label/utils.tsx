@@ -131,7 +131,7 @@ export function renderRadialLabel(
   const id = labelId ?? generatedId
 
   return (
-    <text {...attrs} dominant-baseline="central" class={['v-charts-radial-bar-label', className]}>
+    <text data-slot="label" {...attrs} dominant-baseline="central" class={['v-charts-radial-bar-label', className]}>
       <defs>
         <path id={id} d={path} />
       </defs>

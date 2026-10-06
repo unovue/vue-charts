@@ -197,7 +197,7 @@ const RadialBarView = defineComponent({
       const backgroundProps = typeof props.background === 'object' ? props.background : {}
 
       return (
-        <Layer class="v-charts-radial-bar">
+        <Layer data-slot="series" class="v-charts-radial-bar">
           {showBackground && sectors.value?.map((sector, i) => {
             if (!sector.background)
               return null

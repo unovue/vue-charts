@@ -139,7 +139,7 @@ const FunnelView = defineComponent({
       const stroke = (attrs.stroke as string) ?? props.stroke
 
       return (
-        <Layer class={['v-charts-funnel', props.class]}>
+        <Layer data-slot="series" class={['v-charts-funnel', props.class]}>
           {items.value.map(({ key, value: trap }) => {
             const cellProps = cells[trap.index] ?? {}
             const trapFill = cellProps.fill ?? getValueByDataKey(trap.payload, 'fill') ?? props.fill

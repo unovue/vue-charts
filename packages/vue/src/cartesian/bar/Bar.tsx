@@ -141,7 +141,7 @@ const BarView = defineComponent({
       const cells = extractCellProps(children)
       assignCells(cellPropsRef, cells)
       return teleport((
-        <Layer class={['v-charts-bar', attrs.class]}>
+        <Layer data-slot="series" class={['v-charts-bar', attrs.class]}>
           {h(Geometry)}
           {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
         </Layer>

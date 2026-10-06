@@ -50,7 +50,8 @@ const CalendarHeatmapVueProps = {
   locale: { type: String, default: 'en-US' },
   monthLabels: { type: Boolean, default: true },
   weekdayLabels: { type: Boolean, default: true },
-  ariaLabel: { type: String, default: 'Activity calendar' },
+  desc: String,
+  title: { type: String, default: 'Activity calendar' },
 }
 
 const _CalendarHeatmap = defineComponent({
@@ -193,7 +194,7 @@ const _CalendarHeatmap = defineComponent({
     })
 
     return () => (
-      <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+      <ChartShell {...attrs} {...chartListeners(emit)} size={size} title={props.title} desc={props.desc} overflow="visible">
         {{ svg: () => (
           <Layer class="v-charts-calendar">
             <MovingLabels
@@ -216,7 +217,7 @@ const _CalendarHeatmap = defineComponent({
               radius={props.radius}
               activeStyle="ring"
               grow="center"
-              ariaLabel={props.ariaLabel}
+              title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               {...{

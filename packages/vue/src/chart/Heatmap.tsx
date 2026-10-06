@@ -59,7 +59,8 @@ const HeatmapVueProps = {
   xLabels: { type: Boolean, default: true },
   yLabels: { type: Boolean, default: true },
   gap: { type: Number, default: 2 },
-  ariaLabel: { type: String, default: 'Heatmap' },
+  desc: String,
+  title: { type: String, default: 'Heatmap' },
 }
 
 const _Heatmap = defineComponent({
@@ -206,7 +207,7 @@ const _Heatmap = defineComponent({
     })
 
     return () => (
-      <ChartShell {...attrs} {...chartListeners(emit)} size={size} overflow="visible">
+      <ChartShell {...attrs} {...chartListeners(emit)} size={size} title={props.title} desc={props.desc} overflow="visible">
         {{ svg: () => (
           <Layer class="v-charts-heatmap">
             <MovingLabels
@@ -231,7 +232,7 @@ const _Heatmap = defineComponent({
               radius={props.radius}
               activeStyle="ring"
               grow="center"
-              ariaLabel={props.ariaLabel}
+              title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               {...{

@@ -172,7 +172,7 @@ const PieView = defineComponent({
       }
       const stroke = (attrs.stroke as string) ?? props.stroke
       return (
-        <Layer class={['v-charts-pie', props.class]}>
+        <Layer data-slot="series" class={['v-charts-pie', props.class]}>
           {sectorList.map(({ key, value: sector }) => {
             const animatedStartAngle = sector.startAngle
             const animatedEndAngle = sector.endAngle
