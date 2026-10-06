@@ -2,7 +2,7 @@ import { useChartId } from '@/hooks/useChartId'
 import type { Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, ref, shallowRef } from 'vue'
 import { createContext } from 'motion-v'
-import type { BarProps } from '../type'
+import type { ResolvedBarProps } from '../type'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
 import { getNormalizedStackId } from '@/utils/chart'
 import { useChartLayout } from '@/context/chartLayoutContext'
@@ -15,9 +15,9 @@ export interface BarContext {
   // 基础计算属性
   clipPathId: string
   layout: Ref<'horizontal' | 'vertical' | 'centric' | 'radial'>
-  props: BarProps
+  props: ResolvedBarProps
   attrs: SVGAttributes
-  data: Readonly<ShallowRef<readonly BarRectangleItem[]>>
+  data: Readonly<ShallowRef<readonly BarRectangleItem[] | undefined>>
   isAnimating: Ref<boolean>
   shapeSlot?: (props: any) => any
   activeBarSlot?: (props: any) => any
@@ -39,7 +39,7 @@ export interface DrawnBar {
 }
 export const [useBarContext, provideBarContext] = createContext<BarContext>('BarContext')
 
-export function useBar(props: BarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
+export function useBar(props: ResolvedBarProps, attrs: SVGAttributes, shapeSlot?: (props: any) => any, activeBarSlot?: (props: any) => any) {
   const isPanorama = useIsPanorama()
   const layout = useChartLayout()
   const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)

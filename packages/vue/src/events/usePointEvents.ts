@@ -2,9 +2,16 @@ import { useAppSelector } from '@/state/hooks'
 import { selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
 import { useChartTooltip } from '@/state/chartContext'
 import type { DataKey } from '@/types'
+import type { EmitFn } from 'vue'
+
+type PointEmitter<Entry> = EmitFn<{
+  click: (entry: Entry, index: number, event: MouseEvent) => void
+  mouseenter: (entry: Entry, index: number, event: MouseEvent) => void
+  mouseleave: (entry: Entry, index: number, event: MouseEvent) => void
+}>
 
 export function usePointEvents<Entry extends { x: number, y: number }>(
-  emit: (event: 'click' | 'mouseenter' | 'mouseleave', entry: Entry, index: number, nativeEvent: MouseEvent) => void,
+  emit: PointEmitter<Entry>,
   dataKey: () => DataKey<unknown>,
 ) {
   const tooltip = useChartTooltip()
@@ -28,7 +35,7 @@ export function usePointEvents<Entry extends { x: number, y: number }>(
 }
 
 export function useSeriesPointEvents<Entry extends { x: number, y: number }>(
-  emit: (event: 'click' | 'mouseenter' | 'mouseleave', entry: Entry, index: number, nativeEvent: MouseEvent) => void,
+  emit: PointEmitter<Entry>,
   dataKey: () => DataKey<unknown>,
   points: () => readonly Entry[],
 ) {

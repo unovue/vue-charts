@@ -10,7 +10,7 @@ import type { ValueAnimationTransition } from 'motion-dom'
 import type { BaseValue } from '@/types/area'
 import type { AxisId } from '@/types/axis'
 import type { LegendType } from '@/types/legend'
-import type { PropType } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
@@ -25,7 +25,7 @@ export const AreaVueProps = {
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
     type: [String, Number, Function] as PropType<DataKey<any>>,
-    required: true,
+    required: true as const,
   },
   dot: { type: Boolean, default: false },
   fill: { type: String, default: 'var(--v-charts-series, #3182bd)' },
@@ -89,3 +89,5 @@ export interface AreaDotSlotProps {
   clipDot?: boolean
   class?: VueClassValue
 }
+
+export type ResolvedAreaProps = ExtractPropTypes<typeof AreaVueProps>

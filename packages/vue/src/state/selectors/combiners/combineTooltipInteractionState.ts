@@ -4,7 +4,7 @@ import type { TooltipEventType, TooltipTrigger } from '@/types'
 
 function chooseAppropriateMouseInteraction(
   tooltipState: TooltipState,
-  tooltipEventType: TooltipEventType,
+  tooltipEventType: TooltipEventType | undefined,
   trigger: TooltipTrigger,
 ): TooltipInteractionState | undefined {
   if (tooltipEventType === 'axis') {

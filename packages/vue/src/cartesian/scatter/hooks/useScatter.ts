@@ -10,7 +10,7 @@ export interface ScatterProps {
   yAxisId?: string | number
   zAxisId?: string | number
   dataKey?: DataKey<any>
-  data?: ReadonlyArray<Record<string, any>>
+  data?: ReadonlyArray<unknown>
   name?: string | number
   hide?: boolean
   fill?: string

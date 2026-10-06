@@ -26,19 +26,19 @@ export type ResolvedScatterSettings = {
   name: string | number
 }
 
-function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings, isPanorama: boolean) {
+function selectXAxisWithScale(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings | undefined, isPanorama: boolean) {
   return selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama)
 }
 
-function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings, isPanorama: boolean) {
+function selectXAxisTicks(state: RechartsRootState, xAxisId: AxisId, _yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings | undefined, isPanorama: boolean) {
   return selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama)
 }
 
-function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings, isPanorama: boolean) {
+function selectYAxisWithScale(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings | undefined, isPanorama: boolean) {
   return selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama)
 }
 
-function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings, isPanorama: boolean) {
+function selectYAxisTicks(state: RechartsRootState, _xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings | undefined, isPanorama: boolean) {
   return selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama)
 }
 
@@ -50,7 +50,7 @@ function pickScatterSettings(_state: RechartsRootState, _xAxisId: AxisId, _yAxis
   return scatterSettings
 }
 
-function scatterChartDataSelector(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings, isPanorama: boolean): ChartDataState {
+function scatterChartDataSelector(state: RechartsRootState, xAxisId: AxisId, yAxisId: AxisId, _zAxisId: AxisId, _scatterSettings: ResolvedScatterSettings | undefined, isPanorama: boolean): ChartDataState {
   return selectChartDataWithIndexesIfNotInPanorama(state, xAxisId, yAxisId, isPanorama)
 }
 
@@ -198,8 +198,8 @@ export const selectScatterPoints: (
     xAxisTicks,
     yAxis,
     yAxisTicks,
-    zAxis: ZAxisWithScale,
-    scatterSettings: ResolvedScatterSettings,
+    zAxis: ZAxisWithScale | undefined,
+    scatterSettings: ResolvedScatterSettings | undefined,
   ): ReadonlyArray<ScatterPointItem> | undefined => {
     if (scatterSettings == null) {
       return undefined
@@ -215,8 +215,8 @@ export const selectScatterPoints: (
       displayedData == null
       || xAxis == null
       || yAxis == null
-      || xAxisTicks?.length === 0
-      || yAxisTicks?.length === 0
+      || xAxisTicks == null || xAxisTicks.length === 0
+      || yAxisTicks == null || yAxisTicks.length === 0
     ) {
       return undefined
     }

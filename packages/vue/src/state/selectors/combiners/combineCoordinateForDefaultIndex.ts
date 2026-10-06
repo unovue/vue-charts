@@ -1,7 +1,7 @@
 import type { ChartOffset, Coordinate, LayoutType, TickItem } from '@/types'
 import type { TooltipIndex, TooltipPayloadConfiguration, TooltipPayloadSearcher } from '../../chartTooltip'
 
-export function combineCoordinateForDefaultIndex(width: number, height: number, layout: LayoutType, offset: ChartOffset | undefined, tooltipTicks: ReadonlyArray<TickItem>, defaultIndex: TooltipIndex | undefined, tooltipConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined): Coordinate | undefined {
+export function combineCoordinateForDefaultIndex(width: number, height: number, layout: LayoutType, offset: ChartOffset | undefined, tooltipTicks: ReadonlyArray<TickItem> | null, defaultIndex: TooltipIndex | undefined, tooltipConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined): Coordinate | undefined {
   if (defaultIndex == null || offset == null) {
     return undefined
   }

@@ -9,7 +9,7 @@ export const TravellerLayer = defineComponent({
   props: {
     id: String,
     travellerX: Number,
-    otherProps: Object as () => BrushProps & { y: number },
+    otherProps: { type: Object as () => BrushProps & { y: number }, required: true },
   },
   emits: [
     'mouseenter',

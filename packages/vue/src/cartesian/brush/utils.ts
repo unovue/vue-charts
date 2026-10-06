@@ -51,10 +51,10 @@ export function getTextOfTick({
   dataKey,
 }: {
   index: number
-  data: any[]
-  tickFormatter: (value: any, index: number) => number | string
+  data: any[] | undefined
+  tickFormatter?: (value: any, index: number) => number | string
   dataKey: any
 }): number | string {
-  const text = getValueByDataKey(data[index], dataKey, index)
+  const text = getValueByDataKey(data?.[index], dataKey, index)
   return typeof tickFormatter === 'function' ? tickFormatter(text, index) : text
 }

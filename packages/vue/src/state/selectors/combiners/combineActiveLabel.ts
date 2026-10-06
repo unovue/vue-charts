@@ -2,7 +2,7 @@ import { isNan } from '@/utils'
 import type { TooltipIndex } from '../../chartTooltip'
 import type { TickItem } from '@/types'
 
-export function combineActiveLabel(tooltipTicks: ReadonlyArray<TickItem>, activeIndex: TooltipIndex): string | number | undefined {
+export function combineActiveLabel(tooltipTicks: ReadonlyArray<TickItem> | null, activeIndex: TooltipIndex): string | number | undefined {
   const n = Number(activeIndex)
   if (isNan(n) || activeIndex == null) {
     return undefined

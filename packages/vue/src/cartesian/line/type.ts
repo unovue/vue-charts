@@ -4,7 +4,7 @@ import type { ValueAnimationTransition } from 'motion-dom'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
 import type { CurveType, Point } from '@/shape/Curve'
-import type { PropType } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
@@ -50,7 +50,7 @@ export const LineVueProps = {
   data: { type: Array, default: undefined },
   dataKey: {
     type: [String, Number, Function] as PropType<DataKey<any>>,
-    required: true,
+    required: true as const,
   },
   dot: { type: [Boolean, Object, Function], default: true },
   hide: { type: Boolean, default: false },
@@ -81,3 +81,5 @@ export const LineVueProps = {
 
 export type LinePropsInternal = VuePropsToType<typeof LineVueProps>
 export type LinePropsWithSVG = WithSVGProps<typeof LineVueProps>
+
+export type ResolvedLineProps = ExtractPropTypes<typeof LineVueProps>

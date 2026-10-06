@@ -61,7 +61,9 @@ export function useChartInteractions() {
       return configuration.dataDefinedOnItem.map((_, index) => ({
         configuration,
         index: String(index),
-        coordinate: configuration.positions?.[index],
+        coordinate: Array.isArray(configuration.positions)
+          ? configuration.positions[index]
+          : configuration.positions?.[String(index) as keyof typeof configuration.positions],
         onClick: undefined,
       }))
     })

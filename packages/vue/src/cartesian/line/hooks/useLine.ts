@@ -1,7 +1,7 @@
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartName } from '@/state/selectors/selectors'
-import type { LinePointItem, LinePropsInternal } from '../type'
+import type { LinePointItem, ResolvedLineProps } from '../type'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
 import { useIsPanorama } from '@/context/PanoramaContextProvider'
@@ -17,7 +17,7 @@ export interface LineContext {
   clipPathId: Ref<string>
   layout: Readonly<Ref<string>>
   points: Ref<ReadonlyArray<LinePointItem> | undefined>
-  props: LinePropsInternal
+  props: ResolvedLineProps
   attrs: SVGAttributes
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
   isAnimating: Ref<boolean>
@@ -49,7 +49,7 @@ export function useLineContext() {
   return context
 }
 
-export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
+export function useLine(props: ResolvedLineProps, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
   const layout = useChartLayout()
   const chartName = useChartName()
   const localId = useChartId('v-charts-line')

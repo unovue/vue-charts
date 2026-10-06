@@ -12,7 +12,7 @@ import { selectUnfilteredPolarItems } from './polarSelectors'
 import type { RechartsScale } from '@/types/scale'
 import type { AngleAxisForRadar, RadarComposedData, RadiusAxisForRadar } from '@/types/radar'
 import type { DataKey, LayoutType, TickItem } from '@/types'
-import type { PolarViewBox } from '@/cartesian/type'
+import type { PolarViewBoxRequired } from '@/cartesian/type'
 import { isCategoricalAxis } from '@/utils'
 import { getBandSizeOfAxis, getValueByDataKey } from '@/utils/chart'
 import { selectChartLayout } from '@/state/selectors/common'
@@ -61,10 +61,9 @@ function selectPolarAxisScaleForRadar(state: RechartsRootState, _radiusAxisId: A
   return selectPolarAxisScale(state, 'angleAxis', angleAxisId)
 }
 
-// @ts-ignore
 export const selectAngleAxisForBandSize = createSelector(
   [selectAngleAxisForRadar, selectPolarAxisScaleForRadar],
-  (axisSettings: AngleAxisSettings, scale: RechartsScale | undefined): BaseAxisWithScale | undefined => {
+  (axisSettings: AngleAxisSettings | undefined, scale: RechartsScale | undefined): BaseAxisWithScale | undefined => {
     if (axisSettings == null || scale == null) {
       return undefined
     }
@@ -79,15 +78,14 @@ function selectAngleAxisTicks(state: RechartsRootState, _radiusAxisId: AxisId, a
   return selectPolarAxisTicks(state, 'angleAxis', angleAxisId, isPanorama)
 }
 
-// @ts-ignore
 export const selectAngleAxisWithScaleAndViewport: (
   state: RechartsRootState,
   _radiusAxisId: AxisId,
   angleAxisId: AxisId,
-) => AngleAxisForRadar = createSelector(
+) => AngleAxisForRadar | undefined = createSelector(
   [selectAngleAxisForRadar, selectPolarAxisScaleForRadar, selectPolarViewBox],
-  (axisOptions: AngleAxisSettings, scale: RechartsScale | undefined, polarViewBox: PolarViewBox | undefined) => {
-    if (polarViewBox == null) {
+  (axisOptions: AngleAxisSettings | undefined, scale: RechartsScale | undefined, polarViewBox: PolarViewBoxRequired | undefined) => {
+    if (polarViewBox == null || axisOptions == null || scale == null) {
       return undefined
     }
     return {
@@ -217,7 +215,6 @@ export const selectRadarPoints: (
   angleAxisId: AxisId,
   isPanorama: boolean,
   radarDataKey: DataKey<any> | undefined,
-  // @ts-ignore
 ) => RadarComposedData | undefined = createSelector(
   [
     selectRadiusAxisForRadar,
@@ -227,8 +224,8 @@ export const selectRadarPoints: (
     selectBandSizeOfAxis,
   ],
   (
-    radiusAxis: RadiusAxisForRadar,
-    angleAxis: AngleAxisForRadar,
+    radiusAxis: RadiusAxisForRadar | undefined,
+    angleAxis: AngleAxisForRadar | undefined,
     { chartData, dataStartIndex, dataEndIndex }: ChartDataState,
     dataKey: DataKey<any> | undefined,
     bandSize: number | undefined,

@@ -7,6 +7,11 @@ import type { Coordinate, DataKey, TooltipType, WithSVGProps } from '@/types'
 import type { LegendType } from '@/types/legend'
 
 export interface FunnelTrapezoidItem extends TrapezoidProps {
+  x: number
+  y: number
+  upperWidth: number
+  lowerWidth: number
+  height: number
   value?: number | string
   payload?: any
   isActive: boolean

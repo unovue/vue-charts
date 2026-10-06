@@ -1,5 +1,5 @@
 import type { TooltipPayloadConfiguration } from '@/state/chartTooltip'
-import type { BarProps, BarSettings, Rectangle } from './type'
+import type { BarSettings, Rectangle, ResolvedBarProps } from './type'
 import type { BarPositionPosition, BarRectangleItem } from '@/types/bar'
 import type { BaseAxisWithScale } from '@/state/selectors/axisSelectors'
 import type { DataKey, TickItem } from '@/types'
@@ -14,7 +14,7 @@ import { isNaN } from 'es-toolkit/compat'
 import { mathSign } from '@/utils/data'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 
-export function computeLegendPayloadFromBarData(props: BarProps): ReadonlyArray<LegendPayload> {
+export function computeLegendPayloadFromBarData(props: ResolvedBarProps): ReadonlyArray<LegendPayload> {
   const { dataKey, name, fill, legendType, hide } = props
   return [
     {
@@ -28,7 +28,7 @@ export function computeLegendPayloadFromBarData(props: BarProps): ReadonlyArray<
   ]
 }
 
-export function getTooltipEntrySettings(props: BarProps): TooltipPayloadConfiguration {
+export function getTooltipEntrySettings(props: ResolvedBarProps): TooltipPayloadConfiguration {
   const { dataKey, stroke, strokeWidth, fill, name, hide, unit } = props
   return {
     dataDefinedOnItem: undefined,
@@ -89,8 +89,8 @@ export function computeBarRectangles({
   barSettings: BarSettings
   pos: BarPositionPosition
   bandSize: number
-  xAxis?: BaseAxisWithScale
-  yAxis?: BaseAxisWithScale
+  xAxis: BaseAxisWithScale
+  yAxis: BaseAxisWithScale
   xAxisTicks: TickItem[]
   yAxisTicks: TickItem[]
   stackedData: Series<Record<number, number>, DataKey<any>> | undefined
@@ -132,8 +132,8 @@ export function computeBarRectangles({
         entry,
         index,
       })
-      y = currentValueScale ?? baseValueScale ?? undefined
-      width = pos.size
+      y = currentValueScale ?? baseValueScale
+      width = pos.size!
       const computedHeight = baseValueScale - currentValueScale
       height = isNaN(computedHeight) ? 0 : computedHeight
       background = { x, y: offset.top, width, height: offset.height }
@@ -157,7 +157,7 @@ export function computeBarRectangles({
         index,
       })
       width = currentValueScale - baseValueScale
-      height = pos.size
+      height = pos.size!
       background = { x: offset.left, y, width: offset.width, height }
 
       if (Math.abs(minPointSize) > 0 && Math.abs(width) < Math.abs(minPointSize)) {
@@ -175,7 +175,7 @@ export function computeBarRectangles({
       value: stackedData ? value : value[1],
       payload: entry,
       background,
-      tooltipPosition: { x: x + width / 2, y: y + height / 2 },
+      tooltipPosition: { x: (x ?? 0) + width / 2, y: (y ?? 0) + height / 2 },
       parentViewBox,
     } satisfies BarRectangleItem
 

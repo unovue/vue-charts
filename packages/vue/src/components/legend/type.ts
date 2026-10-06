@@ -50,7 +50,7 @@ export const LegendVueProps = {
   wrapperStyle: Object as PropType<CSSProperties>,
   contentStyle: Object as PropType<CSSProperties>,
   itemStyle: Object as PropType<CSSProperties>,
-  formatter: Function as PropType<(value: string, entry: LegendPayload) => string>,
+  formatter: Function as PropType<(value: string | undefined, entry: LegendPayload) => string>,
   margin: Object as PropType<Margin>,
   chartWidth: Number,
   chartHeight: Number,

@@ -54,12 +54,12 @@ function isValueWithinDomain(
 }
 
 export function combineActiveTooltipIndex(
-  tooltipInteraction: TooltipInteractionState,
+  tooltipInteraction: TooltipInteractionState | undefined,
   chartData: ChartData,
   axisDataKey?: DataKey<unknown>,
   domain?: NumberDomain | CategoricalDomain,
 ): TooltipIndex | null {
-  const desiredIndex: TooltipIndex = tooltipInteraction?.index
+  const desiredIndex = tooltipInteraction?.index
   if (desiredIndex == null) {
     return null
   }

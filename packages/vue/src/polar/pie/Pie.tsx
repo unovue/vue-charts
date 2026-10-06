@@ -86,7 +86,7 @@ const PieView = defineComponent({
         const angle = previous?.endAngle ?? next?.startAngle ?? from.startAngle
         return { ...from, startAngle: angle, endAngle: angle, paddingAngle: 0 }
       },
-      isActive: () => props.isAnimationActive,
+      isActive: () => props.isAnimationActive ?? true,
       transition: () => props.transition,
       onEnd: callbacks.onEnd,
 

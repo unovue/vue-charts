@@ -97,7 +97,7 @@ export function getTicksOfAxis(axis: null | AxisPropsNeededForTicksGenerator, is
   )
 }
 
-export function getValueByDataKey<T>(obj: T, dataKey: DataKey<T>, defaultValue?: any) {
+export function getValueByDataKey<T>(obj: T, dataKey: DataKey<T> | undefined, defaultValue?: any) {
   if (isNullish(obj) || isNullish(dataKey)) {
     return defaultValue
   }

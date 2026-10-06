@@ -34,7 +34,7 @@ function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | 
   >
     <Bar data-key="desktop">
       <template #shape="{ width }">
-        {{ number(width) }}
+        {{ number(width ?? 0) }}
       </template>
     </Bar>
     <Bar :data-key="row => row.desktop" />
@@ -50,7 +50,7 @@ function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | 
     </Tooltip>
     <Legend>
       <template #content="{ payload }">
-        {{ key(payload[0]?.dataKey) }} {{ payload[0]?.value.toUpperCase() }}
+        {{ key(payload[0]?.dataKey) }} {{ payload[0]?.value?.toUpperCase() }}
       </template>
     </Legend>
     <Area data-key="desktop" /><Line data-key="mobile" />

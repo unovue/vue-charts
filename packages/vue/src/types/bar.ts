@@ -21,8 +21,8 @@ export type RectRadius = [number, number, number, number]
 
 interface RectangleProps {
   class?: VueClassValue
-  x?: number
-  y?: number
+  x?: number | null
+  y?: number | null
   width?: number
   height?: number
   radius?: number | RectRadius
@@ -36,8 +36,8 @@ export interface BarRectangleItem extends RectangleProps {
   payload?: any
   /** the coordinate of background rectangle */
   background?: {
-    x?: number
-    y?: number
+    x?: number | null
+    y?: number | null
     width?: number
     height?: number
   }

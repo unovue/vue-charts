@@ -173,7 +173,7 @@ export const Curve = defineComponent<CurveProps>({
         <path
           {...svgAttrs(attrs)}
           class={['v-charts-curve', props.class]}
-          d={realPath.value}
+          d={realPath.value ?? undefined}
         />
       )
     }

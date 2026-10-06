@@ -4,7 +4,7 @@ import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { BarProps } from './type'
+import type { ResolvedBarProps } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
 import { Layer } from '@/container/Layer'
@@ -47,7 +47,7 @@ const BarView = defineComponent({
   name: 'BarView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<BarProps>, required: true },
+    item: { type: Object as PropType<ResolvedBarProps>, required: true },
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
@@ -110,7 +110,7 @@ const BarView = defineComponent({
               </defs>
             )
           }
-          <Layer class="v-charts-bar-rectangles" clip-path={clip ? `url(#clipPath-${clipPathId})` : null}>
+          <Layer class="v-charts-bar-rectangles" clip-path={clip ? `url(#clipPath-${clipPathId})` : undefined}>
             {props.background && !props.hide && <BarBackground />}
             <BarRectangles />
           </Layer>

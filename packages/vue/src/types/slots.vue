@@ -42,7 +42,7 @@ function text(value: string | undefined) { return value }
   </Tooltip>
   <Legend>
     <template #content="{ payload }">
-      {{ payload[0]?.value.toUpperCase() }}
+      {{ payload[0]?.value?.toUpperCase() }}
     </template>
   </Legend>
   <XAxis>
@@ -67,7 +67,7 @@ function text(value: string | undefined) { return value }
       {{ number(index) }}
     </template>
     <template #shape="{ x, width }">
-      {{ number(x) }} {{ number(width) }}
+      {{ number(x ?? 0) }} {{ number(width) }}
       <!-- @vue-expect-error Shape width is numeric. -->
       {{ text(width) }}
     </template>
@@ -113,12 +113,12 @@ function text(value: string | undefined) { return value }
   </Pie>
   <Funnel data-key="value">
     <template #shape="{ x, width }">
-      {{ number(x) }} {{ number(width) }}
+      {{ number(x ?? 0) }} {{ number(width) }}
     </template>
   </Funnel>
   <Treemap :data="[]">
     <template #content="{ x, width }">
-      {{ number(x) }} {{ number(width) }}
+      {{ number(x ?? 0) }} {{ number(width) }}
     </template>
   </Treemap>
   <SunburstChart :data="{ name: 'root', value: 1 }">
@@ -128,7 +128,7 @@ function text(value: string | undefined) { return value }
   </SunburstChart>
   <Sankey :data="{ nodes: [], links: [] }">
     <template #node="{ x, width }">
-      {{ number(x) }} {{ number(width) }}
+      {{ number(x ?? 0) }} {{ number(width) }}
     </template>
     <template #link="{ d, linkWidth }">
       {{ text(d) }} {{ number(linkWidth) }}

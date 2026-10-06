@@ -8,7 +8,7 @@ export interface LegendPayload {
   /**
    * This is the text that will be displayed in the legend in the DOM.
    */
-  value: string
+  value: string | undefined
   type?: LegendType
   color?: string
   payload?: {

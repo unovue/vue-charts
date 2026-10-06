@@ -7,7 +7,7 @@ import type { VueClassValue } from '@/types/common'
 import type { AxisInterval } from '@/types/axis'
 import type { RechartsScale } from '@/types/scale'
 import type { CartesianTickItem } from '@/types/tick'
-import type { ComponentPublicInstance, PropType, SVGAttributes } from 'vue'
+import type { PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
 import { computed, defineComponent, reactive } from 'vue'
@@ -304,8 +304,8 @@ export const CartesianAxis = defineComponent({
       return (
         <Layer
           class={['v-charts-cartesian-axis']}
-          ref={(ref: ComponentPublicInstance) => {
-            const elm: unknown = ref?.$el
+          ref={(ref) => {
+            const elm: unknown = ref instanceof Element ? ref : ref?.$el
             // Reading computed style forces a style recalculation; ticks re-render every frame
             // while they move, so measure once.
             if (elm instanceof Element && !state.fontSize) {

@@ -8,8 +8,8 @@ import type { AxisId } from '@/state/chartCartesianAxis'
 import type { ErrorBarsSettings } from '@/state/chartGraphicalItems'
 
 export interface ErrorBarDataItem {
-  x: number | undefined
-  y: number | undefined
+  x: number | null | undefined
+  y: number | null | undefined
   value: number
   errorVal?: number[] | number
 }
@@ -21,7 +21,7 @@ export type ErrorBarDataPointFormatter<T> = (
 ) => ErrorBarDataItem
 
 export interface ErrorBarContextType {
-  data: Readonly<ShallowRef<readonly any[]>>
+  data: Readonly<ShallowRef<readonly any[] | undefined>>
   xAxisId: AxisId
   yAxisId: AxisId
   dataPointFormatter: ErrorBarDataPointFormatter<any>

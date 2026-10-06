@@ -230,9 +230,9 @@ export const selectPolarBarBandSize: (
     selectChartLayout,
     selectRootMaxBarSize,
     selectAngleAxisWithScale,
-    selectAngleAxisTicks,
+    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId, Boolean(settings)),
     selectRadiusAxisWithScale,
-    selectRadiusAxisTicks,
+    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId, Boolean(settings)),
     pickMaxBarSize,
   ],
   (
@@ -264,7 +264,7 @@ export const selectAllPolarBarPositions: (
     selectBarGap,
     selectBarCategoryGap,
     selectPolarBarBandSize,
-    selectBandSizeOfPolarAxis,
+    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId, Boolean(settings)),
     pickMaxBarSize,
   ],
   combineAllBarPositions,
@@ -277,7 +277,7 @@ export const selectPolarBarPosition: (
   radialBarSettings: RadialBarSettings,
 ) => BarPositionPosition | undefined = createSelector(
   [selectAllPolarBarPositions, selectSynchronisedRadialBarSettings],
-  (allBarPositions: ReadonlyArray<BarWithPosition>, barSettings: RadialBarSettings) => {
+  (allBarPositions: ReadonlyArray<BarWithPosition> | undefined, barSettings: RadialBarSettings | undefined) => {
     if (allBarPositions == null || barSettings == null) {
       return undefined
     }
@@ -380,7 +380,7 @@ export function computeRadialBarDataItems({
       innerRadius: number | null | undefined,
       outerRadius: number | undefined,
       startAngle: number | null,
-      endAngle: number,
+      endAngle: number | undefined,
       backgroundSector: { background: SectorProps } | undefined
 
     if (stackedData) {
@@ -482,16 +482,15 @@ export const selectRadialBarSectors: (
   radiusAxisId: AxisId,
   angleAxisId: AxisId,
   radialBarSettings: RadialBarSettings,
-  // @ts-ignore createSelector overload can't handle 13 inputs
 ) => ReadonlyArray<RadialBarDataItem> | undefined = createSelector(
   [
     selectAngleAxisWithScale,
-    selectAngleAxisTicks,
+    (state, radiusId, angleId, settings) => selectAngleAxisTicks(state, radiusId, angleId, Boolean(settings)),
     selectRadiusAxisWithScale,
-    selectRadiusAxisTicks,
+    (state, radiusId, angleId, settings) => selectRadiusAxisTicks(state, radiusId, angleId, Boolean(settings)),
     selectChartDataWithIndexes,
     selectSynchronisedRadialBarSettings,
-    selectBandSizeOfPolarAxis,
+    (state, radiusId, angleId, settings) => selectBandSizeOfPolarAxis(state, radiusId, angleId, Boolean(settings)),
     selectChartLayout,
     selectBaseValue,
     selectPolarViewBox,
@@ -499,12 +498,12 @@ export const selectRadialBarSectors: (
     selectPolarStackedData,
   ],
   (
-    angleAxis: BaseAxisWithScale,
+    angleAxis: BaseAxisWithScale | undefined,
     angleAxisTicks: ReadonlyArray<TickItem> | undefined,
-    radiusAxis: BaseAxisWithScale,
+    radiusAxis: BaseAxisWithScale | undefined,
     radiusAxisTicks: ReadonlyArray<TickItem> | undefined,
     { chartData, dataStartIndex, dataEndIndex }: ChartDataState,
-    radialBarSettings: RadialBarSettings,
+    radialBarSettings: RadialBarSettings | undefined,
     bandSize: number | undefined,
     layout: LayoutType,
     baseValue: number | unknown,
@@ -574,7 +573,7 @@ export const selectRadialBarLegendPayload: (state: RechartsRootState, legendType
           value: entry.name,
           // @ts-expect-error we need a better typing for our data inputs
           color: entry.fill,
-          payload: entry,
+          payload: entry as Record<string, unknown>,
         }
       })
     },

@@ -41,7 +41,6 @@ import {
 import type { AxisId } from '../chartCartesianAxis'
 import type { AppliedChartData, ChartData, ChartDataState } from '../chartData'
 import { selectChartDataWithIndexes } from './dataSelectors'
-import type { GraphicalItemSettings } from '../chartGraphicalItems'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '../chartReferenceElements'
 import { selectChartName, selectStackOffsetType } from './rootPropsSelectors'
 // import { mathSign } from '../../util/DataUtils'
@@ -99,7 +98,7 @@ function selectFinalData(dataDefinedOnItem: unknown, dataDefinedOnChart: Readonl
   return dataDefinedOnChart
 }
 
-export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType): TooltipPayload | undefined {
+export function combineTooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, chartDataState: ChartDataState, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined): TooltipPayload | undefined {
   if (activeIndex == null || tooltipPayloadSearcher == null) {
     return undefined
   }
@@ -207,14 +206,13 @@ export const selectTooltipAxisRealScaleType = createSelector(
   combineRealScaleType,
 )
 
-export const selectAllUnfilteredGraphicalItems: (state: RechartsRootState) => ReadonlyArray<GraphicalItemSettings>
-  = createSelector(
-    [
-      (state: RechartsRootState) => state.graphicalItems.cartesianItems,
-      (state: RechartsRootState) => state.graphicalItems.polarItems,
-    ],
-    (cartesianItems, polarItems) => [...cartesianItems, ...polarItems],
-  )
+export const selectAllUnfilteredGraphicalItems = createSelector(
+  [
+    (state: RechartsRootState) => state.graphicalItems.cartesianItems,
+    (state: RechartsRootState) => state.graphicalItems.polarItems,
+  ],
+  (cartesianItems, polarItems) => [...cartesianItems, ...polarItems],
+)
 
 const selectTooltipAxisPredicate = createSelector(
   [selectTooltipAxisType, selectTooltipAxisId],
@@ -262,8 +260,7 @@ const selectTooltipDomainOfStackGroups: (state: RechartsRootState) => NumberDoma
   combineDomainOfStackGroups,
 )
 
-const selectTooltipItemsSettingsExceptStacked: (state: RechartsRootState) => ReadonlyArray<GraphicalItemSettings>
-  = createSelector([selectAllGraphicalItemsSettings], filterGraphicalNotStackedItems)
+const selectTooltipItemsSettingsExceptStacked = createSelector([selectAllGraphicalItemsSettings], filterGraphicalNotStackedItems)
 
 const selectTooltipAllAppliedNumericalValuesIncludingErrorValues: (
   state: RechartsRootState,
@@ -469,7 +466,7 @@ export const selectActiveLabel: (state: RechartsRootState) => string | number | 
 
 export const selectActiveTooltipDataKey: (state: RechartsRootState) => DataKey<any> | undefined = createSelector(
   [selectTooltipInteractionState],
-  (tooltipInteraction: TooltipInteractionState): DataKey<any> | undefined => {
+  (tooltipInteraction: TooltipInteractionState | undefined): DataKey<any> | undefined => {
     if (!tooltipInteraction) {
       return undefined
     }
@@ -499,13 +496,13 @@ const selectTooltipCoordinateForDefaultIndex: (state: RechartsRootState) => Coor
 
 export const selectActiveTooltipCoordinate: (state: RechartsRootState) => Coordinate | undefined = createSelector(
   [selectTooltipInteractionState, selectTooltipCoordinateForDefaultIndex],
-  (tooltipInteractionState: TooltipInteractionState, defaultIndexCoordinate: Coordinate | undefined): Coordinate | undefined => {
-    return tooltipInteractionState.coordinate ?? defaultIndexCoordinate
+  (tooltipInteractionState: TooltipInteractionState | undefined, defaultIndexCoordinate: Coordinate | undefined): Coordinate | undefined => {
+    return tooltipInteractionState?.coordinate ?? defaultIndexCoordinate
   },
 )
 export const selectIsTooltipActive: (state: RechartsRootState) => boolean = createSelector(
   [selectTooltipInteractionState],
-  (tooltipInteractionState: TooltipInteractionState) => tooltipInteractionState.active,
+  (tooltipInteractionState: TooltipInteractionState | undefined) => tooltipInteractionState?.active ?? false,
 )
 
 export const selectActiveTooltipPayload: (state: RechartsRootState) => TooltipPayload | undefined = createSelector(

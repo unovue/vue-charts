@@ -62,7 +62,7 @@ brush.$emit('change', { startIndex: 0 })
     <Tooltip v-model:active-index="activePoint" />
     <Legend
       v-model:hidden="hidden"
-      @click="(entry, index, event) => { entry.value.toUpperCase(); index.toFixed(); event.preventDefault() }"
+      @click="(entry, index, event) => { entry.value?.toUpperCase(); index.toFixed(); event.preventDefault() }"
     />
   </BarChart>
   <PieChart

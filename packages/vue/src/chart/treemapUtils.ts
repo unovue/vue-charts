@@ -32,22 +32,22 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
   if (!data || data.length === 0 || width <= 0 || height <= 0)
     return []
 
-  const root = hierarchy({ children: data } as any)
-    .sum((d: any) => {
-      if (d.children && d.children.length > 0)
+  const root = hierarchy<Record<string, unknown>>({ children: data })
+    .sum((d) => {
+      if (Array.isArray(d.children) && d.children.length > 0)
         return 0
       const val = toFiniteNumber(getValueByDataKey(d, dataKey))
       return val != null && val > 0 ? val : 0
     })
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 
-  treemap()
+  const layout = treemap<Record<string, unknown>>()
     .size([width, height])
     .tile(treemapSquarify.ratio(aspectRatio))
     .round(true)(root)
 
-  return root.leaves().map((leaf) => {
-    const d = leaf.data as any
+  return layout.leaves().map((leaf) => {
+    const d = leaf.data
     let ancestor = leaf
     while (ancestor.depth > 1 && ancestor.parent) ancestor = ancestor.parent
     const rootIndex = ancestor.parent ? ancestor.parent.children!.indexOf(ancestor) : 0

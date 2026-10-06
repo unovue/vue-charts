@@ -291,21 +291,21 @@ export type BarWithPosition = {
   position: BarPositionPosition
 }
 
-export function combineAllBarPositions(sizeList: SizeList, globalMaxBarSize: number, barGap: string | number, barCategoryGap: string | number, barBandSize: number, bandSize: number | undefined, childMaxBarSize: number | undefined) {
+export function combineAllBarPositions(sizeList: SizeList | undefined, globalMaxBarSize: number, barGap: string | number, barCategoryGap: string | number, barBandSize: number | undefined, bandSize: number | undefined, childMaxBarSize: number | undefined) {
   const maxBarSize: number = isNullish(childMaxBarSize) ? globalMaxBarSize : childMaxBarSize!
 
   let allBarPositions = getBarPositions(
     barGap,
     barCategoryGap,
-    barBandSize !== bandSize ? barBandSize : bandSize,
-    sizeList,
+    barBandSize !== bandSize ? barBandSize! : bandSize!,
+    sizeList!,
     maxBarSize,
   )
 
   if (barBandSize !== bandSize && allBarPositions != null) {
     allBarPositions = allBarPositions.map(pos => ({
       ...pos,
-      position: { ...pos.position, offset: pos.position.offset - barBandSize / 2 },
+      position: { ...pos.position, offset: pos.position.offset - barBandSize! / 2 },
     }))
   }
 
@@ -356,7 +356,7 @@ export const selectBarPosition = createSelector(
   },
 )
 
-export function combineStackedData(stackGroups: Record<StackId, StackGroup> | undefined, barSettings: MaybeStackedGraphicalItem): Series<Record<number, number>, DataKey<any>> | undefined {
+export function combineStackedData(stackGroups: Record<StackId, StackGroup> | undefined, barSettings: MaybeStackedGraphicalItem | undefined): Series<Record<number, number>, DataKey<any>> | undefined {
   if (!stackGroups || barSettings?.dataKey == null) {
     return undefined
   }

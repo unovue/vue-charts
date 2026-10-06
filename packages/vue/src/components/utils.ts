@@ -5,15 +5,16 @@ import type { ChartOffsetInternal } from '@/utils/types'
 
 function getRadialCursorPoints(activeCoordinate: ChartCoordinate): RadialCursorPoints {
   const { cx, cy, radius, startAngle, endAngle } = activeCoordinate
-  const startPoint = polarToCartesian(cx, cy, radius, startAngle)
-  const endPoint = polarToCartesian(cx, cy, radius, endAngle)
+
+  const startPoint = polarToCartesian(cx!, cy!, radius!, startAngle!)
+  const endPoint = polarToCartesian(cx!, cy!, radius!, endAngle!)
   return {
     points: [startPoint, endPoint],
-    cx,
-    cy,
-    radius,
-    startAngle,
-    endAngle,
+    cx: cx!,
+    cy: cy!,
+    radius: radius!,
+    startAngle: startAngle!,
+    endAngle: endAngle!,
   }
 }
 

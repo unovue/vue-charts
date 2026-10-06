@@ -95,7 +95,7 @@ const ScatterView = defineComponent({
       fn: input => ({
         // This owned array contains payloads that reference caller-owned rows.
         dataDefinedOnItem: input.points && input.points.map(p => p.tooltipPayload),
-        positions: input.points?.map(point => ({ x: point.cx, y: point.cy })),
+        positions: input.points?.map(point => point.tooltipPosition),
         settings: {
           stroke: input.stroke,
           strokeWidth: input.strokeWidth,

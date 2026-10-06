@@ -8,8 +8,8 @@ import type { RectRadius } from '@/types/bar'
 import { svgAttrs } from '@/utils/VueUtils'
 
 const RectangleVueProps = {
-  x: { type: Number as PropType<number>, default: 0 },
-  y: { type: Number as PropType<number>, default: 0 },
+  x: { type: Number as PropType<number | null>, default: 0 },
+  y: { type: Number as PropType<number | null>, default: 0 },
   width: { type: Number as PropType<number>, default: 0 },
   height: { type: Number as PropType<number>, default: 0 },
   radius: { type: [Number, Array] as PropType<number | RectRadius>, default: undefined },
@@ -78,6 +78,11 @@ export const Rectangle = defineComponent<RectanglePropsWithSVG>({
   props: RectangleVueProps,
   inheritAttrs: false,
   setup(props, { attrs }) {
-    return () => rectanglePath(svgAttrs(attrs), props.x, props.y, props.width, props.height, props.radius)
+    return () => {
+      const { x, y, width, height } = props
+      if (x == null || y == null || width == null || height == null)
+        return null
+      return rectanglePath(svgAttrs(attrs), x, y, width, height, props.radius)
+    }
   },
 })

@@ -6,6 +6,7 @@ import type {
   AxisId,
   BaseCartesianAxis,
   CartesianAxisSettings,
+  TicksSettings,
   XAxisOrientation,
   XAxisSettings,
   YAxisOrientation,
@@ -293,7 +294,7 @@ export const selectCartesianItemsSettings = createSelector(
   combineGraphicalItemsSettings,
 )
 
-export function filterGraphicalNotStackedItems<T extends MaybeStackedGraphicalItem>(cartesianItems: ReadonlyArray<T>): ReadonlyArray<T> {
+export function filterGraphicalNotStackedItems<T extends { stackId?: StackId }>(cartesianItems: ReadonlyArray<T>): ReadonlyArray<T> {
   return cartesianItems.filter(item => item.stackId === undefined)
 }
 
@@ -490,7 +491,7 @@ export type StackGroup = {
   readonly graphicalItems: ReadonlyArray<MaybeStackedGraphicalItem>
 }
 
-export function combineStackGroups(displayedData: ChartData, items: ReadonlyArray<MaybeStackedGraphicalItem>, stackOffsetType: StackOffsetType): Record<StackId, StackGroup> {
+export function combineStackGroups(displayedData: ChartData | undefined, items: ReadonlyArray<MaybeStackedGraphicalItem>, stackOffsetType: StackOffsetType): Record<StackId, StackGroup> {
   const initialItemsGroups: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
   const itemsGroup: Record<StackId, ReadonlyArray<MaybeStackedGraphicalItem>> = items.reduce(
     (acc: Record<StackId, Array<MaybeStackedGraphicalItem>>, item: MaybeStackedGraphicalItem) => {
@@ -507,7 +508,7 @@ export function combineStackGroups(displayedData: ChartData, items: ReadonlyArra
   )
   return Object.fromEntries(
     Object.entries(itemsGroup).map(([stackId, graphicalItems]): [StackId, StackGroup] => {
-      const dataKeys = graphicalItems.map(i => i.dataKey)
+      const dataKeys = graphicalItems.map(i => i.dataKey!)
       return [
         stackId,
         {
@@ -550,7 +551,7 @@ export const selectDomainOfStackGroups = createSelector(
   combineDomainOfStackGroups,
 )
 
-export function combineAppliedNumericalValuesIncludingErrorValues(data: ChartData, axisSettings: BaseCartesianAxis, items: ReadonlyArray<CartesianGraphicalItemSettings>, axisType: XorYorZType): ReadonlyArray<AppliedChartDataWithErrorDomain> {
+export function combineAppliedNumericalValuesIncludingErrorValues(data: ChartData, axisSettings: BaseCartesianAxis, items: ReadonlyArray<GraphicalItemSettings & { errorBars?: ReadonlyArray<ErrorBarsSettings> }>, axisType: XorYorZType): ReadonlyArray<AppliedChartDataWithErrorDomain> {
   if (items.length > 0) {
     return data
       .flatMap((entry) => {
@@ -625,7 +626,7 @@ function computeDomainOfTypeCategory(allDataSquished: AppliedChartData, axisSett
   return Array.from(new Set(categoricalDomain))
 }
 
-export function getDomainDefinition(axisSettings: CartesianAxisSettings): AxisDomain {
+export function getDomainDefinition(axisSettings: BaseCartesianAxis & Partial<TicksSettings>): AxisDomain {
   if (axisSettings == null || !('domain' in axisSettings)) {
     return defaultNumericDomain
   }
@@ -706,8 +707,8 @@ export const selectReferenceLinesByAxis: (
   filterReferenceElements,
 )
 
-export function combineDotsDomain(dots: ReadonlyArray<ReferenceDotSettings>, axisType: XorYType): NumberDomain | undefined {
-  const allCoords = onlyAllowNumbers(dots.map(dot => (axisType === 'xAxis' ? dot.x : dot.y)))
+export function combineDotsDomain(dots: ReadonlyArray<ReferenceDotSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
+  const allCoords = onlyAllowNumbers((dots ?? []).map(dot => (axisType === 'xAxis' ? dot.x : dot.y)))
   if (allCoords.length === 0) {
     return undefined
   }
@@ -716,9 +717,9 @@ export function combineDotsDomain(dots: ReadonlyArray<ReferenceDotSettings>, axi
 
 const selectReferenceDotsDomain = createSelector(selectReferenceDotsByAxis, pickAxisType, combineDotsDomain)
 
-export function combineAreasDomain(areas: ReadonlyArray<ReferenceAreaSettings>, axisType: XorYType): NumberDomain | undefined {
+export function combineAreasDomain(areas: ReadonlyArray<ReferenceAreaSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
   const allCoords = onlyAllowNumbers(
-    areas.flatMap(area => [axisType === 'xAxis' ? area.x1 : area.y1, axisType === 'xAxis' ? area.x2 : area.y2]),
+    (areas ?? []).flatMap(area => [axisType === 'xAxis' ? area.x1 : area.y1, axisType === 'xAxis' ? area.x2 : area.y2]),
   )
   if (allCoords.length === 0) {
     return undefined
@@ -728,8 +729,8 @@ export function combineAreasDomain(areas: ReadonlyArray<ReferenceAreaSettings>, 
 
 const selectReferenceAreasDomain = createSelector([selectReferenceAreasByAxis, pickAxisType], combineAreasDomain)
 
-export function combineLinesDomain(lines: ReadonlyArray<ReferenceLineSettings>, axisType: XorYType): NumberDomain | undefined {
-  const allCoords = onlyAllowNumbers(lines.map(line => (axisType === 'xAxis' ? line.x : line.y)))
+export function combineLinesDomain(lines: ReadonlyArray<ReferenceLineSettings> | undefined, axisType: XorYType): NumberDomain | undefined {
+  const allCoords = onlyAllowNumbers((lines ?? []).map(line => (axisType === 'xAxis' ? line.x : line.y)))
   if (allCoords.length === 0) {
     return undefined
   }
@@ -810,7 +811,7 @@ export function combineAxisDomain(
     // When forced to band scale, parseSpecifiedDomain extends the data-derived domain
     // to match the specified domain length, creating extra bands that make bars thinner.
     const domainLen = Array.isArray(axisSettings.domain) ? axisSettings.domain.length : 0
-    return range(0, Math.max(displayedData.length, domainLen))
+    return range(0, Math.max(displayedData?.length ?? 0, domainLen))
   }
 
   if (type === 'category') {
@@ -883,11 +884,15 @@ function getD3ScaleFromType(realScaleType: string | undefined) {
     return undefined
   }
   if (realScaleType in d3Scales) {
-    return d3Scales[realScaleType]()
+    const factory = d3Scales[realScaleType as keyof typeof d3Scales]
+    // Standard d3 scale constructors accept no arguments and return a scale.
+    return typeof factory === 'function' ? (factory as () => RechartsScale)() : undefined
   }
   const name = `scale${upperFirst(realScaleType)}`
   if (name in d3Scales) {
-    return d3Scales[name]()
+    const factory = d3Scales[name as keyof typeof d3Scales]
+    // Standard d3 scale constructors accept no arguments and return a scale.
+    return typeof factory === 'function' ? (factory as () => RechartsScale)() : undefined
   }
   return undefined
 }
@@ -932,7 +937,7 @@ export function combineScaleFunction(
   return guardScale(scale)
 }
 
-export function combineNiceTicks(axisDomain: NumberDomain | CategoricalDomain | undefined, axisSettings: CartesianAxisSettings, realScaleType: string): ReadonlyArray<number> | undefined {
+export function combineNiceTicks(axisDomain: NumberDomain | CategoricalDomain | undefined, axisSettings: AxisWithTicksSettings, realScaleType: string | undefined): ReadonlyArray<number> | undefined {
   const domainDefinition: AxisDomain = getDomainDefinition(axisSettings)
   if (realScaleType !== 'auto' && realScaleType !== 'linear') {
     return undefined
@@ -1223,14 +1228,14 @@ export const selectSortedDataPoints: (
 
 export const selectAxisInverseScale: (
   state: RechartsRootState,
-  axisType: XorYorZType,
+  axisType: XorYType,
   axisId: AxisId,
   isPanorama: boolean,
 ) => InverseScaleFunction | undefined = createSelector([selectAxisScale], combineInverseScaleFunction)
 
 export const selectAxisInverseDataSnapScale: (
   state: RechartsRootState,
-  axisType: XorYorZType,
+  axisType: XorYType,
   axisId: AxisId,
   isPanorama: boolean,
 ) => InverseScaleFunction | undefined = createSelector(
@@ -1540,7 +1545,7 @@ export const selectAxisPropsNeededForCartesianGridTicksGenerator = createSelecto
   },
 )
 
-export function combineAxisTicks(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, niceTicks: ReadonlyArray<number> | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYType): ReadonlyArray<TickItem> | undefined {
+export function combineAxisTicks(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, niceTicks: ReadonlyArray<number> | undefined, axisRange: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: XorYorZType): ReadonlyArray<TickItem> | undefined {
   if (axis == null || scale == null) {
     return undefined
   }
@@ -1622,7 +1627,7 @@ export const selectTicksOfAxis = createSelector(
 
 export const selectAxisInverseTickSnapScale: (
   state: RechartsRootState,
-  axisType: XorYorZType,
+  axisType: XorYType,
   axisId: AxisId,
   isPanorama: boolean,
 ) => InverseScaleFunction | undefined = createSelector(
@@ -1714,7 +1719,7 @@ export type BaseAxisWithScale = BaseCartesianAxis & { scale: RechartsScale }
 
 export const selectAxisWithScale: (
   state: RechartsRootState,
-  axisType: XorYorZType,
+  axisType: XorYType,
   axisId: AxisId,
   isPanorama: boolean,
 ) => BaseAxisWithScale | undefined = createSelector(
@@ -1741,7 +1746,7 @@ export type ZAxisWithScale = ZAxisSettings & { scale: RechartsScale }
 export const selectZAxisWithScale = createSelector(
   (state: RechartsRootState, _axisType: 'zAxis', axisId: AxisId) => selectZAxisSettings(state, axisId),
   selectZAxisScale,
-  (axis: ZAxisSettings, scale: RechartsScale): ZAxisWithScale | undefined => {
+  (axis: ZAxisSettings, scale: RechartsScale | undefined): ZAxisWithScale | undefined => {
     if (axis == null || scale == null) {
       return undefined
     }

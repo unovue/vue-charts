@@ -11,7 +11,7 @@ interface LegendContentProps {
   iconType?: LegendType
   wrapperStyle?: CSSProperties
   contentStyle?: CSSProperties
-  formatter?: (value: string, entry: LegendPayload) => string
+  formatter?: (value: string | undefined, entry: LegendPayload) => string
   payload?: LegendPayload[]
   content?: Component | ((props: any) => any)
 }

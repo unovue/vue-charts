@@ -19,7 +19,7 @@ export function computeLinePoints({
   yAxis: BaseAxisWithScale
   xAxisTicks: TickItem[]
   yAxisTicks: TickItem[]
-  dataKey: LineProps['dataKey']
+  dataKey: LineProps['dataKey'] | undefined
   bandSize: number
   displayedData: any[]
 }): ReadonlyArray<LinePointItem> {

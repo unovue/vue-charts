@@ -13,6 +13,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
+      "d3-hierarchy": [
+        "../../node_modules/.pnpm/node_modules/@types/d3-hierarchy"
+      ],
       "@/*": [
         "./src/*"
       ],
@@ -26,7 +29,7 @@
     ],
     "allowImportingTsExtensions": true,
     "allowJs": true,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "outDir": "./dist/es",
     "esModuleInterop": true,

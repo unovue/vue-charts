@@ -142,7 +142,7 @@ function defaultFormatter<TValue extends ValueType>(value: TValue) {
  * in messy data) print nothing instead of "[object Object]" or, for objects without a
  * prototype, a crash.
  */
-function printable(value: unknown) {
+function printable(value: unknown): unknown {
   if (value == null || typeof value !== 'object' || isVNode(value))
     return value
   return Array.isArray(value) ? value.map(printable) : undefined
@@ -842,7 +842,7 @@ const _Tooltip = defineComponent({
               tooltipEventType={tooltipEventType.value}
               coordinate={coordinate.value}
               payload={payload.value}
-              index={tooltipState.value?.activeIndex}
+              index={tooltipState.value?.activeIndex ?? undefined}
             />
           )}
         </Fragment>

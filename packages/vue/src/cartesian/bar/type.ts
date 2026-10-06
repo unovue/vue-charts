@@ -8,7 +8,7 @@ import type {
 } from '@/types'
 import type { ChartTransition } from '@/animation/motion'
 import type { AxisId } from '@/types/axis'
-import type { PropType } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
 import type { LegendType } from '@/types/legend'
 import type { MinPointSize } from '@/shape'
 import { classProp } from '@/types'
@@ -37,7 +37,7 @@ export const BarVueProps = {
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
     type: [String, Number, Function] as PropType<DataKey<any>>,
-    required: true,
+    required: true as const,
   },
   fill: { type: String, default: undefined },
   stroke: { type: String, default: undefined },
@@ -93,3 +93,5 @@ export type BarSettings = {
   minPointSize: MinPointSize
   stackId?: string | number
 }
+
+export type ResolvedBarProps = ExtractPropTypes<typeof BarVueProps>

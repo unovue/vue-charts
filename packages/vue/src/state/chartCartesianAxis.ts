@@ -38,7 +38,7 @@ export type BaseCartesianAxis = {
 
 export type TicksSettings = {
   allowDecimals: boolean
-  tickCount: number
+  tickCount: number | undefined
   /**
    * Ticks can be any type when the axis is the type of category
    * Ticks must be numbers when the axis is the type of number

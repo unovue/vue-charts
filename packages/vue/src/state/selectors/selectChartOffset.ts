@@ -28,10 +28,10 @@ export const selectChartOffset: (state: RechartsRootState) => ChartOffsetRequire
   (
     chartWidth: number,
     chartHeight: number,
-    margin: Margin,
+    margin: Margin | undefined,
     brushHeight: number,
-    xAxes: XAxisSettings[],
-    yAxes: YAxisSettings[],
+    xAxes: readonly XAxisSettings[],
+    yAxes: readonly YAxisSettings[],
     legendSettings: LegendSettings,
     legendSize: Size,
   ): ChartOffsetRequired => {
@@ -46,7 +46,7 @@ export const selectChartOffset: (state: RechartsRootState) => ChartOffsetRequire
 
         return result
       },
-      { left: margin.left || 0, right: margin.right || 0 },
+      { left: margin?.left || 0, right: margin?.right || 0 },
     )
 
     const offsetV: OffsetVertical = xAxes.reduce(
@@ -59,7 +59,7 @@ export const selectChartOffset: (state: RechartsRootState) => ChartOffsetRequire
 
         return result
       },
-      { top: margin.top || 0, bottom: margin.bottom || 0 },
+      { top: margin?.top || 0, bottom: margin?.bottom || 0 },
     )
 
     let offset = { ...offsetV, ...offsetH }
