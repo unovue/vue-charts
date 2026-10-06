@@ -14,7 +14,7 @@ import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
 export const AreaVueProps = {
-  ...CurveVueProps,
+  type: CurveVueProps.type,
   activeDot: { type: Boolean, default: true },
   baseValue: {
     type: [Number, String] as PropType<BaseValue>,
@@ -49,7 +49,6 @@ export const AreaVueProps = {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,
   },
-  needClip: { type: Boolean, default: false },
   stackId: {
     type: [String, Number] as PropType<string | number>,
     default: undefined,
@@ -61,13 +60,7 @@ export const AreaVueProps = {
   },
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
-  activeIndex: { type: Number, default: undefined },
-  activePoint: { type: Object as PropType<import('./ActivePoints').PointType>, default: undefined },
   id: { type: String, default: undefined },
-  left: { type: Number, default: 0 },
-  top: { type: Number, default: 0 },
-  width: { type: Number, default: 0 },
-  height: { type: Number, default: 0 },
   name: { type: [String, Number] as PropType<string | number> },
   class: classProp,
 }

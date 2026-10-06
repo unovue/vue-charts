@@ -1,7 +1,7 @@
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { defineComponent } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
-import { Label } from '@/components/label/Label'
+import { LabelView } from './LabelView'
 import type { LabelListVueProps } from '@/components/label/types'
 import { parseViewBox } from '@/components/label/utils'
 import { useLabelLayerRef } from '@/model/runtime'
@@ -53,7 +53,7 @@ export const LabelListView = defineComponent({
             const entryFill = entry.fill != null && !('fill' in others) && !('fill' in attrs) ? entry.fill : undefined
 
             return (
-              <Label
+              <LabelView
                 {...others}
                 {...attrs}
                 {...(entryFill != null ? { fill: entryFill } : {})}

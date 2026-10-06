@@ -1,5 +1,5 @@
 import type { CSSProperties, PropType, VNode } from 'vue'
-import type { LayoutType, Margin } from '@/types'
+import type { LayoutType } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LegendType } from '@/types/legend'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
@@ -51,9 +51,6 @@ export const LegendVueProps = {
   contentStyle: Object as PropType<CSSProperties>,
   itemStyle: Object as PropType<CSSProperties>,
   formatter: Function as PropType<(value: string | undefined, entry: LegendPayload) => string>,
-  margin: Object as PropType<Margin>,
-  chartWidth: Number,
-  chartHeight: Number,
   payloadUniqBy: [Boolean, Function] as PropType<boolean | ((item: LegendPayload) => unknown)>,
   /** Sort entries. By default they keep the order of the data (Pie) or of the series. */
   itemSorter: {

@@ -486,3 +486,12 @@ Source: `.evidence/release-1.0/step-2.14/benchmark-spread.json`, derived from th
 - Export snapshot reviewed; migration rows and TypeScript guide updated.
 - Evidence: `.evidence/release-1.0/part-a/3.2-*.log`.
 - Assumption: infer missing Props types from public constructors; useOffset removal follows D-12a now.
+
+### 3.3 Internal props — done
+- Removed public internal props; LabelList uses internal LabelView geometry.
+- Public Label blocks removed attrs from becoming internal view props; migration rows added.
+- Gate: typecheck/lint/code pass; Vitest 131 files / 1316 tests (`part-a/3.3-*.log`).
+- Packed consumers pass; strict guard 296 files / zero vccs errors / 100 external diagnostics.
+- Reverse proofs fail removed-props table and Label attr regression; restored runs pass.
+- Evidence: `.evidence/release-1.0/3.3/` and `.evidence/release-1.0/part-a/3.3-*.log`.
+- Assumptions: Bar keeps D-13 model; Area default unclipped rendering and Line/Area id retained.

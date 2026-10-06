@@ -44,7 +44,6 @@ export const BarVueProps = {
   isAnimationActive: { type: Boolean, default: true },
   activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, unknown> | boolean>, default: false },
   activeIndex: { type: Number as PropType<number | null>, default: undefined },
-  id: { type: String, default: undefined },
   stackId: {
     type: [String, Number] as PropType<string | number>,
     default: undefined,
@@ -56,7 +55,6 @@ export const BarVueProps = {
     type: Object as PropType<ChartTransition>,
     default: undefined,
   },
-  needClip: { type: Boolean, default: false },
   label: {
     type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: false,

@@ -2,13 +2,12 @@ import type { LinePointItem } from '@/types/line'
 import type { LabelListSlotProps } from '@/components/label/types'
 import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
 import type { ChartDataKey } from '@/types/base'
-import type { LayoutType, TooltipType, VueClassValue, WithSVGProps } from '@/types'
+import type { TooltipType, VueClassValue, WithSVGProps } from '@/types'
 import type { AxisId } from '@/types/axis'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { LegendType } from '@/types/legend'
 import type { CurveFactory } from 'd3-shape'
 import type { CurveType } from '@/shape/Curve'
-import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
 export type { LinePointItem } from '@/types/line'
@@ -17,7 +16,6 @@ export type { LinePointItem } from '@/types/line'
 export interface LineProps {
   activeDot?: unknown
   animateNewValues?: boolean
-  animationId?: string
   class?: VueClassValue
   connectNulls?: boolean
   data?: unknown[]
@@ -28,7 +26,6 @@ export interface LineProps {
   isAnimationActive?: boolean
   label?: unknown
   legendType?: LegendType
-  layout?: LayoutType
   name?: string | number
   stroke?: string
   strokeWidth?: number
@@ -38,13 +35,10 @@ export interface LineProps {
   unit?: string | number
   xAxisId?: AxisId
   yAxisId?: AxisId
-  needClip?: boolean
 }
 
 export const LineVueProps = {
-  ...CurveVueProps,
   activeDot: { type: [Boolean, Object, Function], default: true },
-  animationId: { type: String },
   isAnimationActive: { type: Boolean, default: true },
   connectNulls: { type: Boolean, default: false },
   data: { type: Array, default: undefined },
@@ -67,14 +61,7 @@ export const LineVueProps = {
   unit: { type: [String, Number] },
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
-  needClip: { type: Boolean, default: false },
   id: { type: String },
-  activeIndex: { type: Number },
-  activePoint: { type: Object },
-  left: { type: Number, default: 0 },
-  top: { type: Number, default: 0 },
-  width: { type: Number, default: 0 },
-  height: { type: Number, default: 0 },
   name: { type: [String, Number] },
   class: classProp,
 }

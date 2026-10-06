@@ -1,5 +1,5 @@
 import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/types/viewBox'
-import type { Data, LabelProps } from '@/components/label/types'
+import type { Data, LabelViewProps } from '@/components/label/types'
 import type { Coordinate } from '@/types'
 import { isNumber, isPercent } from '@/utils'
 import { getPercentValue, mathSign } from '@/utils/data'
@@ -91,7 +91,7 @@ function getDeltaAngle(startAngle: number, endAngle: number) {
 }
 
 export function renderRadialLabel(
-  labelProps: LabelProps,
+  labelProps: LabelViewProps,
   position: PolarLabelPosition,
   label: string | number | undefined,
   attrs: Record<string, unknown>,
@@ -140,7 +140,7 @@ export function renderRadialLabel(
   )
 }
 
-export function getAttrsOfPolarLabel(props: LabelProps, viewBox?: PolarViewBox) {
+export function getAttrsOfPolarLabel(props: LabelViewProps, viewBox?: PolarViewBox) {
   const { offset, position } = props
   const vb = viewBox ?? (props.viewBox as PolarViewBox)
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle } = vb
@@ -195,7 +195,7 @@ export function getAttrsOfPolarLabel(props: LabelProps, viewBox?: PolarViewBox) 
   }
 }
 
-export function getAttrsOfCartesianLabel(props: LabelProps, viewBox: CartesianViewBox) {
+export function getAttrsOfCartesianLabel(props: LabelViewProps, viewBox: CartesianViewBox) {
   const { parentViewBox, offset, position } = props
   const { x, y, width, height } = viewBox
 

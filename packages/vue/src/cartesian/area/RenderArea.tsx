@@ -32,7 +32,7 @@ const Dots = defineComponent({
   },
   setup(_props) {
     const emit = areaEvents.use()
-    const { clipPathId, props, attrs, dotSlot } = useAreaContext()
+    const { props, attrs, dotSlot } = useAreaContext()
     const listeners = usePointEvents<AreaPointItem>(emit, () => props.dataKey)
 
     return () => {
@@ -50,7 +50,6 @@ const Dots = defineComponent({
       return (
         <Layer
           class="v-charts-area-dots"
-          clip-path={props.needClip ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
             points?.map((point, position) => {
@@ -142,7 +141,7 @@ export const StaticArea = defineComponent({
           </defs>
           <g clip-path={display.reveal.value < 1 ? `url(#${sweepId})` : undefined}>
             {currentPoints.value && currentPoints.value.length > 1 && (
-              <Layer {...seriesListeners} clip-path={props.needClip ? `url(#clipPath-${clipPathId.value})` : undefined}>
+              <Layer {...seriesListeners}>
                 <Curve
                   {...curveAttrs}
                   points={currentPoints.value}

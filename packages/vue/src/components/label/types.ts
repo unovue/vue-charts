@@ -92,9 +92,6 @@ export const LabelVueProps = {
   viewBox: {
     type: Object as PropType<ViewBox>,
   },
-  parentViewBox: {
-    type: Object as PropType<ViewBox>,
-  },
   value: {
     type: [Number, String],
   },
@@ -114,10 +111,15 @@ export const LabelVueProps = {
   angle: {
     type: Number,
   },
-  index: {
-    type: Number,
-  },
 }
+
+export const LabelViewVueProps = {
+  ...LabelVueProps,
+  parentViewBox: { type: Object as PropType<ViewBox> },
+  index: { type: Number },
+}
+
+export type LabelViewProps = VuePropsToType<typeof LabelViewVueProps>
 
 export type LabelProps = VuePropsToType<typeof LabelVueProps>
 
