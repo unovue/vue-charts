@@ -47,6 +47,7 @@ async function bundle() {
     bundle: true, minify: true, format: 'esm', splitting: true, platform: 'browser', target: 'es2022',
     alias: {
       '#bench-verdict': join(root, 'scripts/lib/benchmark-verdict.mjs'),
+      '#bench-motion': join(root, 'scripts/lib/benchmark-motion.mjs'),
       'vue': libraryRequire.resolve('vue').replace('/index.js', '/dist/vue.runtime.esm-bundler.js'),
       'motion-v': join(await realpath(join(peers, 'motion-v')), 'dist/es/index.mjs'),
     },

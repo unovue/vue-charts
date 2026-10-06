@@ -1,4 +1,5 @@
 import { compareSamples } from '#bench-verdict'
+import { animatedGeometry } from '#bench-motion'
 import { createApp, h, nextTick, ref } from 'vue'
 import { Bar, BarChart, CalendarHeatmap, Heatmap, Line, LineChart, XAxis, YAxis } from '#bench-library'
 
@@ -159,13 +160,17 @@ window.vccsBench = {
     const times = []
     let running = true
     let injectedMs = 0
+    const capture = animatedGeometry(kind, this.animated.beforeGeometry)
+    this.animated.capture = capture
     const tick = (time) => {
       if (!running)
         return
+      requestAnimationFrame(tick)
       times.push(time)
+      // A single timer-delayed snapshot can land after the animation has finished.
+      capture.sample(geometry(kind))
       if (busyMsPerFrame)
         injectedMs += busyWait(busyMsPerFrame)
-      requestAnimationFrame(tick)
     }
     await frame()
     requestAnimationFrame(tick)
@@ -174,9 +179,7 @@ window.vccsBench = {
     await flush()
     const initialUpdateMs = performance.now() - started
     this.animated.immediateGeometry = geometry(kind)
-    await new Promise(resolve => setTimeout(resolve, 200))
-    this.animated.middleGeometry = geometry(kind)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, 700))
     running = false
     await frame()
     await flush()
@@ -185,9 +188,7 @@ window.vccsBench = {
   validateAnimated(kind, n) {
     changed(kind, this.animated.before, observe(kind, n, 1))
     const final = geometry(kind)
-    const { beforeGeometry: before, immediateGeometry: immediate, middleGeometry: middle } = this.animated
-    if (!before || !middle || !final || middle === before || middle === final || immediate === final)
-      throw new Error(`${kind}: changed-data update snapped or produced no intermediate motion`)
+    const { before, immediate, middle } = this.animated.capture.validate(this.animated.immediateGeometry, final)
     return { motionObserved: true, geometrySample: { before: before.slice(0, 150), immediate: immediate?.slice(0, 150), middle: middle.slice(0, 150), final: final.slice(0, 150) } }
   },
   async endAnimated() {
