@@ -22,22 +22,28 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
   BarList desktop shows a 120.8 ms gap with 55–95 ms startup long tasks. This is page startup
   cost, not only machine load (correcting the phase 1 note). Evidence: `seen-unreliable.md`,
   `seen-profile-findings.json`.
-- **P3 Playground demos:** 33 presentational legends look clickable but do nothing; the
-  dashboard Pie's centre total label sits inside the series group, so hover probes hit it
-  (`dashboard-charts.vue:174`).
+- **P1 RadialBar item tooltips fail on hover (new).** With hover probes on real data marks,
+  6 RadialBar sectors show no correct item tooltip. Did not show before because the old probe
+  hovered the SVG centre. Evidence: tooling worktree `.evidence/tooling/remaining-flags.md`.
+- ~~P3 Playground demos~~ done on `release/1.0-tooling` (`e390f1a`): display legends are
+  non-interactive; the Pie total sits outside the series group.
 
 ## Checks and tooling
 
-- **P2 `check:play` exits 1 at baseline** (130 inherited flags); D-25d gates on "no new flags".
-  Once the P1 above is fixed, return to a plain pass/fail with an explicit artifact list.
+- **P2 `check:play` exits 1 at baseline** (now 86 flags after the probe fixes); D-25d gates on
+  "no new flags". Once the P1 items are fixed, return to a plain pass/fail. The 28 below-viewport
+  entrances are by design: the detector should wait for in-view like the charts do.
 - **P2 `check:seen` cannot pass on this machine** (see the startup item above).
-- **P3 The motion lab's rate comparison** does not reset pointer state between 1× and 4×, so
-  4× looks faster than 1× (61–78 samples). Reset per rate or drop the comparison.
-- **P3 The playground recorder hovers SVG centres** instead of data marks; 15 of 16 hover flags
-  are artifacts of that.
-- **P3 Firefox does not launch here**; docs ran on Chromium and WebKit only.
-- **P3 Docs OG image:** the committed snapshot uses Unhead 3.4.2 despite the 2.1.12 override
-  (`.evidence/seen/build-docs.log`).
+- ~~P3 Motion lab rate comparison~~ state reset done (`e78ed41`). Remaining: pointer entry
+  still shows 46 ms at 1× versus 18 ms at 4×. Likely a first-run warm-up; run a discarded
+  warm-up replay before timing, or stop reporting this comparison.
+- ~~P3 Hover probes on SVG centres~~ done (`5bb3b5b`, `e58fa1a`): 130 → 86 flags; the rest are
+  the P1 fallback (46 + 6), below-viewport entrances (28, by design) and the RadialBar P1.
+- **P3 Firefox does not launch here:** launch times out after 30 s outside the checker too, so
+  it is the machine, not the repo. Diagnostics now surface the error (`23a96ea`).
+- ~~P3 Docs OG image~~ done (`d22163e`): Unhead is bundled into the snapshot; Nuxt resolves
+  2.1.9, not the 2.1.12 override. The override itself looks ineffective — check or remove it.
+- **P3 Docs build logs a landing-query POST 404** but exits 0; cause unknown.
 
 ## Code
 
@@ -48,3 +54,9 @@ Priority: **P1** user-visible bug · **P2** visible polish or reliability · **P
 - **P3 `motion.ts` imports the `Reveal` type from `useKeyedTransition.ts`**, which imports
   `motion.ts`. Type-only, but move `Reveal` next to the tokens.
 - **P3 Run hygiene:** the `vue` commit scope in `a6ab90a` is outside the README's scope list.
+
+## Status
+
+The tooling items run on branch `release/1.0-tooling` (worktree `fork_vue-charts-release-tooling`)
+and are cherry-picked onto `release/1.0` between phase 2 slices. Product items wait for one slice
+right after phase 2, on the new model.
