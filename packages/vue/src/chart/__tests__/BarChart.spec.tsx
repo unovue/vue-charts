@@ -186,6 +186,23 @@ describe('barChart', () => {
       },
     )
 
+    // The first stacked item sits at the base unless reverseStackOrder flips the order.
+    it.each([
+      { reverse: false, y: ['205,100', '5,200'] },
+      { reverse: true, y: ['5,100', '105,200'] },
+    ])('stacks in item order with reverseStackOrder=$reverse', async ({ reverse, y }) => {
+      const { container } = render(() => (
+        <BarChart width={500} height={340} data={[{ name: 'A', a: 10, b: 20 }]} reverseStackOrder={reverse}>
+          <XAxis dataKey="name" />
+          <YAxis domain={[0, 30]} />
+          <Bar dataKey="a" stackId="s" isAnimationActive={false} />
+          <Bar dataKey="b" stackId="s" isAnimationActive={false} />
+        </BarChart>
+      ))
+      await nextTick()
+      expect(getBarRects(container).map(rect => [rect.getAttribute('y'), rect.getAttribute('height')].join())).toEqual(y)
+    })
+
     it('renders stacked bars with stackId', () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>

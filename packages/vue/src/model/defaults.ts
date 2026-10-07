@@ -12,6 +12,7 @@ export const chartDefaults: UpdatableChartOptions & PolarChartOptions & {
   barSize: undefined,
   class: undefined,
   maxBarSize: undefined,
+  reverseStackOrder: false,
   stackOffset: 'none',
   syncId: undefined,
   syncMethod: 'index',

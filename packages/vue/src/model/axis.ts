@@ -53,6 +53,7 @@ interface AxisSources extends AxisScaleSources, Pick<ChartRegistries, 'items' | 
   dataRange: ReturnType<typeof createChartData>
   layout: () => LayoutType
   stackOffset: () => StackOffsetType
+  reverseStackOrder: () => boolean
 }
 
 export type AxisLookup = <T extends AxisType>(type: T, id: AxisId) => AxisModels[T]
@@ -77,7 +78,7 @@ function createAxis<S extends BaseCartesianAxis>(
   const displayedData = computed(() => sources.dataRange.displayedData({ data: graphicalData.value }) ?? [])
   const appliedValues = computed(() => getAppliedValues(displayedData.value, settings.value, items.value))
   const domainDefinition = computed(() => getDomainDefinition(settings.value))
-  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))
+  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset(), sources.reverseStackOrder()))
   const stackDomain = computed(() => getStackDomain(stackGroups.value, dataWithIndexes.value, type))
   const numericalValues = computed(() => numericalValuesWithErrors(
     displayedData.value,

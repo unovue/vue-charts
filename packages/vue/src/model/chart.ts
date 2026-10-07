@@ -99,6 +99,7 @@ export function createChart(inputs: ChartInputs): Chart {
     dataRange,
     layout: inputs.layout,
     stackOffset: () => options.value.stackOffset,
+    reverseStackOrder: () => options.value.reverseStackOrder,
   })
   const tooltip = createTooltip({
     axis,

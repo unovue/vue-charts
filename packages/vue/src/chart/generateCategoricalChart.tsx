@@ -58,6 +58,7 @@ function createChartSetup({
             barSize: props.barSize,
             class: props.class,
             maxBarSize: props.maxBarSize,
+            reverseStackOrder: props.reverseStackOrder,
             stackOffset: props.stackOffset,
             syncId: props.syncId,
             syncMethod: props.syncMethod,
