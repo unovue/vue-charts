@@ -30,6 +30,7 @@ jobs:
         run: node packages/vue/test/lab/report.mjs --prod --check
       - run: pnpm check:play
       - run: node --test scripts/check-play.test.mjs
+      - run: pnpm --filter docs build
       - run: pnpm check:docs
       - run: node --test scripts/check-docs.test.mjs
       - uses: actions/upload-artifact@v4

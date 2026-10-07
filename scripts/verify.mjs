@@ -34,6 +34,8 @@ const checks = [
     : [
         ['production motion fixture', 'pnpm check:motion'],
         ['motion recorder regressions', 'node --test scripts/check-motion-report.test.mjs'],
+        // check:docs audits the generated site in docs/.output/public; build it from this checkout.
+        ['docs site build', 'pnpm --filter docs build'],
         ['docs pages in selected browsers', docsCommand],
         ['docs checker regression', 'node --test scripts/check-docs.test.mjs'],
       ]),
