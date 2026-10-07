@@ -2,7 +2,7 @@ import type { TooltipEventType } from '@/types/tooltip'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideClipPathId, provideRenderPhase } from '@/model/runtime'
 import type { ExtractPropTypes, SetupContext } from 'vue'
-import { Fragment, defineComponent } from 'vue'
+import { Fragment } from 'vue'
 import ChartSurface from '@/chart/ChartSurface.vue'
 import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
@@ -11,7 +11,8 @@ import { createChart, provideChart } from '@/model/chart'
 import { chartDefaults } from '@/model/defaults'
 import { useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { useChartId } from '@/hooks/useChartId'
-import { cartesianChartProps, commonChartProps, funnelChartProps, polarChartProps, radialChartProps } from './chartProps'
+import { commonChartProps, polarChartProps } from './chartProps'
+import type { radialChartProps } from './chartProps'
 import { provideChartAnimation } from '@/model/animation'
 
 type CategoricalChartPropsWithOutSvg = ExtractPropTypes<typeof commonChartProps>
@@ -19,7 +20,6 @@ type CategoricalChartPropsWithOutSvg = ExtractPropTypes<typeof commonChartProps>
 
 export interface CategoricalChartOptions {
   chartName: string
-  defaultProps?: Partial<Pick<CategoricalChartPropsWithOutSvg, 'layout' | 'startAngle' | 'endAngle'>>
   defaultTooltipEventType?: TooltipEventType
   validateTooltipEventTypes?: readonly TooltipEventType[]
 }
@@ -163,60 +163,21 @@ function createChartSetup({
   }
 }
 
-function componentOptions(options: CategoricalChartOptions) {
-  return { name: options.chartName, inheritAttrs: false, emits: chartEmits }
+/**
+ * The component options shared by every chart root. Spread into `defineComponent` next to the
+ * chart's prop set: `defineComponent({ ...chartRoot(options), props: cartesianChartProps })`.
+ */
+export function chartRoot(options: CategoricalChartOptions) {
+  return { name: options.chartName, inheritAttrs: false, emits: chartEmits, setup: createChartSetup(options) }
 }
 
-export function generateCartesianChart(options: CategoricalChartOptions) {
-  const setupChart = createChartSetup(options)
-  return defineComponent({
-    ...componentOptions(options),
-    props: cartesianChartProps,
-    setup(props, context) {
-      return setupChart(props, context)
-    },
-  })
-}
-
-function polarProps(options: CategoricalChartOptions) {
+/** Polar chart props with the chart's own layout and angle defaults. */
+export function polarProps(defaults: Pick<CategoricalChartPropsWithOutSvg, 'layout' | 'startAngle' | 'endAngle'>) {
   return {
     ...commonChartProps,
     ...polarChartProps,
-    layout: { ...commonChartProps.layout, default: options.defaultProps?.layout ?? 'centric' },
-    startAngle: { ...polarChartProps.startAngle, default: options.defaultProps?.startAngle },
-    endAngle: { ...polarChartProps.endAngle, default: options.defaultProps?.endAngle },
+    layout: { ...commonChartProps.layout, default: defaults.layout },
+    startAngle: { ...polarChartProps.startAngle, default: defaults.startAngle },
+    endAngle: { ...polarChartProps.endAngle, default: defaults.endAngle },
   }
-}
-
-export function generatePolarChart(options: CategoricalChartOptions) {
-  const setupChart = createChartSetup(options)
-  return defineComponent({
-    ...componentOptions(options),
-    props: polarProps(options),
-    setup(props, context) {
-      return setupChart(props, context)
-    },
-  })
-}
-
-export function generateRadialChart(options: CategoricalChartOptions) {
-  const setupChart = createChartSetup(options)
-  return defineComponent({
-    ...componentOptions(options),
-    props: { ...radialChartProps, ...polarProps(options) },
-    setup(props, context) {
-      return setupChart(props, context)
-    },
-  })
-}
-
-export function generateFunnelChart(options: CategoricalChartOptions) {
-  const setupChart = createChartSetup(options)
-  return defineComponent({
-    ...componentOptions(options),
-    props: funnelChartProps,
-    setup(props, context) {
-      return setupChart(props, context)
-    },
-  })
 }
