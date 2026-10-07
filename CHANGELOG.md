@@ -78,6 +78,8 @@ every breaking change with a before and after example.
 - `allowDataOverflow` on one axis clips only that axis; Area clips too; Line and Area dots
   reference a clip path that exists.
 - Labels with a partial `viewBox` no longer render at `NaN`.
+- LabelList `formatter` receives the raw value, also `null` and objects; before, such values
+  reached it as `undefined`. LabelList `position` accepts `{ x, y }` like Label.
 
 ### Changed
 

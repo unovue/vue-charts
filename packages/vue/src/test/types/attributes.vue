@@ -33,6 +33,8 @@ export type GridDash = CartesianGridProps['strokeDasharray']
       <LabelList
         data-key="v"
         font-size="12"
+        :position="{ x: 4, y: 8 }"
+        :formatter="(value: unknown) => String(value ?? '')"
       />
       <ErrorBar
         data-key="v"

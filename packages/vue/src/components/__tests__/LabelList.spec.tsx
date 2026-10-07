@@ -99,6 +99,30 @@ describe('labelList', () => {
     })
   })
 
+  describe('formatter', () => {
+    // Wrong behavior: the formatter only sees `undefined` for values that are not text or numbers.
+    it('receives the raw value, including null and objects', () => {
+      const rows = [
+        { name: 'A', uv: 400, range: { min: 1, max: 3 } },
+        { name: 'B', uv: 300, range: null },
+      ]
+      const { container } = render(() => (
+        <BarChart width={500} height={300} data={rows}>
+          <XAxis dataKey="name" />
+          <Bar dataKey="uv" isAnimationActive={false}>
+            <LabelList
+              dataKey="range"
+              formatter={(value: unknown) => value === null ? 'n/a' : `${(value as { min: number }).min}+`}
+            />
+          </Bar>
+        </BarChart>
+      ))
+
+      const texts = [...container.querySelectorAll('.v-charts-label')].map(label => label.textContent)
+      expect(texts).toEqual(['1+', 'n/a'])
+    })
+  })
+
   describe('label-list wrapper', () => {
     it('renders label-list container', () => {
       const { container } = render(() => (

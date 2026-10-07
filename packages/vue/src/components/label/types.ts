@@ -72,7 +72,7 @@ export const LabelListVueProps = {
     type: Boolean,
   },
   position: {
-    type: String as PropType<LabelPosition>,
+    type: [String, Object] as PropType<LabelPosition>,
   },
   offset: {
     type: Number,
@@ -80,9 +80,14 @@ export const LabelListVueProps = {
   angle: {
     type: Number,
   },
+  /** Writes the label text. Receives the raw value, which can be `null` or an object in messy data. */
+  formatter: {
+    type: Function as PropType<LabelListFormatter>,
+  },
 }
 
 export type LabelFormatter = (label: string | number | undefined) => string | number | undefined
+export type LabelListFormatter = (value: unknown) => string | number | undefined
 
 export const LabelVueProps = {
   id: {
@@ -127,7 +132,8 @@ export interface LabelSlots {
   content?: (props: LabelProps & { viewBox: ViewBox }) => VNodeChild
 }
 
-export type LabelListSlotProps = Omit<LabelProps, 'viewBox'> & ViewBox & {
+export type LabelListSlotProps = Omit<LabelProps, 'viewBox' | 'formatter'> & ViewBox & {
+  formatter?: LabelListFormatter
   value?: string | number
   index: number
   key: string

@@ -26,7 +26,7 @@ export const LabelListView = defineComponent({
       // Read per render: series pass a new item object whenever their labels change.
       const props = view.item
       const attrs = view.svgAttrs
-      const { dataKey, valueAccessor, clockWise, id, ...others } = props
+      const { dataKey, valueAccessor, clockWise, id, formatter, ...others } = props
       const data = props.data ?? contextData?.value
       if (!data || !data.length)
         return null
@@ -38,8 +38,8 @@ export const LabelListView = defineComponent({
               ? valueAccessor(entry, index)
               : getValueByDataKey(entry && entry.payload, dataKey!)
             // Without a formatter only text and numbers make a label; other values in messy data
-            // show none. A formatter may turn any value into text.
-            const value = typeof raw === 'number' || typeof raw === 'string' || ('formatter' in others && others.formatter) ? raw as string | number : undefined
+            // show none. A formatter receives the raw value and may turn any value into text.
+            const text = typeof raw === 'number' || typeof raw === 'string' ? raw : undefined
             const idProps = isNullish(id) ? undefined : `${id}-${index}`
             const viewBox = parseViewBox(isNullish(clockWise) ? entry : { ...entry, clockWise })
 
@@ -47,7 +47,8 @@ export const LabelListView = defineComponent({
             const entryOpacity = typeof entry.opacity === 'number' ? { opacity: entry.opacity } : undefined
             const contentSlot = slots.content ?? slots.label
             if (contentSlot) {
-              return contentSlot({ ...others, ...attrs, ...entryOpacity, ...viewBox, value, index, key: `label-${String(entry.key ?? index)}` })
+              // Like a Recharts `content`, the slot receives the formatter and decides how to use it.
+              return contentSlot({ ...others, formatter, ...attrs, ...entryOpacity, ...viewBox, value: formatter ? raw as string | number : text, index, key: `label-${String(entry.key ?? index)}` })
             }
 
             const entryFill = entry.fill != null && !('fill' in others) && !('fill' in attrs) ? entry.fill : undefined
@@ -60,7 +61,7 @@ export const LabelListView = defineComponent({
                 {...entryOpacity}
                 id={idProps!}
                 parentViewBox={entry.parentViewBox}
-                value={value}
+                value={formatter ? formatter(raw) : text}
                 viewBox={viewBox}
                 key={`label-${String(entry.key ?? index)}`}
                 index={index}
