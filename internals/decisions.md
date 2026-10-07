@@ -226,7 +226,9 @@ removed → clamp to the new length, reset to full only when nothing remains. A 
 This differs from Recharts, which resets on a new data array; vccs has no row identity, so the
 rule is index-based. The Brush is the only owner of the range (it registers it into
 `chart.brush`); a chart without a Brush follows only a synchronised peer's range. A controlled `null` remains null until the parent
-changes it; repopulation must not overwrite that explicit choice.
+changes it; repopulation must not overwrite that explicit choice. The exception is the `null` that the Brush
+itself emitted for empty data: when rows return, it emits the full range, so a `v-model` that accepted that
+null (or a listener) gets its travellers back (2026-10).
 For nonempty data, floor finite indexes, clamp them to `[0, length - 1]`, then order start/end.
 Non-finite indexes normalize to `null`. Emit `update:range` once per distinct input/data state
 that needs normalization, including shrink-to-empty. Derive the safe effective range without

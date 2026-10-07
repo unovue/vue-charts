@@ -274,8 +274,21 @@ export const Brush = forwardsSvgAttributes(defineComponent({
     })))
     useBrushChartSynchronisation(chart)
 
+    // Empty data emits `null`. Whoever accepted that null gets the full range back when rows
+    // return, so a filter that briefly finds nothing does not leave the Brush without handles.
+    let emptied = false
+    function announce(value: BrushStartEndIndex | null) {
+      emptied = value === null && length.value === 0
+      emit('update:range', value)
+    }
+
     // D-16: reconcile the uncontrolled window by index when the row count changes.
     watch(length, (rows, previous) => {
+      if (emptied && previous === 0 && rows > 0) {
+        emptied = false
+        if (!controlled() || props.range === null)
+          return emit('update:range', fullRange(rows))
+      }
       if (controlled())
         return
       const shown = normalizeBrushRange(local.value ?? fullRange(previous), previous)
@@ -288,14 +301,14 @@ export const Brush = forwardsSvgAttributes(defineComponent({
         local.value = normalizeBrushRange(window, rows)
       // A full window grows silently; a shifted or clamped one is announced.
       if ((rows < previous || local.value !== window) && !sameRange(shown, range.value))
-        emit('update:range', range.value)
+        announce(range.value)
     }, { flush: 'sync' })
     // Ask the parent once per distinct (input, row count) to accept a normalized controlled range.
     watch(
       () => [props.range === null, props.range?.startIndex, props.range?.endIndex, length.value],
       () => {
         if (controlled() && !sameRange(props.range!, range.value))
-          emit('update:range', range.value)
+          announce(range.value)
       },
       { immediate: true },
     )

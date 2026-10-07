@@ -461,6 +461,33 @@ it.each([undefined, null])('restores empty data without replacing the parent cho
     .toEqual(range === null ? [] : ['0', '1'])
 })
 
+// A filter that briefly returns no rows must not leave a v-model Brush without handles.
+it('restores the travellers of a model that accepted the empty-data null', async () => {
+  const rows = ref(Array.from({ length: 6 }, (_, index) => ({ value: index + 1 })))
+  const range = ref<BrushStartEndIndex | null>()
+  const { container } = render(() => (
+    <BarChart width={400} height={200} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush range={range.value} {...{ 'onUpdate:range': (value: BrushStartEndIndex | null) => range.value = value }} />
+    </BarChart>
+  ))
+  await nextTick()
+  const end = container.querySelectorAll('.v-charts-brush-traveller')[1]
+  await fireEvent.focus(end)
+  await fireEvent.keyDown(end, { key: 'ArrowLeft' })
+  expect(range.value).toEqual({ startIndex: 0, endIndex: 4 })
+  rows.value = []
+  await nextTick()
+  await nextTick()
+  expect(range.value).toBeNull()
+  rows.value = Array.from({ length: 4 }, (_, index) => ({ value: index + 1 }))
+  await nextTick()
+  await nextTick()
+  expect(range.value).toEqual({ startIndex: 0, endIndex: 3 })
+  expect([...container.querySelectorAll('[role="slider"]')].map(slider => slider.getAttribute('aria-valuenow')))
+    .toEqual(['0', '3'])
+})
+
 // Synchronized requests must respect a peer's parent-owned range without rebroadcast loops.
 it.each([
   { accept: true, peerRows: 5, initial: { startIndex: 0, endIndex: 4 }, expected: { startIndex: 3, endIndex: 4 }, bars: [2, 2], sliders: ['3', '4'] },
