@@ -28,7 +28,7 @@ jobs:
 
       - name: Check tooling regressions and motion tokens
         run: |
-          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs packages/vue/test/lab/report-metrics.test.mjs
+          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs
           node scripts/update-motion-docs.mjs --check
           node packages/vue/test/lab/cli.mjs help
 
@@ -94,7 +94,8 @@ jobs:
 
       - run: pnpm check:motion
 
-      - run: node --test scripts/check-motion-report.test.mjs
+      # Both launch Chromium, so they run here, after the browser install.
+      - run: node --test scripts/check-motion-report.test.mjs packages/vue/test/lab/report-metrics.test.mjs
 
       - run: pnpm check:a11y
 
