@@ -10,10 +10,12 @@ export interface GridCell<P = unknown> {
   /** Grid position for keyboard navigation. */
   row: number
   column: number
-  /** Accessible text and default tooltip name, e.g. "Sep 3, 2026". */
+  /** Accessible text and tooltip name, e.g. "Sep 3, 2026". */
   label: string
-  /** Default tooltip value, e.g. "4" or "Operational". */
+  /** Raw tooltip value, e.g. 4 or `'up'`; `null` when the cell has none. */
   value: string | number | null
+  /** Readable value for screen readers and the default tooltip, e.g. "42%" or "Operational". */
+  valueText?: string
   /** Text drawn centered on the cell, e.g. "42%"; hidden when it does not fit. */
   text?: string
   payload: P

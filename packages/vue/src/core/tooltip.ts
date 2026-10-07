@@ -15,7 +15,7 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
 
   const init: Array<TooltipPayloadEntry> = []
 
-  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values }): Array<TooltipPayloadEntry> => {
+  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values, names }): Array<TooltipPayloadEntry> => {
     const sliced = dataDefinedOnItem
 
     const finalDataKey = settings?.dataKey ?? tooltipAxis?.dataKey
@@ -69,13 +69,14 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
       })
     }
     else {
+      const key = payloadKey ?? activeIndex
       agg.push(
         getTooltipEntry({
           tooltipEntrySettings: settings,
           dataKey: finalDataKey!,
           payload: tooltipPayload,
-          value: values?.[payloadKey ?? activeIndex] ?? getValueByDataKey(tooltipPayload, finalDataKey),
-          name: getValueByDataKey(tooltipPayload, finalNameKey) ?? settings?.name,
+          value: values && key in values ? values[key] ?? undefined : getValueByDataKey(tooltipPayload, finalDataKey),
+          name: names?.[key] ?? getValueByDataKey(tooltipPayload, finalNameKey) ?? settings?.name,
         }),
       )
     }
@@ -136,7 +137,7 @@ export function getTooltipEntry({
   tooltipEntrySettings: TooltipEntrySettings
   dataKey: DataKey<unknown>
   payload: unknown
-  value: ValueType
+  value: ValueType | undefined
   name: string | undefined
 }): TooltipPayloadEntry {
   return {

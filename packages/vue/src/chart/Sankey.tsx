@@ -168,32 +168,28 @@ function useSankey(
       })
     })
 
-    const payloadTree = computed(() => {
-      // Strip circular source/target node refs — Immer can't handle them.
-      const nodes = layout.value.nodes.map((n, i) => ({
-        tooltipIndex: `nodes[${i}]`,
-        name: n[props.nameKey] ?? n.name,
-        value: n.value,
-        x0: n.x0,
-        x1: n.x1,
-        y0: n.y0,
-        y1: n.y1,
-      }))
-      const links = layout.value.links.map((l, i) => {
-        const src = l.source as SankeyLayoutNode
-        const tgt = l.target as SankeyLayoutNode
-        return {
-          tooltipIndex: `links[${i}]`,
-          name: `${src[props.nameKey] ?? src.name} - ${tgt[props.nameKey] ?? tgt.name}`,
-          value: l.value,
-        }
+    // Tooltip payloads are the caller's own nodes and links, addressed by `nodes[i]` and
+    // `links[i]`; values and link names come from the layout.
+    const tooltipItems = computed(() => {
+      const nameOf = (node: SankeyLayoutNode) => String(node[props.nameKey] ?? node.name)
+      const values: Record<string, number | null> = {}
+      const names: Record<string, string> = {}
+      layout.value.nodes.forEach((node, i) => {
+        values[`nodes[${i}]`] = node.value ?? null
+        names[`nodes[${i}]`] = nameOf(node)
       })
-      return { nodes, links }
+      layout.value.links.forEach((link, i) => {
+        values[`links[${i}]`] = link.value ?? null
+        names[`links[${i}]`] = `${nameOf(link.source as SankeyLayoutNode)} - ${nameOf(link.target as SankeyLayoutNode)}`
+      })
+      return { values, names }
     })
 
     tooltip.entries.register(computed(() => {
       const settings: TooltipPayloadConfiguration = {
-        dataDefinedOnItem: payloadTree.value,
+        dataDefinedOnItem: data.value?.[0],
+        values: tooltipItems.value.values,
+        names: tooltipItems.value.names,
         positions: undefined,
         pointerItems: layout.value.links.map((link, index) => ({
           index: layout.value.nodes.length + index,

@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, ref, toRaw, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { useTooltipController } from '@/model/tooltip'
@@ -220,6 +220,8 @@ export const CellGridLayer = defineComponent({
       onEnd: callbacks.onEnd,
     })
 
+    // A Tooltip `formatter` replaces this default text and receives the raw value.
+    const valueTexts = computed(() => new Map(props.cells.flatMap(cell => cell.valueText === undefined ? [] : [[toRaw(cell.payload), cell.valueText]])))
     const configuration = computed(() => {
       const settings: TooltipPayloadConfiguration = {
         model: {
@@ -232,7 +234,10 @@ export const CellGridLayer = defineComponent({
           identity: cell.key,
           coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
         })),
-        dataDefinedOnItem: props.cells.map(cell => ({ name: cell.label, value: cell.value, payload: cell.payload, color: cell.fill })),
+        // The payload is the chart's domain object; value and name come per cell.
+        dataDefinedOnItem: props.cells.map(cell => cell.payload),
+        values: Object.fromEntries(props.cells.map((cell, index) => [index, cell.value])),
+        names: Object.fromEntries(props.cells.map((cell, index) => [index, cell.label])),
         positions: undefined,
         settings: {
           stroke: undefined,
@@ -245,6 +250,9 @@ export const CellGridLayer = defineComponent({
           type: undefined,
           color: undefined,
           unit: '',
+          formatter: valueTexts.value.size
+            ? (value, _name, entry) => valueTexts.value.get(toRaw(entry.payload)) ?? value
+            : undefined,
         },
       }
       return settings
@@ -409,7 +417,7 @@ export const CellGridLayer = defineComponent({
                   class="v-charts-cell"
                   role="option"
                   aria-selected={isActive}
-                  aria-label={cell.value == null ? cell.label : `${cell.label}: ${cell.value}`}
+                  aria-label={(cell.valueText ?? cell.value) == null ? cell.label : `${cell.label}: ${cell.valueText ?? cell.value}`}
                   style={{ opacity: dimmed ? 0.45 : 1, transition: fillTransition, pointerEvents: interactive ? undefined : 'none' }}
                   onMouseenter={(event: MouseEvent) => interactive && onEnter(cell, index, event)}
                   onMouseleave={(event: MouseEvent) => interactive && onLeave(cell, index, event)}

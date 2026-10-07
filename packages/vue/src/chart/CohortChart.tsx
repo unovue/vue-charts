@@ -6,8 +6,8 @@ import { type PropType, type SlotsType, type VNode, computed, defineComponent } 
 import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import type { StandaloneChartProps } from './directChartTypes'
-import { type CellGridSlots, type CellSlotProps, cellGridSharedProps } from './CellGridLayer'
-import { Heatmap, type HeatmapCell, type HeatmapKey } from './Heatmap'
+import { type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
+import { type HeatmapCell, type HeatmapKey, HeatmapView } from './Heatmap'
 
 export interface CohortCell<Row = unknown> {
   x: HeatmapKey
@@ -110,10 +110,11 @@ const _CohortChart = defineComponent({
     const format = (value: number) => props.mode === 'percent' ? `${Math.round(value)}%` : numbers.value.format(value)
 
     return () => (
-      <Heatmap
+      <HeatmapView
         {...attrs}
         {...chartListeners(emit)}
-        {...cellGridListeners(emit, cohortCell)}
+        {...cellGridListeners(emit)}
+        cellPayload={cell => cohortCell(cell as HeatmapCell<CohortPeriod>)}
         data={model.value.rows}
         xKey="period"
         yKey="cohort"
@@ -123,7 +124,7 @@ const _CohortChart = defineComponent({
         max={props.mode === 'percent' ? 100 : undefined}
         fillMissing={false}
         showValues
-        valueFormatter={format}
+        valueFormatter={value => format(value)}
         xTickFormatter={x => props.periodFormatter(Number(x))}
         yTickFormatter={y => `${y} · ${numbers.value.format(model.value.sizes.get(String(y)) ?? 0)}`}
         color={props.color}
@@ -140,13 +141,8 @@ const _CohortChart = defineComponent({
         aspect={props.aspect}
         initialDimension={props.initialDimension}
       >
-        {{ cell: slots.cell
-          ? (slot: CellSlotProps<HeatmapCell<CohortPeriod>>) => {
-              const payload = cohortCell(slot.cell.payload)
-              return payload && slots.cell?.({ ...slot, cell: { ...slot.cell, payload } })
-            }
-          : undefined, default: slots.default }}
-      </Heatmap>
+        {{ cell: slots.cell, default: slots.default }}
+      </HeatmapView>
     )
   },
 })

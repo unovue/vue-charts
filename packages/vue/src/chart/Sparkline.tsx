@@ -118,10 +118,18 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
       payload: rows.value?.[index],
     }))
   })
-  const keyOf = (point: SparkPoint) => {
+  const nameValueOf = (point: SparkPoint) => {
     const row = point.payload
-    const name = props.nameKey && row !== null && typeof row === 'object' ? getValueByDataKey(row, props.nameKey) : undefined
+    return props.nameKey && row !== null && typeof row === 'object' ? getValueByDataKey(row, props.nameKey) : undefined
+  }
+  const keyOf = (point: SparkPoint) => {
+    const name = nameValueOf(point)
     return name == null ? point.index : String(name)
+  }
+  /** The point's name in the tooltip and for screen readers, in line and bar mode alike. */
+  const nameOf = (point: SparkPoint) => {
+    const name = nameValueOf(point)
+    return name == null ? String(point.index + 1) : String(name)
   }
   const baselineY = computed(() => size.effectiveHeight.value - PAD)
   const display = usePointTransition(() => props.type === 'bar' ? [] : points.value, {
@@ -162,7 +170,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
       fill: props.color,
       row: 0,
       column: point.index,
-      label: String(point.index + 1),
+      label: nameOf(point),
       value: point.value,
       payload: point.payload,
     }))
@@ -192,7 +200,10 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
           : positionalIdentities[point.index] ??= Symbol(),
         coordinate: { x: point.x, y: point.y },
       })),
-      dataDefinedOnItem: points.value.map(point => ({ name: props.nameKey && point.payload !== null && typeof point.payload === 'object' ? String(getValueByDataKey(point.payload, props.nameKey)) : String(point.index + 1), value: point.value, payload: point.payload, color: props.color })),
+      // The payload is the caller's row; value and name come per point.
+      dataDefinedOnItem: points.value.map(point => point.payload),
+      values: Object.fromEntries(points.value.map(point => [point.index, point.value])),
+      names: Object.fromEntries(points.value.map(point => [point.index, nameOf(point)])),
       positions: undefined,
       settings: { stroke: props.color, strokeWidth: undefined, fill: props.color, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: props.color, unit: '' },
     }

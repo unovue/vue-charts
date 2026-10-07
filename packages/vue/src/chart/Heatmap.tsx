@@ -67,6 +67,8 @@ const HeatmapVueProps = {
   gap: { type: Number, default: 2 },
   desc: String,
   title: { type: String, default: 'Heatmap' },
+  /** Internal: the domain object a derived chart exposes per cell, e.g. CohortChart's `CohortCell`. */
+  cellPayload: { type: Function as PropType<(cell: HeatmapCell) => unknown>, default: undefined },
 }
 
 const _Heatmap = defineComponent({
@@ -129,7 +131,7 @@ const _Heatmap = defineComponent({
       const height = size.effectiveHeight.value
       if (xs.length === 0 || ys.length === 0 || !(width > 0) || !(height > 0)) {
         return {
-          cells: [] as GridCell<HeatmapCell>[],
+          cells: [] as GridCell[],
           xLabels: [] as MovingLabel[],
           yLabels: [] as MovingLabel[],
           gap: 0,
@@ -148,7 +150,7 @@ const _Heatmap = defineComponent({
       }
       const scale = cellColorScale({ color: props.color, empty: props.emptyColor, levels: props.levels, colors: props.colors, max })
 
-      const cells: GridCell<HeatmapCell>[] = []
+      const cells: GridCell[] = []
       ys.forEach((y, row) => {
         xs.forEach((x, column) => {
           const cell = byKey.get(cellKey(x, y))
@@ -167,9 +169,10 @@ const _Heatmap = defineComponent({
             row,
             column,
             label: `${yText(y)}, ${xText(x)}`,
-            value: text ?? null,
+            value: data.value,
+            valueText: text,
             text: props.showValues ? text : undefined,
-            payload: data,
+            payload: props.cellPayload ? props.cellPayload(data) : data,
           })
         })
       })
@@ -255,13 +258,16 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  */
 export type HeatmapSlots<Row = unknown> = CellGridSlots<HeatmapCell<Row>> & { default?: () => VNode[] }
 
-export type HeatmapProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _Heatmap>['$props'], CellEvents<HeatmapCell<NoInfer<Row>>> & {
+export type HeatmapProps<Row = unknown> = StandaloneChartProps<Omit<InstanceType<typeof _Heatmap>['$props'], 'cellPayload'>, CellEvents<HeatmapCell<NoInfer<Row>>> & {
   data: readonly Row[]
   xKey?: RowDataKey<NoInfer<Row>>
   yKey?: RowDataKey<NoInfer<Row>>
   dataKey?: RowDataKey<NoInfer<Row>>
   valueFormatter?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
 }>
+
+/** The untyped component, for charts derived from a heatmap that expose their own cell payload. */
+export const HeatmapView = _Heatmap
 
 export const Heatmap = _Heatmap as unknown as <Row>(
   props: HeatmapProps<Row>,

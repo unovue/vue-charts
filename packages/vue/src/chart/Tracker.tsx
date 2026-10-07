@@ -109,7 +109,8 @@ const _Tracker = defineComponent({
           row: 0,
           column: index,
           label: labelOf(name, index),
-          value: status == null ? 'No data' : labels[status as string] ?? String(status),
+          value: status == null ? null : typeof status === 'number' ? status : String(status),
+          valueText: status == null ? 'No data' : labels[status as string] ?? String(status),
           payload: row,
         }
       })

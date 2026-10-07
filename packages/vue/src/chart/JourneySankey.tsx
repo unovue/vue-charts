@@ -1,6 +1,6 @@
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import { getValueByDataKey } from '@/utils/chart'
-import { type EmitFn, type ExtractPropTypes, type SlotsType, computed, defineComponent, reactive, ref, toRefs, watch } from 'vue'
+import { type EmitFn, type ExtractPropTypes, type SlotsType, computed, defineComponent, reactive, ref, toRaw, toRefs, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
@@ -241,12 +241,32 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
       value: `${numbers.value.format(link.count)} sessions · ${percent.value.format(link.count / source.count * 100)}% of those on ${source.name} at step ${source.step + 1}`,
     }
   }
+  // Payloads are the layout's own nodes and links; the value is the session count and the
+  // readable text is the default a Tooltip `formatter` replaces.
+  const tooltipItems = computed(() => {
+    const { nodes, links } = layout.value
+    const values: Record<string, number> = {}
+    const names: Record<string, string> = {}
+    const texts = new Map<unknown, string>()
+    nodes.forEach((node, i) => {
+      values[`nodes[${i}]`] = node.count
+      names[`nodes[${i}]`] = node.name
+      texts.set(node, subtitleOf(node))
+    })
+    links.forEach((link, i) => {
+      const description = linkDescription(link)
+      values[`links[${i}]`] = link.count
+      names[`links[${i}]`] = description.name
+      texts.set(link, description.value)
+    })
+    return { data: { nodes, links }, values, names, texts }
+  })
   tooltip.entries.register(computed(() => {
+    const { data, values, names, texts } = tooltipItems.value
     const settings: TooltipPayloadConfiguration = {
-      dataDefinedOnItem: {
-        nodes: layout.value.nodes.map(node => ({ name: node.name, value: subtitleOf(node), payload: node })),
-        links: layout.value.links.map(link => ({ ...linkDescription(link), payload: link })),
-      },
+      dataDefinedOnItem: data,
+      values,
+      names,
       positions: undefined,
       pointerItems: [
         ...layout.value.nodes.map((node, index) => ({
@@ -262,7 +282,7 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
           coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 },
         })),
       ],
-      settings: { stroke: undefined, strokeWidth: undefined, fill: undefined, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: undefined, unit: '' },
+      settings: { stroke: undefined, strokeWidth: undefined, fill: undefined, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: undefined, unit: '', formatter: (value, _name, entry) => texts.get(toRaw(entry.payload)) ?? value },
     }
     return settings
   }))
