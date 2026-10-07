@@ -221,7 +221,6 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
     const action = {
       index: point ? point.index : null,
       configuration: configuration.value,
-      dataKey: 'value',
       coordinate: point ? { x: point.x, y: point.y } : undefined,
     }
     if (keyboard)

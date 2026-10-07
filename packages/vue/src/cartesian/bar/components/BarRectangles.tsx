@@ -121,7 +121,6 @@ export const BarRectangles = defineComponent({
     const activate = (kind: 'hover' | 'click', bar: BarRectangleItem, index: number) => {
       const payload = {
         configuration: entry.value,
-        dataKey: props.dataKey,
         index,
         coordinate: { x: bar.tooltipPosition.x, y: bar.tooltipPosition.y },
       }

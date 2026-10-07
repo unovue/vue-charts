@@ -34,7 +34,7 @@ const Dots = defineComponent({
   setup(_props) {
     const emit = lineEvents.use()
     const { clipPathId, clipDot, props, attrs, needClip, dotSlot } = useLineContext()
-    const listeners = usePointEvents<LinePointItem>(emit, () => props.dataKey)
+    const listeners = usePointEvents<LinePointItem>(emit)
     const delegated = delegateItemEvents((position) => {
       const point = _props.points[position]
       if (!point || _props.exiting[position])
@@ -93,7 +93,7 @@ export const StaticLine = defineComponent({
   setup() {
     const emit = lineEvents.use()
     const { points, clipPathId, layout, attrs, props, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
-    const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => props.dataKey, () => points.value ?? [])
+    const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => points.value ?? [])
     const offset = useOffset()
     const chart = useChart()
     const categoryAxis = computed(() => layout.value === 'vertical'

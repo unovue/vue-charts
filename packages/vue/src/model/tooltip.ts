@@ -8,7 +8,7 @@ import type { createChartData } from './dataRange'
 import { tooltipCoordinate, tooltipPayload } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
-import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
+import type { ChartOffsetRequired, Coordinate, LayoutType, Size, TooltipEventType } from '@/types'
 import type { TooltipActiveIndex, TooltipInteraction, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettings, TooltipTargetRequest } from '@/types/tooltip'
 
 const noInteraction: TooltipInteraction = Object.freeze({
@@ -322,10 +322,11 @@ export function createTooltip(inputs: TooltipInputs) {
   function findTarget(type: TooltipEventType, input: TooltipTargetRequest) {
     if (type === 'axis')
       return positional(input.index, axisTargets.value)
-    // Series identity is the registered configuration; dataKey is not unique (two Scatters may
-    // both have none). Callers without one are standalone charts with a single entry.
-    return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === input.index
-      && (!input.configuration || item.entry?.value === input.configuration))
+    // Series identity is the registered configuration (see TooltipTargetRequest).
+    if (input.index === null || !('configuration' in input))
+      return undefined
+    const { index, configuration } = input
+    return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === index && item.entry?.value === configuration)
   }
 
   let lastSeriesRequest: { entry: Entry, index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target: Target } | undefined
@@ -442,11 +443,6 @@ export function createTooltip(inputs: TooltipInputs) {
     label: label.value,
   }))
 
-  function coordinateAt(index: TooltipActiveIndex, dataKey: DataKey<unknown>) {
-    const entry = entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
-    return index === null ? undefined : entry?.positions?.[index]
-  }
-
   return {
     source,
     bindings,
@@ -465,7 +461,6 @@ export function createTooltip(inputs: TooltipInputs) {
     announcement,
     keyboardInteraction,
     syncInteraction,
-    coordinateAt,
     activeIndexFor,
     coordinateFor,
     activate,

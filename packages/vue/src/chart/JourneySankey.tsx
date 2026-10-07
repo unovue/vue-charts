@@ -263,7 +263,7 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
     })
     return { data: { nodes, links }, values, names, texts }
   })
-  tooltip.entries.register(computed(() => {
+  const tooltipConfiguration = computed(() => {
     const { data, values, names, texts } = tooltipItems.value
     const settings: TooltipPayloadConfiguration = {
       dataDefinedOnItem: data,
@@ -287,7 +287,8 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
       settings: { stroke: undefined, strokeWidth: undefined, fill: undefined, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: undefined, unit: '', formatter: (value, _name, entry) => texts.get(toRaw(entry.payload)) ?? value },
     }
     return settings
-  }))
+  })
+  tooltip.entries.register(tooltipConfiguration)
 
   const nodeIndex = (node: JourneyNode) => layout.value.nodes.findIndex(item => item.id === node.id)
   const linkIndex = (link: JourneyLink) => layout.value.links.findIndex(item => item.id === link.id)
@@ -297,13 +298,13 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
     const index = nodeIndex(node)
     if (event)
       emit('node-mouseenter', node, index, event)
-    tooltip.activate('hover', { type: 'item', index, dataKey: 'value', coordinate: { x: node.x + props.nodeWidth, y: node.y } })
+    tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: { x: node.x + props.nodeWidth, y: node.y } })
   }
   function enterLink(link: JourneyLink, event: MouseEvent) {
     hover.value = { kind: 'link', id: link.id }
     const index = linkIndex(link)
     emit('link-mouseenter', link, index, event)
-    tooltip.activate('hover', { type: 'item', index: layout.value.nodes.length + index, dataKey: 'value', coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 } })
+    tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index: layout.value.nodes.length + index, coordinate: { x: (link.x0 + link.x1) / 2, y: (link.y0 + link.y1) / 2 } })
   }
   function leave() {
     hover.value = undefined

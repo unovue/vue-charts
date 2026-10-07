@@ -215,12 +215,16 @@ export type TooltipSyncInteraction = TooltipInteraction & {
 }
 
 /** Selection requests carry the entry identity and interaction coordinate. */
+/**
+ * A request to select a tooltip target. An axis request selects a category. Any other request
+ * names its series by the registered configuration, because a dataKey is not unique (two
+ * Scatters may have none); `index: null` clears the selection.
+ */
 export type TooltipTargetRequest = {
-  type?: TooltipEventType
   active?: boolean
-  configuration?: TooltipPayloadConfiguration
-
-  index: TooltipActiveIndex
-  dataKey: ChartDataKey | undefined
   coordinate?: ChartCoordinate
-}
+} & (
+  | { type: 'axis', index: TooltipActiveIndex }
+  | { type?: TooltipEventType, index: TooltipActiveIndex, configuration: TooltipPayloadConfiguration | undefined }
+  | { type?: TooltipEventType, index: null }
+)

@@ -173,7 +173,7 @@ function useTreemap(
   })
 
   // Register tooltip entry settings (like Funnel/Scatter do)
-  tooltip.entries.register(computed(() => {
+  const tooltipConfiguration = computed(() => {
     const tooltipEntrySettings: TooltipPayloadConfiguration = {
       dataDefinedOnItem: tooltipTree.value.data,
       values: tooltipTree.value.values,
@@ -202,7 +202,8 @@ function useTreemap(
       },
     }
     return tooltipEntrySettings
-  }))
+  })
+  tooltip.entries.register(tooltipConfiguration)
 
   // The tooltip path of a layout node in the current data.
   function getTooltipIndex(node: TreemapLayoutNode): string | null {
@@ -263,8 +264,8 @@ function useTreemap(
     }
     tooltip.activate('hover', {
       type: 'item',
+      configuration: tooltipConfiguration.value,
       index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
-      dataKey: props.dataKey,
       coordinate,
     })
     emit('node-mouseenter', node, index, e)
@@ -286,8 +287,8 @@ function useTreemap(
       }
       tooltip.activate('click', {
         type: 'item',
+        configuration: tooltipConfiguration.value,
         index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
-        dataKey: props.dataKey,
         coordinate,
       })
       emit('node-click', node, index, e)

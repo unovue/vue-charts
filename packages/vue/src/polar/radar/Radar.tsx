@@ -79,7 +79,7 @@ const RadarView = defineComponent({
   setup(view, { slots }) {
     const emit = radarEvents.use()
     const props = view.item
-    const listeners = usePointEvents<RadarPoint>(emit, () => props.dataKey)
+    const listeners = usePointEvents<RadarPoint>(emit)
     const attrs = view.svgAttrs
 
     const chart = useChart()
@@ -153,7 +153,7 @@ const RadarView = defineComponent({
       })
     }))
 
-    const seriesListeners = useSeriesPointEvents<RadarPoint>(emit, () => props.dataKey, () => radarPoints.value?.points ?? [])
+    const seriesListeners = useSeriesPointEvents<RadarPoint>(emit, () => radarPoints.value?.points ?? [])
 
     const renderPolygon = (
       points: RadarPoint[],

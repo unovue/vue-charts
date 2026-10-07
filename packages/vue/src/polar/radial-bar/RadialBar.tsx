@@ -169,7 +169,6 @@ const RadialBarView = defineComponent({
       type: 'item',
       configuration: tooltipConfiguration.value,
       index,
-      dataKey: props.dataKey,
     })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))

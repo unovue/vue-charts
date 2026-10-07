@@ -79,7 +79,6 @@ function useTooltipSyncEventsListener(chart: Chart) {
           active: message.active,
           index: candidate?.index ?? null,
           configuration: candidate?.entry?.value,
-          dataKey: candidate?.entry?.value?.settings.dataKey,
           coordinate: message.coordinate,
         })
         // This is the default behaviour, we don't need to do anything else.
@@ -112,7 +111,7 @@ function useTooltipSyncEventsListener(chart: Chart) {
       }
 
       if (activeTick == null || message.active === false) {
-        tooltip.activate('sync', { active: false, index: null, dataKey: undefined })
+        tooltip.activate('sync', { active: false, index: null })
         return
       }
       const { x, y } = message.coordinate!
@@ -128,7 +127,6 @@ function useTooltipSyncEventsListener(chart: Chart) {
         active: message.active,
         index: candidate?.index ?? null,
         configuration: candidate?.entry?.value,
-        dataKey: candidate?.entry?.value?.settings.dataKey,
         coordinate: activeCoordinate,
       })
     }

@@ -35,7 +35,7 @@ const LineView = defineComponent({
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, needClip, clipPathId, lineData, points, labelData } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
-    const activeListeners = useSeriesPointEvents(lineEvents.use(), () => props.dataKey, () => lineData.value ?? [])
+    const activeListeners = useSeriesPointEvents(lineEvents.use(), () => lineData.value ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 

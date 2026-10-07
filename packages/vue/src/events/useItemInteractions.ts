@@ -32,7 +32,6 @@ export function useItemInteractions() {
     tooltip.activate('keyboard', {
       active: true,
       index: target.index,
-      dataKey: target.entry?.value?.settings.dataKey,
       coordinate: target.coordinate,
       configuration: target.entry?.value,
     })
@@ -51,7 +50,6 @@ export function useItemInteractions() {
     tooltip.activate('hover', {
       type: 'item',
       index: index === null ? null : Number(index),
-      dataKey: dataKey ?? undefined,
       coordinate: target?.coordinate,
       configuration: target?.entry?.value,
     })

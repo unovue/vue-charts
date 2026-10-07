@@ -188,7 +188,6 @@ export const CellGridLayer = defineComponent({
       const action = {
         index,
         configuration: configuration.value,
-        dataKey: 'value',
         coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
       }
       if (keyboard.value)
@@ -199,7 +198,7 @@ export const CellGridLayer = defineComponent({
 
     function clear() {
       if (keyboard.value)
-        tooltip.activate('keyboard', { index: null, dataKey: 'value', coordinate: undefined, active: false })
+        tooltip.activate('keyboard', { index: null, coordinate: undefined, active: false })
       else
         tooltip.clear('hover')
     }
@@ -221,7 +220,6 @@ export const CellGridLayer = defineComponent({
         type: 'item',
         index,
         configuration: configuration.value,
-        dataKey: 'value',
         coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
       })
       emit('cell-click', cell.payload, index, event)

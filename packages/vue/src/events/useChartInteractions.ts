@@ -46,7 +46,6 @@ export function useChartInteractions() {
         tooltip.activate('click', {
           type: 'axis',
           index: activeProps.activeIndex,
-          dataKey: undefined,
           coordinate: activeProps.activeCoordinate,
         })
       }
@@ -61,7 +60,6 @@ export function useChartInteractions() {
         tooltip.activate('hover', {
           type: 'axis',
           index: activeProps.activeIndex,
-          dataKey: undefined,
           coordinate: activeProps.activeCoordinate,
         })
       }
@@ -97,9 +95,9 @@ export function useChartInteractions() {
     if (key === 'Enter') {
       const coordinate = coordinateAt(keyboardInteraction.index)
       tooltip.activate('keyboard', {
+        type: 'axis',
         active: !keyboardInteraction.active,
         index: keyboardInteraction.index,
-        dataKey: keyboardInteraction.dataKey,
         coordinate,
       })
       return
@@ -115,9 +113,9 @@ export function useChartInteractions() {
     const coordinate = coordinateAt(nextIndex)
 
     tooltip.activate('keyboard', {
+      type: 'axis',
       active: true,
       index: nextIndex,
-      dataKey: undefined,
       coordinate,
     })
   }
@@ -137,7 +135,7 @@ export function useChartInteractions() {
       const nextIndex = 0
       const coordinate = coordinateAt(nextIndex)
       tooltip.activate('keyboard', {
-        dataKey: undefined,
+        type: 'axis',
         active: true,
         index: nextIndex,
         coordinate,
@@ -162,7 +160,6 @@ export function useChartInteractions() {
         tooltip.activate('hover', {
           type: 'axis',
           index: activeProps.activeIndex,
-          dataKey: undefined,
           coordinate: activeProps.activeCoordinate,
         })
       }
@@ -174,13 +171,14 @@ export function useChartInteractions() {
       }
       const itemIndex = target.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
       const dataKey = target.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
-      const coordinate = tooltip.coordinateAt(itemIndex === null ? null : Number(itemIndex), dataKey!)
-
+      const index = itemIndex === null ? null : Number(itemIndex)
+      // A touched element only carries its series dataKey, so the series is found by it here.
+      const configuration = tooltip.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
       tooltip.activate('hover', {
         type: 'item',
-        dataKey: dataKey!,
-        index: itemIndex === null ? null : Number(itemIndex),
-        coordinate,
+        index,
+        configuration,
+        coordinate: index === null ? undefined : configuration?.positions?.[index],
       })
     }
   }

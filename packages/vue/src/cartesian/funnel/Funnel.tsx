@@ -115,7 +115,7 @@ const FunnelView = defineComponent({
     }))
 
     function handleTrapezoidEnter(trap: FunnelTrapezoidItem, index: number) {
-      tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index, dataKey: props.dataKey, coordinate: trap.tooltipPosition })
+      tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: trap.tooltipPosition })
     }
 
     function handleTrapezoidLeave() {
@@ -175,7 +175,7 @@ const FunnelView = defineComponent({
                 key={key}
                 onMouseenter={(event: MouseEvent) => { handleTrapezoidEnter(trap, trap.index); emit('mouseenter', trap, trap.index, event) }}
                 onMouseleave={(event: MouseEvent) => { handleTrapezoidLeave(); emit('mouseleave', trap, trap.index, event) }}
-                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index: trap.index, dataKey: props.dataKey, coordinate: trap.tooltipPosition }); emit('click', trap, trap.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index: trap.index, coordinate: trap.tooltipPosition }); emit('click', trap, trap.index, event) }}
               >
                 {content}
               </g>

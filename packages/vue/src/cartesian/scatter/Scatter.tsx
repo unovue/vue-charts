@@ -127,7 +127,6 @@ const ScatterView = defineComponent({
       // (axis) and in a ScatterChart (item); the configuration names this series.
       tooltip.activate('hover', {
         configuration: tooltipConfiguration.value,
-        dataKey: props.dataKey,
         index,
         coordinate: point.tooltipPosition,
       })
@@ -138,7 +137,7 @@ const ScatterView = defineComponent({
     let symbolData: ReadonlyArray<ScatterPointItem> = []
     const listeners = delegateItemEvents(index => symbolData[index], {
       click: (point, index, event) => {
-        tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index, dataKey: props.dataKey, coordinate: point.tooltipPosition })
+        tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: point.tooltipPosition })
         emit('click', point, index, event)
       },
       mouseenter: (point, index, event) => {

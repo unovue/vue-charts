@@ -33,7 +33,7 @@ const Dots = defineComponent({
   setup(_props) {
     const emit = areaEvents.use()
     const { props, attrs, dotSlot, needClip, clipPathId } = useAreaContext()
-    const listeners = usePointEvents<AreaPointItem>(emit, () => props.dataKey)
+    const listeners = usePointEvents<AreaPointItem>(emit)
 
     return () => {
       const { points } = _props
@@ -77,7 +77,7 @@ export const StaticArea = defineComponent({
   setup(_, { slots }) {
     const emit = areaEvents.use()
     const { points, clipPathId, layout, attrs, areaData, props, needClip } = useAreaContext()
-    const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
+    const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => points.value ?? [])
     const offset = useOffset()
     const chart = useChart()
     const categoryAxis = computed(() => layout.value === 'vertical'

@@ -39,7 +39,7 @@ const AreaView = defineComponent({
     const attrs = view.svgAttrs
     const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
     const { shouldRender, areaData, needClip, clipPathId } = useArea(trackedProps, attrs, slots.dot)
-    const activeListeners = useSeriesPointEvents(areaEvents.use(), () => props.dataKey, () => areaData.value?.points ?? [])
+    const activeListeners = useSeriesPointEvents(areaEvents.use(), () => areaData.value?.points ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
 

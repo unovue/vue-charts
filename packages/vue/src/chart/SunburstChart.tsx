@@ -124,7 +124,7 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
   })
 
   // Register tooltip entry settings
-  tooltip.entries.register(computed(() => {
+  const tooltipConfiguration = computed(() => {
     const tooltipEntrySettings: TooltipPayloadConfiguration = {
       dataDefinedOnItem: data.value,
       values: Object.fromEntries(nodes.value.map(node => [node.tooltipIndex, node.value])),
@@ -156,7 +156,8 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
       },
     }
     return tooltipEntrySettings
-  }))
+  })
+  tooltip.entries.register(tooltipConfiguration)
 
   function getNodeFill(node: SunburstLayoutNode): string {
     if (node.fill)
@@ -178,8 +179,8 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
     emit('node-mouseenter', node, indexOf(node), e)
     tooltip.activate('hover', {
       type: 'item',
+      configuration: tooltipConfiguration.value,
       index: indexOf(node),
-      dataKey: props.dataKey,
       coordinate: getTooltipCoordinate(node),
     })
   }
@@ -192,8 +193,8 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
   function handleClick(node: SunburstLayoutNode, e: MouseEvent | KeyboardEvent) {
     tooltip.activate('click', {
       type: 'item',
+      configuration: tooltipConfiguration.value,
       index: indexOf(node),
-      dataKey: props.dataKey,
       coordinate: getTooltipCoordinate(node),
     })
     emit('node-click', node, indexOf(node), e)

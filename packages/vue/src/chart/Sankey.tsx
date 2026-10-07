@@ -186,7 +186,7 @@ function useSankey(
       return { values, names }
     })
 
-    tooltip.entries.register(computed(() => {
+    const tooltipConfiguration = computed(() => {
       const settings: TooltipPayloadConfiguration = {
         dataDefinedOnItem: data.value?.[0],
         values: tooltipItems.value.values,
@@ -227,14 +227,15 @@ function useSankey(
         },
       }
       return settings
-    }))
+    })
+    tooltip.entries.register(tooltipConfiguration)
 
     function handleNodeMouseEnter(node: SankeyLayoutNode, index: number, e: MouseEvent) {
       const coord: Coordinate = {
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      tooltip.activate('hover', { type: 'item', index, dataKey: props.dataKey, coordinate: coord })
+      tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: coord })
       emit('node-mouseenter', node, index, e)
     }
 
@@ -246,8 +247,8 @@ function useSankey(
       const coord: Coordinate = { x: (sx + tx) / 2, y: (sy + ty) / 2 }
       tooltip.activate('hover', {
         type: 'item',
+        configuration: tooltipConfiguration.value,
         index: layout.value.nodes.length + index,
-        dataKey: props.dataKey,
         coordinate: coord,
       })
       emit('link-mouseenter', link, index, e)
@@ -268,7 +269,7 @@ function useSankey(
         x: ((node.x0 ?? 0) + (node.x1 ?? 0)) / 2,
         y: ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2,
       }
-      tooltip.activate('click', { type: 'item', index, dataKey: props.dataKey, coordinate: coord })
+      tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: coord })
       emit('node-click', node, index, e)
     }
 
@@ -281,8 +282,8 @@ function useSankey(
       }
       tooltip.activate('click', {
         type: 'item',
+        configuration: tooltipConfiguration.value,
         index: layout.value.nodes.length + index,
-        dataKey: props.dataKey,
         coordinate: coord,
       })
       emit('link-click', link, index, e)

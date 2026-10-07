@@ -114,7 +114,6 @@ const PieView = defineComponent({
         type: 'item',
         configuration: tooltipConfiguration.value,
         index,
-        dataKey: props.dataKey,
         coordinate: sector.tooltipPosition,
       })
     }
@@ -129,7 +128,6 @@ const PieView = defineComponent({
           type: 'item',
           configuration: tooltipConfiguration.value,
           index: sector.index,
-          dataKey: props.dataKey,
           coordinate: sector.tooltipPosition,
         })
         emit('click', sector, sector.index, event)
