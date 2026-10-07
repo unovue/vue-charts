@@ -101,7 +101,7 @@ internals/release-1.0/      # 1.0 run: PLAN, DECISIONS, PROGRESS, LATER, reviews
 
 ### Component Pattern
 ```typescript
-export const Component = defineComponent<PropsWithSVG>({
+export const Component = defineComponent({
   name: 'Component',
   props: ComponentVueProps,
   inheritAttrs: false,
@@ -114,13 +114,8 @@ export const Component = defineComponent<PropsWithSVG>({
 })
 ```
 
-**Volar slot type preservation** (for compiled `.d.ts`):
-```typescript
-const _Component = defineComponent<PropsWithSVG>({ /* ... */ })
-export const Component = _Component as typeof _Component & {
-  new (): { $slots: ComponentSlots }
-}
-```
+Export the component directly. `slots: Object as SlotsType<Slots>` types template slots in
+source and in the emitted `.d.ts`; do not add a constructor cast for `$slots`.
 
 ### Props Pattern
 ```typescript
@@ -149,7 +144,7 @@ Customization uses **named slots**: `shape`, `activeBar`, `dot`, `activeDot`, `l
 - Always `toRaw(entry)` before passing to D3 scale functions (Vue Proxy breaks D3)
 
 ### SVG Layers (Teleport)
-Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
+Three-tier z-ordering: cursor → graphical → label (via `Surface.tsx`).
 
 ### Animation
 - `useKeyedTransition` matches data keys and keeps exiting items mounted until they finish.
