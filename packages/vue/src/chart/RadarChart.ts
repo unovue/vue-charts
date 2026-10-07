@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { forwardsSvgAttributes } from '@/utils/attributes'
-import { chartRoot, polarProps } from '@/chart/generateCategoricalChart'
+import { chartRoot, polarProps } from '@/chart/chartRoot'
 
 const root = chartRoot({
   chartName: 'RadarChart',

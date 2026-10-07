@@ -1,18 +1,18 @@
 import { defineComponent } from 'vue'
 import { forwardsSvgAttributes } from '@/utils/attributes'
-import { chartRoot } from '@/chart/generateCategoricalChart'
+import { chartRoot } from '@/chart/chartRoot'
 import { cartesianChartProps } from '@/chart/chartProps'
 import type { TooltipEventType } from '@/types'
 
-const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis']
+const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
 const root = chartRoot({
-  chartName: 'ComposedChart',
+  chartName: 'BarChart',
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: allowedTooltipTypes,
 })
 
-export const ComposedChart = forwardsSvgAttributes(defineComponent({
+export const BarChart = forwardsSvgAttributes(defineComponent({
   ...root,
   props: cartesianChartProps,
   setup: (props, context) => root.setup(props, context),

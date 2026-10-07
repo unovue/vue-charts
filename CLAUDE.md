@@ -55,7 +55,7 @@ pnpm test packages/vue/src/chart/__tests__/AreaChart.spec.tsx
 packages/vue/src/           # Library source (published as vccs)
 ├── model/                  # One Vue model per chart: createChart/useChart, registries, axis, polar, tooltip, legend, brush
 ├── core/                   # Pure math (layout, scales, series geometry, tooltip payloads); no Vue imports
-├── chart/                  # Chart containers: generateCartesianChart/PolarChart/RadialChart/FunnelChart; ChartShell for standalone charts
+├── chart/                  # Chart roots (chartRoot.tsx defines the 9 categorical charts); ChartShell for standalone charts
 ├── cartesian/              # Area, Bar, Line, Scatter, Axis, Brush, CartesianGrid, ZAxis, ErrorBar; funnel/
 ├── polar/                  # Pie, Radar, RadialBar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 ├── components/             # Legend, Tooltip, Text, Label, LabelList, Cell
@@ -160,7 +160,7 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.tsx`).
   in `packages/vue/test/lab/accepted-flags.json` may remain, each with its reason.
 
 ### Funnel
-- `FunnelChart` comes from `generateFunnelChart`; `Funnel` registers in `useChart().items.polar` like Pie.
+- `FunnelChart` is a `chartRoot` chart; `Funnel` registers in `useChart().items.polar` like Pie.
 - **Coordinate calculation**: `x` uses the `left` offset, `y` the `top` offset. Do not swap
   them (a ported bug fix).
 - Animation uses the `transition` prop, not the legacy Recharts `animationBegin`/`animationDuration`.

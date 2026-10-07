@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { forwardsSvgAttributes } from '@/utils/attributes'
-import { chartRoot } from '@/chart/generateCategoricalChart'
+import { chartRoot } from '@/chart/chartRoot'
 import { cartesianChartProps } from '@/chart/chartProps'
 
 const root = chartRoot({
