@@ -28,6 +28,15 @@ every breaking change with a before and after example.
 - Item events receive `(item, index, event)`.
 - Series without a color take the next palette color (`--v-charts-series-1` … `-8`).
 - Requirements: Vue `^3.5` and `motion-v` `^2.4`.
+- Every public `XxxProps` type is derived from its component and includes its events.
+  `*PropsWithSVG` types are removed, `TrapezoidProps` (geometry) is now `TrapezoidItem`, and
+  `TypedComponents` needs its second parameter.
+- Standalone charts give the tooltip the domain object as `payload` and the raw `value`; a
+  Tooltip `formatter` wins over a chart's default formatter.
+- Bar `class` sits on the series layer, not on every rectangle.
+- The chart `dataKey` prop is removed (it was never read).
+- The Nuxt module requires Nuxt 4, and its `components` option is removed.
+- `unplugin-vue-components` is no longer a peer dependency.
 
 ### Added
 
@@ -50,6 +59,26 @@ every breaking change with a before and after example.
 - Edge data: non-finite values count as missing, nested and function data keys resolve,
   prototype-named stack ids work, invalid Sankey links are dropped.
 - Hydration mismatches in grid lines and pie labels.
+- Two Scatters without `dataKey` no longer share one tooltip and highlight; Funnel marks the
+  hovered trapezoid active.
+- Numeric and string axis ids (`y-axis-id="1"`, `:y-axis-id="1"`) name the same axis.
+- CohortChart emits its pointer events.
+- An uncontrolled Brush keeps its window when data updates instead of snapping to the last row.
+- `reverseStackOrder` reverses the stack order; the chart `role` prop applies.
+- Legend, tooltip, label and shape colors agree: Pie, RadialBar and Funnel tooltip swatches
+  show the entry color, the Pie legend and Funnel labels use `<Cell fill>`, and
+  `<Area stroke="none">` hides the outline.
+- Every series layer gets its `class`; Scatter, Radar and RadialBar accept `class`.
+- `allowDataOverflow` on one axis clips only that axis; Area clips too; Line and Area dots
+  reference a clip path that exists.
+- Labels with a partial `viewBox` no longer render at `NaN`.
+
+### Changed
+
+- Area `dot` and `activeDot` accept objects and functions like Line; Radar and RadialBar
+  `name` accepts numbers.
+- `ResponsiveContainer` and `Customized` are marked `@deprecated` (removal in 2.0).
+- A chart no longer measures its scale with a forced layout read.
 
 ### Performance
 
