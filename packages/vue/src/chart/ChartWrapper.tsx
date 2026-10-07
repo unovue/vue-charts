@@ -1,5 +1,5 @@
 import type { CSSProperties, ComponentPublicInstance, PropType, StyleValue } from 'vue'
-import { defineComponent, onMounted, ref, useId, watch } from 'vue'
+import { defineComponent, ref, useId, watch } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
 import { chartEmits } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
@@ -63,17 +63,17 @@ export const ChartWrapper = defineComponent({
 
     provideChartInView(wrapperEl)
 
-    onMounted(() => {
-      watch(() => props.isResponsive, (responsive, _, cleanup) => {
-        if (!responsive || !wrapperEl.value)
-          return
-        const { stop } = useResizeObserver(wrapperEl, (entries) => {
-          const { width, height } = entries[0].contentRect
-          emit('resize', width, height)
-        })
-        cleanup(stop)
-      }, { immediate: true })
-    })
+    // Only responsive charts observe their box; toggling `responsive` starts or stops it. A
+    // fixed-size chart creates no observer (useResizeObserver with a null target still would).
+    watch(() => props.isResponsive ? wrapperEl.value : null, (element, _, onCleanup) => {
+      if (!element)
+        return
+      onCleanup(useResizeObserver(element, (entries) => {
+        const box = entries[0]?.contentRect
+        if (box)
+          emit('resize', box.width, box.height)
+      }).stop)
+    }, { immediate: true, flush: 'post' })
 
     const myOnClick = (e: MouseEvent) => {
       const chartPointer = getChartPointer(e)
