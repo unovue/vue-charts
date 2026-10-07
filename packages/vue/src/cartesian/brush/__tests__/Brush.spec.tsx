@@ -73,6 +73,18 @@ describe('<Brush />', () => {
       const brushLayer = container.querySelector('.v-charts-brush')
       expect(brushLayer).toBeTruthy()
     })
+
+    it('forwards aria-label and data attributes to the brush group', () => {
+      const { container } = render(() => (
+        <BarChart width={400} height={100} data={data}>
+          <Brush dataKey="value" aria-label="Date range" data-testid="range" />
+        </BarChart>
+      ))
+
+      const brush = container.querySelector('[data-slot="brush"]')
+      expect(brush?.getAttribute('aria-label')).toBe('Date range')
+      expect(brush?.getAttribute('data-testid')).toBe('range')
+    })
   })
 
   describe('empty data', () => {

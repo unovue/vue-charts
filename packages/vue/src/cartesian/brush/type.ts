@@ -52,9 +52,6 @@ export const BrushVueProps = {
   width: {
     type: Number,
   },
-  ariaLabel: {
-    type: String,
-  },
   class: classProp,
   data: {
     type: Array as PropType<unknown[]>,

@@ -152,6 +152,7 @@ const BrushView = defineComponent({
 
       return (
         <Layer
+          {...attrs}
           data-slot="brush"
           class={['v-charts-brush', props.class]}
           style={{ userSelect: 'none', ...attrs.style as CSSProperties }}
