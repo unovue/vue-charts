@@ -154,6 +154,9 @@ const FunnelView = defineComponent({
               stroke: trapStroke,
               animationProgress: isAnimating.value ? 0 : 1,
             }
+            // The focus ring marks keyboard focus only; pointer hover keeps the separator, as in Recharts.
+            const keyboard = tooltip.keyboardInteraction.value
+            const focused = keyboard.active && keyboard.configuration === tooltipConfiguration.value && keyboard.index === trap.index
 
             const content = slots.shape
               ? slots.shape(trapezoidProps)
@@ -166,8 +169,8 @@ const FunnelView = defineComponent({
                     lowerWidth={trapezoidProps.lowerWidth}
                     height={trapezoidProps.height}
                     fill={trapFill}
-                    stroke={trapezoidProps.isActive ? 'var(--v-charts-focus, Highlight)' : trapStroke}
-                    stroke-width={trapezoidProps.isActive ? 2 : undefined}
+                    stroke={focused ? 'var(--v-charts-focus, Highlight)' : trapStroke}
+                    stroke-width={focused ? 2 : undefined}
                   />
                 )
 

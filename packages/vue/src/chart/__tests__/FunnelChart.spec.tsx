@@ -180,6 +180,28 @@ describe('funnelChart', () => {
       const tooltipWrapper = container.querySelector('.v-charts-tooltip-wrapper')
       expect(tooltipWrapper).toBeTruthy()
     })
+
+    // The focus ring is for keyboard users; pointer hover keeps the separator, as in Recharts.
+    it('draws the focus ring for keyboard focus only, not for pointer hover', async () => {
+      const { container } = render(() => (
+        <FunnelChart width={500} height={300}>
+          <Funnel dataKey="value" data={data} isAnimationActive={false} />
+          <Tooltip />
+        </FunnelChart>
+      ))
+      const strokes = () => Array.from(container.querySelectorAll('.v-charts-trapezoid'), path => path.getAttribute('stroke'))
+      const focus = 'var(--v-charts-focus, Highlight)'
+      await fireEvent.mouseEnter(container.querySelectorAll('.v-charts-trapezoid')[2].closest('g')!)
+      await nextTick()
+      expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain(String(data[2].value))
+      expect(strokes()).not.toContain(focus)
+      await fireEvent.mouseLeave(container.querySelectorAll('.v-charts-trapezoid')[2].closest('g')!)
+      const root = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+      root.focus()
+      await fireEvent.keyDown(root, { key: 'ArrowRight' })
+      await nextTick()
+      expect(strokes().filter(stroke => stroke === focus)).toHaveLength(1)
+    })
   })
 
   describe('legend', () => {
