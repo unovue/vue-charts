@@ -1,4 +1,6 @@
+import { Heatmap } from '@/chart/Heatmap'
 import { clock } from '@/test/motionClock'
+import { render } from '@testing-library/vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, h, nextTick, shallowRef } from 'vue'
 import { cascadeTiming, motionTokens } from '../motion'
@@ -98,8 +100,6 @@ describe('useKeyedTransition', () => {
     await nextTick()
     expect(onStart).not.toHaveBeenCalled()
     expect(onEnd).not.toHaveBeenCalled()
-    const { render } = await import('@testing-library/vue')
-    const { Heatmap } = await import('@/index')
     const width = shallowRef(300)
     render(() => h(Heatmap, {
       'width': width.value,
