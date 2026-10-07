@@ -148,7 +148,7 @@ const RadialBarView = defineComponent({
           (sector.startAngle + sector.endAngle) / 2,
         )
       }),
-      colors: sectors.value?.map(sector => entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index })),
+      colors: sectors.value?.map((sector, index) => entryColor({ row: sector.payload, seriesFill: props.fill, index })),
       settings: {
         dataKey: props.dataKey,
         nameKey: undefined,
