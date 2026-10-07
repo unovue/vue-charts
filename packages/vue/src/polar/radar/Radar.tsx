@@ -30,6 +30,7 @@ import { mainColor } from '@/core/color'
 import { getTooltipNameProp } from '@/core/tooltip'
 import { classProp } from '@/types'
 import { forwardsSvgAttributes } from '@/utils/attributes'
+import { useSetupPolarItem } from '@/hooks/useSetupGraphicalItem'
 
 export type RadarShapeSlotProps = RadarComposedData & {
   fill?: string
@@ -296,26 +297,15 @@ export const Radar = forwardsSvgAttributes(defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps, ['fill'])
     radarEvents.provide(emit)
-    useChart().items.polar.register(computed(() => ({
-      stackId: undefined,
-      barSize: undefined,
-      type: 'radar' as const,
-      seriesId: getSeriesId(props),
-      data: undefined,
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: props.angleAxisId,
-      radiusAxisId: props.radiusAxisId,
-    })))
-
-    useChart().legend.entries.register(computed(() => [{
-      dataKey: props.dataKey,
-      type: props.legendType,
-      color: mainColor('radar', props),
-      value: getTooltipNameProp(props.name, props.dataKey) ?? '',
-      payload: { ...props },
-      inactive: props.hide,
-    }]))
+    useSetupPolarItem(props, 'radar', {
+      settings: () => ({ seriesId: getSeriesId(props), angleAxisId: props.angleAxisId, radiusAxisId: props.radiusAxisId }),
+      legend: () => [{
+        type: props.legendType,
+        color: mainColor('radar', props),
+        value: getTooltipNameProp(props.name, props.dataKey) ?? '',
+        payload: { ...props },
+      }],
+    })
 
     const tooltipEntry = computed(() => ({
       dataDefinedOnItem: undefined,

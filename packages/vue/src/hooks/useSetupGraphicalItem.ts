@@ -7,7 +7,8 @@ import type { Ref, ShallowRef } from 'vue'
 import type { MinPointSize } from '@/types/shape'
 import type { AreaInput } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/types/legend'
-import type { CartesianGraphicalItemSettings, CartesianGraphicalItemType, ErrorBarsSettings } from '@/types/graphical'
+import type { CartesianGraphicalItemSettings, CartesianGraphicalItemType, ErrorBarsSettings, PolarGraphicalItemSettings } from '@/types/graphical'
+import type { ChartDataKey } from '@/types/base'
 import { getNormalizedStackId } from '@/core/coordinates'
 import { getTooltipNameProp } from '@/core/tooltip'
 import { computed } from 'vue'
@@ -72,6 +73,34 @@ export function useSetupGraphicalItem(
   if (!options?.skipTooltip)
     useSetupTooltipEntry(props, type, data)
   return { data, settings }
+}
+
+/**
+ * Registers a polar series (Pie, Radar, RadialBar, Funnel) and its legend items. The hook owns
+ * the shared fields: the series type, its dataKey, and `hide`, which also marks the legend
+ * items inactive. `settings` adds the series' own fields (axis ids, bar sizing, data).
+ */
+export function useSetupPolarItem(
+  props: { dataKey: ChartDataKey, hide: boolean },
+  type: PolarGraphicalItemSettings['type'],
+  options: {
+    settings?: () => Partial<Omit<PolarGraphicalItemSettings, 'type' | 'dataKey' | 'hide'>>
+    legend: () => readonly Omit<LegendPayload, 'dataKey' | 'inactive'>[]
+  },
+) {
+  const chart = useChart()
+  chart.items.polar.register(computed<PolarGraphicalItemSettings>(() => ({
+    data: undefined,
+    stackId: undefined,
+    barSize: undefined,
+    angleAxisId: 0,
+    radiusAxisId: 0,
+    ...options.settings?.(),
+    type,
+    dataKey: props.dataKey,
+    hide: props.hide,
+  })))
+  chart.legend.entries.register(computed(() => options.legend().map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 }
 
 export function useSetupTooltipEntry(

@@ -27,6 +27,7 @@ import { RadialBarVueProps } from './type'
 import type { LabelListSlotProps } from '@/components/label/types'
 import { forwardsSvgAttributes } from '@/utils/attributes'
 import { sameAxis } from '@/core/axis/key'
+import { useSetupPolarItem } from '@/hooks/useSetupGraphicalItem'
 
 export type RadialBarShapeSlotProps = RadialBarDataItem & {
   innerRadius: number
@@ -347,23 +348,20 @@ export const RadialBar = forwardsSvgAttributes(defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps)
     radialBarEvents.provide(emit)
-    useChart().items.polar.register(computed(() => ({
-      type: 'radialBar' as const,
-      data: undefined,
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: props.angleAxisId,
-      radiusAxisId: props.radiusAxisId,
-      barSize: props.barSize,
-      stackId: props.stackId,
-      minPointSize: props.minPointSize,
-      maxBarSize: props.maxBarSize,
-    })))
-
     const chart = useChart()
     const legendPayload = computed(() => radialBarLegend(chart.data.value, props.legendType))
-    // Rows without their own fill are drawn in the series colour; their legend icons match.
-    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entryColor({ row: entry.payload, seriesFill: props.fill, index }), dataKey: props.dataKey, inactive: props.hide }))))
+    useSetupPolarItem(props, 'radialBar', {
+      settings: () => ({
+        angleAxisId: props.angleAxisId,
+        radiusAxisId: props.radiusAxisId,
+        barSize: props.barSize,
+        stackId: props.stackId,
+        minPointSize: props.minPointSize,
+        maxBarSize: props.maxBarSize,
+      }),
+      // Rows without their own fill are drawn in the series colour; their legend icons match.
+      legend: () => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entryColor({ row: entry.payload, seriesFill: props.fill, index }) })),
+    })
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

@@ -18,6 +18,7 @@ import type { FunnelTrapezoidItem } from '@/types/funnel'
 import { FunnelVueProps } from './type'
 import { forwardsSvgAttributes } from '@/utils/attributes'
 import { getTooltipNameProp } from '@/core/tooltip'
+import { useSetupPolarItem } from '@/hooks/useSetupGraphicalItem'
 
 export interface FunnelSlots {
   shape?: (props: FunnelTrapezoidItem) => VNodeChild
@@ -216,17 +217,6 @@ export const Funnel = forwardsSvgAttributes(defineComponent({
       },
     }))
 
-    useChart().items.polar.register(computed(() => ({
-      stackId: undefined,
-      barSize: undefined,
-      type: 'funnel' as const,
-      data: data.value ?? [],
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: 0,
-      radiusAxisId: 0,
-    })))
-
     const chart = useChart()
     const composedData = computed(() => funnelTrapezoids(
       chart.offset.value,
@@ -246,11 +236,12 @@ export const Funnel = forwardsSvgAttributes(defineComponent({
         value: String(trap.name ?? ''),
         color: entryColor({ cell: cells[i], row: trap.payload, seriesFill: props.fill, index: i }),
         payload: trap.payload as import('@/types/legend').LegendPayload['payload'],
-        dataKey: props.dataKey,
-        inactive: props.hide,
       }))
     })
-    useChart().legend.entries.register(computed(() => legendPayload.value))
+    useSetupPolarItem(props, 'funnel', {
+      settings: () => ({ data: data.value ?? [] }),
+      legend: () => legendPayload.value,
+    })
 
     const View = useDeferredView(FunnelView)
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)

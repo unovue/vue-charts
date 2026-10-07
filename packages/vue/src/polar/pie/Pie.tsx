@@ -22,6 +22,7 @@ import type { PieInput } from './type'
 import { PieVueProps } from './type'
 import { forwardsSvgAttributes } from '@/utils/attributes'
 import { getTooltipNameProp } from '@/core/tooltip'
+import { useSetupPolarItem } from '@/hooks/useSetupGraphicalItem'
 
 const LABEL_OFFSET = 20
 /** Horizontal distance from the centre over which a label's anchor blends from start to end. */
@@ -278,17 +279,6 @@ export const Pie = forwardsSvgAttributes(defineComponent({
       presentationProps: {},
     }))
 
-    useChart().items.polar.register(computed(() => ({
-      stackId: undefined,
-      barSize: undefined,
-      type: 'pie' as const,
-      data: data.value ?? [],
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: 0,
-      radiusAxisId: 0,
-    })))
-
     const chart = useChart()
     const cells = shallowRef<CellProps[]>([])
     const legendPayload = computed(() => pieLegend(
@@ -296,7 +286,10 @@ export const Pie = forwardsSvgAttributes(defineComponent({
       pieSettings.value,
       cells.value,
     ))
-    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
+    useSetupPolarItem(props, 'pie', {
+      settings: () => ({ data: data.value ?? [] }),
+      legend: () => legendPayload.value ?? [],
+    })
 
     const View = useDeferredView(PieView)
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings, cells }, slots)
