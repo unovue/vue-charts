@@ -3,7 +3,7 @@ import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent } from 'vue'
-import { chartEmits } from '@/events/componentEvents'
+import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { type CellGridSlots, type CellSlotProps, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { Heatmap, type HeatmapCell, type HeatmapKey } from './Heatmap'
@@ -111,6 +111,7 @@ const _CohortChart = defineComponent({
     return () => (
       <Heatmap
         {...attrs}
+        {...chartListeners(emit)}
         {...{
           'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
           'onCell-click': (payload: HeatmapCell<CohortPeriod>, index: number, event: MouseEvent) => {
