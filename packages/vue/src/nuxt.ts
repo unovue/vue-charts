@@ -14,8 +14,9 @@ const module: NuxtModule<ModuleOptions, ModuleOptions> = defineNuxtModule<Module
   setup(options, nuxt) {
     // Only Nuxt 4 is exercised by the packed consumer check; Nuxt 3 is end-of-life. A compatibility
     // range only warns and skips the module, which ships pages without charts, so fail the build.
-    if (!isNuxtMajorVersion(4, nuxt))
-      throw new Error(`vccs/nuxt needs Nuxt 4, found ${getNuxtVersion(nuxt)}. On Nuxt 3, import components from 'vccs' or use 'vccs/resolver'.`)
+    // Only Nuxt 3 is refused: a later major keeps working as it did under `>=4.0.0`.
+    if (isNuxtMajorVersion(3, nuxt))
+      throw new Error(`vccs/nuxt needs Nuxt 4 or later, found ${getNuxtVersion(nuxt)}. On Nuxt 3, import components from 'vccs' or use 'vccs/resolver'.`)
     for (const name of componentNames)
       addComponent({ name: options.prefix + name, export: name, filePath: 'vccs' })
     // Composables keep their names: the prefix only applies to components.
