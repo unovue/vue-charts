@@ -33,6 +33,7 @@ palette, which you can change with CSS variables.
 - Vue `^3.5`
 - [`motion-v`](https://motion.dev/docs/vue) `^2.4` (peer dependency, drives all animation)
 - An ESM build setup (Vite, Nuxt, or another bundler). vccs ships ES modules only.
+- For the Nuxt module: Nuxt `^4`.
 
 ## Install
 
@@ -152,5 +153,6 @@ release check (`--quick` skips the browser checks). `VERIFY.md` lists what each 
 ## License
 
 MIT. vccs is an unofficial port and is not affiliated with the Recharts team. It builds on
-[Recharts](https://recharts.org), [Victory Vendor](https://github.com/FormidableLabs/victory) for
-D3 math, [Motion for Vue](https://motion.dev/docs/vue) and [VueUse](https://vueuse.org).
+[Recharts](https://recharts.org), the [D3](https://d3js.org) modules `d3-scale`, `d3-shape`,
+`d3-hierarchy` and `d3-sankey`, [Motion for Vue](https://motion.dev/docs/vue) and
+[VueUse](https://vueuse.org).
