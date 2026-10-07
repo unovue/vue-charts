@@ -75,7 +75,6 @@ const appConfig = useAppConfig()
           <LandingCodeCard v-model:active="heroChart" />
         </div>
       </section>
-
     </div>
   </div>
 </template>
