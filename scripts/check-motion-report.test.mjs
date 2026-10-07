@@ -37,10 +37,7 @@ test('the motion CLI rejects an error from its static target page', () => {
   const preload = `${evidence}/preload.mjs`
   // Use the real browser; inject only a deliberate error into static controls.
   writeFileSync(preload, `
-import { realpath } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-const require = createRequire(await realpath('packages/vue/node_modules/@nuxt/test-utils/package.json'))
-const { chromium } = require('playwright-core')
+import { chromium } from '${resolve('scripts/lib/browser.mjs')}'
 const launch = chromium.launch.bind(chromium)
 chromium.launch = async (options) => {
   const browser = await launch(options)

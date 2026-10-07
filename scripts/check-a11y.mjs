@@ -1,19 +1,18 @@
 /* eslint-disable no-console -- command-line check */
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
-import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { createServer as createViteServer } from 'vite'
 import { checkContrast } from './a11y/contrast.mjs'
 import { checkKeyboard } from './a11y/keyboard.mjs'
+import { launchBrowser } from './lib/browser.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4600, 4699)
 
 const evidence = resolve('.evidence/release-1.0/a11y')
-const require = createRequire(await realpath(
-  'packages/vue/node_modules/@nuxt/test-utils/package.json',
-))
-const { chromium } = require('playwright-core')
 
 let vite
 let server
@@ -64,7 +63,7 @@ async function prepareFixture() {
 <script>window.chartName=${JSON.stringify(name)};window.variant=${JSON.stringify(variant)}</script>
 <script type="module" src="/scripts/a11y/client.mjs"></script></body></html>`)
   })
-  for (let port = 4600; port <= 4699; port++) {
+  for (const port of ports) {
     try {
       await new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -77,7 +76,7 @@ async function prepareFixture() {
         throw error
     }
   }
-  throw new Error('No free port in 4600–4699')
+  throw new Error(`No free port in ${portText(ports)}`)
 }
 
 async function checkPage(url, name, theme, reducedMotion, variant = 'default') {
@@ -123,12 +122,7 @@ async function checkPage(url, name, theme, reducedMotion, variant = 'default') {
 try {
   assert.equal(spawnSync('pnpm', ['--filter', 'vccs', 'build'], { stdio: 'inherit' }).status, 0)
   const { names, url } = await prepareFixture()
-  browser = await chromium.launch({
-    headless: true,
-    ...(process.env.MOTION_EXECUTABLE_PATH
-      ? { executablePath: process.env.MOTION_EXECUTABLE_PATH }
-      : {}),
-  })
+  browser = await launchBrowser()
   for (const theme of ['light', 'dark']) {
     for (const reducedMotion of ['no-preference', 'reduce']) {
       for (const name of names)

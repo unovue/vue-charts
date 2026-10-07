@@ -64,6 +64,31 @@ test('each clock advance samples exactly one animation frame at every phase', as
   }
 })
 
+// Catch Web Animations (the tooltip fade, CSS transitions) running on the real clock while the
+// recorder steps a fake one: the tooltip then stays visible after pointer-leave and the gate fails.
+test('each clock advance also drives Web Animations on the fake clock', async () => {
+  const browser = await launchBrowser()
+  try {
+    const page = await browser.newPage()
+    await page.clock.install({ time: 0 })
+    await page.clock.pauseAt(1000)
+    await page.setContent('<div id="box">fade</div>')
+    await page.evaluate(() => {
+      window.fade = document.getElementById('box').animate({ opacity: [1, 0] }, { duration: 160 })
+      window.fade.finished.then(() => window.faded = true)
+    })
+    await advanceFrame(page)
+    await page.waitForTimeout(400)
+    assert.equal(await page.evaluate(() => window.faded ?? false), false, 'real time must not finish it')
+    for (let i = 0; i < 12; i++)
+      await advanceFrame(page)
+    assert.equal(await page.evaluate(() => window.faded ?? false), true, 'fake time must finish it')
+  }
+  finally {
+    await browser.close()
+  }
+})
+
 // Catch HTML rows being lost/reidentified on rerank, or percent spans treated as pixels.
 test('HTML bar list geometry keeps row identities and resolves widths to pixels', async () => {
   const browser = await launchBrowser()
@@ -100,7 +125,7 @@ test('HTML bar list geometry keeps row identities and resolves widths to pixels'
   }
 })
 
-// Catch acceptance hiding a new flag, a stale entry, page errors or strict timing failures.
+// Catch acceptance hiding a new flag, a stale entry or page errors; real-clock timing never gates.
 test('the report gate accepts only current listed identities', () => {
   const row = {
     scenario: 'journey',
@@ -110,16 +135,15 @@ test('the report gate accepts only current listed identities', () => {
     timing: { '1x': { slow: 3 } },
   }
   const accepted = [{ scenario: 'journey top8', kind: 'jump', element: 'rect.node' }]
-  for (const [name, report, entries, strict, failures, stale] of [
-    ['unlisted', [row], [], false, 1, 0],
-    ['listed', [row], accepted, false, 0, 0],
-    ['different element', [{ ...row, issues: ['jump rect.other @112ms +30% (7px)'] }], accepted, false, 1, 1],
-    ['stale', [{ ...row, issues: [] }], accepted, false, 0, 1],
-    ['page error', [{ ...row, errors: ['SVG height is negative'] }], accepted, false, 1, 0],
-    ['strict timing', [row], accepted, true, 1, 0],
-    ['focused run', [{ ...row, scenario: 'bar', step: 'values', issues: [] }], accepted, false, 0, 0],
+  for (const [name, report, entries, failures, stale] of [
+    ['unlisted', [row], [], 1, 0],
+    ['listed with slow real-clock frames', [row], accepted, 0, 0],
+    ['different element', [{ ...row, issues: ['jump rect.other @112ms +30% (7px)'] }], accepted, 1, 1],
+    ['stale', [{ ...row, issues: [] }], accepted, 0, 1],
+    ['page error', [{ ...row, errors: ['SVG height is negative'] }], accepted, 1, 0],
+    ['focused run', [{ ...row, scenario: 'bar', step: 'values', issues: [] }], accepted, 0, 0],
   ]) {
-    const result = checkReport(report, entries, strict)
+    const result = checkReport(report, entries)
     assert.equal(result.failed.length, failures, name)
     assert.equal(result.stale.length, stale, name)
   }

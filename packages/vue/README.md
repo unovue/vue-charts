@@ -15,7 +15,10 @@ const data = [
 </script>
 
 <template>
-  <BarChart :data="data" :height="300">
+  <BarChart
+    :data="data"
+    :height="300"
+  >
     <XAxis data-key="month" />
     <YAxis />
     <Tooltip :cursor="false" />
@@ -88,7 +91,10 @@ const Chart = defineChartComponents<Visit>()({ AreaChart, Area, XAxis, Tooltip }
 </script>
 
 <template>
-  <Chart.AreaChart :data="visits" :height="300">
+  <Chart.AreaChart
+    :data="visits"
+    :height="300"
+  >
     <Chart.XAxis data-key="date" />
     <Chart.Area data-key="desktop" />
     <Chart.Tooltip />

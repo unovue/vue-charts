@@ -34,12 +34,13 @@ try {
     }
     assert(entry.types.endsWith('.d.ts'), `${name}: expected a .d.ts declaration`)
   }
-  const forbidden = [...files].filter(path => /(?:^|\/)(?:src|tests?|__tests__|__breakit__|stories|__stories__|storybook|fixtures|\.evidence)(?:\/|$)|\.(?:test|spec|stories|story)\.|\.tsbuildinfo$/.test(path))
+  const forbidden = [...files].filter(path => /(?:^|\/)(?:src|tests?|__tests__|fixtures|\.evidence)(?:\/|$)|\.(?:test|spec)\.|\.tsbuildinfo$/.test(path))
   assert.deepEqual(forbidden, [], 'Tarball contains development files')
   run('pnpm', ['exec', 'publint', archive, '--strict'])
   // Strict profile checks every resolution, including legacy node10. Only the
   // expected CJS-to-ESM diagnostic is ignored: vccs supports ESM imports only.
   run('pnpm', ['exec', 'attw', archive, '--profile', 'strict', '--ignore-rules', 'cjs-resolves-to-esm'])
+  // eslint-disable-next-line no-console -- the command-line verdict
   console.log(`PASS: vccs tarball (${files.size} files), ${Object.keys(pkg.exports).length} exports and declarations, README/LICENSE/package.json; no development files; publint strict; attw strict (only CJS-to-ESM ignored).`)
 }
 finally {

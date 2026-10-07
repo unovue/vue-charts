@@ -1,7 +1,10 @@
 import { compareSamples } from '#bench-verdict'
 import { animatedGeometry } from '#bench-motion'
 import { createApp, h, nextTick, ref } from 'vue'
-import { Bar, BarChart, CalendarHeatmap, Heatmap, Line, LineChart, XAxis, YAxis } from '#bench-library'
+// A namespace import, so a baseline release without the newer charts still bundles.
+import * as library from '#bench-library'
+
+const { Bar, BarChart, Line, LineChart, XAxis, YAxis } = library
 
 let inject = false
 let cpuFrame = 0
@@ -26,7 +29,7 @@ function dataFor(kind, n, phase = 0) {
 function fixture(kind, n) {
   const data = ref(dataFor(kind, n))
   const active = ref(false)
-  const component = { LineChart, BarChart, Heatmap, CalendarHeatmap }[kind]
+  const component = { LineChart, BarChart, Heatmap: library.Heatmap, CalendarHeatmap: library.CalendarHeatmap }[kind]
   const cartesian = kind === 'LineChart' || kind === 'BarChart'
   const app = createApp({
     render: () => h(component, {
@@ -88,8 +91,10 @@ function geometry(kind) {
 }
 
 window.vccsBench = {
-  verdict({ errors, summary, runs, sameBuild, selfTest }) {
-    const acceptable = !errors.length && summary.length === 18 && summary.every(row => row.verdict !== 'FAIL')
+  verdict({ errors, summary, runs, cases, sameBuild, selfTest }) {
+    // Two metrics per static case (mount, update) and one per animated case.
+    const expected = cases.reduce((count, entry) => count + (entry.mode === 'static' ? 2 : 1), 0)
+    const acceptable = !errors.length && summary.length === expected && summary.every(row => row.verdict !== 'FAIL')
     const inconclusive = acceptable && summary.some(row => row.verdict === 'INCONCLUSIVE')
     const passed = acceptable && !inconclusive
     const selfTestVerified = selfTest && !errors.length && summary.length === 18

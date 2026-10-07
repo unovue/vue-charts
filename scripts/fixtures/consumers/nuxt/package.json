@@ -4,14 +4,14 @@
   "private": true,
   "packageManager": "pnpm@9.15.0+sha1.8bfdb6d72b4d5fdf87d21d27f2bfbe2b21dd2629",
   "dependencies": {
-    "motion-v": "^2.4.0",
+    "motion-v": "2.6.0",
     "vccs": "file:../vccs.tgz",
-    "vue": "^3.5.0"
+    "vue": "3.5.43"
   },
   "devDependencies": {
-    "@types/node": "^22.5.3",
-    "nuxt": "^4.4.2",
-    "typescript": "^6.0.0",
-    "vue-tsc": "^3.3.0"
+    "@types/node": "22.20.5",
+    "nuxt": "4.5.2",
+    "typescript": "6.0.3",
+    "vue-tsc": "3.3.12"
   }
 }

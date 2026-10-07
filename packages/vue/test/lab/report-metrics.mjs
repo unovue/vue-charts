@@ -105,7 +105,7 @@ function identity(scenario, issue) {
 }
 
 /** Gate only recorded scenarios, so focused runs can use the same acceptance file. */
-export function checkReport(report, accepted, strictTiming = false) {
+export function checkReport(report, accepted) {
   const same = (a, b) => a.scenario === b.scenario && a.kind === b.kind && a.element === b.element
   const observed = report.flatMap(r =>
     r.issues.map(issue => identity(`${r.scenario} ${r.step}`, issue)))
@@ -116,8 +116,6 @@ export function checkReport(report, accepted, strictTiming = false) {
     const failures = r.issues.filter(issue =>
       !accepted.some(entry => same(identity(`${r.scenario} ${r.step}`, issue), entry)))
     failures.push(...r.errors)
-    if (strictTiming && (r.timing['1x']?.slow ?? 0) > 2)
-      failures.push(`${r.timing['1x'].slow} slow frames`)
     return failures.length ? [{ ...r, failures }] : []
   })
   return { failed, stale }

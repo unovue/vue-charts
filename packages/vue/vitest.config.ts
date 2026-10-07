@@ -17,7 +17,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: [resolve(__dirname, 'src/test/setup.ts')],
     restoreMocks: true,
     unstubGlobals: true,
     unstubEnvs: true,
@@ -27,7 +27,7 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['text-summary', 'json', 'html'],
       include: ['src/**/*.{ts,tsx,vue}'],
-      exclude: [...coverageConfigDefaults.exclude, '**/__tests__/**', 'src/test/**', 'src/**/__stories__/**', 'src/storybook/**'],
+      exclude: [...coverageConfigDefaults.exclude, '**/__tests__/**', 'src/test/**'],
     },
     server: {
       deps: {

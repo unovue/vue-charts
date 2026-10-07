@@ -2,30 +2,26 @@
 /* eslint-disable no-console -- CLI summaries are the interface. */
 import { spawnSync } from 'node:child_process'
 import { createReadStream } from 'node:fs'
-import { mkdir, readdir, realpath, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
 import { emptySurface } from './lib/check-verdicts.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4680, 4689)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(root, 'docs/.output/public')
 const output = process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B12/docs'
 const evidence = resolve(root, output)
-const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
-const playwright = require('playwright-core')
 
 const selected = process.argv.find(arg => arg.startsWith('--browser='))?.slice(10)
 const engines = selected ? selected.split(',') : ['chromium', 'firefox', 'webkit']
 if (engines.some(engine => !['chromium', 'firefox', 'webkit'].includes(engine)))
   throw new Error(`Unknown browser: ${selected}`)
-if (process.argv.includes('--install-browsers')) {
-  const install = spawnSync(process.execPath, [join(dirname(require.resolve('playwright-core')), 'cli.js'), 'install', 'chromium-headless-shell', 'firefox', 'webkit'], { stdio: 'inherit' })
-  if (install.status !== 0)
-    process.exit(install.status ?? 1)
-}
 if (spawnSync('git', ['check-ignore', join(evidence, 'summary.json')], { cwd: root }).status !== 0)
   throw new Error('Evidence must be git-ignored before running this check')
 await mkdir(evidence, { recursive: true })
@@ -64,7 +60,7 @@ const server = createServer(async (req, res) => {
   }
 })
 async function listen() {
-  for (let port = 4680; port <= 4689; port++) {
+  for (const port of ports) {
     try {
       await new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -80,7 +76,7 @@ async function listen() {
         throw error
     }
   }
-  throw new Error('No free port in 4680–4689')
+  throw new Error(`No free port in ${portText(ports)}`)
 }
 const results = []
 const errors = []
@@ -174,7 +170,7 @@ try {
   for (const engine of engines) {
     let browser
     try {
-      browser = await playwright[engine].launch({ headless: !process.argv.includes('--headed'), timeout: 30000, ...(engine === 'chromium' && process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
+      browser = await launchBrowser({ browser: engine, headless: !process.argv.includes('--headed'), timeout: 30000 })
       // Two pages at a time bounds memory while keeping the run practical.
       const jobs = [...routes.map(route => [route, false]), ...chartRoutes.map(route => [route, true])]
       let next = 0
@@ -199,7 +195,7 @@ finally {
   if (server.listening)
     await new Promise(resolve => server.close(resolve))
   const passed = !errors.length && results.length === engines.length * (routes.length + chartRoutes.length) && results.every(result => result.passed)
-  const summary = { passed, node: process.version, playwright: require('playwright-core/package.json').version, routes, chartRoutes, errors, results }
+  const summary = { passed, node: process.version, playwright: playwrightVersion, routes, chartRoutes, errors, results }
   await writeFile(join(evidence, 'summary.json'), `${JSON.stringify(summary, null, 2)}\n`)
   console.log('\nRoute × browser (desktop / mobile)')
   console.table(routes.map(route => Object.fromEntries([['route', route], ...engines.map(engine => [engine, results.filter(result => result.route === route && result.browser === engine).map(result => `${result.mobile ? 'M' : 'D'}:${result.passed ? 'PASS' : `FAIL(${result.findings.length})`}`).join(' / ') || 'NOT RUN'])])))

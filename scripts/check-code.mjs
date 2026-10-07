@@ -14,7 +14,7 @@ const ignored = spawnSync('git', ['check-ignore', join(evidence, 'report.json')]
 if (ignored.status !== 0)
   throw new Error('Code evidence must be git-ignored: .evidence/code/report.json')
 await mkdir(evidence, { recursive: true })
-const excluded = /(?:^|\/)(?:__tests__|__stories__|storybook|test|__breakit__|fixtures)(?:\/|$)|\.(?:spec|test|stories|story)\./
+const excluded = /(?:^|\/)(?:__tests__|test|fixtures)(?:\/|$)|\.(?:spec|test)\./
 const files = (await readdir(source, { recursive: true }))
   .filter(file => /\.(?:ts|tsx|vue)$/.test(file) && !excluded.test(file)).sort()
 const config = JSON.parse(await readFile(join(root, 'packages/vue/tsconfig.json'), 'utf8'))

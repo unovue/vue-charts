@@ -1,7 +1,5 @@
 node_modules
 tsconfig.tsbuildinfo
-*storybook.log
-storybook-static
 .npmrc
 
 .DS_Store
@@ -30,3 +28,6 @@ openspec
 
 # Local check recordings and reports
 .evidence/
+
+# Agent plans and scratch files
+docs/superpowers/

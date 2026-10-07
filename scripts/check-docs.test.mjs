@@ -21,32 +21,21 @@ test('the docs checker accepts the real BarList demo at both widths', () => {
   assert.deepEqual(summary.results.map(r => r.demos[0].surfaces[0].shapes), [5, 5])
 })
 
-// Sized empty surfaces must fail both CLI coverage gates.
-for (const [script, args, message] of [
-  ['check-docs', ['--browser=chromium'], 'empty or zero-sized surface'],
-  ['check-seen', ['--skip-build', '--only=docs', '--width=390'], 'No chart rows recorded'],
-]) {
-  test(`${script} rejects an empty chart page`, () => {
-    const root = fileURLToPath(new URL('../', import.meta.url))
-    const route = '/charts/__empty-control'
-    const file = `${root}docs/.output/public${route}.html`
-    assert.equal(spawnSync('git', ['check-ignore', file], { cwd: root }).status, 0)
-    writeFileSync(file, '<h1>Empty control</h1><div class="chart-demo"><svg class="v-charts-surface" width="300" height="200"></svg></div>')
-    try {
-      const out = `.evidence/tooling/${script}-empty-regression`
-      const result = spawnSync(process.execPath, [`scripts/${script}.mjs`, ...args, `--route=${route}`, `--out=${out}`], { cwd: root, encoding: 'utf8' })
-      assert.equal(result.status, 1, result.stdout + result.stderr)
-      const report = readFileSync(`${root}${out}/summary.json`, 'utf8')
-      assert.ok(report.includes(message), report)
-      if (script === 'check-seen') {
-        const summary = JSON.parse(report)
-        assert.deepEqual(summary.rows, [])
-        assert.deepEqual(summary.recordings, [])
-        assert.equal(summary.errors.length, 1)
-      }
-    }
-    finally {
-      unlinkSync(file)
-    }
-  })
-}
+// A sized but empty surface must fail the docs coverage gate.
+test('check-docs rejects an empty chart page', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const route = '/charts/__empty-control'
+  const file = `${root}docs/.output/public${route}.html`
+  assert.equal(spawnSync('git', ['check-ignore', file], { cwd: root }).status, 0)
+  writeFileSync(file, '<h1>Empty control</h1><div class="chart-demo"><svg class="v-charts-surface" width="300" height="200"></svg></div>')
+  try {
+    const out = '.evidence/tooling/check-docs-empty-regression'
+    const result = spawnSync(process.execPath, ['scripts/check-docs.mjs', '--browser=chromium', `--route=${route}`, `--out=${out}`], { cwd: root, encoding: 'utf8' })
+    assert.equal(result.status, 1, result.stdout + result.stderr)
+    const report = readFileSync(`${root}${out}/summary.json`, 'utf8')
+    assert.ok(report.includes('empty or zero-sized surface'), report)
+  }
+  finally {
+    unlinkSync(file)
+  }
+})

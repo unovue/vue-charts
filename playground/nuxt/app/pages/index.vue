@@ -59,9 +59,9 @@ const routes = [
     count: 3,
   },
   {
-    path: '/customized-charts',
-    name: 'Customized Charts',
-    description: 'Render custom SVG elements using chart internal state.',
+    path: '/custom-svg',
+    name: 'Custom SVG',
+    description: 'Annotations drawn with usePlotArea() and the axis scales.',
     icon: PencilRuler,
     count: 2,
   },

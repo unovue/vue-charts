@@ -1,11 +1,16 @@
-// Motion report: frame-exact videos (1x and 4x slow motion) of every transition, each
-// moving shape's progress against the ideal easing, and real-clock frame timing at normal speed
-// and with the CPU slowed 4x. Writes an HTML report.
-// pnpm motion:report [scenario...] [--steps=a,b] [--out=dir] [--no-throttle] [--prod] [--browser=…] [--check]
-// --check gates geometry and page errors; --strict-timing also gates real-clock slow frames.
+// Motion report: steps every transition frame by frame on a fake clock, measures each moving
+// shape's progress against the ideal easing and the independent static target, and writes an HTML
+// report. By default it records geometry only (the release gate). Instrument options:
+//   --video    1x video, contact sheet and filmstrip PNG per transition (`pnpm lab film`)
+//   --frames   <step>.frames.json with per-frame geometry and the flags
+//   --timing   real-clock frame timing at normal speed and with the CPU slowed 4x (`pnpm lab timing`)
+// node packages/vue/test/lab/report.mjs [scenario...] [--steps=a,b] [--out=dir] [--prod] [--browser=…]
+//   [--check] [--no-throttle] [--scenario-timeout=ms]
+// --check exits 1 on unaccepted geometry flags, stale accepted flags or page errors. Timing never gates.
 /* eslint-disable no-console -- command-line output is the interface of these tools */
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { Buffer } from 'node:buffer'
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { cascadeTiming, drawTiming, motionTokens } from '../../src/animation/motion.ts'
 import { polylineLength } from '../../src/animation/ridingLabels.ts'
@@ -17,6 +22,12 @@ const out = resolve(flag('out', join(repo, '.evidence/motion-report')))
 const accepted = JSON.parse(readFileSync(new URL('./accepted-flags.json', import.meta.url), 'utf8'))
 const only = flag('steps', '')
 const throttle = !has('no-throttle')
+const measureTiming = has('timing')
+const film = has('video')
+// A hung page must end the run with a named scenario, not wait for an outside kill.
+const SCENARIO_TIMEOUT = Number(flag('scenario-timeout', String(10 * 60_000)))
+if (!(SCENARIO_TIMEOUT > 0))
+  throw new Error('Expected --scenario-timeout=<milliseconds>')
 const TIMING_WINDOW = 900
 const SETTLEMENT_MARGIN = 100
 const INTERRUPTION_DELAY = 150
@@ -210,9 +221,11 @@ function svgCurves(curveList, kind, durationMs) {
 
 // Frame-exact rendering: advance to each fake-clock animation frame, one screenshot per frame.
 // What each frame shows is exact; real-time cost is measured separately on a real clock.
+// Screenshots only with --video; the gate needs the geometry alone.
 async function record(page, dir, name, act, durationMs) {
   const frameDir = join(dir, `${name}-frames`)
-  mkdirSync(frameDir, { recursive: true })
+  if (film)
+    mkdirSync(frameDir, { recursive: true })
   const clip = await page.locator('.frame').boundingBox()
   const frames = []
   const before = await page.evaluate(() => window.__snapshot())
@@ -220,20 +233,80 @@ async function record(page, dir, name, act, durationMs) {
   const started = await page.evaluate(() => performance.now())
   for (let i = 0, t = 0; t <= durationMs; i++) {
     frames.push({ t, ...await page.evaluate(() => ({ shapes: window.__snapshot(), overlap: window.__overlap() })) })
-    await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
+    if (film)
+      await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
     await advanceFrame(page)
     t = await page.evaluate(start => performance.now() - start, started)
   }
   frames[0].before = before
+  if (!film)
+    return { frames }
   const video = join(dir, `${name}.mp4`)
-  const slow = join(dir, `${name}-slow.mp4`)
-  const scale = 'scale=trunc(iw/2)*2:trunc(ih/2)*2'
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(1000 / FRAME), '-i', join(frameDir, '%04d.jpg'), '-vf', scale, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', video])
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(1000 / FRAME / 4), '-i', join(frameDir, '%04d.jpg'), '-vf', `${scale},fps=60`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', slow])
-  rmSync(frameDir, { recursive: true, force: true })
-  if (has('frames'))
-    writeFileSync(join(dir, `${name}.frames.json`), JSON.stringify(frames))
-  return { frames, video, slow }
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(1000 / FRAME), '-i', join(frameDir, '%04d.jpg'), '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '20', video])
+  return { frames, video, frameDir }
+}
+
+// Tiles recorded frames into one PNG, so a reader (or an agent) sees a whole transition at once:
+// a contact sheet (up to 36 evenly spaced frames plus every flagged frame) and an 8-frame strip.
+// Each tile is labelled with its frame index and fake-clock time; flagged frames have a red border.
+async function sheets(dir, name, label, frameDir, frames, issues) {
+  const files = readdirSync(frameDir).filter(file => file.endsWith('.jpg')).sort()
+  const nearest = t => frames.reduce((best, frame, i) => Math.abs(frame.t - t) < Math.abs(frames[best].t - t) ? i : best, 0)
+  const flagged = new Set(issues.map(issue => Number(issue.match(/@(\d+)ms/)?.[1])).filter(Number.isFinite).map(nearest))
+  const pick = n => files.length <= n
+    ? files.map((_, i) => i)
+    : Array.from({ length: n }, (_, k) => Math.round(k * (files.length - 1) / (n - 1)))
+  const page = await browser.newPage()
+  const images = {}
+  try {
+    for (const [kind, indexes, columns] of [['sheet', [...new Set([...pick(36), ...flagged])].sort((a, b) => a - b), 6], ['strip', pick(8), 8]]) {
+      const tiles = indexes.map(i => ({
+        src: `data:image/jpeg;base64,${readFileSync(join(frameDir, files[i])).toString('base64')}`,
+        label: `#${i} ${Math.round(frames[i].t)} ms`,
+        flagged: flagged.has(i),
+      }))
+      const title = `${label} · ${files.length} frames · ${issues.length ? `${issues.length} flags: ${issues.slice(0, 2).join('; ')}` : 'no flags'}`
+      const png = await page.evaluate(async ({ tiles, columns, title }) => {
+        const images = await Promise.all(tiles.map(async (tile) => {
+          const image = new Image()
+          image.src = tile.src
+          await image.decode()
+          return image
+        }))
+        const width = 240
+        const height = Math.round(width * images[0].height / images[0].width)
+        const header = 28
+        const label = 18
+        const canvas = document.createElement('canvas')
+        canvas.width = columns * width
+        canvas.height = header + Math.ceil(tiles.length / columns) * (label + height)
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.font = '13px sans-serif'
+        ctx.fillStyle = '#111'
+        ctx.fillText(title.slice(0, 180), 6, 18)
+        tiles.forEach((tile, i) => {
+          const x = i % columns * width
+          const y = header + Math.floor(i / columns) * (label + height)
+          ctx.fillStyle = tile.flagged ? '#b91c1c' : '#374151'
+          ctx.font = '12px sans-serif'
+          ctx.fillText(tile.label, x + 4, y + 13)
+          ctx.drawImage(images[i], x, y + label, width, height)
+          ctx.strokeStyle = tile.flagged ? '#dc2626' : '#d1d5db'
+          ctx.lineWidth = tile.flagged ? 3 : 1
+          ctx.strokeRect(x + 1, y + label + 1, width - 2, height - 2)
+        })
+        return canvas.toDataURL('image/png').split(',')[1]
+      }, { tiles, columns, title })
+      images[kind] = join(dir, `${name}-${kind}.png`)
+      writeFileSync(images[kind], Buffer.from(png, 'base64'))
+    }
+  }
+  finally {
+    await page.close()
+  }
+  return images
 }
 
 mkdirSync(out, { recursive: true })
@@ -316,105 +389,145 @@ function actions(page, box) {
   }
 }
 
+// The step in progress, for timeout and stop messages.
+let current = 'startup'
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.once(signal, async () => {
+    console.error(`Motion report stopped by ${signal} during ${current}. Another process ended this run; it is not a scenario timeout (that fails with a named error).`)
+    await browser?.close().catch(() => {})
+    await server?.close().catch(() => {})
+    process.exit(signal === 'SIGTERM' ? 143 : 130)
+  })
+}
+
+async function runScenario(s) {
+  current = `${s} (opening pages)`
+  const backSteps = s === 'journey' ? { ...BACK, ...JOURNEY_BACK } : BACK
+  const dir = join(out, s)
+  if (existsSync(dir))
+    assertContained(realpathSync(out), realpathSync(dir))
+  rmSync(dir, { recursive: true, force: true })
+  mkdirSync(dir, { recursive: true })
+  const visual = await openPage(s, true)
+  const timingPage = measureTiming ? await openPage(s, false) : undefined
+  const targetPage = await openPage(s, true, true)
+  const pages = [visual, timingPage, targetPage].filter(Boolean)
+  const labSteps = await visual.page.evaluate(() => window.lab.steps)
+  const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(['values', 'removeMiddle', 'fromOne'].every(name => labSteps.includes(name)) ? ['interrupt'] : [])]
+  const chartBox = page => page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox()
+  const act = actions(visual.page, await chartBox(visual.page))
+  const actTarget = actions(targetPage.page, await chartBox(targetPage.page))
+  const actReal = timingPage && actions(timingPage.page, await chartBox(timingPage.page))
+  for (const step of steps) {
+    if (only && !only.split(',').includes(step))
+      continue
+    current = `${s} ${step}`
+    if (step === 'interrupt') {
+      for (const { page } of pages) await page.evaluate(() => window.lab.step('fromOne'))
+      await timingPage?.page.waitForTimeout(900)
+    }
+    const settled = step === 'entrance' || await settle(visual.page)
+    await actTarget(step)
+    // Static controls have no animation; release pending interruption actions and layout.
+    await targetPage.page.clock.runFor(TIMING_WINDOW)
+    const targetSettled = await settle(targetPage.page)
+    const target = await targetPage.page.evaluate(() => window.__snapshot())
+    const budget = await recordingBudget(targetPage.page, step)
+    const recorded = await record(visual.page, dir, step, () => act(step), budget.durationMs)
+    const curveList = curves(recorded.frames)
+    let { issues } = flags(curveList, recorded.frames, target)
+    if (!targetSettled)
+      issues.push('target control did not settle (2s cap)')
+    if (!settled)
+      issues.push('did not settle before recording (2s cap)')
+
+    // An interrupted change legitimately reverses direction.
+    if (step === 'interrupt')
+      issues = issues.filter(issue => !issue.startsWith('backwards'))
+
+    // Real-clock frame timing of the same step, at normal speed and with the CPU slowed 4x.
+    const timing = {}
+    // Timing replays the step on a second page, so it needs a step that returns to the start.
+    const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(backSteps[step])
+    if (timingPage && step !== 'entrance' && replayable && flag('browser', 'chromium') === 'chromium') {
+      // Resolve fonts and exercise this replay once before comparing CPU rates.
+      // The first pointer entry can otherwise include lazy layout/JIT work.
+      await timingPage.page.evaluate(() => document.fonts.ready)
+      for (const rate of [null, ...(throttle ? [1, 4] : [1])]) {
+        // Each rate must start with the same tooltip selection and settled replay state.
+        // Otherwise the second pointer action can be a no-op at the previous endpoint.
+        await actReal('pointer-leave')
+        if (step === 'pointer-move')
+          await actReal('pointer-enter')
+        if (step === 'pointer-leave')
+          await actReal('pointer-move')
+        await timingPage.page.waitForTimeout(900)
+        const back = labSteps.includes(backSteps[step]) ? backSteps[step] : undefined
+        if (back) {
+          await timingPage.page.evaluate(name => window.lab.step(name), back)
+          await timingPage.page.waitForTimeout(900)
+        }
+        if (step === 'interrupt') {
+          await timingPage.page.evaluate(() => window.lab.step('fromOne'))
+          await timingPage.page.waitForTimeout(900)
+        }
+        const beforeReplay = step.startsWith('pointer') ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
+        const cdp = await timingPage.context.newCDPSession(timingPage.page)
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: rate ?? 1 })
+        const t = timingPage.page.evaluate(ms => window.__timing(ms), TIMING_WINDOW)
+        await actReal(step)
+        const r = await t
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
+        await cdp.detach()
+        const afterReplay = beforeReplay ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
+        if (rate !== null)
+          timing[`${rate}x`] = { ...stats(r.intervals), longtasks: r.longtasks, ...(beforeReplay ? { replay: { before: beforeReplay, after: afterReplay } } : {}) }
+        await timingPage.page.waitForTimeout(300)
+      }
+    }
+    const kind = step === 'entrance' ? 'enter' : 'update'
+    const errors = [...new Set(pages.flatMap(p => p.errors))]
+    const settlement = issues.filter(issue => issue.startsWith('unsettled ')).map((issue) => {
+      const id = issue.slice(10)
+      return { id, recorded: recorded.frames.at(-1).shapes[id], target: target[id] }
+    })
+    const images = recorded.frameDir ? await sheets(dir, step, `${s} · ${step}`, recorded.frameDir, recorded.frames, issues) : {}
+    if (recorded.frameDir)
+      rmSync(recorded.frameDir, { recursive: true, force: true })
+    const framesFile = has('frames') ? join(dir, `${step}.frames.json`) : undefined
+    if (framesFile)
+      writeFileSync(framesFile, JSON.stringify({ scenario: s, step, flags: issues, errors, budget, frames: recorded.frames }))
+    report.push({ scenario: s, step, kind, issues, settlement, budget, timing, curves: curveList.length, video: recorded.video, ...images, frames: framesFile, svg: svgCurves(curveList, kind, budget.durationMs), errors })
+    const last = report.at(-1)
+    const timingText = measureTiming ? ` 1x worst=${timing['1x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['1x']?.slow ?? '-'} 4x worst=${timing['4x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['4x']?.slow ?? '-'} lt=${JSON.stringify(timing['4x']?.longtasks ?? [])}` : ''
+    console.log(`${s.padEnd(13)} ${step.padEnd(13)} curves=${String(last.curves).padStart(3)} issues=${String(issues.length).padStart(2)}${timingText}${issues.length ? `\n    ${issues.slice(0, 6).join('\n    ')}` : ''}${errors.length ? `\n    ERR ${errors.slice(0, 3).join(' | ')}` : ''}`)
+  }
+  for (const { context } of pages)
+    await context.close()
+}
+
+async function withTimeout(s) {
+  let timer
+  const task = runScenario(s)
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Motion scenario ${s} did not finish within ${SCENARIO_TIMEOUT / 1000} s (stuck at ${current}). Look for a hung page or raise --scenario-timeout=<ms>.`)), SCENARIO_TIMEOUT)
+  })
+  try {
+    await Promise.race([task, timeout])
+  }
+  finally {
+    clearTimeout(timer)
+    // The browser closes below; the abandoned scenario then rejects, which is expected.
+    task.catch(() => {})
+  }
+}
+
 try {
   server = await startServer()
   url = server.url
   browser = await launchBrowser()
-  for (const s of scenarios.length ? scenarios : all) {
-    const backSteps = s === 'journey' ? { ...BACK, ...JOURNEY_BACK } : BACK
-    const dir = join(out, s)
-    if (existsSync(dir))
-      assertContained(realpathSync(out), realpathSync(dir))
-    rmSync(dir, { recursive: true, force: true })
-    mkdirSync(dir, { recursive: true })
-    const visual = await openPage(s, true)
-    const timingPage = await openPage(s, false)
-    const targetPage = await openPage(s, true, true)
-    const labSteps = await visual.page.evaluate(() => window.lab.steps)
-    const steps = s === 'tooltip' ? ['pointer-enter', 'pointer-move', 'pointer-leave'] : ['entrance', ...labSteps, ...(['values', 'removeMiddle', 'fromOne'].every(name => labSteps.includes(name)) ? ['interrupt'] : [])]
-    const act = actions(visual.page, await visual.page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox())
-    const actTarget = actions(targetPage.page, await targetPage.page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox())
-    const actReal = actions(timingPage.page, await timingPage.page.locator(s === 'barList' ? '.frame' : '.v-charts-wrapper').first().boundingBox())
-    for (const step of steps) {
-      if (only && !only.split(',').includes(step))
-        continue
-      if (step === 'interrupt') {
-        for (const p of [visual.page, timingPage.page, targetPage.page]) await p.evaluate(() => window.lab.step('fromOne'))
-        await timingPage.page.waitForTimeout(900)
-      }
-      const settled = step === 'entrance' || await settle(visual.page)
-      await actTarget(step)
-      // Static controls have no animation; release pending interruption actions and layout.
-      await targetPage.page.clock.runFor(TIMING_WINDOW)
-      const targetSettled = await settle(targetPage.page)
-      const target = await targetPage.page.evaluate(() => window.__snapshot())
-      const budget = await recordingBudget(targetPage.page, step)
-      const recorded = await record(visual.page, dir, step, () => act(step), budget.durationMs)
-      const curveList = curves(recorded.frames)
-      let { issues } = flags(curveList, recorded.frames, target)
-      if (!targetSettled)
-        issues.push('target control did not settle (2s cap)')
-      if (!settled)
-        issues.push('did not settle before recording (2s cap)')
-
-      // An interrupted change legitimately reverses direction.
-      if (step === 'interrupt')
-        issues = issues.filter(issue => !issue.startsWith('backwards'))
-
-      // Real-clock frame timing of the same step, at normal speed and with the CPU slowed 4x.
-      const timing = {}
-      // Timing replays the step on a second page, so it needs a step that returns to the start.
-      const replayable = step === 'interrupt' || step.startsWith('pointer') || labSteps.includes(backSteps[step])
-      if (step !== 'entrance' && replayable && flag('browser', 'chromium') === 'chromium') {
-        // Resolve fonts and exercise this replay once before comparing CPU rates.
-        // The first pointer entry can otherwise include lazy layout/JIT work.
-        await timingPage.page.evaluate(() => document.fonts.ready)
-        for (const rate of [null, ...(throttle ? [1, 4] : [1])]) {
-          // Each rate must start with the same tooltip selection and settled replay state.
-          // Otherwise the second pointer action can be a no-op at the previous endpoint.
-          await actReal('pointer-leave')
-          if (step === 'pointer-move')
-            await actReal('pointer-enter')
-          if (step === 'pointer-leave')
-            await actReal('pointer-move')
-          await timingPage.page.waitForTimeout(900)
-          const back = labSteps.includes(backSteps[step]) ? backSteps[step] : undefined
-          if (back) {
-            await timingPage.page.evaluate(name => window.lab.step(name), back)
-            await timingPage.page.waitForTimeout(900)
-          }
-          if (step === 'interrupt') {
-            await timingPage.page.evaluate(() => window.lab.step('fromOne'))
-            await timingPage.page.waitForTimeout(900)
-          }
-          const beforeReplay = step.startsWith('pointer') ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
-          const cdp = await timingPage.context.newCDPSession(timingPage.page)
-          await cdp.send('Emulation.setCPUThrottlingRate', { rate: rate ?? 1 })
-          const t = timingPage.page.evaluate(ms => window.__timing(ms), TIMING_WINDOW)
-          await actReal(step)
-          const r = await t
-          await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
-          await cdp.detach()
-          const afterReplay = beforeReplay ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
-          if (rate !== null)
-            timing[`${rate}x`] = { ...stats(r.intervals), longtasks: r.longtasks, ...(beforeReplay ? { replay: { before: beforeReplay, after: afterReplay } } : {}) }
-          await timingPage.page.waitForTimeout(300)
-        }
-      }
-      const kind = step === 'entrance' ? 'enter' : 'update'
-      const errors = [...new Set([...visual.errors, ...timingPage.errors, ...targetPage.errors])]
-      const settlement = issues.filter(issue => issue.startsWith('unsettled ')).map((issue) => {
-        const id = issue.slice(10)
-        return { id, recorded: recorded.frames.at(-1).shapes[id], target: target[id] }
-      })
-      report.push({ scenario: s, step, kind, issues, settlement, budget, timing, curves: curveList.length, video: recorded.video, slow: recorded.slow, svg: svgCurves(curveList, kind, budget.durationMs), errors })
-      const last = report.at(-1)
-      console.log(`${s.padEnd(13)} ${step.padEnd(13)} curves=${String(last.curves).padStart(3)} issues=${String(issues.length).padStart(2)} 1x worst=${timing['1x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['1x']?.slow ?? '-'} 4x worst=${timing['4x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['4x']?.slow ?? '-'} lt=${JSON.stringify(timing['4x']?.longtasks ?? [])}${issues.length ? `\n    ${issues.slice(0, 6).join('\n    ')}` : ''}${errors.length ? `\n    ERR ${errors.slice(0, 3).join(' | ')}` : ''}`)
-    }
-    await visual.context.close()
-    await timingPage.context.close()
-    await targetPage.context.close()
-  }
+  for (const s of scenarios.length ? scenarios : all)
+    await withTimeout(s)
   if (!report.length)
     throw new Error(`No motion transitions matched --steps=${only}`)
   writeFileSync(join(out, 'report.json'), JSON.stringify(report.map(({ svg, ...r }) => r), null, 2))
@@ -424,10 +537,10 @@ try {
   const rows = report.map(r => `
   <section class="step ${r.issues.length ? 'flagged' : ''}">
     <header><h3>${r.scenario} · ${r.step}</h3><span class="pill ${r.issues.length ? 'bad' : 'ok'}">${r.issues.length ? `${r.issues.length} flags` : 'clean'}</span>
-    <span class="meta">${r.curves} moving shapes · 1x worst ${r.timing['1x']?.worst.toFixed(0) ?? '–'} ms · 4x CPU worst ${r.timing['4x']?.worst.toFixed(0) ?? '–'} ms, ${r.timing['4x']?.slow ?? '–'} slow frames</span></header>
+    <span class="meta">${r.curves} moving shapes${r.timing['1x'] ? ` · 1x worst ${r.timing['1x'].worst.toFixed(0)} ms · 4x CPU worst ${r.timing['4x']?.worst.toFixed(0) ?? '–'} ms, ${r.timing['4x']?.slow ?? '–'} slow frames` : ''}</span></header>
     <div class="row">
-      <figure><video src="${rel(r.slow)}" muted loop playsinline controls preload="none"></video><figcaption>4× slow motion</figcaption></figure>
-      <figure><video src="${rel(r.video)}" muted loop playsinline controls preload="none"></video><figcaption>real time</figcaption></figure>
+      ${r.video ? `<figure><video src="${rel(r.video)}" muted loop playsinline controls preload="none"></video><figcaption>real time</figcaption></figure>` : ''}
+      ${r.sheet ? `<figure><a href="${rel(r.sheet)}"><img src="${rel(r.sheet)}" loading="lazy" alt="contact sheet"></a><figcaption>contact sheet (frame index, fake-clock ms; red = flagged)</figcaption></figure>` : ''}
       <figure>${r.svg}<figcaption>progress per shape (colour) vs ideal ${r.kind} easing (dashed)</figcaption></figure>
     </div>
     ${r.issues.length ? `<ul class="issues">${r.issues.slice(0, 12).map(i => `<li>${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>` : ''}
@@ -444,11 +557,11 @@ try {
   .step header{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline}.step h3{margin:0;font-size:15px}
   .meta{opacity:.65;font-size:12px}.pill{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor}.ok{color:var(--ok)}.bad{color:var(--bad)}
   .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:10px}
-  figure{margin:0}video,.curves{width:100%;border-radius:8px;border:1px solid var(--line);background:#fff}.curves{background:var(--card)}
+  figure{margin:0}video,img,.curves{width:100%;border-radius:8px;border:1px solid var(--line);background:#fff}.curves{background:var(--card)}
   figcaption{font-size:11px;opacity:.6;margin-top:4px}.issues{margin:8px 0 0;padding-left:18px;font:12px ui-monospace,monospace;color:var(--bad)}
   .filters{margin:0 0 16px}label{margin-right:12px}
   </style></head><body><main>
-  <h1>Motion report</h1><p class="lede">${report.length} transitions across ${new Set(report.map(r => r.scenario)).size} scenarios, recorded in real time in headless Chromium. Curves show each moving shape's progress from start to end value; the dashed line is the ideal easing. Timing is measured without the sampler, at normal speed and with the CPU slowed 4×.</p>
+  <h1>Motion report</h1><p class="lede">${report.length} transitions across ${new Set(report.map(r => r.scenario)).size} scenarios, stepped frame by frame on a fake clock in a headless browser. Curves show each moving shape's progress from start to end value; the dashed line is the ideal easing.${report.some(r => r.timing['1x']) ? ' Timing is measured on the real clock without the sampler, at normal speed and with the CPU slowed 4×.' : ''}</p>
   <p class="filters"><label><input type="checkbox" id="flagged"> only flagged</label></p>
   ${rows}
   <script>document.getElementById('flagged').addEventListener('change',e=>document.querySelectorAll('.step:not(.flagged)').forEach(s=>s.style.display=e.target.checked?'none':''));
@@ -465,7 +578,7 @@ finally {
 }
 
 if (has('check')) {
-  const { failed, stale } = checkReport(report, accepted, has('strict-timing'))
+  const { failed, stale } = checkReport(report, accepted)
   for (const r of failed)
     console.error(`FAIL ${r.scenario} ${r.step}: ${r.failures.slice(0, 3).join(' | ')}`)
   for (const entry of stale)

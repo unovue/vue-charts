@@ -6,6 +6,8 @@ import { createRequire } from 'node:module'
 import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, version as esbuildVersion } from 'esbuild'
+import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
+import { checkPorts } from './lib/ports.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const option = name => process.argv.find(arg => arg.startsWith(`--${name}=`))?.slice(name.length + 3)
@@ -19,14 +21,19 @@ const fixture = join(root, 'scripts/fixtures/bench.mjs')
 const output = join(root, '.evidence/bench', `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`)
 const peers = join(root, 'packages/vue/node_modules')
 const libraryRequire = createRequire(join(root, 'packages/vue/package.json'))
-const require = createRequire(await realpath(join(peers, '@nuxt/test-utils/package.json')))
-const { chromium } = require('playwright-core')
 
 const sides = compare ? ['A', 'B'] : ['B']
-const cases = ['LineChart', 'BarChart'].flatMap(kind => [100, 1000, 10000].map(n => ({ kind, n, mode: 'static' })))
-cases.push({ kind: 'Heatmap', n: 168, mode: 'static' }, { kind: 'CalendarHeatmap', n: 365, mode: 'static' })
-cases.push(...['LineChart', 'BarChart'].map(kind => ({ kind, n: 1000, mode: 'animated' })))
-const result = { rounds, selfTest, dist, compare, warmups: [], runs: [], summary: [], errors: [], references: {} }
+const allCases = ['LineChart', 'BarChart'].flatMap(kind => [100, 1000, 10000].map(n => ({ kind, n, mode: 'static' })))
+allCases.push({ kind: 'Heatmap', n: 168, mode: 'static' }, { kind: 'CalendarHeatmap', n: 365, mode: 'static' })
+allCases.push(...['LineChart', 'BarChart'].map(kind => ({ kind, n: 1000, mode: 'animated' })))
+// `--charts=LineChart,BarChart` and `--modes=static` limit the cases, for example against vccs 0.6.0,
+// which has no cell charts and whose bar update snaps instead of animating.
+const chartFilter = option('charts')?.split(',')
+const modeFilter = option('modes')?.split(',')
+const cases = allCases.filter(entry => (!chartFilter || chartFilter.includes(entry.kind)) && (!modeFilter || modeFilter.includes(entry.mode)))
+if (!cases.length)
+  throw new Error('--charts and --modes match no case')
+const result = { rounds, selfTest, dist, compare, cases, warmups: [], runs: [], summary: [], errors: [], references: {} }
 const calibration = new Map()
 let browser, page, session, server
 async function bundle() {
@@ -66,12 +73,9 @@ async function openBrowser() {
     res.setHeader('Content-Type', req.url === '/' ? 'text/html' : 'text/javascript')
     res.writeHead(routes[req.url] ? 200 : 404).end(routes[req.url])
   })
-  const port = Number(process.env.BENCH_PORT ?? 4600)
-  if (port < 4600 || port > 4699)
-    throw new Error('BENCH_PORT must be in 4600–4699')
+  const port = Number(process.env.BENCH_PORT ?? checkPorts(4600, 4699)[0])
   await new Promise((resolve, reject) => server.once('error', reject).listen(port, '127.0.0.1', resolve))
-  const executablePath = process.env.MOTION_EXECUTABLE_PATH
-  browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) })
+  browser = await launchBrowser()
   page = await browser.newPage({ viewport: { width: 1100, height: 700 }, reducedMotion: 'no-preference' })
   page.on('pageerror', error => result.errors.push(error.message))
   page.on('console', (message) => {
@@ -126,8 +130,7 @@ async function sample() {
 }
 try {
   await mkdir(output, { recursive: true })
-  const playwright = require('playwright-core/package.json').version
-  result.tools = { node: process.version, esbuild: esbuildVersion, playwright }
+  result.tools = { node: process.version, esbuild: esbuildVersion, playwright: playwrightVersion }
   await bundle()
   await openBrowser()
   await sample()

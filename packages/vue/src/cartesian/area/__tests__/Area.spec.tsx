@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
-import type { ActivePointSlotProps } from '@/cartesian/area/ActivePoints'
+import type { ActivePointSlotProps } from '@/cartesian/ActivePoints'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('area', () => {
