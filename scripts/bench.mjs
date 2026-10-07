@@ -22,10 +22,17 @@ const peers = join(root, 'packages/vue/node_modules')
 const libraryRequire = createRequire(join(root, 'packages/vue/package.json'))
 
 const sides = compare ? ['A', 'B'] : ['B']
-const cases = ['LineChart', 'BarChart'].flatMap(kind => [100, 1000, 10000].map(n => ({ kind, n, mode: 'static' })))
-cases.push({ kind: 'Heatmap', n: 168, mode: 'static' }, { kind: 'CalendarHeatmap', n: 365, mode: 'static' })
-cases.push(...['LineChart', 'BarChart'].map(kind => ({ kind, n: 1000, mode: 'animated' })))
-const result = { rounds, selfTest, dist, compare, warmups: [], runs: [], summary: [], errors: [], references: {} }
+const allCases = ['LineChart', 'BarChart'].flatMap(kind => [100, 1000, 10000].map(n => ({ kind, n, mode: 'static' })))
+allCases.push({ kind: 'Heatmap', n: 168, mode: 'static' }, { kind: 'CalendarHeatmap', n: 365, mode: 'static' })
+allCases.push(...['LineChart', 'BarChart'].map(kind => ({ kind, n: 1000, mode: 'animated' })))
+// `--charts=LineChart,BarChart` and `--modes=static` limit the cases, for example against vccs 0.6.0,
+// which has no cell charts and whose bar update snaps instead of animating.
+const chartFilter = option('charts')?.split(',')
+const modeFilter = option('modes')?.split(',')
+const cases = allCases.filter(entry => (!chartFilter || chartFilter.includes(entry.kind)) && (!modeFilter || modeFilter.includes(entry.mode)))
+if (!cases.length)
+  throw new Error('--charts and --modes match no case')
+const result = { rounds, selfTest, dist, compare, cases, warmups: [], runs: [], summary: [], errors: [], references: {} }
 const calibration = new Map()
 let browser, page, session, server
 async function bundle() {

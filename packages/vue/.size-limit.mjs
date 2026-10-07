@@ -3,7 +3,7 @@
 // so a new chart gets a budget and a standalone-bundle check from one row.
 
 /** Typical compositions: a chart with its usual axes, grid, tooltip and legend. */
-const presets = [
+export const presets = [
   { name: 'Area chart', import: '{ AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip }', limit: '84.7 kB' },
   { name: 'Bar chart', import: '{ BarChart, Bar, XAxis, YAxis, Tooltip, Legend }', limit: '87.8 kB' },
   { name: 'Pie chart', import: '{ PieChart, Pie, Tooltip }', limit: '70.8 kB' },

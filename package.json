@@ -29,7 +29,8 @@
     "verify": "node scripts/verify.mjs",
     "bench": "node scripts/bench.mjs",
     "check:bundle": "node scripts/check-bundle.mjs",
-    "check:code": "node scripts/check-code.mjs"
+    "check:code": "node scripts/check-code.mjs",
+    "compare:upstream": "node scripts/compare-upstream.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",
