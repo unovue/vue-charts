@@ -1,6 +1,6 @@
 import type { AxisRange, AxisType } from '@/types/axis'
 import type { AxisWithTicksSettings } from '@/types/axisSettings'
-import type { TooltipEntrySettings, TooltipIndex, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher } from '@/types/tooltip'
+import type { TooltipActiveIndex, TooltipEntrySettings, TooltipPayload, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipPayloadSearcher } from '@/types/tooltip'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TickItem, TooltipEventType, ValueType } from '@/types'
 import type { RechartsScale } from '@/types/scale'
 import { isCategoricalAxis } from '@/utils/validate'
@@ -8,7 +8,7 @@ import { findEntryInArray, mathSign } from '@/utils/data'
 
 import { getValueByDataKey } from '@/core/data'
 
-export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipIndex, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined, payloadKey?: string): TooltipPayload | undefined {
+export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<TooltipPayloadConfiguration>, activeIndex: TooltipActiveIndex, tooltipAxis: Pick<AxisWithTicksSettings, 'dataKey' | 'allowDuplicatedCategory'> | undefined, activeLabel: string | number | undefined, tooltipPayloadSearcher: TooltipPayloadSearcher | undefined, tooltipEventType: TooltipEventType | undefined, payloadKey?: string): TooltipPayload | undefined {
   if (activeIndex == null) {
     return undefined
   }

@@ -9,7 +9,7 @@ import { tooltipCoordinate, tooltipPayload } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
-import type { TooltipActiveIndex, TooltipIndex, TooltipInteraction, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettings, TooltipTargetRequest } from '@/types/tooltip'
+import type { TooltipActiveIndex, TooltipInteraction, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettings, TooltipTargetRequest } from '@/types/tooltip'
 
 const noInteraction: TooltipInteraction = Object.freeze({
   active: false,
@@ -442,7 +442,7 @@ export function createTooltip(inputs: TooltipInputs) {
     label: label.value,
   }))
 
-  function coordinateAt(index: TooltipIndex, dataKey: DataKey<unknown>) {
+  function coordinateAt(index: TooltipActiveIndex, dataKey: DataKey<unknown>) {
     const entry = entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
     return index === null ? undefined : entry?.positions?.[index]
   }

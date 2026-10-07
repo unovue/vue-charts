@@ -1,9 +1,6 @@
 import type { ChartCoordinate, ChartDataKey, Coordinate, VueClassValue } from '@/types/base'
 import type { VNodeChild } from 'vue'
 
-/** Numeric item position; null means no selection. */
-export type TooltipIndex = number | null
-
 export type TooltipEventType = 'axis' | 'item'
 
 export type TooltipTrigger = 'hover' | 'click'
@@ -121,7 +118,7 @@ export type TooltipPayloadConfiguration = {
 }
 
 export type ActiveTooltipProps = {
-  activeIndex: TooltipIndex
+  activeIndex: TooltipActiveIndex
   activeCoordinate: ChartCoordinate | undefined
 }
 
@@ -158,7 +155,7 @@ export type TooltipSettings = {
   /**
    * If you want to set the tooltip to be active before user interaction, you can set this property.
    */
-  defaultIndex: TooltipIndex | undefined
+  defaultIndex: TooltipActiveIndex | undefined
 }
 
 /**
@@ -185,7 +182,7 @@ export type TooltipInteraction = {
    * This can come from mouse events, keyboard events, or hardcoded in props
    * in property `defaultIndex` on Tooltip.
    */
-  index: TooltipIndex
+  index: TooltipActiveIndex
   /**
    * DataKey filter.
    *
@@ -223,7 +220,7 @@ export type TooltipTargetRequest = {
   active?: boolean
   configuration?: TooltipPayloadConfiguration
 
-  index: TooltipIndex
+  index: TooltipActiveIndex
   dataKey: ChartDataKey | undefined
   coordinate?: ChartCoordinate
 }

@@ -44,10 +44,10 @@ export const ActivePoints = defineComponent({
     if (!entry)
       throw new Error('vccs: ActivePoints requires its series tooltip entry.')
     // In item mode only the hovered series shows its dot; in axis mode every series does.
-    const activeTooltipIndex = useChart().tooltip.activeIndexFor(entry)
+    const activeIndex = useChart().tooltip.activeIndexFor(entry)
 
     return () => {
-      const index = activeTooltipIndex.value
+      const index = activeIndex.value
       const point = index == null ? undefined : props.points[index]
       if (index == null || point == null || props.activeDot === false)
         return null
