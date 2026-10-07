@@ -1,5 +1,4 @@
-import type { ChartDataKey } from '@/types/base'
-import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
 import { useChart } from '@/model/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { scatterEvents } from '@/events/itemEvents'
@@ -7,24 +6,24 @@ import { delegateItemEvents, itemEventIndex } from '@/events/delegateItemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { ValueAnimationTransition } from 'motion-v'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { Layer } from '@/container/Layer'
 import { Symbols } from '@/shape/Symbols'
 import type { SymbolType, SymbolsProps } from '@/shape/Symbols'
 import { Curve } from '@/shape/Curve'
-import type { CurveType } from '@/shape/Curve'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { LabelList } from '@/components/label/LabelList'
-import type { TooltipType } from '@/types/tooltip'
 import type { ScatterPointItem } from '@/types/common'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { getLinearRegression } from '@/utils/getLinearRegression'
 import { getTooltipNameProp } from '@/core/tooltip'
+import { mainColor } from '@/core/color'
 import { getValueByDataKey } from '@/utils/chart'
+import type { ScatterSlots } from './type'
+import { ScatterVueProps } from './type'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 
@@ -54,26 +53,6 @@ const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   }
 }
 
-const ScatterVueProps = {
-  xAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  yAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  zAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: undefined },
-  data: { type: Array as PropType<ReadonlyArray<Record<string, unknown>>>, default: undefined },
-  name: { type: [String, Number] as PropType<string | number>, default: undefined },
-  hide: { type: Boolean, default: false },
-  fill: { type: String, default: undefined },
-  shape: { type: String as PropType<SymbolType>, default: 'circle' },
-  isAnimationActive: { type: Boolean, default: undefined },
-  line: { type: [Boolean, Object], default: false },
-  lineType: { type: String as PropType<'fitting' | 'joint'>, default: 'joint' },
-  lineJointType: { type: [String, Function] as PropType<CurveType>, default: 'linear' },
-  label: { type: [Boolean, Object], default: false },
-  legendType: { type: String as PropType<import('@/types/legend').LegendType>, default: 'circle' },
-  tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
-}
-
 const ScatterView = defineComponent({
   name: 'ScatterView',
   inheritAttrs: false,
@@ -82,10 +61,7 @@ const ScatterView = defineComponent({
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
-  slots: Object as SlotsType<{
-    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild
-    default?: () => VNode[]
-  }>,
+  slots: Object as SlotsType<ScatterSlots>,
   setup(view, { slots }) {
     const chart = useChart()
     const emit = scatterEvents.use()
@@ -105,15 +81,15 @@ const ScatterView = defineComponent({
       dataDefinedOnItem: points.value?.map(point => point.tooltipPayload),
       positions: points.value?.map(point => point.tooltipPosition),
       settings: {
-        stroke: svgAttrs.stroke as string,
-        strokeWidth: svgAttrs['stroke-width'] as string | number | undefined,
-        fill: svgAttrs.fill as string ?? props.fill,
+        stroke: svgAttrs.stroke,
+        strokeWidth: svgAttrs['stroke-width'],
+        fill: props.fill,
         dataKey: props.dataKey,
         nameKey: undefined,
         name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
-        color: svgAttrs.fill as string ?? props.fill,
+        color: mainColor('scatter', props),
         unit: '',
       },
     }))
@@ -304,7 +280,7 @@ const ScatterView = defineComponent({
       if (props.hide)
         return null
       return teleport((
-        <Layer data-slot="series" class="v-charts-scatter" {...listeners} onMousemove={handleSymbolMove}>
+        <Layer data-slot="series" class={['v-charts-scatter', props.class]} {...listeners} onMousemove={handleSymbolMove}>
           {slots.default?.()}
           {h(Geometry)}
         </Layer>
@@ -319,10 +295,7 @@ const _Scatter = defineComponent({
   emits: scatterEvents.emits,
   props: ScatterVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<{
-    shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild
-    default?: () => VNode[]
-  }>,
+  slots: Object as SlotsType<ScatterSlots>,
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps, ['fill'])
     scatterEvents.provide(emit)
@@ -334,4 +307,4 @@ const _Scatter = defineComponent({
 })
 
 // Preserve template slot inference in published declarations.
-export const Scatter: typeof _Scatter & { new (): { $slots: { default?: () => VNode[], shape?: (props: ScatterPointItem & { index: number, isActive: boolean }) => VNodeChild } } } = _Scatter
+export const Scatter: typeof _Scatter & { new (): { $slots: ScatterSlots } } = _Scatter

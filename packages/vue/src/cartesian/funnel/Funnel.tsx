@@ -1,4 +1,4 @@
-import { seriesColor } from '@/utils/theme'
+import { entryColor } from '@/core/color'
 import type { ComputedRef, ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { funnelEvents } from '@/events/itemEvents'
@@ -71,6 +71,7 @@ const FunnelView = defineComponent({
     const tooltipConfiguration = computed(() => ({
       dataDefinedOnItem: data.value ?? [],
       positions: trapezoids.value.map(t => t.tooltipPosition),
+      colors: trapezoids.value.map((trap, index) => entryColor({ cell: cellPropsRef.value[index], row: trap.payload, seriesFill: props.fill, index })),
       settings: {
         dataKey: props.dataKey,
         nameKey: props.nameKey,
@@ -104,7 +105,7 @@ const FunnelView = defineComponent({
           dataKey: props.dataKey,
           inactive: props.hide,
           parentViewBox: trap.parentViewBox,
-          fill: trap.fill ?? props.fill ?? seriesColor(trap.index),
+          fill: entryColor({ cell: cellPropsRef.value[trap.index], row: trap.payload, seriesFill: props.fill, index: trap.index }),
           key: item.key,
           ...(opacity != null ? { opacity } : {}),
         }
@@ -134,13 +135,13 @@ const FunnelView = defineComponent({
       const cells = extractCellProps(defaultContent)
       assignCells(cellPropsRef, cells)
       const nonCellContent = cells.length > 0 ? filterOutCells(defaultContent) : defaultContent
-      const stroke = (attrs.stroke as string) ?? props.stroke
+      const stroke = props.stroke
 
       return (
         <Layer data-slot="series" class={['v-charts-funnel', props.class]}>
           {items.value.map(({ key, value: trap }) => {
             const cellProps = cells[trap.index] ?? {}
-            const trapFill = cellProps.fill ?? getValueByDataKey(trap.payload, 'fill') ?? props.fill ?? seriesColor(trap.index)
+            const trapFill = entryColor({ cell: cellProps, row: trap.payload, seriesFill: props.fill, index: trap.index })
             const trapStroke = cellProps.stroke ?? stroke
 
             const trapezoidProps = {
@@ -241,7 +242,7 @@ const _Funnel = defineComponent({
       return trapList.map((trap, i: number) => ({
         type: props.legendType,
         value: String(trap.name ?? ''),
-        color: cells[i]?.fill ?? trap.fill ?? props.fill ?? seriesColor(i),
+        color: entryColor({ cell: cells[i], row: trap.payload, seriesFill: props.fill, index: i }),
         payload: trap.payload as import('@/types/legend').LegendPayload['payload'],
         dataKey: props.dataKey,
         inactive: props.hide,

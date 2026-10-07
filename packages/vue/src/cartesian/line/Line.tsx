@@ -10,10 +10,11 @@ import { LineVueProps } from './type'
 import { useLine } from '@/cartesian/line/hooks/useLine'
 import { Layer } from '@/container/Layer'
 import { StaticLine } from '@/cartesian/line/StaticLine'
-import { ActivePoints } from '@/cartesian/line/ActivePoints'
+import { ActivePoints } from '@/cartesian/ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
-import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
+import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { useGraphicalLayerRef } from '@/model/runtime'
+import { mainColor } from '@/core/color'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 
 export type { LineSlots } from './type'
@@ -49,10 +50,11 @@ const LineView = defineComponent({
 
       const lineContent = (
         <Fragment>
-          <Layer data-slot="series" class={['v-charts-line', attrs.class]}>
+          <Layer data-slot="series" class={['v-charts-line', props.class]}>
             {needClip.value && (
               <defs>
                 <GraphicalItemClipPath clipPathId={clipPathId.value} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />
+                <DotsClipPath clipPathId={clipPathId.value} dot={props.dot} />
               </defs>
             )}
             <StaticLine />
@@ -62,7 +64,7 @@ const LineView = defineComponent({
             {!props.hide && (
               <ActivePoints
                 points={lineData.value ?? []}
-                mainColor={attrs.stroke ?? props.stroke!}
+                mainColor={mainColor('line', props)}
                 itemDataKey={props.dataKey}
                 activeDot={props.activeDot}
                 isAnimationActive={props.isAnimationActive}

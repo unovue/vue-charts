@@ -18,13 +18,16 @@ import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
-import { ActivePoints } from '@/cartesian/line/ActivePoints'
+import { ActivePoints } from '@/cartesian/ActivePoints'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 import type { RadarComposedData, RadarPoint } from '@/types/radar'
 import type { LineSlots } from '@/cartesian/line/type'
+import { mainColor } from '@/core/color'
+import { getTooltipNameProp } from '@/core/tooltip'
+import { classProp } from '@/types'
 
 export type RadarShapeSlotProps = RadarComposedData & {
   fill?: string
@@ -38,13 +41,9 @@ export type RadarSlots = Pick<LineSlots, 'dot' | 'activeDot' | 'label'> & {
   shape?: (props: RadarShapeSlotProps) => VNodeChild
 }
 
-function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
-  return stroke && stroke !== 'none' ? stroke : fill
-}
-
 const RadarViewProps = {
   dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
-  name: { type: String, default: undefined },
+  name: { type: [String, Number] as PropType<string | number>, default: undefined },
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   fill: { type: String, default: undefined },
@@ -64,6 +63,7 @@ const RadarViewProps = {
     default: undefined,
   },
   activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
+  class: classProp,
 }
 
 const RadarView = defineComponent({
@@ -172,7 +172,7 @@ const RadarView = defineComponent({
       const isClosed = pathD.endsWith('Z')
 
       return (
-        <Layer data-slot="series" class="v-charts-radar">
+        <Layer {...attrs} data-slot="series" class={['v-charts-radar', props.class]}>
           <g class="v-charts-radar-polygon" {...seriesListeners}>
             {slots.shape
               ? slots.shape({
@@ -255,13 +255,11 @@ const RadarView = defineComponent({
       const points = data?.points ?? []
       const isRange = data?.isRange ?? false
 
-      const mainColor = getLegendItemColor(props.stroke, props.fill) ?? props.fill
-
       const activePointsEl = (
         <Layer {...seriesListeners}>
           <ActivePoints
             points={points}
-            mainColor={mainColor}
+            mainColor={mainColor('radar', props)}
             itemDataKey={props.dataKey}
             activeDot={props.activeDot}
             isAnimationActive={props.isAnimationActive}
@@ -311,8 +309,8 @@ const _Radar = defineComponent({
     useChart().legend.entries.register(computed(() => [{
       dataKey: props.dataKey,
       type: props.legendType,
-      color: getLegendItemColor(props.stroke, props.fill),
-      value: props.name ?? String(props.dataKey ?? ''),
+      color: mainColor('radar', props),
+      value: getTooltipNameProp(props.name, props.dataKey) ?? '',
       payload: { ...props },
       inactive: props.hide,
     }]))
@@ -323,10 +321,10 @@ const _Radar = defineComponent({
       settings: {
         dataKey: props.dataKey,
         nameKey: undefined,
-        name: props.name ?? String(props.dataKey ?? ''),
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
-        color: getLegendItemColor(props.stroke, props.fill),
+        color: mainColor('radar', props),
         fill: props.fill,
         stroke: props.stroke,
         unit: '',

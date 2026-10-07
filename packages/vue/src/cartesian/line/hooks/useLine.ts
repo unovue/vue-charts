@@ -9,7 +9,6 @@ import { computeLinePoints } from '@/core/line'
 import { isClipDot } from '@/core/coordinates'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 
-// Line Context 类型定义
 export interface LineContext {
   clipPathId: Ref<string>
   layout: Readonly<Ref<string>>
@@ -26,15 +25,12 @@ export interface LineContext {
   labelData: ShallowRef<ComputedRef<readonly import('@/components/label/types').Data[]> | undefined>
 }
 
-// Injection Key
 const LineContextKey: InjectionKey<LineContext> = Symbol('LineContext')
 
-// 提供 Line Context
 function provideLineContext(context: LineContext) {
   provide(LineContextKey, context)
 }
 
-// 使用 Line Context
 export function useLineContext() {
   const context = inject(LineContextKey)
   if (!context) {
@@ -87,7 +83,6 @@ export function useLine(
 
   const clipDot = computed(() => isClipDot(props.dot))
 
-  // Create Line Context - 保持响应式
   const lineContext: LineContext = {
     clipPathId,
     layout,
@@ -103,7 +98,6 @@ export function useLine(
     labelData: shallowRef(undefined),
   }
 
-  // Provide context
   provideLineContext(lineContext)
 
   return {

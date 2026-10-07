@@ -1,4 +1,4 @@
-import type { InjectionKey, Ref, SVGAttributes, ShallowRef, VNodeChild } from 'vue'
+import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef, VNodeChild } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartPresentation } from '@/model/presentation'
@@ -6,42 +6,28 @@ import type { AreaDotSlotProps, ResolvedAreaProps } from '@/cartesian/area/type'
 import { computed, inject, provide } from 'vue'
 import { useChart } from '@/model/chart'
 import { computeArea } from '@/core/area'
-import { getNormalizedStackId, isClipDot } from '@/core/coordinates'
-import { filterProps } from '@/utils/VueUtils'
+import { getNormalizedStackId } from '@/core/coordinates'
+import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import type { AreaPointItem, ComputedArea } from '@/core/area'
 
-// Area Context 类型定义
 export interface AreaContext {
-  // 基础计算属性
   clipPathId: Ref<string>
   layout: Ref<'horizontal' | 'vertical' | 'centric' | 'radial'>
   points: Ref<ReadonlyArray<AreaPointItem> | undefined>
-
-  // 响应式 props 和 attrs
   props: ResolvedAreaProps
   attrs: SVGAttributes
-
-  // 计算属性
-  dot: unknown
-  clipDot: boolean
-  dotSize: number
-
-  // dot slot for custom rendering
+  /** True when an axis has allowDataOverflow, so the series is clipped to the plot. */
+  needClip: ComputedRef<boolean>
   dotSlot?: (props: AreaDotSlotProps) => VNodeChild
-
   areaData: Readonly<ShallowRef<ComputedArea | undefined>>
-
 }
 
-// Injection Key
 const AreaContextKey: InjectionKey<AreaContext> = Symbol('AreaContext')
 
-// 提供 Area Context
 function provideAreaContext(context: AreaContext) {
   provide(AreaContextKey, context)
 }
 
-// 使用 Area Context
 export function useAreaContext() {
   const context = inject(AreaContextKey)
   if (!context) {
@@ -57,9 +43,8 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
   const localId = useChartId('v-charts-area')
   const clipPathId = computed(() => props.id || localId)
 
-  /**
-   * render only when layout is horizontal or vertical and chartName is AreaChart or ComposedChart
-   */
+  const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
+  // Areas draw only in cartesian layouts of an AreaChart or ComposedChart.
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
     && (chartName.value === 'AreaChart' || chartName.value === 'ComposedChart'),
@@ -110,27 +95,17 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
       bandSize: (type === 'horizontal' ? xAxis.value : yAxis.value).bandSize.value!,
     })
   })
-  // Dot related logic
-  const dot = props.dot
-  const clipDot = isClipDot(dot)
-  const { r = 3, strokeWidth = 2 } = filterProps(dot, false) ?? { r: 3, strokeWidth: 2 }
-  const dotSize = (r as number) * 2 + (strokeWidth as number)
-
-  // Create Area Context - 保持响应式
   const areaContext: AreaContext = {
     clipPathId,
     layout,
     points: computed(() => areaData.value?.points),
     props,
     attrs,
-    dot,
-    clipDot,
-    dotSize,
+    needClip,
     dotSlot,
     areaData,
   }
 
-  // Provide context
   provideAreaContext(areaContext)
 
   return {
@@ -138,5 +113,6 @@ export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dot
     areaData,
     points: areaContext.points,
     clipPathId,
+    needClip,
   }
 }

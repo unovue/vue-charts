@@ -21,6 +21,7 @@ import { getValueByDataKey } from '@/utils/chart'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
+import { entryColor } from '@/core/color'
 
 const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   dataPoint,
@@ -63,7 +64,7 @@ const BarView = defineComponent({
     useSetupTooltipEntry(props, 'bar', data, () => barData.value?.map(bar => bar.tooltipPosition), {
       index: () => props.activeIndex,
       request: index => emit('update:activeIndex', index),
-    }, attrs)
+    })
     const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
     const layout = useChartLayout()
 
@@ -85,7 +86,7 @@ const BarView = defineComponent({
     // Labels ride along with the bars as drawn on this frame and show the new value at once;
     // labels of entering and leaving bars fade with them.
     const labelListData = computed(() => drawn.value.map(({ bar: entry, index, opacity, key }) => {
-      const fill = cellPropsRef.value?.[index]?.fill ?? getValueByDataKey(entry.payload, 'fill') ?? props.fill
+      const fill = entryColor({ cell: cellPropsRef.value[index], row: entry.payload, seriesFill: props.fill, index })
       return {
         x: entry.x,
         y: entry.y,
@@ -95,7 +96,7 @@ const BarView = defineComponent({
         payload: entry.payload,
         parentViewBox: entry.parentViewBox,
         key,
-        ...(fill != null ? { fill } : {}),
+        fill,
         ...(opacity != null && opacity < 1 ? { opacity } : {}),
       }
     }))
@@ -147,7 +148,7 @@ const BarView = defineComponent({
       const cells = extractCellProps(children)
       assignCells(cellPropsRef, cells)
       return teleport((
-        <Layer data-slot="series" class={['v-charts-bar', attrs.class]}>
+        <Layer data-slot="series" class={['v-charts-bar', props.class]}>
           {h(Geometry)}
           {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
         </Layer>

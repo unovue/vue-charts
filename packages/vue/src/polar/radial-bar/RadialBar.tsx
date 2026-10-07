@@ -1,4 +1,5 @@
-import { seriesColor } from '@/utils/theme'
+import { entryColor, mainColor } from '@/core/color'
+import { getTooltipNameProp } from '@/core/tooltip'
 import { getValueByDataKey } from '@/utils/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
@@ -40,10 +41,6 @@ export interface RadialBarSlots {
   shape?: (props: RadialBarShapeSlotProps) => VNodeChild
   label?: (props: LabelListSlotProps) => VNodeChild
   default?: () => VNodeChild
-}
-
-function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
-  return fill
 }
 
 const RadialBarView = defineComponent({
@@ -151,13 +148,14 @@ const RadialBarView = defineComponent({
           (sector.startAngle + sector.endAngle) / 2,
         )
       }),
+      colors: sectors.value?.map(sector => entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index })),
       settings: {
         dataKey: props.dataKey,
         nameKey: undefined,
-        name: props.name ?? String(props.dataKey ?? ''),
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
-        color: getLegendItemColor(props.stroke, props.fill),
+        color: mainColor('radialBar', props),
         fill: props.fill,
         stroke: props.stroke,
         unit: '',
@@ -196,7 +194,6 @@ const RadialBarView = defineComponent({
     provideCartesianLabelListData(computed(() => {
       if (items.value.length === 0)
         return undefined
-      const defaultFill = props.fill
       return items.value.map((item) => {
         const sector = item.value
         const opacity = labelOpacity(item)
@@ -206,7 +203,7 @@ const RadialBarView = defineComponent({
           value: sector.value ?? '',
           payload: sector.payload,
           parentViewBox: undefined,
-          fill: sector.fill ?? defaultFill ?? seriesColor(sector.index),
+          fill: entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index }),
           cx: sector.cx,
           cy: sector.cy,
           innerRadius: sector.innerRadius,
@@ -219,13 +216,12 @@ const RadialBarView = defineComponent({
     }))
 
     const renderSectors = (sectorData: RadialBarDataItem[]) => {
-      const defaultFill = props.fill
       const defaultStroke = props.stroke
       const showBackground = !!props.background
       const backgroundProps = typeof props.background === 'object' ? props.background : {}
 
       return (
-        <Layer data-slot="series" class="v-charts-radial-bar">
+        <Layer {...attrs} data-slot="series" class={['v-charts-radial-bar', props.class]}>
           {showBackground && sectors.value?.map((sector, i) => {
             if (!sector.background)
               return null
@@ -253,7 +249,7 @@ const RadialBarView = defineComponent({
               || sector.startAngle == null || sector.endAngle == null) {
               return null
             }
-            const sectorFill = sector.fill ?? defaultFill ?? seriesColor(sector.index)
+            const sectorFill = entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index })
             const onMouseenter = (event: MouseEvent) => {
               activateSector('hover', sector.index)
               emit('mouseenter', sector, sector.index, event)
@@ -366,7 +362,7 @@ const _RadialBar = defineComponent({
     const chart = useChart()
     const legendPayload = computed(() => radialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
-    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entry.color ?? props.fill ?? seriesColor(index), dataKey: props.dataKey, inactive: props.hide }))))
+    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entryColor({ row: entry.payload, seriesFill: props.fill, index }), dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

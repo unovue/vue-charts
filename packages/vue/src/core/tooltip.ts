@@ -15,7 +15,7 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
 
   const init: Array<TooltipPayloadEntry> = []
 
-  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values }): Array<TooltipPayloadEntry> => {
+  return tooltipPayloadConfigurations.reduce((agg, { dataDefinedOnItem, settings, values, colors }): Array<TooltipPayloadEntry> => {
     const sliced = dataDefinedOnItem
 
     const finalDataKey = settings?.dataKey ?? tooltipAxis?.dataKey
@@ -50,12 +50,11 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
 
     if (Array.isArray(tooltipPayload)) {
       tooltipPayload.forEach((item) => {
+        // Each row (x, y, z of a Scatter point) keeps the series colour for its swatch.
         const newSettings: TooltipEntrySettings = {
           ...settings,
           name: item.name,
           unit: item.unit,
-          color: undefined,
-          fill: undefined,
         }
         agg.push(
           getTooltipEntry({
@@ -69,9 +68,10 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
       })
     }
     else {
+      const color = payloadKey === undefined ? colors?.[activeIndex] : undefined
       agg.push(
         getTooltipEntry({
-          tooltipEntrySettings: settings,
+          tooltipEntrySettings: color === undefined ? settings : { ...settings, color, fill: color },
           dataKey: finalDataKey!,
           payload: tooltipPayload,
           value: values?.[payloadKey ?? activeIndex] ?? getValueByDataKey(tooltipPayload, finalDataKey),

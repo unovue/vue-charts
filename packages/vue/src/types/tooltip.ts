@@ -99,6 +99,8 @@ export type TooltipPayloadConfiguration = {
   pointerItems?: ReadonlyArray<TooltipKeyboardItem>
   /** Hierarchy totals come from layout; parent rows need not store a value. */
   values?: Readonly<Record<string, number>>
+  /** Per-entry swatch colours (Pie sectors, Funnel trapezoids), by item index; see core/color entryColor. */
+  colors?: ReadonlyArray<string | undefined>
 
   // This is the data that is the same for all tooltip payloads, regardless of activeIndex
   settings: TooltipEntrySettings

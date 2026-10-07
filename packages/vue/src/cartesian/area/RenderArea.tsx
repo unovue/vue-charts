@@ -7,7 +7,7 @@ import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
 import type { AreaPointItem } from '@/core/area'
 import { getValueByDataKey } from '@/utils/chart'
-import { isClipDot } from '@/core/coordinates'
+import { isClipDot, shouldRenderDots } from '@/core/coordinates'
 import { Dot } from '@/shape/Dot'
 import { usePointTransition } from '@/animation/usePointTransition'
 import { SweepClip } from '@/animation/SweepClip'
@@ -18,7 +18,7 @@ import { useAreaContext } from './hooks/useArea'
 import { useOffset } from '@/context/chartLayoutContext'
 import { LabelList } from '@/components/label/LabelList'
 
-// 简化的 Dots 组件 - 使用 context
+// The area's dots; series props and slots come from the Area context.
 const Dots = defineComponent({
   name: 'Dots',
   props: {
@@ -32,12 +32,12 @@ const Dots = defineComponent({
   },
   setup(_props) {
     const emit = areaEvents.use()
-    const { props, attrs, dotSlot } = useAreaContext()
+    const { props, attrs, dotSlot, needClip, clipPathId } = useAreaContext()
     const listeners = usePointEvents<AreaPointItem>(emit, () => props.dataKey)
 
     return () => {
       const { points } = _props
-      if (!shouldRenderDots(points!, props.dot!)) {
+      if (!shouldRenderDots(points, props.dot)) {
         return null
       }
       const clipDot = isClipDot(props.dot)
@@ -50,6 +50,7 @@ const Dots = defineComponent({
       return (
         <Layer
           class="v-charts-area-dots"
+          clip-path={needClip.value ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
             points?.map((point, position) => {
@@ -69,12 +70,12 @@ const Dots = defineComponent({
   },
 })
 
-// 简化的 StaticArea 组件 - 使用 context
+// The area shape, its outline and dots, revealed by a sweep on entrance.
 export const StaticArea = defineComponent({
   name: 'StaticArea',
   setup(_, { slots }) {
     const emit = areaEvents.use()
-    const { points, clipPathId, layout, attrs, areaData, props } = useAreaContext()
+    const { points, clipPathId, layout, attrs, areaData, props, needClip } = useAreaContext()
     const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => props.dataKey, () => points.value ?? [])
     const offset = useOffset()
     const chart = useChart()
@@ -141,7 +142,7 @@ export const StaticArea = defineComponent({
           </defs>
           <g clip-path={display.reveal.value < 1 ? `url(#${sweepId})` : undefined}>
             {currentPoints.value && currentPoints.value.length > 1 && (
-              <Layer {...seriesListeners}>
+              <Layer {...seriesListeners} clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
                 <Curve
                   {...curveAttrs}
                   points={currentPoints.value}
@@ -152,7 +153,7 @@ export const StaticArea = defineComponent({
                   stroke="none"
                   class="v-charts-area-area"
                 />
-                {attrs.stroke !== 'none' && (
+                {props.stroke !== 'none' && (
                   <Curve
                     {...curveAttrs}
                     layout={layout.value}
@@ -164,7 +165,7 @@ export const StaticArea = defineComponent({
                     class="v-charts-area-curve"
                   />
                 )}
-                {attrs.stroke !== 'none' && isRange && (
+                {props.stroke !== 'none' && isRange && (
                   <Curve
                     {...curveAttrs}
                     class="v-charts-area-curve"
@@ -190,13 +191,3 @@ export const StaticArea = defineComponent({
     }
   },
 })
-
-function shouldRenderDots(points: ReadonlyArray<AreaPointItem>, dot: unknown): boolean {
-  if (points == null || !points.length) {
-    return false
-  }
-  if (dot) {
-    return true
-  }
-  return points.length === 1
-}

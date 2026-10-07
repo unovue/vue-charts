@@ -16,6 +16,7 @@ import { drawTiming } from '@/animation/motion'
 import { SweepClip } from '@/animation/SweepClip'
 import { useChart } from '@/model/chart'
 import { getValueByDataKey } from '@/utils/chart'
+import { shouldRenderDots } from '@/core/coordinates'
 // Dots component
 const Dots = defineComponent({
   name: 'LineDots',
@@ -47,7 +48,7 @@ const Dots = defineComponent({
 
     return () => {
       const { points } = _props
-      if (!shouldRenderDots(points!, props.dot!)) {
+      if (!shouldRenderDots(points, props.dot)) {
         return null
       }
       const dotObjProps = typeof props.dot === 'object' && props.dot !== null ? props.dot : {}
@@ -183,7 +184,3 @@ export const StaticLine = defineComponent({
     }
   },
 })
-
-function shouldRenderDots(points: ReadonlyArray<LinePointItem>, dot: unknown): boolean {
-  return points != null && points.length > 0 && (!!dot || points.length === 1)
-}

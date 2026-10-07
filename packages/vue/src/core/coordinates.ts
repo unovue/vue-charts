@@ -133,6 +133,11 @@ export function getCateCoordinateOfBar({
   return number != null ? axis.scale(number) - bandSize / 2 + offset : null
 }
 
+/** Dots draw when the `dot` option is on, or always for a single point, which has no line. */
+export function shouldRenderDots(points: readonly unknown[] | undefined, dot: unknown): boolean {
+  return points != null && points.length > 0 && (!!dot || points.length === 1)
+}
+
 export function isClipDot(dot: unknown): boolean {
   if (dot && typeof dot === 'object' && 'clipDot' in dot) {
     return Boolean(dot.clipDot)
