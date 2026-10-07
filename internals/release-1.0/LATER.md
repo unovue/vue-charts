@@ -109,7 +109,8 @@ step covers only part of an item, the step is named. Items marked ✓ were check
 - **P2 Tooltip hover is O(N) per pointer event** (`model/tooltip.ts:308`, `:358`, `:367`): copy and
   scan of all targets on every mousemove. Fix: one computed Map by `(entry, index)`. Not in 4.2. M.
 - **P3 Tooltip API still Redux-shaped** (`tooltip.ts:428`, 49 `parseTooltipIndex`/`String(index)`
-  conversions, `tooltipPayloadSearcher`): `activate(channel, target)`/`clear(channel)` with numeric
+  conversions, ~~`tooltipPayloadSearcher`~~ one path searcher in `chart/shell.ts` since the
+  elegance pass): `activate(channel, target)`/`clear(channel)` with numeric
   indices. Internal transport remains for part B 3.10; D-13 defines public ownership and indexes, not this private API. M.
 - ~~P3 Two controlled Tooltips throw inside a computed~~ done in 3.6: warn once in development; first controlled binding wins.
 - **P3 Plumbing to fold:** 11 chart events relayed through 3 layers (`ChartWrapper.tsx:78`,
@@ -121,7 +122,8 @@ step covers only part of an item, the step is named. Items marked ✓ were check
   `utils/env.ts`, `runtime.ts:97`): one `useRenderPhase()`. Extends the hydration item above. S.
 - **P3 Built-ins:** watcher in `onMounted` around `useResizeObserver` (`ChartWrapper.tsx:66`) →
   `useResizeObserver(() => responsive ? el : null)`; per-chart emitter in computeds (`sync.ts:33`)
-  → a plain const or VueUse `useEventBus`; `useReportScale` measures only on mount. S.
+  → a plain const or VueUse `useEventBus`. ~~`useReportScale` measures only on mount~~ deleted
+  with `layout.scale` in the elegance pass (F15, 1.0-elegance). S.
 - **P3 Three real `any` left** (the 25 in PROGRESS is a text count; 22 are the word "any" in
   comments): `types/base.ts:5` `DataKey<any>` → `DataKey<Row>` in 3.9 typed rows;
   `types/tooltip.ts:93` searcher `T = any` → drop with the Redux-shaped tooltip API (3.6/3.10);
@@ -172,6 +174,75 @@ and are cherry-picked onto `release/1.0` between phase 2 slices. Product items w
 right after phase 2, on the new model.
 
 - **Existing class forwarding defects (phase 4.1 evidence):** Symbols repeats a custom class
-  token; RadialBar does not put the supplied class on its series layer. The former test only
+  token; ~~RadialBar does not put the supplied class on its series layer~~ done in the elegance
+  pass (F5: every series layer gets `props.class`). The former test only
   checked inclusion and the latter only checked that a layer existed. Rendering is unchanged.
   Evidence: `.evidence/release-1.0/phase-4/4.1-tables-final.log` (diagnostic run).
+
+## Elegance review (2026-10-07)
+
+Review: `vccs-elegance.md` (F1–F15), fixed on `release/1.0-elegance` by four area branches
+(model, series, standalone, api). Migration rows and CHANGELOG lines are written.
+
+- ~~F1 Item series identity by dataKey~~ done (series 55e624e): Scatter, RadialBar and Funnel
+  pass their configuration; `findTarget` no longer matches `settings.dataKey`.
+- ~~F2 String and numeric axis ids~~ done (model 745e6c2): `core/axis/key.ts` is the only rule.
+- ~~F3 CohortChart drops pointer events~~ done (standalone 895cf6c).
+- ~~F4 Colour rules in six homes~~ done (series a9ee331): `core/color.ts` `mainColor`/`entryColor`.
+- ~~F5 Series `class`/`stroke` read from attrs~~ done (series a9ee331).
+- ~~F6 Cell event relays and two props derivations~~ done (standalone 9f240ed, 5a0bdf5).
+- ~~F7 Hand-written public props types~~ done (api 8042973).
+- **F8 Volar slot workaround (`_X as typeof _X & { new(): { $slots } }`) not done.** No area owned
+  it. Confirm `typed.ts` still types `<Chart.Bar>` slots with plain `slots: SlotsType`, then
+  export components directly and update the root CLAUDE.md pattern. M.
+- ~~F9 Standalone tooltip payload shapes~~ done (standalone 29c0283).
+- ~~F10 Clip refs always truthy, missing dots clip~~ done (series a9ee331).
+- ~~F11 Label viewBox `!` assertions~~ done (standalone 54da18c).
+- ~~F12 Brush range with three writers~~ done (model e692de9); rule in D-16.
+- ~~F13 `reverseStackOrder` unread, chart `dataKey` unread~~ done (model 296fd39, 7121695).
+- ~~F14 Packaging promises~~ done (api 8161b94).
+- ~~F15 `useReportScale`, `jsx.d.ts`, unread values, stale comments~~ done (model d3b85ae, api 29f0b17, series).
+
+### Skipped in the pass
+
+- **P3 Axis model still exposes grid internals.** `model/axisLayout.ts` builds the grid from
+  `niceTicks`, `realScaleType`, `duplicateDomain`, `categoricalDomain`. `gridAxis` needs
+  `XAxisSettings | YAxisSettings` but `createAxisScale` is generic over `BaseCartesianAxis`; finish
+  by retyping `gridAxis`/`CartesianGrid` so the axis model owns a finished grid value without casts. M.
+- **P3 `chartRoot` is not a single `generateChart(options, props)`.** A generic version needs a cast
+  on `ExtractPropTypes<P>`; the cast-free `chartRoot(options)` spread is used. Rename
+  `chart/generateCategoricalChart.tsx` to `chart/chartRoot.tsx`. S.
+- **P3 Sparkline gaps use `y: null as unknown as number`** (also in the Types item above). Needs
+  `Point.y` (shape/Curve) and `usePointTransition` to accept `null` without changing the gap
+  animation. M.
+- **P3 Name-based Tooltip/Legend special case in `typed.ts`.** Their content props hold a top-level
+  `payload` array that the generic `RowItem` mapping would replace. Map only nested `payload` keys
+  or mark slot payload arrays explicitly. S.
+
+### Follow-ups seen in the pass
+
+- **P3 `TooltipTargetRequest.configuration` optional.** Make it required once Sankey,
+  JourneySankey, Treemap and SunburstChart pass their configuration on activate (JourneySankey
+  still keeps `settings.dataKey: 'value'` for that path); then delete the "no configuration"
+  branch in `findTarget` (`model/tooltip.ts`). S.
+- **P2 Bar drops undeclared attrs.** `BarContext.attrs` is not read by `BarRectangles`, so `data-*`
+  and `aria-*` never reach the DOM. Decide: forward to the series layer like Radar and RadialBar. S.
+- **P2 Item-mode active dots.** Shared `ActivePoints` uses `tooltip.target.index` for every series;
+  with `shared=false` every Line/Area shows an active dot at the hovered index. Use
+  `activeIndexFor(entry)`. S.
+- **P3 Function `dot`/`activeDot` on Line and Area** is accepted at runtime but never called (slots
+  are the render path). Document that slots replace it, or narrow the runtime type. S.
+- **P3 Pie and Funnel tooltip names use `String(dataKey)`.** Confirm against Recharts 3. S.
+- **P3 Two raw axis-id comparisons:** `polar/radial-bar/RadialBar.tsx` (angle/radius peer filter)
+  and `cartesian/axis/YAxis.tsx` (`measured.id === props.yAxisId`). Use `sameAxis`. S.
+- **P3 Treemap `getTooltipIndex`** searches the whole tree on every keyboard-items rebuild (O(n²)).
+  Build a path map once next to `totalsByPath`. S.
+- **P2 Vite consumer fixture lockfile** lacks `unplugin-vue-components`: run
+  `node scripts/check-consumers.mjs --prepare` (network) and commit the lockfile, or the frozen
+  offline install fails. S.
+- **P3 Resolver not proven by check-consumers.** vue-tsc runs before `vite build`, so it checks the
+  checked-in `components.d.ts`, not `VccsResolver`. Check the built bundle for CartesianGrid code,
+  or regenerate the d.ts before the typecheck. S.
+- **P3 `line/type.ts` re-exports `LinePointItem`** for `useLine.ts`; point it at `@/types/line`. S.
+- ~~P3 Flaky `useKeyedTransition` snapping test~~ done on `release/1.0-elegance` (e70b967):
+  Heatmap is imported statically instead of a 5–7 s cold `import('@/index')`.
