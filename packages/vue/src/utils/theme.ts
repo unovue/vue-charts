@@ -12,6 +12,7 @@ export const chartThemeTokens = [
   '--v-charts-tooltip-border',
   '--v-charts-tooltip-foreground',
   '--v-charts-inactive',
+  '--v-charts-label-foreground',
   '--v-charts-series',
   '--v-charts-series-1',
   '--v-charts-series-2',
@@ -21,7 +22,6 @@ export const chartThemeTokens = [
   '--v-charts-series-6',
   '--v-charts-series-7',
   '--v-charts-series-8',
-
   '--v-charts-status-up',
   '--v-charts-status-degraded',
   '--v-charts-status-down',
