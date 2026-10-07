@@ -31,7 +31,7 @@ export const Cursor = defineComponent({
     const presentation = useChartPresentation()
     const offset = presentation.offset
     const layout = presentation.layout
-    const chartName = presentation.name
+    const capabilities = presentation.capabilities
     const tooltipAxisBandSize = presentation.bandSize
     const cursorLayerRef = useCursorLayerRef(null)
     const points = computed(() => getCursorPoints(layout.value, props.coordinate!, offset.value))
@@ -39,8 +39,8 @@ export const Cursor = defineComponent({
       if (!props.cursor || !props.coordinate)
         return null
 
-      const isScatterChart = chartName.value === 'ScatterChart'
-      if (!isScatterChart && props.tooltipEventType !== 'axis')
+      const crossCursor = capabilities.value.cursor === 'cross'
+      if (!crossCursor && props.tooltipEventType !== 'axis')
         return null
 
       const cursor = props.cursor
@@ -50,7 +50,7 @@ export const Cursor = defineComponent({
       const cursorSvgProps = (typeof cursor === 'object') ? cursor : {}
 
       let cursorElement: VNodeChild
-      if (isScatterChart) {
+      if (crossCursor) {
         const at = props.coordinate!
         // A scatter chart is Cartesian; a polar coordinate keeps only its point.
         const { offset: _offset, ...coord } = isPolarCoordinate(at) ? { x: at.x, y: at.y, offset: undefined } : at
@@ -69,7 +69,7 @@ export const Cursor = defineComponent({
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(crossProps) : <Cross {...crossProps} />
       }
-      else if (chartName.value === 'BarChart') {
+      else if (capabilities.value.cursor === 'rect') {
         const bandSize = tooltipAxisBandSize.value ?? 0
         const halfSize = bandSize / 2
         const coord = props.coordinate!

@@ -8,6 +8,7 @@ const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
 const root = chartRoot({
   chartName: 'BarChart',
+  cursor: 'rect',
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: allowedTooltipTypes,
 })

@@ -1,6 +1,8 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { nextTick } from 'vue'
+import { defineComponent, nextTick } from 'vue'
+import { chartRoot } from '@/chart/chartRoot'
+import { cartesianChartProps } from '@/chart/chartProps'
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -376,5 +378,23 @@ describe('lineChart', () => {
     await nextTick()
     expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain('uv')
     expect(container.querySelectorAll('.v-charts-active-dot')).toHaveLength(dots)
+  })
+
+  // Behaviour comes from declared capabilities, not the chart name: a renamed root keeps its
+  // lines and its point scale (the first point sits on the plot edge, not mid-band).
+  it('draws Lines on a point scale in a chart root with another name', async () => {
+    const root = chartRoot({ chartName: 'SalesChart', categoryScale: 'point', series: ['line'] })
+    const SalesChart = defineComponent({ ...root, props: cartesianChartProps, setup: (props, context) => root.setup(props, context) })
+    const rows = [{ name: 'A', uv: 4 }, { name: 'B', uv: 3 }]
+    const { container } = render(() => (
+      <SalesChart width={400} height={300} data={rows} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <XAxis dataKey="name" hide />
+        <YAxis hide />
+        <Line dataKey="uv" isAnimationActive={false} />
+      </SalesChart>
+    ))
+    await nextTick()
+    const curve = container.querySelector('.v-charts-line-curve')
+    expect(curve?.getAttribute('d')).toMatch(/^M0,/)
   })
 })

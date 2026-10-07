@@ -39,15 +39,15 @@ export function useAreaContext() {
 export function useArea(props: ResolvedAreaProps, attrs: SVGAttributes = {}, dotSlot?: (props: AreaDotSlotProps) => VNodeChild) {
   const chart = useChart()
   const layout = useChartLayout()
-  const chartName = useChartPresentation().name
+  const capabilities = useChartPresentation().capabilities
   const localId = useChartId('v-charts-area')
   const clipPathId = computed(() => props.id || localId)
 
   const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
-  // Areas draw only in cartesian layouts of an AreaChart or ComposedChart.
+  // Areas draw only in cartesian layouts of charts that list them (AreaChart, ComposedChart).
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
-    && (chartName.value === 'AreaChart' || chartName.value === 'ComposedChart'),
+    && capabilities.value.series.includes('area'),
   )
 
   const areaSettings = computed(

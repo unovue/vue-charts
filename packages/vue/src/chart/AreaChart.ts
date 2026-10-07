@@ -5,6 +5,8 @@ import { cartesianChartProps } from '@/chart/chartProps'
 
 const root = chartRoot({
   chartName: 'AreaChart',
+  categoryScale: 'point',
+  series: ['area'],
 })
 
 export const AreaChart = forwardsSvgAttributes(defineComponent({

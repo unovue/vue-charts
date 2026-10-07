@@ -55,7 +55,7 @@ export function useChartShell(
   })
   provideTooltipController(tooltip)
   provideChartPresentation({
-    name: computed(() => options.chartName),
+    capabilities: computed(() => options.capabilities),
     layout: computed(() => 'horizontal'),
     width,
     height,

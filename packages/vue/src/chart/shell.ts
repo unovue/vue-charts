@@ -1,6 +1,7 @@
 import type { StyleValue } from 'vue'
 import { get } from 'es-toolkit/compat'
 import type { ChartOptions } from '@/model/options'
+import { defaultChartCapabilities } from '@/model/options'
 import type { TooltipPayloadSearcher } from '@/types/tooltip'
 import type { VueClassValue } from '@/types/common'
 
@@ -12,6 +13,7 @@ const pathPayloadSearcher: TooltipPayloadSearcher = (data, payloadKey) =>
 export function standaloneChartOptions(chartName: string): ChartOptions {
   return {
     chartName,
+    capabilities: defaultChartCapabilities,
     defaultTooltipEventType: 'item',
     validateTooltipEventTypes: ['item'],
     tooltipPayloadSearcher: pathPayloadSearcher,

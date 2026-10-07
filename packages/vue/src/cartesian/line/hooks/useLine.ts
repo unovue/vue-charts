@@ -48,7 +48,7 @@ export function useLine(
 ) {
   const chart = useChart()
   const layout = useChartLayout()
-  const chartName = useChartPresentation().name
+  const capabilities = useChartPresentation().capabilities
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
 
@@ -56,7 +56,7 @@ export function useLine(
 
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
-    && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart'),
+    && capabilities.value.series.includes('line'),
   )
 
   const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))

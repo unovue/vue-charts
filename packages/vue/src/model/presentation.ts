@@ -2,9 +2,10 @@ import type { ComputedRef, InjectionKey } from 'vue'
 import { inject, provide } from 'vue'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { ChartOffsetRequired, LayoutType, Margin } from '@/types'
+import type { ChartCapabilities } from '@/model/options'
 
 export interface ChartPresentation {
-  name: ComputedRef<string>
+  capabilities: ComputedRef<ChartCapabilities>
   layout: ComputedRef<LayoutType>
   width: ComputedRef<number>
   height: ComputedRef<number>

@@ -84,7 +84,7 @@ export function createChart(inputs: ChartInputs): Chart {
     polarLayout,
     size: inputs.size,
     offset: () => geometry.offset.value,
-    name: () => tooltipOptions.value.chartName,
+    categoryScale: () => tooltipOptions.value.capabilities.categoryScale,
     hasBar: () => registries.items.cartesian.entries.value.some(item => item.type === 'bar')
       || registries.items.polar.entries.value.some(item => item.type === 'radialBar'),
     barCategoryGap: () => options.value.barCategoryGap,
@@ -133,7 +133,7 @@ export function provideChart(chart: Chart) {
   provide(chartKey, chart)
   provideTooltipController(chart.tooltip)
   provideChartPresentation({
-    name: computed(() => chart.tooltipOptions.value.chartName),
+    capabilities: computed(() => chart.tooltipOptions.value.capabilities),
     layout: computed(() => chart.layout.value.layout),
     width: chart.width,
     height: chart.height,

@@ -8,6 +8,9 @@ const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis']
 
 const root = chartRoot({
   chartName: 'ComposedChart',
+  title: 'Chart',
+  categoryScale: 'auto',
+  series: ['line', 'area'],
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: allowedTooltipTypes,
 })

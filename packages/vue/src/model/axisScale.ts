@@ -6,6 +6,7 @@ import type { AxisRange, AxisType, BaseCartesianAxis, NumberDomain } from '@/typ
 import type { CategoricalDomain } from '@/types/categorical'
 import type { ChartOffsetRequired, LayoutType } from '@/types/common'
 import type { TicksSettings } from '@/types/axisSettings'
+import type { ChartCapabilities } from '@/model/options'
 import { axisTicks } from '@/core/axis/ticks'
 import { tooltipTicks as getTooltipTicks } from '@/core/tooltip'
 import {
@@ -25,7 +26,7 @@ import { createCategoricalInverse, inverseScaleFunction } from '@/utils/createCa
 
 export interface AxisScaleSources {
   layout: () => LayoutType
-  name: () => string
+  categoryScale: () => ChartCapabilities['categoryScale']
   hasBar: () => boolean
   offset: () => ChartOffsetRequired
 }
@@ -38,7 +39,7 @@ export function createAxisScale<S extends BaseCartesianAxis & Partial<TicksSetti
   appliedValues: ComputedRef<AppliedChartData>,
   range: ComputedRef<AxisRange | undefined>,
 ) {
-  const realScaleType = computed(() => getRealScaleType(settings.value, sources.hasBar(), sources.name()))
+  const realScaleType = computed(() => getRealScaleType(settings.value, sources.hasBar(), sources.categoryScale()))
   const tickSettings = computed(() => ({
     ...settings.value,
     tickCount: settings.value.tickCount,

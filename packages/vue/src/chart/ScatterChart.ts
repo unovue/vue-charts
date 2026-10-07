@@ -8,6 +8,7 @@ const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
 const root = chartRoot({
   chartName: 'ScatterChart',
+  cursor: 'cross',
   defaultTooltipEventType: 'item',
   validateTooltipEventTypes: allowedTooltipTypes,
 })

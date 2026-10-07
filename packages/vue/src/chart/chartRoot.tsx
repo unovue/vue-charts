@@ -1,4 +1,6 @@
 import type { TooltipEventType } from '@/types/tooltip'
+import type { ChartCapabilities } from '@/model/options'
+import { defaultChartCapabilities } from '@/model/options'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideClipPathId, provideRenderPhase } from '@/model/runtime'
 import type { ExtractPropTypes, SetupContext } from 'vue'
@@ -18,20 +20,24 @@ import { provideChartAnimation } from '@/model/animation'
 type CategoricalChartPropsWithOutSvg = ExtractPropTypes<typeof commonChartProps>
   & Partial<ExtractPropTypes<typeof radialChartProps>>
 
-export interface CategoricalChartOptions {
+export interface CategoricalChartOptions extends Partial<ChartCapabilities> {
+  /** Component name; also gives the default accessible title (`BarChart` → "Bar chart"). */
   chartName: string
+  /** Default accessible title, when the name does not give a good one. */
+  title?: string
   defaultTooltipEventType?: TooltipEventType
   validateTooltipEventTypes?: readonly TooltipEventType[]
 }
 
 function createChartSetup({
   chartName,
+  title: chartTitle,
   defaultTooltipEventType = 'axis',
   validateTooltipEventTypes = ['axis'],
+  ...declared
 }: CategoricalChartOptions) {
-  const defaultTitle = chartName === 'ComposedChart'
-    ? 'Chart'
-    : chartName.replace(/Chart$/, ' chart').replace('RadialBar', 'Radial bar')
+  const capabilities: ChartCapabilities = { ...defaultChartCapabilities, ...declared }
+  const defaultTitle = chartTitle ?? chartName.replace(/Chart$/, ' chart').replace('RadialBar', 'Radial bar')
   return function setup(props: CategoricalChartPropsWithOutSvg, { attrs, slots, emit }: SetupContext<typeof chartEmits>) {
     provideChartAnimation(props)
     const {
@@ -73,7 +79,7 @@ function createChartSetup({
             outerRadius: props.outerRadius ?? chartDefaults.outerRadius,
           }
         : null,
-      tooltip: () => ({ chartName, defaultTooltipEventType, validateTooltipEventTypes }),
+      tooltip: () => ({ chartName, capabilities, defaultTooltipEventType, validateTooltipEventTypes }),
     })
     provideChart(chart)
     provideRenderPhase()

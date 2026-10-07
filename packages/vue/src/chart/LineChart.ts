@@ -8,6 +8,8 @@ const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
 const root = chartRoot({
   chartName: 'LineChart',
+  categoryScale: 'point',
+  series: ['line'],
   defaultTooltipEventType: 'axis',
   validateTooltipEventTypes: allowedTooltipTypes,
 })

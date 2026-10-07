@@ -20,7 +20,7 @@ type XorYorZType = AxisType
 export function realScaleType(
   axisConfig: BaseCartesianAxis | undefined,
   hasBar: boolean,
-  chartType: string,
+  categoryScale: 'point' | 'band' | 'auto',
 ): string | undefined {
   if (axisConfig == null) {
     return undefined
@@ -29,10 +29,7 @@ export function realScaleType(
   if (scale === 'auto') {
     if (
       type === 'category'
-      && chartType
-      && (chartType.includes('LineChart')
-        || chartType.includes('AreaChart')
-        || (chartType.includes('ComposedChart') && !hasBar))
+      && (categoryScale === 'point' || (categoryScale === 'auto' && !hasBar))
     ) {
       return 'point'
     }
