@@ -92,6 +92,7 @@ export type GridDash = CartesianGridProps['strokeDasharray']
     <Pie
       data-key="v"
       stroke-dasharray="3 3"
+      :corner-radius="4"
     />
     <Radar
       data-key="v"

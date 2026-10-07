@@ -220,6 +220,7 @@ const PieView = defineComponent({
                     outerRadius={sector.outerRadius}
                     startAngle={animatedStartAngle}
                     endAngle={animatedEndAngle}
+                    cornerRadius={sector.cornerRadius}
                     fill={sector.fill}
                     stroke={stroke}
                   />
@@ -272,6 +273,7 @@ export const Pie = forwardsSvgAttributes(defineComponent({
       startAngle: props.startAngle,
       endAngle: props.endAngle,
       paddingAngle: props.paddingAngle,
+      cornerRadius: props.cornerRadius,
       minAngle: props.minAngle,
       fill: props.fill,
       legendType: props.legendType,

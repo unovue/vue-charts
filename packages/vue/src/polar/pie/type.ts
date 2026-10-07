@@ -19,6 +19,8 @@ export const PieVueProps = {
   startAngle: { type: Number, default: 0 },
   endAngle: { type: Number, default: 360 },
   paddingAngle: { type: Number, default: 0 },
+  /** Rounds the corners of every sector, in px. */
+  cornerRadius: { type: [Number, String] as PropType<number | string>, default: undefined },
   minAngle: { type: Number, default: 0 },
   fill: { type: String, default: undefined },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },

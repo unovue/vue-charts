@@ -222,6 +222,24 @@ describe('pieChart', () => {
       const sectors = container.querySelectorAll('.v-charts-sector')
       expect(sectors.length).toBe(6)
     })
+
+    // The donut recipe rounds slices with corner-radius; a declared prop must still reach every sector.
+    it('rounds the sector corners with cornerRadius', () => {
+      const paths = (cornerRadius?: number) => {
+        const { container, unmount } = render(() => (
+          <PieChart width={400} height={400}>
+            <Pie dataKey="value" isAnimationActive={false} data={data} innerRadius={40} outerRadius={80} paddingAngle={4} cornerRadius={cornerRadius} />
+          </PieChart>
+        ))
+        const result = Array.from(container.querySelectorAll('.v-charts-sector'), sector => sector.getAttribute('d'))
+        unmount()
+        return result
+      }
+      const rounded = paths(4)
+      expect(rounded).toHaveLength(6)
+      expect(rounded.every(d => d?.includes(' A4,4,'))).toBe(true)
+      expect(paths().some(d => d?.includes(' A4,4,'))).toBe(false)
+    })
   })
 
   describe('with Cell children', () => {
