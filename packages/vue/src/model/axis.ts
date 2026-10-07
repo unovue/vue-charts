@@ -32,6 +32,7 @@ import {
   linesDomain,
 } from '@/core/axis/references'
 import { stackDomain as getStackDomain, stackGroups as getStackGroups } from '@/core/axis/stacks'
+import { axisKey } from '@/core/axis/key'
 import { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
 import type { AxisRegistry, ChartRegistries } from './registries'
 
@@ -64,7 +65,7 @@ function createAxis<S extends BaseCartesianAxis>(
   implicit: S,
   readRange: (settings: S, applied: AppliedChartData) => AxisRange,
 ): AxisModel<S> {
-  const settings = computed(() => registry.byId.value.get(String(id)) ?? implicit)
+  const settings = computed(() => registry.byId.value.get(axisKey(id)) ?? implicit)
   const items = computed(() => graphicalItemsSettings(
     sources.items.cartesian.entries.value,
     settings.value,
@@ -119,17 +120,17 @@ function createAxis<S extends BaseCartesianAxis>(
 }
 
 function keyed<V>(scope: EffectScope, build: (id: AxisId) => V) {
-  const cache = new Map<AxisId, V>()
+  const cache = new Map<string, V>()
   onScopeDispose(() => cache.clear())
   return (id: AxisId): V => {
-    const existing = cache.get(id)
+    const existing = cache.get(axisKey(id))
     if (existing !== undefined)
       return existing
     // A child may request the first model; the chart owns its lifetime.
     const model = scope.run(() => build(id))
     if (model === undefined)
       throw new Error('vccs: cannot read an axis after its chart is disposed.')
-    cache.set(id, model)
+    cache.set(axisKey(id), model)
     return model
   }
 }

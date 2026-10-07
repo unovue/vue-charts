@@ -4,6 +4,7 @@ import type { AngleAxisSettings } from '@/types/axisSettings'
 import type { StackOffsetType } from '@/types/common'
 import type { ChartRegistries } from './registries'
 import type { AxisScaleSources } from './axisScale'
+import { axisKey } from '@/core/axis/key'
 import { createAxisScale } from './axisScale'
 import type { createChartData } from './dataRange'
 import type { PolarLayout } from './polar'
@@ -23,7 +24,7 @@ export function createPolarAxis(
   id: AxisId,
 ) {
   const settings = computed<AngleAxisSettings>(() => {
-    const axis = sources.axes[type].byId.value.get(String(id))
+    const axis = sources.axes[type].byId.value.get(axisKey(id))
     if (axis)
       return axis
     if (sources.layout() === 'radial')

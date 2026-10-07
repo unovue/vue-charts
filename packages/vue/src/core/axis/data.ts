@@ -8,21 +8,22 @@ import type {
 import type { AxisId, AxisType, BaseCartesianAxis } from '@/types/axis'
 import type { StackId } from '@/types/tick'
 import { getValueByDataKey } from '@/core/data'
+import { sameAxis } from './key'
 import { isNan, isNumOrStr, isWellBehavedNumber } from '@/utils/validate'
 
 export function itemAxisPredicate(axisType: AxisType, axisId: AxisId) {
   return (item: CartesianGraphicalItemSettings | PolarGraphicalItemSettings) => {
     switch (axisType) {
       case 'xAxis':
-        return 'xAxisId' in item && item.xAxisId === axisId
+        return 'xAxisId' in item && sameAxis(item.xAxisId, axisId)
       case 'yAxis':
-        return 'yAxisId' in item && item.yAxisId === axisId
+        return 'yAxisId' in item && sameAxis(item.yAxisId, axisId)
       case 'zAxis':
-        return 'zAxisId' in item && item.zAxisId === axisId
+        return 'zAxisId' in item && sameAxis(item.zAxisId, axisId)
       case 'angleAxis':
-        return 'angleAxisId' in item && item.angleAxisId === axisId
+        return 'angleAxisId' in item && sameAxis(item.angleAxisId, axisId)
       case 'radiusAxis':
-        return 'radiusAxisId' in item && item.radiusAxisId === axisId
+        return 'radiusAxisId' in item && sameAxis(item.radiusAxisId, axisId)
       default:
         return false
     }

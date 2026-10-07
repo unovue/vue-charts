@@ -124,3 +124,18 @@ it('shares the domain after the first consumer unmounts and stops work on chart 
   expect(combine).not.toHaveBeenCalled()
   expect(scale).not.toHaveBeenCalled()
 })
+
+// A string attribute id and a bound number id must name one axis, not two.
+it('matches a string axis id to a numeric series axis id', async () => {
+  const { container } = render(() => (
+    <LineChart width={400} height={200} data={[{ value: 10 }, { value: 40 }]}>
+      <YAxis yAxisId="1" />
+      <Line dataKey="value" yAxisId={1} isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  await nextTick()
+  const ticks = [...container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')].map(t => t.textContent)
+  expect(ticks.length).toBeGreaterThan(0)
+  expect(ticks).toContain('40')
+})
