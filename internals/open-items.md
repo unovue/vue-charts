@@ -34,10 +34,13 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
   (`cartesian/funnel/Funnel.tsx`), `Symbols` (`cartesian/scatter/Scatter.tsx`), `Text`
   (`components/label/LabelView.tsx`) and `Sector` (`polar/pie/Pie.tsx`). Fix the prop types,
   then remove the override.
-- **P2 Playground recorder times out on `/line-charts`** in some full sweeps; an isolated
+- **P2 `check:play` is load-sensitive.** The playground recorder times out on `/line-charts` in some full sweeps; an isolated
   retry passes. Find whether the capture stalls or the page never settles. In the d414ded run
   on a loaded machine, `/motion` at 1280 px also flagged 30 Tracker cells as "unsettled" with
-  0 px change (only their style string differed at 2.5 s). Rerun on a quiet machine first.
+  0 px change (only their style string differed at 2.5 s). In the 38abb40 release run (load
+  average about 30), `/area` at 1280 px flagged 4 paths as "unsettled" because the entrance clip
+  rectangle was still widening at 2.5 s; `--route=/area` alone passed right after. The
+  2.5 s settle limit runs on the real clock, so load can fail it. Rerun on a quiet machine first.
 - **P3 Firefox does not launch on the maintainer's Mac** (timeout after 30 s, also outside the
   checker). `check:docs` covers Chromium and WebKit.
 - **P3 The docs build logs a landing-query POST 404** but exits 0. Cause unknown.
