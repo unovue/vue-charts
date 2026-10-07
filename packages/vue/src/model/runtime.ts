@@ -148,84 +148,27 @@ export function useClipPathId() {
   return value
 }
 
-const tooltipPortalKey: InjectionKey<Ref<HTMLElement | null>> = Symbol('v-charts-tooltip-portal')
-
-export function providePortalRaw(value: Ref<HTMLElement | null>) {
-  provide(tooltipPortalKey, value)
-  return value
+/**
+ * The elements a chart's parts teleport into: the HTML portal that hosts the tooltip and the
+ * legend, and the SVG cursor, graphical and label layers, painted in that order.
+ */
+export interface ChartLayers {
+  portal: Ref<HTMLElement | null>
+  cursor: Ref<SVGGElement | null>
+  graphical: Ref<SVGGElement | null>
+  label: Ref<SVGGElement | null>
 }
 
-export function usePortal(fallback?: Ref<HTMLElement | null>): Ref<HTMLElement | null>
-export function usePortal(fallback: Ref<HTMLElement | null> | null): Ref<HTMLElement | null> | null
-export function usePortal(fallback?: Ref<HTMLElement | null> | null) {
-  const value = inject(tooltipPortalKey, fallback)
-  if (value === undefined)
-    throw new Error('vccs: tooltip-portal requires a chart runtime.')
-  return value
+const layersKey: InjectionKey<Partial<ChartLayers>> = Symbol('v-charts-layers')
+
+/** Provides layers to the subtree; layers that an outer component provided stay available. */
+export function provideChartLayers(layers: Partial<ChartLayers>) {
+  provide(layersKey, { ...inject(layersKey, {}), ...layers })
 }
 
-const legendPortalKey: InjectionKey<Ref<HTMLElement | null>> = Symbol('v-charts-legend-portal')
-
-export function provideLegendPortalRaw(value: Ref<HTMLElement | null>) {
-  provide(legendPortalKey, value)
-  return value
-}
-
-export function useLegendPortal(fallback?: Ref<HTMLElement | null>): Ref<HTMLElement | null>
-export function useLegendPortal(fallback: Ref<HTMLElement | null> | null): Ref<HTMLElement | null> | null
-export function useLegendPortal(fallback?: Ref<HTMLElement | null> | null) {
-  const value = inject(legendPortalKey, fallback)
-  if (value === undefined)
-    throw new Error('vccs: legend-portal requires a chart runtime.')
-  return value
-}
-
-const cursorLayerKey: InjectionKey<Ref<SVGGElement | null>> = Symbol('v-charts-cursor-layer')
-
-export function provideCursorLayerRef(value: Ref<SVGGElement | null>) {
-  provide(cursorLayerKey, value)
-  return value
-}
-
-export function useCursorLayerRef(fallback?: Ref<SVGGElement | null>): Ref<SVGGElement | null>
-export function useCursorLayerRef(fallback: Ref<SVGGElement | null> | null): Ref<SVGGElement | null> | null
-export function useCursorLayerRef(fallback?: Ref<SVGGElement | null> | null) {
-  const value = inject(cursorLayerKey, fallback)
-  if (value === undefined)
-    throw new Error('vccs: cursor-layer requires a chart runtime.')
-  return value
-}
-
-const graphicalLayerKey: InjectionKey<Ref<SVGGElement | null>> = Symbol('v-charts-graphical-layer')
-
-export function provideGraphicalLayerRef(value: Ref<SVGGElement | null>) {
-  provide(graphicalLayerKey, value)
-  return value
-}
-
-export function useGraphicalLayerRef(fallback?: Ref<SVGGElement | null>): Ref<SVGGElement | null>
-export function useGraphicalLayerRef(fallback: Ref<SVGGElement | null> | null): Ref<SVGGElement | null> | null
-export function useGraphicalLayerRef(fallback?: Ref<SVGGElement | null> | null) {
-  const value = inject(graphicalLayerKey, fallback)
-  if (value === undefined)
-    throw new Error('vccs: graphical-layer requires a chart runtime.')
-  return value
-}
-
-const labelLayerKey: InjectionKey<Ref<SVGGElement | null>> = Symbol('v-charts-label-layer')
-
-export function provideLabelLayerRef(value: Ref<SVGGElement | null>) {
-  provide(labelLayerKey, value)
-  return value
-}
-
-export function useLabelLayerRef(fallback?: Ref<SVGGElement | null>): Ref<SVGGElement | null>
-export function useLabelLayerRef(fallback: Ref<SVGGElement | null> | null): Ref<SVGGElement | null> | null
-export function useLabelLayerRef(fallback?: Ref<SVGGElement | null> | null) {
-  const value = inject(labelLayerKey, fallback)
-  if (value === undefined)
-    throw new Error('vccs: label-layer requires a chart runtime.')
-  return value
+/** The named layer, or `null` outside a chart: the caller then renders in place. */
+export function useChartLayer<Name extends keyof ChartLayers>(name: Name): ChartLayers[Name] | null {
+  return inject(layersKey, {})[name] ?? null
 }
 
 /** Create the chart's SSR-stable clip-path id. */

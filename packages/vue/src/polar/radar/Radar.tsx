@@ -20,7 +20,7 @@ import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
 import { ActivePoints } from '@/cartesian/ActivePoints'
-import { useGraphicalLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
@@ -115,7 +115,7 @@ const RadarView = defineComponent({
     })
 
     const teleport = useLayerTeleport()
-    const graphicalLayerRef = useGraphicalLayerRef()
+    const graphicalLayerRef = useChartLayer('graphical')
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })

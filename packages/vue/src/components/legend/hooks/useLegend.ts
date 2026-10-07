@@ -1,6 +1,6 @@
 import { useChart } from '@/model/chart'
 import { toPx } from '@/utils/style'
-import { useCanMeasureText, useLegendPortal } from '@/model/runtime'
+import { useCanMeasureText, useChartLayer } from '@/model/runtime'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
@@ -19,7 +19,7 @@ export function useLegend(props: LegendInput) {
   const chart = useChart()
   const canMeasureText = useCanMeasureText()
   const contextPayload = chart.legend.payload
-  const legendPortalFromContext = useLegendPortal()
+  const legendPortalFromContext = useChartLayer('portal')
   const margin = useChartPresentation().margin
   const chartWidth = useChartPresentation().width
   const chartHeight = useChartPresentation().height

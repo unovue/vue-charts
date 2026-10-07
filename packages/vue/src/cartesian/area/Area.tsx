@@ -14,7 +14,7 @@ import { StaticArea } from '@/cartesian/area/RenderArea'
 import { ActivePoints } from '@/cartesian/ActivePoints'
 import type { ActivePointsSlots } from '@/cartesian/ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
-import { useGraphicalLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { mainColor } from '@/core/color'
 import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { forwardsSvgAttributes } from '@/utils/attributes'
@@ -41,7 +41,7 @@ const AreaView = defineComponent({
     const { shouldRender, areaData, needClip, clipPathId } = useArea(trackedProps, attrs, slots.dot)
     const activeListeners = useSeriesPointEvents(areaEvents.use(), () => areaData.value?.points ?? [])
     const teleport = useLayerTeleport()
-    const graphicalLayerRef = useGraphicalLayerRef(null)
+    const graphicalLayerRef = useChartLayer('graphical')
 
     return () => {
       if (!shouldRender.value) {

@@ -12,7 +12,7 @@ import { Layer } from '@/container/Layer'
 import { Symbols } from '@/shape/Symbols'
 import type { SymbolType, SymbolsProps } from '@/shape/Symbols'
 import { Curve } from '@/shape/Curve'
-import { useGraphicalLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { LabelList } from '@/components/label/LabelList'
 import type { ScatterPointItem } from '@/types/common'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
@@ -273,7 +273,7 @@ const ScatterView = defineComponent({
       },
     }))
     const teleport = useLayerTeleport()
-    const graphicalLayerRef = useGraphicalLayerRef(null)
+    const graphicalLayerRef = useChartLayer('graphical')
     return () => {
       if (props.hide)
         return null

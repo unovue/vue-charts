@@ -1,7 +1,7 @@
 import type { PropType, VNodeChild } from 'vue'
 import { useChartPresentation } from '@/model/presentation'
 import { Teleport, computed, defineComponent } from 'vue'
-import { useCursorLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import type { TooltipPayload } from '@/types/tooltip'
 import type {
   ChartCoordinate,
@@ -33,7 +33,7 @@ export const Cursor = defineComponent({
     const layout = presentation.layout
     const capabilities = presentation.capabilities
     const tooltipAxisBandSize = presentation.bandSize
-    const cursorLayerRef = useCursorLayerRef(null)
+    const cursorLayerRef = useChartLayer('cursor')
     const points = computed(() => getCursorPoints(layout.value, props.coordinate!, offset.value))
     return () => {
       if (!props.cursor || !props.coordinate)

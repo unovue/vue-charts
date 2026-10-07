@@ -4,7 +4,7 @@ import type { ExtractPropTypes, PropType } from 'vue'
 import { LabelView } from './LabelView'
 import type { LabelListVueProps } from '@/components/label/types'
 import { parseViewBox } from '@/components/label/utils'
-import { useLabelLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { useCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { Layer } from '@/container/Layer'
 import { isNullish } from '@/utils'
@@ -19,7 +19,7 @@ export const LabelListView = defineComponent({
   },
   setup(view, { slots }) {
     const teleport = useLayerTeleport()
-    const labelLayerRef = useLabelLayerRef(null)
+    const labelLayerRef = useChartLayer('label')
     const contextData = useCartesianLabelListData(null)
 
     return () => {

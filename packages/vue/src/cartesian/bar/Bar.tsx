@@ -19,7 +19,7 @@ import { LabelList } from '@/components/label/LabelList'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataItem } from '@/core/errorBar'
 import { getValueByDataKey } from '@/utils/chart'
-import { useGraphicalLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import { entryColor } from '@/core/color'
@@ -140,7 +140,7 @@ const BarView = defineComponent({
       setup: () => renderGeometry,
     }))
     const teleport = useLayerTeleport()
-    const graphicalLayerRef = useGraphicalLayerRef(null)
+    const graphicalLayerRef = useChartLayer('graphical')
     return () => {
       if (!shouldRender.value)
         return null

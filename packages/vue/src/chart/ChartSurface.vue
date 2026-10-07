@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type StyleValue, computed, ref } from 'vue'
 import type { VueClassValue } from '@/types'
-import { provideCursorLayerRef, provideGraphicalLayerRef, provideLabelLayerRef } from '@/model/runtime'
+import { provideChartLayers } from '@/model/runtime'
 
 interface SurfaceProps {
   width: number
@@ -32,13 +32,9 @@ const svgViewBox = computed(() => {
 })
 
 const cursorLayerRef = ref<SVGGElement | null>(null)
-provideCursorLayerRef(cursorLayerRef)
-
 const graphicalLayerRef = ref<SVGGElement | null>(null)
-provideGraphicalLayerRef(graphicalLayerRef)
-
 const labelLayerRef = ref<SVGGElement | null>(null)
-provideLabelLayerRef(labelLayerRef)
+provideChartLayers({ cursor: cursorLayerRef, graphical: graphicalLayerRef, label: labelLayerRef })
 </script>
 
 <template>

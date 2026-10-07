@@ -3,7 +3,7 @@ import { useTooltipController, useTooltipSource } from '@/model/tooltip'
 import type { ChartTransition } from '@/animation/motion'
 import { useChartPresentation } from '@/model/presentation'
 import { Fragment, Teleport, computed, defineComponent, watch } from 'vue'
-import { usePortal } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import type { Formatter, TooltipActiveIndex, TooltipPayload, TooltipPayloadEntry, TooltipTrigger } from '@/types/tooltip'
 import { useTimeoutFn } from '@vueuse/core'
 import type { AxisId } from '@/types/axisSettings'
@@ -183,7 +183,7 @@ export const Tooltip = defineComponent({
     const payload = source.payload
 
     // Portal
-    const tooltipPortalFromContext = usePortal()
+    const tooltipPortalFromContext = useChartLayer('portal')
     const tooltipPortal = computed(() => props.to ?? tooltipPortalFromContext?.value)
 
     // Final states

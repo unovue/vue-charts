@@ -6,7 +6,7 @@ import { useTooltipController } from '@/model/tooltip'
 import type { ChartPointer } from '@/types'
 import { useChartCallbacks } from '@/events/useChartCallbacks'
 import { classProp } from '@/types'
-import { provideChartInView, provideLegendPortalRaw, providePortalRaw } from '@/model/runtime'
+import { provideChartInView, provideChartLayers } from '@/model/runtime'
 import { getChartPointer } from '@/utils/pointer'
 
 export interface WrapperInteractions {
@@ -49,16 +49,11 @@ export const ChartWrapper = defineComponent({
     const callHandler = useChartCallbacks()
     const interactions = props.interactions
 
-    const tooltipPortal = ref<HTMLElement | null>(null)
-    const legendPortal = ref<HTMLElement | null>(null)
-    providePortalRaw(tooltipPortal)
-    provideLegendPortalRaw(legendPortal)
-    const wrapperEl = ref<HTMLDivElement | null>(null)
+    // The wrapper hosts the tooltip and the legend.
+    const wrapperEl = ref<HTMLElement | null>(null)
+    provideChartLayers({ portal: wrapperEl })
     const innerRef = (value: Element | ComponentPublicInstance | null) => {
-      const node = value instanceof HTMLDivElement ? value : null
-      tooltipPortal.value = node
-      legendPortal.value = node
-      wrapperEl.value = node
+      wrapperEl.value = value instanceof HTMLDivElement ? value : null
     }
 
     provideChartInView(wrapperEl)

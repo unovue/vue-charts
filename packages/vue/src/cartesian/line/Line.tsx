@@ -13,7 +13,7 @@ import { StaticLine } from '@/cartesian/line/StaticLine'
 import { ActivePoints } from '@/cartesian/ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
-import { useGraphicalLayerRef } from '@/model/runtime'
+import { useChartLayer } from '@/model/runtime'
 import { mainColor } from '@/core/color'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { forwardsSvgAttributes } from '@/utils/attributes'
@@ -35,7 +35,7 @@ const LineView = defineComponent({
     const { shouldRender, needClip, clipPathId, lineData, points, labelData } = useLine(trackedProps, attrs, slots.shape, slots.dot, slots.label)
     const activeListeners = useSeriesPointEvents(lineEvents.use(), () => lineData.value ?? [])
     const teleport = useLayerTeleport()
-    const graphicalLayerRef = useGraphicalLayerRef(null)
+    const graphicalLayerRef = useChartLayer('graphical')
 
     // LabelList children ride along with the line, like the series' own labels.
     provideCartesianLabelListData(labelData)
