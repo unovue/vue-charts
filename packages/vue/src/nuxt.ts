@@ -1,5 +1,5 @@
 import type { NuxtModule } from 'nuxt/schema'
-import { addComponent, addImports, defineNuxtModule, extendViteConfig } from '@nuxt/kit'
+import { addComponent, addImports, defineNuxtModule, extendViteConfig, getNuxtVersion, isNuxtMajorVersion } from '@nuxt/kit'
 import { componentNames, composableNames } from './componentNames'
 
 export interface ModuleOptions {
@@ -9,10 +9,13 @@ export interface ModuleOptions {
 
 // Keep the declaration portable without importing Nuxt's transitive schema types.
 const module: NuxtModule<ModuleOptions, ModuleOptions> = defineNuxtModule<ModuleOptions>({
-  // Only Nuxt 4 is exercised by the packed consumer check; Nuxt 3 is end-of-life.
-  meta: { name: 'vccs', configKey: 'vccs', compatibility: { nuxt: '>=4.0.0' } },
+  meta: { name: 'vccs', configKey: 'vccs' },
   defaults: { prefix: '' },
-  setup(options) {
+  setup(options, nuxt) {
+    // Only Nuxt 4 is exercised by the packed consumer check; Nuxt 3 is end-of-life. A compatibility
+    // range only warns and skips the module, which ships pages without charts, so fail the build.
+    if (!isNuxtMajorVersion(4, nuxt))
+      throw new Error(`vccs/nuxt needs Nuxt 4, found ${getNuxtVersion(nuxt)}. On Nuxt 3, import components from 'vccs' or use 'vccs/resolver'.`)
     for (const name of componentNames)
       addComponent({ name: options.prefix + name, export: name, filePath: 'vccs' })
     // Composables keep their names: the prefix only applies to components.
