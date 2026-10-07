@@ -34,9 +34,10 @@ palette, which you can change with CSS variables.
 ## Requirements
 
 - Vue `^3.5`
-- [`motion-v`](https://motion.dev/docs/vue) `^2.4` (peer dependency, drives all animation)
+- [`motion-v`](https://motion.dev/docs/vue) `^2.4`, a required peer dependency that drives all animation
 - An ESM build setup (Vite, Nuxt, or another bundler). vccs ships ES modules only.
-- For the Nuxt module: Nuxt `^4`.
+- For the Nuxt module (`vccs/nuxt`): Nuxt `^4`
+- For the resolver (`vccs/resolver`): [`unplugin-vue-components`](https://github.com/unplugin/unplugin-vue-components) in your own dev dependencies
 
 ## Install
 
@@ -44,11 +45,12 @@ palette, which you can change with CSS variables.
 pnpm add vccs motion-v
 ```
 
-npm and yarn work the same way: `npm install vccs motion-v`.
+npm, yarn and bun work the same way: `npm install vccs motion-v`.
 
 ### Nuxt
 
-Add the module. It registers every component, so you can use them without imports.
+Add the module. It registers every component and composable, so you can use them without
+imports. Import types and `defineChartComponents` from `vccs`.
 
 ```ts
 // nuxt.config.ts
