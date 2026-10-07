@@ -37,6 +37,13 @@ describe('chart accessibility', () => {
     expect(wrapper.getAttribute('tabindex')).toBe(accessibilityLayer ? '0' : null)
   })
 
+  // Catches a declared `role` prop that never reached the element carrying the chart role.
+  it.each([true, false])('applies a user role with accessibilityLayer=%s', (accessibilityLayer) => {
+    const { container } = render(() => chart({ role: 'figure', accessibilityLayer }))
+    const target = accessibilityLayer ? container.querySelector('.v-charts-wrapper')! : container.querySelector('svg')!
+    expect(target.getAttribute('role')).toBe('figure')
+  })
+
   // Catches pointer announcements and stale pending announcements after a pointer takes over.
   it('debounces formatted keyboard announcements and stays silent for pointer hover', async () => {
     mockGetBoundingClientRect({ width: 500, height: 300 })

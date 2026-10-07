@@ -22,6 +22,8 @@ export const chartWrapperProps = {
   title: String,
   desc: String,
   descriptionId: String,
+  /** Overrides the default `application` role of an accessible chart. */
+  role: String,
   tabIndex: Number,
   class: classProp,
   height: { type: Number, required: true },
@@ -173,7 +175,7 @@ export const ChartWrapper = defineComponent({
           !props.interactive && { pointerEvents: 'none' },
           focusVisible.value && { outline: '2px solid var(--v-charts-focus, Highlight)', outlineOffset: '2px' },
         ]}
-        role={props.accessibilityLayer ? 'application' : undefined}
+        role={props.accessibilityLayer ? props.role ?? 'application' : undefined}
         tabindex={props.accessibilityLayer ? props.tabIndex ?? 0 : undefined}
         aria-label={props.accessibilityLayer ? props.title : undefined}
         aria-describedby={props.accessibilityLayer ? props.descriptionId ?? (props.desc ? descriptionId : undefined) : undefined}

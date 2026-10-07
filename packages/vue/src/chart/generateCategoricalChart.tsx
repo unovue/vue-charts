@@ -91,7 +91,7 @@ function createChartSetup({
         }
         return (
           <Fragment>
-            <ChartSurface {...attrs} class={props.class} style={props.style} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
+            <ChartSurface {...attrs} class={props.class} style={props.style} {...{ role: props.accessibilityLayer ? undefined : props.role ?? 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
               <ClipPath clipPathId={clipPathId} />
               {slots.default?.()}
             </ChartSurface>
@@ -123,6 +123,7 @@ function createChartSetup({
           <ChartsWrapper
             accessibilityLayer={props.accessibilityLayer}
             tabIndex={props.tabIndex}
+            role={props.role}
             title={title ?? defaultTitle}
             descriptionId={desc ? descriptionId : undefined}
             isResponsive={isResponsive.value}
@@ -140,7 +141,7 @@ function createChartSetup({
               <ChartSurface
                 {...{
                   ...svgAttributes,
-                  'role': props.accessibilityLayer ? undefined : 'img',
+                  'role': props.accessibilityLayer ? undefined : props.role ?? 'img',
                   'aria-label': props.accessibilityLayer ? undefined : title ?? defaultTitle,
                   'aria-describedby': desc ? descriptionId : undefined,
                 }}
