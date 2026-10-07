@@ -26,6 +26,7 @@ import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import { RadialBarVueProps } from './type'
 import type { LabelListSlotProps } from '@/components/label/types'
 import { forwardsSvgAttributes } from '@/utils/attributes'
+import { sameAxis } from '@/core/axis/key'
 
 export type RadialBarShapeSlotProps = RadialBarDataItem & {
   innerRadius: number
@@ -82,8 +83,8 @@ const RadialBarView = defineComponent({
     ) ?? props.maxBarSize ?? chart.options.value.maxBarSize ?? 0)
     const visibleBars = computed(() => chart.items.polar.entries.value.filter(item =>
       item.type === 'radialBar' && !item.hide && (chart.inputs.layout() === 'centric'
-        ? item.angleAxisId === props.angleAxisId
-        : item.radiusAxisId === props.radiusAxisId),
+        ? sameAxis(item.angleAxisId, props.angleAxisId)
+        : sameAxis(item.radiusAxisId, props.radiusAxisId)),
     ))
     // Polar charts retain their existing percentage-size fallback (no total category size).
     const sizeList = computed(() => barSizeList(visibleBars.value, chart.options.value.barSize))

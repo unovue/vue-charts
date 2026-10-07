@@ -7,6 +7,9 @@ import {
   BarChart,
   Line,
   LineChart,
+  PolarRadiusAxis,
+  RadialBar,
+  RadialBarChart,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -138,4 +141,26 @@ it('matches a string axis id to a numeric series axis id', async () => {
   const ticks = [...container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')].map(t => t.textContent)
   expect(ticks.length).toBeGreaterThan(0)
   expect(ticks).toContain('40')
+})
+
+// RadialBars on the same axes share one band, whether an id is a string attribute or a number.
+it('stacks RadialBars side by side when one axis id is a string and one a number', async () => {
+  const data = [{ name: 'A', uv: 10, pv: 20 }, { name: 'B', uv: 30, pv: 15 }]
+  const sectors = async (first: string | number, second: string | number) => {
+    const { container, unmount } = render(() => (
+      <RadialBarChart width={400} height={400} data={data}>
+        <PolarRadiusAxis radiusAxisId={1} dataKey="name" type="category" />
+        <RadialBar dataKey="uv" radiusAxisId={first} isAnimationActive={false} />
+        <RadialBar dataKey="pv" radiusAxisId={second} isAnimationActive={false} />
+      </RadialBarChart>
+    ))
+    await nextTick()
+    await nextTick()
+    const paths = [...container.querySelectorAll('.v-charts-radial-bar .v-charts-sector')].map(path => path.getAttribute('d'))
+    unmount()
+    return paths
+  }
+  const numeric = await sectors(1, 1)
+  expect(numeric.length).toBeGreaterThan(1)
+  expect(await sectors('1', 1)).toEqual(numeric)
 })

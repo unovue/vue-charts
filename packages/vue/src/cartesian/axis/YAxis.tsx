@@ -12,6 +12,7 @@ import { AxisVueProps } from './AxisProps'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
 import { forwardsSvgAttributes } from '@/utils/attributes'
+import { axisKey } from '@/core/axis/key'
 
 // Implementation of the YAxis rendering logic
 const YAxisImpl = defineComponent({
@@ -129,10 +130,10 @@ export const YAxis = forwardsSvgAttributes(defineComponent({
   inheritAttrs: false,
   slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
-    const measured = shallowRef<{ id: string | number, width: number, history: number[] }>()
+    const measured = shallowRef<{ id: string, width: number, history: number[] }>()
 
     function updateWidth(width: number) {
-      const previous = measured.value?.id === props.yAxisId ? measured.value : undefined
+      const previous = measured.value?.id === axisKey(props.yAxisId) ? measured.value : undefined
       if (previous?.width === width)
         return
       const history = previous?.history ?? []
@@ -141,12 +142,12 @@ export const YAxis = forwardsSvgAttributes(defineComponent({
         && Math.abs(width - history[0]!) <= 1) {
         return
       }
-      measured.value = { id: props.yAxisId, width, history: [...history, width].slice(-3) }
+      measured.value = { id: axisKey(props.yAxisId), width, history: [...history, width].slice(-3) }
     }
     const settings = computed<YAxisSettings>(() => ({
       ...props,
       id: props.yAxisId,
-      width: props.width === 'auto' && measured.value?.id === props.yAxisId
+      width: props.width === 'auto' && measured.value?.id === axisKey(props.yAxisId)
         ? measured.value.width
         : props.width,
     }))
