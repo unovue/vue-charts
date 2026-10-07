@@ -9,58 +9,22 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
 
 ## Product
 
-- **P2 Bar drops undeclared attrs.** `BarRectangles` does not read `BarContext.attrs`, so
-  `data-*` and `aria-*` on `<Bar>` never reach the DOM. Forward them to the series layer, as
-  Radar and RadialBar do.
-- **P2 Item-mode active dots.** The shared `ActivePoints` uses `tooltip.target.index` for every
-  series. With `shared=false`, every Line and Area shows an active dot at the hovered index.
-  Use `activeIndexFor(entry)`.
 - **P2 Standalone charts report 0×0 geometry.** `usePlotArea`, `useChartWidth` and
   `useChartHeight` return 0 inside `ChartShell` charts, because `ChartPresentation` repeats
   `Chart` fields. One source per field, and a narrower presentation for shell charts.
 - **P2 Page startup blocks the first frames on the docs site.** Docs Shiki WASM and Nuxt
   hydration cause 55–95 ms long tasks, so `pnpm lab seen` marks some rows unreliable. No library
   cause was found.
-- **P3 Function `dot`/`activeDot` on Line and Area** is accepted at runtime but never called
-  (slots are the render path). Document that slots replace it, or narrow the runtime type.
-- **P3 Pie and Funnel tooltip names use `String(dataKey)`** (`polar/pie/Pie.tsx`,
-  `cartesian/funnel/Funnel.tsx`). Confirm against Recharts 3.
 - **P3 Symbols repeats a custom class token** on its root element.
 
 ## Code
 
-- **P2 Behavior keyed on chart-name strings** (`core/axis/scale.ts`,
-  `components/tooltip/Cursor.tsx`, `cartesian/line/hooks/useLine.ts`,
-  `cartesian/area/hooks/useArea.ts`). A wrapped or renamed chart changes its scale and cursor.
-  Put typed capabilities (`categoryScale`, `cursor`) in the chart definition.
-- **P2 Tooltip hover is O(N) per pointer event** (`model/tooltip.ts`): every mousemove copies
-  and scans all targets. Use one computed `Map` keyed by entry and index.
-- **P3 Hydration detection reads `vnode.el`, a Vue internal** (`model/runtime.ts`,
-  `hooks/deferredView.ts`). The standard "open one frame after mount" pattern changed entrance
-  geometry, so the internal read stays, guarded by a public hydration test. Fold the two copies
-  into one `useRenderPhase()`, and switch when Vue makes a hydration hook public.
-- **P3 Two Surface components** (`chart/ChartSurface.vue` and `container/Surface.tsx`). Merge
-  them into one.
-- **P3 Polar registration is written by hand four times** (Pie, Radar, RadialBar, Funnel).
-  Extract `useSetupPolarItem` with a narrow legend payload.
-- **P3 `ChartWrapper` starts `useResizeObserver` inside a watcher.** Use
-  `useResizeObserver(() => responsive ? el : null)`.
+- **P3 Hydration detection reads `vnode.el`, a Vue internal** (`isHydrating` in
+  `model/runtime.ts`, the only reader). The standard "open one frame after mount" pattern
+  changed entrance geometry, so the read stays, guarded by the auto-width hydration test.
+  Switch when Vue makes a hydration hook public.
 - **P3 Axis model exposes grid internals** (`model/axisLayout.ts`). Retype `gridAxis` and
   `CartesianGrid` so the axis model owns a finished grid value.
-- **P3 `chartRoot` lives in `chart/generateCategoricalChart.tsx`.** Rename the file to
-  `chart/chartRoot.tsx`.
-- **P3 Sparkline gaps use `null as unknown as number`** (`chart/Sparkline.tsx`). `Point.y` and
-  `usePointTransition` must accept `null` without changing the gap animation.
-- **P3 Name-based Tooltip and Legend case in `typed.ts`.** Map only nested `payload` keys, or
-  mark slot payload arrays explicitly.
-- **P3 `TooltipTargetRequest.configuration` is optional** (`types/tooltip.ts`). Make it
-  required once Sankey, JourneySankey, Treemap and SunburstChart pass it, then delete the
-  "no configuration" branch in `model/tooltip.ts`.
-- **P3 Raw axis-id comparisons** in `polar/radial-bar/RadialBar.tsx` and
-  `cartesian/axis/YAxis.tsx`. Use `sameAxis`.
-- **P3 Treemap `getTooltipIndex` searches the whole tree** for each node (O(n²)). Build a path
-  map once next to `totalsByPath`.
-- **P3 `cartesian/line/type.ts` re-exports `LinePointItem`.** Import it from `@/types/line`.
 
 ## Checks and tooling
 

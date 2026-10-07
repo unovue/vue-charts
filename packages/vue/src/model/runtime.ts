@@ -103,7 +103,7 @@ export function isServerRender(): boolean {
  * True while Vue hydrates this component: Vue assigns the existing DOM node to the vnode before
  * setup runs. That `el` field is Vue internal state; this is its only reader. The standard pattern
  * (open the gate one frame after mount) changed entrance geometry, and the auto-width hydration
- * test (53eed3f) fails without this check (internals/release-1.0/LATER.md). Call during setup.
+ * test (53eed3f) fails without this check (see internals/open-items.md). Call during setup.
  */
 export function isHydrating(): boolean {
   return getCurrentInstance()?.vnode.el != null
