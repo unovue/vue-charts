@@ -11,7 +11,8 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
-import { CellGridLayer, type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
 import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay<Row = unknown> {

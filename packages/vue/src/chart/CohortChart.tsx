@@ -6,7 +6,8 @@ import { type PropType, type SlotsType, type VNode, computed, defineComponent } 
 import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import type { StandaloneChartProps } from './directChartTypes'
-import { type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
+import type { CellGridSlots } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
 import { type HeatmapCell, type HeatmapKey, HeatmapView } from './Heatmap'
 
 export interface CohortCell<Row = unknown> {

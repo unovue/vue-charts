@@ -11,7 +11,8 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
-import { CellGridLayer, type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
 import { type GridCell, cellColorScale } from './cellGridUtils'
 
 export type HeatmapKey = string | number
