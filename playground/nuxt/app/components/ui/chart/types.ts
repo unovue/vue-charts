@@ -1,6 +1,6 @@
 import type { Component } from 'vue'
 
-export interface ChartConfigItem {
+interface ChartConfigItem {
   label?: string
   icon?: Component
   color?: string

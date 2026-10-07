@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // The motion report records videos with the system ffmpeg.
+  "ignoreBinaries": ["ffmpeg"],
+  // bench.mjs resolves these aliases when it bundles scripts/fixtures/bench.mjs with esbuild.
+  "ignoreUnresolved": ["#bench-library", "#bench-verdict", "#bench-motion"],
+  "workspaces": {
+    ".": {
+      // Release checks are command-line entry points (see VERIFY.md); their tests run with node --test.
+      // check-a11y and bench load the fixtures and the client script at runtime.
+      "entry": ["scripts/*.mjs", "scripts/a11y/client.mjs", "scripts/a11y/fixture.mjs", "scripts/fixtures/bench.mjs"],
+      "project": ["scripts/**/*.{mjs,ts,vue}"],
+      // check-consumers copies these apps into temporary directories and installs them there.
+      "ignore": ["scripts/fixtures/consumers/**"],
+      // CLIs run through `pnpm exec` in check-package.mjs; antfu's ESLint config loads import-x.
+      "ignoreDependencies": ["@arethetypeswrong/cli", "publint", "eslint-plugin-import-x", "axe-core"]
+    },
+    "packages/vue": {
+      "project": ["src/**/*.{ts,tsx,vue}"],
+      "ignore": ["src/test/**"],
+      "includeEntryExports": false
+    },
+    "docs": {
+      // Nuxt auto-imports components, and MDC `::chart-demo{src}` loads the demos at runtime.
+      "entry": ["app/components/**/*.vue", "app/charts/**/*.vue", "app/utils/*.ts"]
+    },
+    "playground/nuxt": {
+      // Nuxt auto-imports components; the shadcn-vue barrels re-export them for explicit imports.
+      "entry": ["app/components/**/*.vue", "app/components/ui/**/index.ts"]
+    }
+  }
+}

@@ -44,7 +44,6 @@
     "@types/d3": "^7.4.3",
     "@types/node": "^22.5.3",
     "@vitejs/plugin-vue": "^6.0.0",
-    "@vitejs/plugin-vue-jsx": "^5.0.0",
     "@vitest/coverage-istanbul": "^4.1.0",
     "@vue/test-utils": "^2.4.4",
     "@vue/tsconfig": "^0.5.1",

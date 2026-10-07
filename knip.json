@@ -1,9 +1,0 @@
-{
-  "workspaces": {
-    "packages/vue": {
-      "project": ["src/**/*.{ts,tsx,vue}"],
-      "ignore": ["src/**/__tests__/**", "src/test/**", "test/fixtures/**"],
-      "includeEntryExports": false
-    }
-  }
-}
