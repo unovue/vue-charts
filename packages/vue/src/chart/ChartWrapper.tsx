@@ -38,7 +38,6 @@ export const ChartWrapper = defineComponent({
   props: {
     ...chartWrapperProps,
     interactions: { type: Object as PropType<WrapperInteractions>, required: true },
-    onWrapper: Function as PropType<(node: HTMLDivElement | null) => void>,
   },
   inheritAttrs: false,
   emits: { ...chartEmits, resize: (_width: number, _height: number) => true },
@@ -55,7 +54,6 @@ export const ChartWrapper = defineComponent({
     const wrapperEl = ref<HTMLDivElement | null>(null)
     const innerRef = (value: Element | ComponentPublicInstance | null) => {
       const node = value instanceof HTMLDivElement ? value : null
-      props.onWrapper?.(node)
       tooltipPortal.value = node
       legendPortal.value = node
       wrapperEl.value = node

@@ -3,7 +3,6 @@ import { defineComponent } from 'vue'
 import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useChartInteractions } from '@/events/useChartInteractions'
 import { useSynchronisedEventsFromOtherCharts } from '@/events/sync'
-import { useReportScale } from '@/hooks/useReportScale'
 import { ChartWrapper, chartWrapperProps } from './ChartWrapper'
 
 export const ChartsWrapper = defineComponent({
@@ -14,14 +13,12 @@ export const ChartsWrapper = defineComponent({
   setup(props, { attrs, slots, emit }) {
     const interactions = useChartInteractions()
     useSynchronisedEventsFromOtherCharts(useChart())
-    const scale = useReportScale()
     return () => (
       <ChartWrapper
         {...attrs}
         {...props}
         {...chartListeners(emit)}
         interactions={interactions}
-        onWrapper={(node) => { scale.value = node }}
         onResize={(width, height) => emit('resize', width, height)}
       >
         {slots}

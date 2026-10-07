@@ -40,7 +40,7 @@ export function createChartData(
     return range === 'all' ? chartData : chartData?.slice(dataStartIndex, dataEndIndex + 1)
   }
 
-  // React tooltip payloads keep empty item arrays and slice item-owned data too.
+  // Recharts parity: tooltip payloads keep empty item arrays and slice item-owned data too.
   function tooltipData(itemData: unknown): unknown {
     const { chartData, dataStartIndex, dataEndIndex } = state.value
     const data = itemData ?? chartData

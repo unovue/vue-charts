@@ -5,5 +5,4 @@ export interface ChartLayoutState {
   width: number
   height: number
   margin: Margin
-  scale: number
 }

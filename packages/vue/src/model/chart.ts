@@ -13,7 +13,7 @@ import { createChartLegend } from '@/model/legend'
 import type { ChartRegistries } from './registries'
 import { createRegistries } from './registries'
 import type { ComputedRef, InjectionKey } from 'vue'
-import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
+import { computed, getCurrentScope, inject, provide } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { ChartData } from '@/types/chartData'
@@ -48,7 +48,6 @@ export interface Chart extends ChartRegistries, ChartGeometry {
   readonly tooltipOptions: ComputedRef<ChartOptions>
   readonly brush: ReturnType<typeof createChartBrush>
   readonly legend: ReturnType<typeof createChartLegend>
-  setScale: (scale: number) => void
 }
 
 const chartKey: InjectionKey<Chart> = Symbol('vccs-chart')
@@ -58,22 +57,16 @@ export function createChart(inputs: ChartInputs): Chart {
   if (!scope)
     throw new Error('vccs: createChart must run inside a chart scope.')
 
-  const scale = shallowRef(1)
   const eventEmitter = Symbol('vccs-chart-emitter')
   const data = useTrackedData(inputs.data)
   const layout = computed(() => ({
     layout: inputs.layout(),
     ...inputs.size(),
     margin: { ...inputs.margin() },
-    scale: scale.value,
   }))
   const options = computed(inputs.options)
   const polar = computed(inputs.polar)
   const tooltipOptions = computed(() => ({ ...inputs.tooltip(), eventEmitter }))
-
-  function setScale(value: number) {
-    scale.value = value
-  }
 
   const registries = createRegistries()
   const brush = createChartBrush()
@@ -130,7 +123,6 @@ export function createChart(inputs: ChartInputs): Chart {
     options,
     polar,
     tooltipOptions,
-    setScale,
     brush,
     legend,
     ...registries,
