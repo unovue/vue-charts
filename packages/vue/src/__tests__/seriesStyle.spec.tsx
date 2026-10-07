@@ -133,14 +133,22 @@ describe('series class and attributes', () => {
     expect(container.querySelector('.v-charts-area-curve')).toBeNull()
   })
 
-  it('radar forwards attributes to its series layer', async () => {
+  // Undeclared attributes such as data-* and aria-* reach the series layer.
+  it.each([
+    { name: 'Bar', Chart: BarChart, Item: Bar },
+    { name: 'Radar', Chart: RadarChart, Item: Radar },
+    { name: 'RadialBar', Chart: RadialBarChart, Item: RadialBar },
+  ])('$name forwards attributes to its series layer', async ({ Chart, Item }) => {
     const { container } = render(() => (
-      <RadarChart width={500} height={300} data={data}>
+      <Chart width={500} height={300} data={data}>
+        <XAxis dataKey="name" />
         <PolarAngleAxis dataKey="name" />
-        <Radar dataKey="value" data-series="radar" isAnimationActive={false} />
-      </RadarChart>
+        <Item dataKey="value" data-testid="series" aria-label="Revenue" isAnimationActive={false} />
+      </Chart>
     ))
     await nextTick()
-    expect(container.querySelector('[data-series="radar"]')?.getAttribute('data-slot')).toBe('series')
+    const series = container.querySelector('[data-testid="series"]')
+    expect(series?.getAttribute('data-slot')).toBe('series')
+    expect(series?.getAttribute('aria-label')).toBe('Revenue')
   })
 })

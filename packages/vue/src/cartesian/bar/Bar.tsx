@@ -61,7 +61,7 @@ const BarView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, needClip, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, attrs, view.settings, slots.shape, slots.activeBar)
+    const { shouldRender, needClip, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, view.settings, slots.shape, slots.activeBar)
     const emit = barEvents.use()
     useSetupTooltipEntry(props, 'bar', data, () => barData.value?.map(bar => bar.tooltipPosition), {
       index: () => props.activeIndex,
@@ -149,7 +149,7 @@ const BarView = defineComponent({
       const cells = extractCellProps(children)
       assignCells(cellPropsRef, cells)
       return teleport((
-        <Layer data-slot="series" class={['v-charts-bar', props.class]}>
+        <Layer {...attrs} data-slot="series" class={['v-charts-bar', props.class]}>
           {h(Geometry)}
           {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
         </Layer>

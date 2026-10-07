@@ -1,6 +1,6 @@
 import type { BarSlots, ResolvedBarProps } from '../type'
 import { computed, inject, provide, shallowRef } from 'vue'
-import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
+import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { sameAxis } from '@/core/axis/key'
 import { useChartLayout } from '@/context/chartLayoutContext'
@@ -15,7 +15,6 @@ export interface BarContext {
   clipPathId: string
   layout: Ref<'horizontal' | 'vertical' | 'centric' | 'radial'>
   props: ResolvedBarProps
-  attrs: SVGAttributes
   data: Readonly<ShallowRef<readonly BarRectangleItem[] | undefined>>
   shapeSlot?: BarSlots['shape']
   activeBarSlot?: BarSlots['shape']
@@ -53,7 +52,6 @@ export function useBarContext(fallback?: BarContext | null) {
 
 export function useBar(
   props: ResolvedBarProps,
-  attrs: SVGAttributes,
   settings: Readonly<Ref<CartesianGraphicalItemSettings>>,
   shapeSlot?: BarSlots['shape'],
   activeBarSlot?: BarSlots['activeBar'],
@@ -132,7 +130,6 @@ export function useBar(
     clipPathId,
     layout,
     props,
-    attrs,
     data: rects,
     shapeSlot,
     activeBarSlot,
