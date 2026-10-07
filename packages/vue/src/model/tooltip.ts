@@ -216,6 +216,47 @@ export function createTooltip(inputs: TooltipInputs) {
   }))
   const targets = computed(() => eventType.value === 'axis' ? axisTargets.value : itemTargets.value)
 
+  // Pointer events look targets up in maps built when the targets change, instead of copying
+  // and scanning every target on each event. The first target wins, as a scan would find it.
+  const lookup = computed(() => {
+    const byIndex = new Map<TooltipPayloadConfiguration, Map<number, Target>>()
+    const byIdentity = new Map<Entry | undefined, Map<unknown, Target>>()
+    const anyByIdentity = new Map<unknown, Target>()
+    for (const item of [...itemTargets.value, ...pointerTargets.value]) {
+      if (item.entry?.value)
+        setFirst(inner(byIndex, item.entry.value), item.index, item)
+      setFirst(inner(byIdentity, item.entry), item.identity, item)
+      setFirst(anyByIdentity, item.identity, item)
+    }
+    const axisByIdentity = new Map<unknown, Target>()
+    for (const item of axisTargets.value)
+      setFirst(axisByIdentity, item.identity, item)
+    return { byIndex, byIdentity, anyByIdentity, axisByIdentity }
+  })
+  const positionOf = computed(() => new Map(targets.value.map((target, position) => [target, position])))
+
+  function inner<K, I>(map: Map<K, Map<I, Target>>, key: K) {
+    let found = map.get(key)
+    if (!found)
+      map.set(key, found = new Map())
+    return found
+  }
+
+  function setFirst<K>(map: Map<K, Target>, key: K, target: Target) {
+    if (!map.has(key))
+      map.set(key, target)
+  }
+
+  /** The item or pointer target with this series and identity. */
+  function itemTarget(wanted: Pick<Target, 'entry' | 'identity'>) {
+    return lookup.value.byIdentity.get(wanted.entry)?.get(wanted.identity)
+  }
+
+  function positionIn(candidate: Target | undefined) {
+    const position = candidate ? positionOf.value.get(candidate) : undefined
+    return position ?? null
+  }
+
   function positional(index: TooltipActiveIndex | undefined, candidates = targets.value) {
     return index === undefined || index === null || !Number.isSafeInteger(index) || index < 0
       ? undefined
@@ -231,9 +272,10 @@ export function createTooltip(inputs: TooltipInputs) {
       return positional(controlled.value)
     const current = selection.value
     if (current) {
-      const candidates = eventType.value === 'item' ? [...itemTargets.value, ...pointerTargets.value] : axisTargets.value
-      const candidate = candidates.find(item => item.identity === current.target.identity
-        && (eventType.value === 'axis' || !current.target.entry || item.entry === current.target.entry))
+      const { identity, entry } = current.target
+      const candidate = eventType.value === 'axis'
+        ? lookup.value.axisByIdentity.get(identity)
+        : entry ? itemTarget(current.target) : lookup.value.anyByIdentity.get(identity)
       const modelIndex = candidate?.entry?.value?.model?.index()
       if (modelIndex !== undefined)
         return positional(modelIndex, itemTargets.value.filter(item => item.entry === candidate?.entry))
@@ -241,14 +283,14 @@ export function createTooltip(inputs: TooltipInputs) {
     }
     return current === null ? undefined : positional(settings.value.defaultIndex)
   })
-  const index = computed(() => {
-    const position = target.value ? targets.value.indexOf(target.value) : -1
-    return position < 0 ? null : position
-  })
+  const index = computed(() => positionIn(target.value))
   const requestedIndex = computed(() => {
     const intent = selection.value
-    const position = intent ? targets.value.findIndex(candidate => sameTarget(candidate, intent.target)) : -1
-    return position < 0 ? null : position
+    if (!intent)
+      return null
+    return positionIn(eventType.value === 'axis'
+      ? intent.target.entry === undefined ? lookup.value.axisByIdentity.get(intent.target.identity) : undefined
+      : itemTarget(intent.target))
   })
   const active = computed(() => {
     if (!target.value)
@@ -325,8 +367,7 @@ export function createTooltip(inputs: TooltipInputs) {
     // Series identity is the registered configuration (see TooltipTargetRequest).
     if (input.index === null || !('configuration' in input))
       return undefined
-    const { index, configuration } = input
-    return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === index && item.entry?.value === configuration)
+    return input.configuration && lookup.value.byIndex.get(input.configuration)?.get(input.index)
   }
 
   let lastSeriesRequest: { entry: Entry, index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target: Target } | undefined
@@ -355,9 +396,7 @@ export function createTooltip(inputs: TooltipInputs) {
       requestSeries(next, isActive)
       return
     }
-    const position = next ? targets.value.indexOf(next) : -1
-    const publicIndex = position < 0 ? null : position
-    request(isActive ? publicIndex : null, next)
+    request(isActive ? positionIn(next) : null, next)
     requestSeries(next, isActive)
     if (!next) {
       selection.value = null
@@ -381,7 +420,7 @@ export function createTooltip(inputs: TooltipInputs) {
       return
     }
     const intent = selection.value
-    const candidate = intent ? [...itemTargets.value, ...pointerTargets.value].find(item => sameTarget(item, intent.target)) : undefined
+    const candidate = intent ? itemTarget(intent.target) : undefined
     requestSeries(candidate, false)
     if (controlled.value === undefined && selection.value)
       selection.value = { ...selection.value, active: false }
