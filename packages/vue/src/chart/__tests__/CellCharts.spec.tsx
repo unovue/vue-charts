@@ -88,9 +88,10 @@ describe('<Tracker />', () => {
     expect(queryByText('Aug 3, 2026')).toBeNull()
   })
 
-  it('starts keyboard focus on the latest bar, moves with the arrow keys and clears with Escape', async () => {
+  it('starts keyboard focus on the latest bar, moves with the arrow keys, clicks with Enter and clears with Escape', async () => {
+    const click = vi.fn()
     const { container } = render(() => (
-      <Tracker width={300} height={20} isAnimationActive={false} data={[{ date: 'a', status: 'up' }, { date: 'b', status: 'up' }, { date: 'c', status: 'down' }]} />
+      <Tracker width={300} height={20} isAnimationActive={false} data={[{ date: 'a', status: 'up' }, { date: 'b', status: 'up' }, { date: 'c', status: 'down' }]} {...{ 'onCell-click': click }} />
     ))
     const grid = container.querySelector<SVGGElement>('.v-charts-cell-grid')!
     const active = () => container.querySelector('[aria-selected="true"]')?.getAttribute('aria-label')
@@ -100,6 +101,10 @@ describe('<Tracker />', () => {
     await fireEvent.keyDown(grid, { key: 'ArrowLeft' })
     expect(active()).toBe('b: Operational')
     expect(grid.getAttribute('aria-activedescendant')).toBe(container.querySelector('[aria-selected="true"]')!.id)
+    await fireEvent.keyDown(grid, { key: 'Enter' })
+    expect(click).toHaveBeenCalledTimes(1)
+    expect(click.mock.calls[0].slice(0, 2)).toEqual([{ date: 'b', status: 'up' }, 1])
+    expect(click.mock.calls[0][2]).toBeInstanceOf(KeyboardEvent)
     await fireEvent.keyDown(grid, { key: 'Escape' })
     expect(active()).toBeUndefined()
   })

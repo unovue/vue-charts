@@ -172,6 +172,16 @@ export const CellGridLayer = defineComponent({
       },
       activate: cell => activate(cell, indexByKey.value.get(cell.key) ?? -1),
       clear,
+      // Enter runs the cell action for keyboard users, like a click on the active cell.
+      keydown: (event) => {
+        const index = activeIndex.value
+        const cell = index === null ? undefined : props.cells[index]
+        if (event.key !== 'Enter' || !cell || index === null)
+          return false
+        event.preventDefault()
+        emit('cell-click', cell.payload, index, event)
+        return true
+      },
     })
 
     function activate(cell: GridCell, index: number) {

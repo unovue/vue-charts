@@ -28,7 +28,7 @@ function text(value: string | undefined) { return value }
     x-key="hour"
     y-key="weekday"
     data-key="nested.value"
-    @cell-click="cell => numeric(cell.rows[0]?.hour)"
+    @cell-click="(cell, index, event) => { numeric(cell.rows[0]?.hour); numeric(index); text('key' in event ? event.key : event.type) }"
   >
     <template #cell="{ cell }">
       {{ numeric(cell.payload.rows[0]?.hour) }}
