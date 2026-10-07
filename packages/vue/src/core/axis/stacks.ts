@@ -10,7 +10,7 @@ import {
 import type { DataKey, StackOffsetType } from '@/types/common'
 import type { AxisType, NumberDomain } from '@/types/axis'
 import type { StackId } from '@/types/tick'
-import type { ChartData, ChartDataState } from '@/types/chartData'
+import type { ChartData, ChartDataWindow } from '@/types/chartData'
 import type { MaybeStackedGraphicalItem } from '@/types/graphical'
 import { getValueByDataKey } from '@/core/data'
 import { isNan, isNumber, toFiniteNumber } from '@/utils/validate'
@@ -179,7 +179,7 @@ export function stackGroups(
 
 export function stackDomain(
   stackGroups: Record<StackId, StackGroup> | undefined,
-  { dataStartIndex, dataEndIndex }: ChartDataState,
+  { dataStartIndex, dataEndIndex }: ChartDataWindow,
   axisType: AxisType,
 ): NumberDomain | undefined {
   if (axisType === 'zAxis') {

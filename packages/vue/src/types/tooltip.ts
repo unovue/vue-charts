@@ -133,7 +133,7 @@ export type ActiveTooltipProps = {
  */
 type SharedTooltipSettings = boolean | undefined
 
-export type TooltipSettingsState = {
+export type TooltipSettings = {
   activeIndex?: TooltipActiveIndex
   shared: SharedTooltipSettings
   trigger: TooltipTrigger
@@ -159,10 +159,9 @@ export type TooltipSettingsState = {
  * A generic state for user interaction with the chart.
  * User interaction can come through multiple channels: mouse events, keyboard events, or hardcoded in props, or synchronised from other charts.
  *
- * Each of the interaction states is represented as TooltipInteractionState,
- * and then the selectors and Tooltip will decide which of the interaction states to use.
+ * Each channel is represented as a TooltipInteraction, and the tooltip model decides which one wins.
  */
-export type TooltipInteractionState = {
+export type TooltipInteraction = {
   configuration?: TooltipPayloadConfiguration
 
   /**
@@ -202,7 +201,7 @@ export type TooltipInteractionState = {
   coordinate: Coordinate | undefined
 }
 
-export type TooltipSyncState = TooltipInteractionState & {
+export type TooltipSyncInteraction = TooltipInteraction & {
   /**
    * Tooltip synchronization is a feature that allows multiple charts to share the same interaction state.
    * This comes with one specialty - the syncMethod. `syncMethod=value` allows the user to synchronise charts

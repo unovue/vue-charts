@@ -21,7 +21,7 @@ import {
   sortBy,
 } from '@/core/axis/scale'
 import { axisRangeWithReverse } from '@/core/axis/range'
-import { combineInverseScaleFunction, createCategoricalInverse } from '@/utils/createCategoricalInverse'
+import { createCategoricalInverse, inverseScaleFunction } from '@/utils/createCategoricalInverse'
 
 export interface AxisScaleSources {
   layout: () => LayoutType
@@ -66,7 +66,7 @@ export function createAxisScale<S extends BaseCartesianAxis & Partial<TicksSetti
   const bandSize = computed(() => getBandSizeOfAxis(withScale.value, graphicalTicks.value ?? undefined))
   const barBandSize = computed(() => getBandSizeOfAxis(withScale.value, graphicalTicks.value ?? undefined, true))
   const sortedValues = computed(() => appliedValues.value.map(item => item.value).sort(sortBy))
-  const inverseScale = computed(() => combineInverseScaleFunction(scale.value))
+  const inverseScale = computed(() => inverseScaleFunction(scale.value))
   const inverseDataScale = computed(() => createCategoricalInverse(scale.value, sortedValues.value))
   const inverseTickScale = computed(() => getInverseTickScale(ticks.value))
   return { realScaleType, niceTicks, range, reversedRange, scale, duplicateDomain, categoricalDomain, ticks, graphicalTicks, tooltipTicks, withScale, bandSize, barBandSize, inverseScale, inverseDataScale, inverseTickScale }

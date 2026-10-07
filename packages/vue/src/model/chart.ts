@@ -17,7 +17,7 @@ import { computed, getCurrentScope, inject, provide } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { ChartData } from '@/types/chartData'
-import type { ChartLayoutState } from '@/types/chartLayout'
+import type { ChartFrame } from '@/types/chartLayout'
 import type { ChartOptions } from '@/model/options'
 import type { PolarChartOptions } from '@/types/polarOptions'
 import type { UpdatableChartOptions } from '@/types/chartOptions'
@@ -42,7 +42,7 @@ export interface Chart extends ChartRegistries, ChartGeometry {
   readonly dataRange: ReturnType<typeof createChartData>
   readonly inputs: ChartInputs
   readonly data: ComputedRef<ChartData | undefined>
-  readonly layout: ComputedRef<ChartLayoutState>
+  readonly layout: ComputedRef<ChartFrame>
   readonly options: ComputedRef<UpdatableChartOptions>
   readonly polar: ComputedRef<PolarChartOptions | null>
   readonly tooltipOptions: ComputedRef<ChartOptions>

@@ -9,9 +9,9 @@ import { tooltipCoordinate, tooltipPayload } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
-import type { TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipTargetRequest } from '@/types/tooltip'
+import type { TooltipActiveIndex, TooltipIndex, TooltipInteraction, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettings, TooltipTargetRequest } from '@/types/tooltip'
 
-const noInteraction: TooltipInteractionState = Object.freeze({
+const noInteraction: TooltipInteraction = Object.freeze({
   active: false,
   index: null,
   dataKey: undefined,
@@ -27,7 +27,7 @@ export interface TooltipSource {
 }
 
 export interface TooltipBinding {
-  readonly settings: TooltipSettingsState
+  readonly settings: TooltipSettings
   readonly request: (index: TooltipActiveIndex) => void
 }
 
@@ -107,7 +107,7 @@ export function createTooltip(inputs: TooltipInputs) {
     if (count === 0)
       announcement.value = ''
   })
-  const settings = computed<TooltipSettingsState>(() => bindings.entries.value[0]?.settings ?? {
+  const settings = computed<TooltipSettings>(() => bindings.entries.value[0]?.settings ?? {
     shared: undefined,
     trigger: 'hover',
     axisId: 0,
@@ -425,7 +425,7 @@ export function createTooltip(inputs: TooltipInputs) {
     }
   }, { flush: 'post' })
 
-  const interaction = computed<TooltipInteractionState>(() => ({
+  const interaction = computed<TooltipInteraction>(() => ({
     active: active.value,
     index: target.value?.index ?? null,
     configuration: target.value?.entry?.value,

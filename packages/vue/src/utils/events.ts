@@ -1,4 +1,4 @@
-import type { TooltipSyncState } from '@/types/tooltip'
+import type { TooltipSyncInteraction } from '@/types/tooltip'
 import type { BrushStartEndIndex } from '@/types/chartData'
 
 export const TOOLTIP_SYNC_EVENT = 'recharts.syncEvent.tooltip'
@@ -23,7 +23,7 @@ function createChannel<Arguments extends unknown[]>() {
   }
 }
 
-export type TooltipSyncMessage = TooltipSyncState & { kind: 'tooltip' }
+export type TooltipSyncMessage = TooltipSyncInteraction & { kind: 'tooltip' }
 
 interface EventTypes {
   [TOOLTIP_SYNC_EVENT]: (syncId: number | string, data: TooltipSyncMessage, emitter: symbol) => void
