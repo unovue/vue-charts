@@ -4,6 +4,13 @@ Status: proposal, 2026-10-04. Based on a full review of `refactor/vue-chart-cont
 (an Opus read plus an independent Codex review), the running Nuxt playground, shadcn-vue
 (`external/shadcn-vue`, v2.7.4), and the Vue/Nuxt reference repos in `~/Git/alignment`.
 
+## Status (2026-10-07)
+
+1.0 is implemented on branch `release/1.0` (local, not published): one Vue model per chart,
+pure math in `core/`, the 1.0 API from `internals/release-1.0/DECISIONS.md`, and every release
+check in `pnpm verify`. `internals/release-1.0/REPORT.md` has the final numbers and what is
+deferred; `LATER.md` holds the follow-ups.
+
 ## Status (2026-10-04)
 
 Accomplished on branch `feat/vision` (local, not pushed). All done-checks in the run's GOAL.md pass:

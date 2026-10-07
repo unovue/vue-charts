@@ -52,35 +52,46 @@ pnpm test packages/vue/src/chart/__tests__/AreaChart.spec.tsx
 ## Architecture
 
 ```
-packages/vue/src/           # Main library source (vccs)
-├── cartesian/              # Area, Bar, Line, Scatter, Axis, Brush, CartesianGrid, ZAxis; funnel/ subdirectory
+packages/vue/src/           # Library source (published as vccs)
+├── model/                  # One Vue model per chart: createChart/useChart, registries, axis, polar, tooltip, legend, brush
+├── core/                   # Pure math (layout, scales, series geometry, tooltip payloads); no Vue imports
+├── chart/                  # Chart containers: generateCartesianChart/PolarChart/RadialChart/FunnelChart; ChartShell for standalone charts
+├── cartesian/              # Area, Bar, Line, Scatter, Axis, Brush, CartesianGrid, ZAxis, ErrorBar; funnel/
 ├── polar/                  # Pie, Radar, RadialBar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
-├── chart/                  # Chart containers (AreaChart, BarChart, LineChart, ComposedChart, FunnelChart, etc.)
-├── components/             # Legend, Tooltip, Text, Label, Cell
-├── container/              # ResponsiveContainer, Surface, Layer
+├── components/             # Legend, Tooltip, Text, Label, LabelList, Cell
+├── container/              # Surface, Layer, ResponsiveContainer (deprecated, D-21)
 ├── shape/                  # Rectangle, Symbols, Dot, Sector, Cross, Curve, Trapezoid
-├── state/                  # Chart-local Vue domains, stable state view, selectors
-├── animation/              # Animate component, motion-v utilities
-├── context/                # provide/inject context providers
-├── hooks/                  # Shared composition hooks
-├── storybook/              # Stories
-├── types/                  # Shared type definitions
-├── utils/                  # Utility functions
-└── index.ts                # Public API
+├── animation/              # Keyed transitions, motion tokens, reduced motion, moving labels
+├── events/                 # Pointer, keyboard, touch and sync handlers
+├── context/ hooks/         # Shared provide/inject keys and composables
+├── types/ utils/           # Shared types and helpers
+├── test/                   # Test helpers and vue-tsc type probes (test/types)
+├── index.ts                # Public API: explicit export list
+├── nuxt.ts                 # Nuxt module (vccs/nuxt)
+└── resolver.ts             # unplugin-vue-components resolver (vccs/resolver)
 
-docs/                       # Documentation site (Nuxt 3, Docus framework)
-playground/nuxt/            # Nuxt 3 playground (Tailwind v4, shadcn-nuxt)
+docs/                       # Documentation site (Nuxt, Docus)
+playground/nuxt/            # Nuxt playground (Tailwind v4, shadcn-nuxt)
+scripts/                    # Release checks: verify, motion lab, check:play, check:docs, check:seen, bench, bundle, code
+internals/release-1.0/      # 1.0 run: PLAN, DECISIONS, PROGRESS, LATER, reviews
 ```
 
 ### Key Decisions
 
-1. **Components**: `defineComponent` + JSX (not SFC)
-2. **State**: Chart-local Vue factories expose immutable shallow snapshots through a stable read-only getter view; selector computeds track only domains they read.
-3. **Context**: `provide/inject` for parent-child communication
-4. **Chart Factory**: `generateCategoricalChart()` creates chart containers
-5. **Animation**: `motion-v` with `Animate` wrapper
-6. **Events**: Pointer, keyboard, touch, and synchronization handlers call chart-local typed operations directly.
-7. **Build output**: ESM-only (`preserveModules: true`); `minify: false` — Rolldown's minifier renames variables colliding with Vue's `h`
+1. **Components**: `defineComponent` + JSX (not SFC).
+2. **State**: one chart model per chart, created once in the chart's `EffectScope` (`createChart`,
+   read with `useChart()`). It is plain functions returning computeds and getters: no store, no
+   classes, no event bus, no props copied into state by watchers. One owner per concept.
+3. **Registration**: series, axes, tooltip entries and legend entries register through
+   `createRegistry()` (`useChart().items.polar.register(…)`, `tooltip.entries.register(…)`) and
+   unregister on unmount.
+4. **Math**: `core/` holds pure functions with no Vue imports; models call them inside computeds.
+5. **Standalone charts** (BarList, Sparkline, Tracker, Heatmap, CalendarHeatmap, CohortChart,
+   JourneySankey) render through `ChartShell` and a `TooltipSource`, without the cartesian engine.
+6. **Animation**: keyed transitions on `motion-v` with shared motion tokens (see Animation).
+7. **Events**: pointer, keyboard, touch and sync handlers call typed chart operations directly.
+8. **Build output**: ESM only (`preserveModules: true`); `minify: false` because Rolldown's
+   minifier renames variables that collide with Vue's `h`.
 
 ## Code Conventions
 
@@ -141,33 +152,43 @@ Customization uses **named slots**: `shape`, `activeBar`, `dot`, `activeDot`, `l
 Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 
 ### Animation
-- `useKeyedTransition` matches data keys and keeps exiting items mounted until completion.
-- Interrupted transitions start from displayed geometry; connected shapes share one clock.
-- `motion.ts` supplies entrance, update, and exit tokens; `transition` overrides their timing.
-- Disabled animation, reduced motion, SSR, and hydration show final geometry immediately.
-- Pie sweeps on entrance, labels fade after settling, and tooltip position uses persistent springs.
+- `useKeyedTransition` matches data keys and keeps exiting items mounted until they finish.
+- Interrupted transitions start from the displayed geometry; connected shapes share one clock.
+- `motion.ts` holds the entrance, update and exit tokens; the `transition` prop overrides timing.
+- Charts pass animation defaults to their series; an item's own `is-animation-active` wins.
+- Disabled animation, reduced motion, SSR and hydration show the final geometry at once.
+- The motion lab (`pnpm motion:report --prod --check`) compares frames exactly; only the entries
+  in `packages/vue/test/lab/accepted-flags.json` may remain, each with its reason.
 
 ### Funnel
-- Created via `generateCategoricalChart({ defaultTooltipEventType: 'item' })`
-- Registers via `SetPolarGraphicalItem` (NOT `useSetupGraphicalItem`)
-- **Coordinate calculation**: `x` uses `left` offset, `y` uses `top` offset — do NOT swap (was a ported bug fix)
-- Animation: motion-v `transition: AnimationOptions` — NOT legacy Recharts `animationBegin`/`animationDuration`/`animationEasing`
+- `FunnelChart` comes from `generateFunnelChart`; `Funnel` registers in `useChart().items.polar` like Pie.
+- **Coordinate calculation**: `x` uses the `left` offset, `y` the `top` offset. Do not swap
+  them (a ported bug fix).
+- Animation uses the `transition` prop, not the legacy Recharts `animationBegin`/`animationDuration`.
 
 ### Tooltip
 - **`#content` slot**: `<Tooltip><template #content="{ active, payload, label }">...</template></Tooltip>`
-- Use destructured props, NOT `v-bind="tooltipProps"` — `@antfu/eslint-config` auto-fix strips `v-bind` spread
-- `TooltipIndex` type is `string | null` (NOT a number)
+- Use destructured props, NOT `v-bind="tooltipProps"`: the `@antfu/eslint-config` auto-fix strips
+  `v-bind` spreads.
+- Active indexes are `number | null` (`TooltipActiveIndex`), also in `v-model:active-index`.
+- Two Tooltips that both control one chart warn once; the first one wins.
 
 ### Testing
-- `isAnimationActive={false}` for deterministic rendering
-- `mockGetBoundingClientRect({ width, height })` in `beforeEach`
-- Tests as render functions: `render(() => <Component />)`
-- Public API imports from `@/index`; internal imports use direct paths
-- CSS class selectors: `.v-charts-{component}` pattern (e.g. `.v-charts-line-curve`, `.v-charts-bar-rectangle`, `.v-charts-funnel`, `.v-charts-trapezoid`)
-- All library CSS classes use the `v-charts-` prefix with kebab-case suffixes, including `.v-charts-responsive-container` and `.v-charts-surface`. User-provided classes and data attributes are preserved.
-- Tooltip hover: `fireEvent(chart, new MouseEvent('mousemove', {...}))` on `.v-charts-wrapper` + 2x `nextTick()`; `defaultIndex` requires 3x `nextTick()`
-- ResizeObserver: `MockResizeObserver` with `trigger(width, height)` method
-- Animation in JSDOM: `motion-v` uses RAF — value stays at `from` when `isActive=true`; snaps to `to` when `isActive=false`
+- Follow the global test rules: name the wrong behavior a test catches, test the public API,
+  one regression test per bug, proven with a reverse patch (never `git stash`).
+- `isAnimationActive={false}` for deterministic rendering; motion specs use the shared motion
+  clock helper in `src/test/`.
+- `mockGetBoundingClientRect({ width, height })` in `beforeEach`; `MockResizeObserver` has
+  `trigger(width, height)`.
+- Tests as render functions: `render(() => <Component />)`. Public API imports come from
+  `@/index`; internal imports use direct paths.
+- All library classes use the `v-charts-` prefix in kebab case (`.v-charts-line-curve`,
+  `.v-charts-responsive-container`, `.v-charts-surface`). Item marks carry
+  `data-v-charts-item-index`.
+- Tooltip hover: `fireEvent(chart, new MouseEvent('mousemove', {...}))` on `.v-charts-wrapper`,
+  then 2× `nextTick()`; a default active index needs 3× `nextTick()`.
+- Type contracts: vue-tsc probes in `src/test/types/` (with `// @ts-expect-error` for what must fail).
+- Release checks: `pnpm verify` (or `--quick` without browsers); `VERIFY.md` lists each check.
 
 ### Storybook
 - Story titles must match Recharts conventions
@@ -188,11 +209,11 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
 
 | Library | Purpose |
 |---------|---------|
-| `reselect` | Pure selector result memoization; argument caching disabled for the stable Vue state view |
-| `motion-v` | SVG animations (external peer dep) |
-| `victory-vendor` | D3 math/scale utilities |
-| `lodash-es` / `es-toolkit` | Utility functions |
+| `motion-v` | Animation engine (peer dependency) |
+| `d3-scale`, `d3-shape`, `d3-hierarchy`, `d3-sankey`, `d3-time`, `d3-color` | Scales, shapes and layouts |
+| `es-toolkit` | Small utilities |
 | `@vueuse/core` | Vue composition utilities |
+| `decimal.js-light` | Exact tick arithmetic |
 
 ## Custom Notes
 
