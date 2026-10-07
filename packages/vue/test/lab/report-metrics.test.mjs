@@ -100,7 +100,7 @@ test('HTML bar list geometry keeps row identities and resolves widths to pixels'
   }
 })
 
-// Catch acceptance hiding a new flag, a stale entry, page errors or strict timing failures.
+// Catch acceptance hiding a new flag, a stale entry or page errors; real-clock timing never gates.
 test('the report gate accepts only current listed identities', () => {
   const row = {
     scenario: 'journey',
@@ -110,16 +110,15 @@ test('the report gate accepts only current listed identities', () => {
     timing: { '1x': { slow: 3 } },
   }
   const accepted = [{ scenario: 'journey top8', kind: 'jump', element: 'rect.node' }]
-  for (const [name, report, entries, strict, failures, stale] of [
-    ['unlisted', [row], [], false, 1, 0],
-    ['listed', [row], accepted, false, 0, 0],
-    ['different element', [{ ...row, issues: ['jump rect.other @112ms +30% (7px)'] }], accepted, false, 1, 1],
-    ['stale', [{ ...row, issues: [] }], accepted, false, 0, 1],
-    ['page error', [{ ...row, errors: ['SVG height is negative'] }], accepted, false, 1, 0],
-    ['strict timing', [row], accepted, true, 1, 0],
-    ['focused run', [{ ...row, scenario: 'bar', step: 'values', issues: [] }], accepted, false, 0, 0],
+  for (const [name, report, entries, failures, stale] of [
+    ['unlisted', [row], [], 1, 0],
+    ['listed with slow real-clock frames', [row], accepted, 0, 0],
+    ['different element', [{ ...row, issues: ['jump rect.other @112ms +30% (7px)'] }], accepted, 1, 1],
+    ['stale', [{ ...row, issues: [] }], accepted, 0, 1],
+    ['page error', [{ ...row, errors: ['SVG height is negative'] }], accepted, 1, 0],
+    ['focused run', [{ ...row, scenario: 'bar', step: 'values', issues: [] }], accepted, 0, 0],
   ]) {
-    const result = checkReport(report, entries, strict)
+    const result = checkReport(report, entries)
     assert.equal(result.failed.length, failures, name)
     assert.equal(result.stale.length, stale, name)
   }
