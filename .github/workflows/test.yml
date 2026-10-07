@@ -128,5 +128,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node scripts/check-docs-coverage.mjs
       - run: pnpm --filter vccs build
       - run: pnpm --filter docs build

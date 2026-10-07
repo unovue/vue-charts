@@ -21,6 +21,7 @@ const checks = [
   ['package exports and types', 'pnpm check:package'],
   ['packed consumers', 'node scripts/check-consumers.mjs'],
   ['code health', 'pnpm check:code'],
+  ['docs cover every public component', 'node scripts/check-docs-coverage.mjs'],
   ['standalone bundles', 'pnpm check:bundle --assert-standalone'],
   ['Nuxt SSR fixture', 'pnpm --filter vccs test:nuxt'],
   ...(quick ? [] : [['accessibility, contrast and hydration', 'pnpm check:a11y']]),
