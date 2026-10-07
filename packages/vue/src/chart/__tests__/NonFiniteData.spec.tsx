@@ -61,8 +61,8 @@ it('keeps finite geometry and rows when numeric data contains non-finite values'
   }
 }, 30000)
 
-// A null or empty-string value is a missing value, as it is for Sparkline and the cartesian charts; it must not read as 0.
-it.each([null, ''])('treats a %o value as missing in the standalone charts', async (blank) => {
+// A null, empty-string, boolean or array value is a missing value, as it is for the cartesian charts; it must not read as 0 or 1.
+it.each([[null], [''], [true], [[]]])('treats a %o value as missing in the standalone charts', async (blank: unknown) => {
   const read = (container: Element) => [
     ...Array.from(container.querySelectorAll('[aria-label]'), element => element.getAttribute('aria-label')),
     container.textContent,
