@@ -1,9 +1,8 @@
 {
   "workspaces": {
     "packages/vue": {
-      "entry": ["src/index.ts", "src/nuxt.ts", "src/resolver.ts"],
       "project": ["src/**/*.{ts,tsx,vue}"],
-      "ignore": ["src/**/__tests__/**", "src/test/**", "src/__breakit__/**", "test/fixtures/**"],
+      "ignore": ["src/**/__tests__/**", "src/test/**", "test/fixtures/**"],
       "includeEntryExports": false
     }
   }

@@ -55,7 +55,6 @@ export default defineConfig({
         'src/**/__tests__/**',
         'src/**/*.spec.*',
         'src/**/*.test.*',
-        'src/__breakit__/**',
         'src/test/**',
       ],
     }),

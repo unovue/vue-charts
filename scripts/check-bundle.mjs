@@ -53,7 +53,8 @@ const standalone = new Set([
   'SunburstChart',
 ])
 const external = ['vue', 'vue/*', 'motion-v', 'motion-v/*']
-const forbidden = /\/(?:core|state\/selectors)\/axis|decimal\.js-light|d3-time-format|reselect/
+// Modules only the cartesian engine needs. A standalone chart that keeps one of them pulls in axis code.
+const forbidden = /\/core\/axis\/|decimal\.js-light|d3-time-format/
 const assertStandalone = args.includes('--assert-standalone')
 const evidenceRoot = join(root, '.evidence/bundle')
 await mkdir(evidenceRoot, { recursive: true })
@@ -87,7 +88,7 @@ const report = {
 
 try {
   // eslint-disable-next-line no-console -- Compact CLI size table.
-  console.log(`${'Chart'.padEnd(20)} ${'Minified B'.padStart(11)} ${'gzip B'.padStart(9)} ${'reselect B'.padStart(11)}`)
+  console.log(`${'Chart'.padEnd(20)} ${'Minified B'.padStart(11)} ${'gzip B'.padStart(9)}`)
   for (const chart of charts) {
     const bundle = await build({
       stdin: { contents: `export { ${chart} } from ${JSON.stringify(entry)}`, resolveDir: root, sourcefile: `${chart}.mjs` },
@@ -113,7 +114,6 @@ try {
       standalone: standalone.has(chart),
       minifiedBytes: output.contents.length,
       gzipBytes: gzipSync(output.contents, { level: 9 }).length,
-      reselectBytes: modules.filter(module => /(?:^|\/)reselect(?:\/|@)/.test(module.path)).reduce((total, module) => total + module.bytesInOutput, 0),
       offendingModules,
       modules,
     }
@@ -121,7 +121,7 @@ try {
     await writeFile(join(evidence, `${chart}.meta.json`), `${JSON.stringify(bundle.metafile, null, 2)}\n`)
     await writeFile(output.path, output.contents)
     // eslint-disable-next-line no-console -- Compact CLI size table.
-    console.log(`${chart.padEnd(20)} ${String(result.minifiedBytes).padStart(11)} ${String(result.gzipBytes).padStart(9)} ${String(result.reselectBytes).padStart(11)}`)
+    console.log(`${chart.padEnd(20)} ${String(result.minifiedBytes).padStart(11)} ${String(result.gzipBytes).padStart(9)}`)
   }
   const offenders = report.results.filter(result => result.offendingModules.length > 0)
   const barList = report.results.find(result => result.chart === 'BarList')

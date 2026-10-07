@@ -27,7 +27,7 @@ jobs:
 
       - run: pnpm --filter vccs typecheck
 
-      - run: pnpm --filter vccs exec vitest run --maxWorkers=2 --exclude 'src/__breakit__/**'
+      - run: pnpm --filter vccs exec vitest run --maxWorkers=2
 
       - name: Check tooling regressions and motion tokens
         run: |

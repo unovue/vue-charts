@@ -10,8 +10,6 @@ export default antfu(
       '**/.output/**',
       '**/.data/**',
       '**/coverage/**',
-      'packages/vue/src/__breakit__/**',
-      'packages/vue/test/fixtures/lab/**',
       '.evidence/**',
     ],
   },
@@ -118,7 +116,6 @@ export default antfu(
     ignores: [
       '**/__tests__/**',
       '**/test/**',
-      '**/__breakit__/**',
     ],
     rules: { 'ts/no-explicit-any': 'error' },
   },
