@@ -10,7 +10,6 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-v'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { cascadeReveal } from '@/animation/motion'
@@ -19,8 +18,8 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import { getStringSize } from '@/utils/attrs'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/model/options'
-import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
+import { standaloneChartOptions } from './shell'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 interface TreemapData extends Record<string, unknown> {
@@ -54,53 +53,15 @@ function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
   return val != null && val > 0 ? val : 0
 }
 
-/**
- * Tooltip payload searcher for Treemap — navigates nested node structure
- * using a path string like 'children[0].children[1]'.
- */
-const treemapPayloadSearcher: TooltipPayloadSearcher = (
-  data: unknown,
-  payloadKey: string,
-) => {
-  if (!data || !payloadKey)
-    return undefined
-  return get(data, payloadKey)
-}
-
-const treemapOptions: ChartOptions = {
-  chartName: 'Treemap',
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: treemapPayloadSearcher,
-  eventEmitter: undefined,
-}
-
-/**
- * Build a hierarchical node structure with tooltipIndex paths for tooltip lookup.
- */
-function buildNodeTree(
-  data: TreemapData[],
-  dataKey: DataKey<TreemapData>,
-  nameKey: DataKey<TreemapData>,
-  parentIndex: string = '',
-): TreemapData {
-  const children = data.map((item, i) => {
-    const tooltipIndex = `${parentIndex}children[${i}]`
-    if (item.children && item.children.length > 0) {
-      const childTree = buildNodeTree(item.children, dataKey, nameKey, `${tooltipIndex}.`)
-      return {
-        ...item,
-        tooltipIndex,
-        ...childTree,
-      }
-    }
-    return {
-      ...item,
-      tooltipIndex,
-      value: sumValues(item, dataKey),
-    }
+/** Each node's total by its tooltip path (`children[0].children[1]`); parents sum their leaves. */
+function totalsByPath(items: readonly TreemapData[], dataKey: DataKey<TreemapData>, parent = '', totals: Record<string, number> = {}) {
+  items.forEach((item, i) => {
+    const path = `${parent}children[${i}]`
+    totals[path] = sumValues(item, dataKey)
+    if (item.children?.length)
+      totalsByPath(item.children, dataKey, `${path}.`, totals)
   })
-  return { children, name: 'root', tooltipIndex: parentIndex }
+  return totals
 }
 
 const TreemapVueProps = {
@@ -109,8 +70,6 @@ const TreemapVueProps = {
   data: { type: Array as PropType<TreemapData[]>, required: true as const },
   dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'value' },
   nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
-  width: { type: Number, required: true as const },
-  height: { type: Number, required: true as const },
   tileAspectRatio: { type: Number, default: 4 / 3 },
   fill: { type: String, default: seriesColor(0) },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
@@ -129,7 +88,7 @@ const treemapEmits = {
 }
 
 function useTreemap(
-  props: ExtractPropTypes<typeof TreemapVueProps>,
+  props: ExtractPropTypes<typeof TreemapVueProps> & { width: number, height: number },
   slots: TreemapSlots,
   emit: EmitFn<typeof treemapEmits>,
 ) {
@@ -206,16 +165,17 @@ function useTreemap(
     onStart: callbacks.onStart,
   })
 
-  // Build node tree for tooltip payload lookup
-  const nodeTree = computed(() => {
+  // Tooltip payloads are the caller's own nodes, addressed by path; totals come from layout.
+  const tooltipTree = computed(() => {
     const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-    return buildNodeTree(data, props.dataKey, props.nameKey)
+    return { data: { children: data }, values: totalsByPath(data, props.dataKey) }
   })
 
   // Register tooltip entry settings (like Funnel/Scatter do)
   tooltip.entries.register(computed(() => {
     const tooltipEntrySettings: TooltipPayloadConfiguration = {
-      dataDefinedOnItem: nodeTree.value,
+      dataDefinedOnItem: tooltipTree.value.data,
+      values: tooltipTree.value.values,
       positions: undefined,
       keyboardItems: [...nodes.value].sort((a, b) =>
         a.y + a.height / 2 - b.y - b.height / 2
@@ -243,7 +203,7 @@ function useTreemap(
     return tooltipEntrySettings
   }))
 
-  // Map layout node name → tooltipIndex from nodeTree
+  // The tooltip path of a layout node in the current data.
   function getTooltipIndex(node: TreemapLayoutNode): string | null {
     const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
     function findPath(items: TreemapData[], parent: string): string | null {
@@ -477,7 +437,7 @@ const _Treemap = defineComponent({
   emits: { ...chartEmits, ...treemapEmits },
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots, emit, attrs }) {
-    const size = useChartShell(props, treemapOptions)
+    const size = useChartShell(props, standaloneChartOptions('Treemap'))
     function setupContent() {
       const { renderChart, renderBreadcrumb } = useTreemap(reactive({
         ...toRefs(props),

@@ -10,20 +10,32 @@ export interface Coordinate {
   y: number
 }
 
-export interface ChartCoordinate extends Coordinate {
+/** Where the tooltip points in a Cartesian chart. */
+export interface CartesianChartCoordinate extends Coordinate {
   xAxis?: unknown
   yAxis?: unknown
   width?: number
   height?: number
   offset?: ChartOffset
-  angle?: number
-  radius?: number
-  cx?: number
-  cy?: number
-  startAngle?: number
-  endAngle?: number
-  innerRadius?: number
-  outerRadius?: number
+}
+
+/** Where the tooltip points in a polar chart: the active angle and radius inside the polar box. */
+export interface PolarChartCoordinate extends Coordinate {
+  cx: number
+  cy: number
+  innerRadius: number
+  outerRadius: number
+  startAngle: number
+  endAngle: number
+  angle: number
+  radius: number
+}
+
+/** Cartesian layouts point at `x`/`y`; polar layouts also carry their box, angle and radius. */
+export type ChartCoordinate = CartesianChartCoordinate | PolarChartCoordinate
+
+export function isPolarCoordinate(coordinate: ChartCoordinate): coordinate is PolarChartCoordinate {
+  return 'cx' in coordinate && 'angle' in coordinate
 }
 
 export interface TickItem {

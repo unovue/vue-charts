@@ -1,14 +1,16 @@
-import { type PropType, type SlotsType, type StyleValue, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, toRaw, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { useTooltipController } from '@/model/tooltip'
-import type { ChartOptions } from '@/model/options'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { cascadeReveal, motionTokens } from '@/animation/motion'
-import type { VueClassValue } from '@/types/common'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
+import { emptyGridTransitionPlan, planGridTransition } from '@/animation/gridTransition'
+import { cellGridSharedProps } from './cellGridProps'
+import { cellGridEmits } from '@/events/componentEvents'
 import type { GridCell } from './cellGridUtils'
+import { useItemKeyboard } from '@/events/useItemKeyboard'
 
 export interface CellSlotProps<P = unknown> {
   cell: GridCell<P>
@@ -25,100 +27,6 @@ export interface CellSlotProps<P = unknown> {
 export interface CellGridSlots<P = unknown> {
   cell?: (props: CellSlotProps<P>) => VNodeChild
 }
-
-export function isFocusVisible(element: Element) {
-  try {
-    return element.matches(':focus-visible')
-  }
-  catch {
-    // Engines without :focus-visible (older test DOMs) treat every focus as keyboard focus.
-    return true
-  }
-}
-
-interface Seams {
-  /** Where an arriving cell starts: a zero-thick line on the seam it opens. */
-  enter: Map<string, GridCell>
-  /** Where a leaving cell ends: a zero-thick line on the seam it closes. */
-  exit: Map<string, GridCell>
-}
-
-/**
- * A cell removed between two staying grid neighbours (a row dropped from the middle) closes
- * onto the line where those neighbours meet after the change; a cell added between two opens
- * from the line where they met before. Both ends move on the same clock as the neighbours, so
- * the cell always fills exactly the gap between them and never overlaps either.
- */
-function findSeams(previous: readonly GridCell[], next: readonly GridCell[]): Seams {
-  const seams: Seams = { enter: new Map(), exit: new Map() }
-  const before = new Map(previous.map(cell => [cell.key, cell]))
-  const after = new Map(next.map(cell => [cell.key, cell]))
-  const position = (cells: readonly GridCell[]) => new Map(cells.map(cell => [`${cell.row}:${cell.column}`, cell]))
-  const oldAt = position(previous)
-  const newAt = position(next)
-  const seamBetween = (cell: GridCell, at: Map<string, GridCell>, stays: Map<string, GridCell>, other: (key: string) => GridCell | undefined) => {
-    const pair = (a: string, b: string) => {
-      const first = at.get(a)
-      const second = at.get(b)
-      return first && second && stays.has(first.key) && stays.has(second.key) ? [other(first.key)!, other(second.key)!] : undefined
-    }
-    const vertical = pair(`${cell.row - 1}:${cell.column}`, `${cell.row + 1}:${cell.column}`)
-    if (vertical)
-      return { ...cell, y: (vertical[0].y + vertical[0].height + vertical[1].y) / 2, height: 0 }
-    const horizontal = pair(`${cell.row}:${cell.column - 1}`, `${cell.row}:${cell.column + 1}`)
-    if (horizontal)
-      return { ...cell, x: (horizontal[0].x + horizontal[0].width + horizontal[1].x) / 2, width: 0 }
-    return undefined
-  }
-  for (const cell of previous) {
-    if (!after.has(cell.key)) {
-      const seam = seamBetween(cell, oldAt, after, key => after.get(key))
-      if (seam)
-        seams.exit.set(cell.key, seam)
-    }
-  }
-  for (const cell of next) {
-    if (!before.has(cell.key)) {
-      const seam = seamBetween(cell, newAt, before, key => before.get(key))
-      if (seam)
-        seams.enter.set(cell.key, seam)
-    }
-  }
-  return seams
-}
-
-/** Chart options shared by every cell chart: tooltips belong to a single cell. */
-export function cellChartOptions(chartName: string): ChartOptions {
-  return {
-    chartName,
-    defaultTooltipEventType: 'item',
-    validateTooltipEventTypes: ['item'],
-    eventEmitter: undefined,
-  }
-}
-
-/** Caller `class` and `style` for the chart box. Attributes are untyped, so they are narrowed here once. */
-export function boxAttrs(attrs: Record<string, unknown>): { class?: VueClassValue, style?: StyleValue } {
-  return { class: attrs.class as VueClassValue, style: attrs.style as StyleValue }
-}
-
-/** Caller attributes for the SVG root: `class` and `style` go to the chart box instead. */
-export function rootAttrs(attrs: Record<string, unknown>) {
-  const { class: _class, style: _style, ...rest } = attrs
-  return rest
-}
-
-export const cellGridEmits = {
-  'update:activeIndex': (_index: number | null) => true,
-  'cell-click': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'cell-mouseenter': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'cell-mouseleave': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'animation-start': () => true,
-  'animation-end': () => true,
-}
-
-export { cellGridSharedProps } from './cellGridProps'
-import { cellGridSharedProps } from './cellGridProps'
 
 type Rect = Pick<GridCell, 'x' | 'y' | 'width' | 'height'>
 /** A cell as drawn: `opacity` is the entrance's fade. */
@@ -150,7 +58,6 @@ export const CellGridLayer = defineComponent({
     const tooltip = useTooltipController()
     const reducedMotion = useReducedMotion()
     const baseId = useId()
-    const keyboard = ref(false)
 
     const indexByKey = computed(() => new Map(props.cells.map((cell, index) => [cell.key, index])))
 
@@ -168,59 +75,11 @@ export const CellGridLayer = defineComponent({
       opacity: Math.min(1, Math.max(0, (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t)),
     })
 
-    // Identity on screen. Usually the cell's own key, with two exceptions decided per change:
-    // - A few cells move far against the common grid move (Sundays wrapping to the last row when
-    //   the week start changes): they shrink and regrow in place instead of streaking across.
-    // - Nothing stays, or most cells would have to jump (a different year, a reversed axis):
-    //   new cells take over the node at the same grid position, so the grid recolors in place
-    //   instead of every cell shrinking and growing at once.
-    let screenKeys = new Map<string, string>()
-    const jumping = new Set<string>()
-    let seams: Seams = { enter: new Map(), exit: new Map() }
+    // Identity on screen, jumps and seams are planned per change; see planGridTransition.
+    let plan = emptyGridTransitionPlan<GridCell>()
     let generation = 0
     watch(() => props.cells, (next, previous = []) => {
-      const before = new Map(previous.map(cell => [cell.key, cell]))
-      jumping.clear()
-      const moves = new Map<string, number>()
-      let staying = 0
-      for (const cell of next) {
-        const old = before.get(cell.key)
-        if (old) {
-          staying++
-          const move = `${cell.column - old.column}:${cell.row - old.row}`
-          moves.set(move, (moves.get(move) ?? 0) + 1)
-        }
-      }
-      const common = [...moves].reduce<[string, number] | undefined>((best, entry) => !best || entry[1] > best[1] ? entry : best, undefined)?.[0]
-      if (common !== undefined) {
-        // Only moves that leave the common move by more than one cell would cross the grid;
-        // neighbours of a removed or added row or column simply slide one step.
-        const [commonColumn, commonRow] = common.split(':').map(Number)
-        for (const cell of next) {
-          const old = before.get(cell.key)
-          if (old && Math.abs(cell.column - old.column - commonColumn) + Math.abs(cell.row - old.row - commonRow) > 1)
-            jumping.add(cell.key)
-        }
-      }
-      const inPlace = previous.length > 0 && (staying === 0 || jumping.size > staying / 2)
-      if (inPlace)
-        jumping.clear()
-
-      const byPosition = new Map(previous.map(cell => [`${cell.row}:${cell.column}`, screenKeys.get(cell.key) ?? cell.key]))
-      const keys = new Map<string, string>()
-      const used = new Set<string>()
-      generation++
-      for (const cell of next) {
-        let key = inPlace
-          ? byPosition.get(`${cell.row}:${cell.column}`) ?? cell.key
-          : screenKeys.get(cell.key) ?? cell.key
-        if (used.has(key))
-          key = `${cell.key}\u0000${generation}`
-        used.add(key)
-        keys.set(cell.key, key)
-      }
-      screenKeys = keys
-      seams = inPlace ? { enter: new Map(), exit: new Map() } : findSeams(previous, next)
+      plan = planGridTransition(previous, next, plan.keys, ++generation)
     }, { immediate: true, flush: 'sync' })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
@@ -228,9 +87,9 @@ export const CellGridLayer = defineComponent({
     // staying neighbours like a conveyor belt and pass the clipped edge, so nothing overlaps.
     // Without a moving neighbour they grow and shrink in place.
     const { items } = useKeyedTransition<ShownCell>(() => props.cells, {
-      key: cell => screenKeys.get(cell.key) ?? cell.key,
+      key: cell => plan.keys.get(cell.key) ?? cell.key,
       interpolate: (from, to, t) => {
-        if (!jumping.has(to.key))
+        if (!plan.jumping.has(to.key))
           return lerp(from, to, t)
         // Shrink where it was, then grow where it goes.
         return t < 0.5 ? lerp(from, collapse(from), t * 2) : lerp(collapse(to), to, t * 2 - 1)
@@ -238,14 +97,14 @@ export const CellGridLayer = defineComponent({
       // Between grid neighbours a cell folds along the seam; at an edge it rides the belt
       // through the clip.
       enterFrom: (to, neighbors) => {
-        const seam = seams.enter.get(to.key)
+        const seam = plan.seams.enter.get(to.key)
         if (seam)
           return seam
         const shift = shiftOf(neighbors.previousMove) ?? shiftOf(neighbors.nextMove)
         return isShift(shift) ? { ...to, x: to.x - shift.x, y: to.y - shift.y } : collapse(to)
       },
       exitTo: (from, neighbors) => {
-        const seam = seams.exit.get(from.key)
+        const seam = plan.seams.exit.get(from.key)
         if (seam)
           return seam
         const shift = shiftOf(neighbors.nextMove) ?? shiftOf(neighbors.previousMove)
@@ -260,6 +119,8 @@ export const CellGridLayer = defineComponent({
       onEnd: callbacks.onEnd,
     })
 
+    // A Tooltip `formatter` replaces this default text and receives the raw value.
+    const valueTexts = computed(() => new Map(props.cells.flatMap(cell => cell.valueText === undefined ? [] : [[toRaw(cell.payload), cell.valueText]])))
     const configuration = computed(() => {
       const settings: TooltipPayloadConfiguration = {
         model: {
@@ -272,7 +133,10 @@ export const CellGridLayer = defineComponent({
           identity: cell.key,
           coordinate: { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 },
         })),
-        dataDefinedOnItem: props.cells.map(cell => ({ name: cell.label, value: cell.value, payload: cell.payload, color: cell.fill })),
+        // The payload is the chart's domain object; value and name come per cell.
+        dataDefinedOnItem: props.cells.map(cell => cell.payload),
+        values: Object.fromEntries(props.cells.map((cell, index) => [index, cell.value])),
+        names: Object.fromEntries(props.cells.map((cell, index) => [index, cell.label])),
         positions: undefined,
         settings: {
           stroke: undefined,
@@ -285,6 +149,9 @@ export const CellGridLayer = defineComponent({
           type: undefined,
           color: undefined,
           unit: '',
+          formatter: valueTexts.value.size
+            ? (value, _name, entry) => valueTexts.value.get(toRaw(entry.payload)) ?? value
+            : undefined,
         },
       }
       return settings
@@ -292,6 +159,20 @@ export const CellGridLayer = defineComponent({
     tooltip.entries.register(configuration)
     const activeIndex = tooltip.activeIndexFor(configuration)
     const activeKey = computed(() => activeIndex.value === null ? undefined : props.cells[activeIndex.value]?.key)
+
+    // Keyboard focus must show where it is: start on the latest cell, the one people look for first.
+    const { keyboard, onFocus, onKeydown } = useItemKeyboard<GridCell>({
+      empty: () => props.cells.length === 0,
+      start: () => activeKey.value === undefined ? props.cells[props.cells.length - 1] : undefined,
+      neighbour: (key) => {
+        const current = activeKey.value === undefined ? undefined : props.cells[indexByKey.value.get(activeKey.value) ?? -1]
+        if (current)
+          return neighbour(current, key)
+        return key === 'Home' ? props.cells[0] : key.startsWith('Arrow') || key === 'End' ? props.cells[props.cells.length - 1] : undefined
+      },
+      activate: cell => activate(cell, indexByKey.value.get(cell.key) ?? -1),
+      clear,
+    })
 
     function activate(cell: GridCell, index: number) {
       const action = {
@@ -350,31 +231,6 @@ export const CellGridLayer = defineComponent({
         case 'End': return cells[cells.length - 1]
       }
       return undefined
-    }
-
-    // Keyboard focus must show where it is: start on the latest cell, the one people look for first.
-    function onFocus(event: FocusEvent) {
-      if (activeKey.value !== undefined || props.cells.length === 0 || !isFocusVisible(event.target as Element))
-        return
-      keyboard.value = true
-      activate(props.cells[props.cells.length - 1], props.cells.length - 1)
-    }
-
-    function onKeydown(event: KeyboardEvent) {
-      if (props.cells.length === 0)
-        return
-      if (event.key === 'Escape') {
-        keyboard.value = true
-        clear()
-        return
-      }
-      const current = activeKey.value === undefined ? undefined : props.cells[indexByKey.value.get(activeKey.value)!]
-      const next = current ? neighbour(current, event.key) : event.key === 'Home' ? props.cells[0] : (event.key.startsWith('Arrow') || event.key === 'End') ? props.cells[props.cells.length - 1] : undefined
-      if (!next)
-        return
-      event.preventDefault()
-      keyboard.value = true
-      activate(next, indexByKey.value.get(next.key)!)
     }
 
     // Cells sliding in or out are visible only inside the grid's own bounds.
@@ -449,7 +305,7 @@ export const CellGridLayer = defineComponent({
                   class="v-charts-cell"
                   role="option"
                   aria-selected={isActive}
-                  aria-label={cell.value == null ? cell.label : `${cell.label}: ${cell.value}`}
+                  aria-label={(cell.valueText ?? cell.value) == null ? cell.label : `${cell.label}: ${cell.valueText ?? cell.value}`}
                   style={{ opacity: dimmed ? 0.45 : 1, transition: fillTransition, pointerEvents: interactive ? undefined : 'none' }}
                   onMouseenter={(event: MouseEvent) => interactive && onEnter(cell, index, event)}
                   onMouseleave={(event: MouseEvent) => interactive && onLeave(cell, index, event)}

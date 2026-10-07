@@ -2,7 +2,7 @@ import type { DirectChartAttributes } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
-import { type ComponentPublicInstance, type ExtractPublicPropTypes, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
+import { type ComponentPublicInstance, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/model/runtime'
@@ -208,10 +208,7 @@ const BarListInner = defineComponent({
   },
 })
 
-export type BarListProps<Row = unknown> = DirectChartAttributes & Omit<
-  ExtractPublicPropTypes<typeof BarListVueProps>,
-  'data' | 'dataKey' | 'nameKey' | 'hrefKey' | 'valueFormatter'
-> & {
+interface BarListTyped<Row> {
   'data': readonly Row[]
   'dataKey'?: RowDataKey<NoInfer<Row>>
   'nameKey'?: RowDataKey<NoInfer<Row>>
@@ -219,9 +216,10 @@ export type BarListProps<Row = unknown> = DirectChartAttributes & Omit<
   'valueFormatter'?: (value: number, row: NoInfer<Row>) => string
   'onRow-click'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
   'onRowClick'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onAnimation-start'?: () => void
-  'onAnimation-end'?: () => void
 }
+
+/** An HTML list, not an SVG chart: plain element attributes instead of chart pointer events. */
+export type BarListProps<Row = unknown> = DirectChartAttributes & Omit<InstanceType<typeof _BarList>['$props'], keyof BarListTyped<Row>> & BarListTyped<Row>
 
 const _BarList = defineComponent({
   name: 'BarList',

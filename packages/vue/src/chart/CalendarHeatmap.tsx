@@ -1,16 +1,19 @@
+import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
-import { type GridCell, dayNumberToIso, formatDay, levelColors, levelOf, toDayNumber, weekdayOf } from './cellGridUtils'
+import { standaloneChartOptions } from './shell'
+import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
+import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay<Row = unknown> {
   /** `YYYY-MM-DD`. */
@@ -112,7 +115,7 @@ const _CalendarHeatmap = defineComponent({
       height: computed(() => props.height),
       aspect: computed(() => props.aspect ?? (props.height === undefined ? (left.value + Math.max(columns.value, 1) * NOMINAL_STEP) / (top.value + 7 * NOMINAL_STEP) : undefined)),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('CalendarHeatmap'))
+    }), standaloneChartOptions('CalendarHeatmap'))
 
     const layout = computed(() => {
       const r = range.value
@@ -139,8 +142,7 @@ const _CalendarHeatmap = defineComponent({
             max = value
         }
       }
-      const levels = props.colors?.length ? props.colors.length - 1 : Math.max(1, Math.floor(props.levels))
-      const fills = props.colors?.length ? props.colors : levelColors(props.color, props.emptyColor, levels)
+      const scale = cellColorScale({ color: props.color, empty: props.emptyColor, levels: props.levels, colors: props.colors, max, minLevel: 1 })
       const dateFormat = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' } as const
 
       const cells: GridCell<CalendarDay>[] = []
@@ -149,7 +151,7 @@ const _CalendarHeatmap = defineComponent({
         const column = Math.floor((day - firstColumn) / 7)
         const row = weekdayOffset(day)
         const value = values.get(day) ?? null
-        const level = value === null ? 0 : levelOf(value, max, levels)
+        const level = scale.level(value)
         const iso = dayNumberToIso(day)
         cells.push({
           key: iso,
@@ -157,7 +159,7 @@ const _CalendarHeatmap = defineComponent({
           y: top.value + row * step,
           width: cellSize,
           height: cellSize,
-          fill: fills[level],
+          fill: scale.fill(value),
           row,
           column,
           label: formatDay(day, props.locale, dateFormat),
@@ -229,14 +231,7 @@ const _CalendarHeatmap = defineComponent({
               title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
-              {...{
-                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-                'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
-                'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
-                'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),
-                'onAnimation-start': () => emit('animation-start'),
-                'onAnimation-end': () => emit('animation-end'),
-              }}
+              {...cellGridListeners(emit)}
             >
               {{ cell: slots.cell }}
             </CellGridLayer>
@@ -256,17 +251,11 @@ const _CalendarHeatmap = defineComponent({
  */
 export type CalendarHeatmapSlots<Row = unknown> = CellGridSlots<CalendarDay<Row>> & { default?: () => VNode[] }
 
-export type CalendarHeatmapProps<Row = unknown> = Omit<InstanceType<typeof _CalendarHeatmap>['$props'], 'data' | 'dateKey' | 'dataKey' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
-  'data': readonly Row[]
-  'dateKey'?: RowDataKey<NoInfer<Row>>
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'onCellClick'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-click'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-}
+export type CalendarHeatmapProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _CalendarHeatmap>['$props'], CellEvents<CalendarDay<NoInfer<Row>>> & {
+  data: readonly Row[]
+  dateKey?: RowDataKey<NoInfer<Row>>
+  dataKey?: RowDataKey<NoInfer<Row>>
+}>
 
 export const CalendarHeatmap = _CalendarHeatmap as unknown as <Row>(
   props: CalendarHeatmapProps<Row>,

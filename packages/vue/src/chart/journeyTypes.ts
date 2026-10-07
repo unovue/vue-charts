@@ -1,10 +1,8 @@
 import { seriesColor } from '@/utils/theme'
 import { cellGridSharedProps } from './cellGridProps'
 import type { RowDataKey } from '@/types/typed'
-import type { chartSizeProps } from '@/hooks/useResponsiveSize'
-import type { ChartRootAttributes } from './directChartTypes'
-import type { ExtractPublicPropTypes, PropType, VNode, VNodeChild } from 'vue'
-import type { JourneyLink, JourneyNode, JourneyStep } from './journeyUtils'
+import type { PropType, VNode, VNodeChild } from 'vue'
+import type { JourneyNode, JourneyStep } from './journeyUtils'
 
 export const JourneySankeyVueProps = {
   isAnimationActive: cellGridSharedProps.isAnimationActive,
@@ -53,30 +51,4 @@ export interface JourneySankeySlots<Row = unknown> {
   header?: (props: JourneyHeaderSlotProps) => VNodeChild
   label?: (props: JourneyLabelSlotProps<Row>) => VNodeChild
   default?: () => VNode[]
-}
-
-export type JourneySankeyProps<Row = unknown> = ChartRootAttributes & Omit<
-  ExtractPublicPropTypes<typeof JourneySankeyVueProps & typeof chartSizeProps>,
-  'data' | 'dataKey' | 'pathKey' | 'nodeHref' | 'subtitleFormatter'
-> & {
-  'data': readonly Row[]
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'pathKey'?: RowDataKey<NoInfer<Row>>
-  'nodeHref'?: (name: string, node: JourneyNode<NoInfer<Row>>) => string | undefined
-  'subtitleFormatter'?: (node: JourneyNode<NoInfer<Row>>) => string
-  'onNode-click'?: (node: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent | KeyboardEvent) => void
-  'onNodeClick'?: (node: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent | KeyboardEvent) => void
-  'onLink-click'?: (link: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent | KeyboardEvent) => void
-  'onLinkClick'?: (link: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent | KeyboardEvent) => void
-  'onNode-mouseenter'?: (item: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onNodeMouseenter'?: (item: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onNode-mouseleave'?: (item: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onNodeMouseleave'?: (item: JourneyNode<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onLink-mouseenter'?: (item: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onLinkMouseenter'?: (item: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onLink-mouseleave'?: (item: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onLinkMouseleave'?: (item: JourneyLink<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onUpdate:pinned'?: (path: string[] | null) => void
-  'onAnimation-start'?: () => void
-  'onAnimation-end'?: () => void
 }

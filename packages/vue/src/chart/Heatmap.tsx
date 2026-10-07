@@ -1,16 +1,19 @@
+import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
-import { type GridCell, levelColors, levelOf, mixColor } from './cellGridUtils'
+import { standaloneChartOptions } from './shell'
+import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
+import { type GridCell, cellColorScale } from './cellGridUtils'
 
 export type HeatmapKey = string | number
 
@@ -65,6 +68,8 @@ const HeatmapVueProps = {
   gap: { type: Number, default: 2 },
   desc: String,
   title: { type: String, default: 'Heatmap' },
+  /** Internal: the domain object a derived chart exposes per cell, e.g. CohortChart's `CohortCell`. */
+  cellPayload: { type: Function as PropType<(cell: HeatmapCell) => unknown>, default: undefined },
 }
 
 const _Heatmap = defineComponent({
@@ -119,7 +124,7 @@ const _Heatmap = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : Math.max(1, matrix.value.ys.length) * DEFAULT_ROW + bottom.value)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('Heatmap'))
+    }), standaloneChartOptions('Heatmap'))
 
     const layout = computed(() => {
       const { xs, ys, cells: byKey } = matrix.value
@@ -127,7 +132,7 @@ const _Heatmap = defineComponent({
       const height = size.effectiveHeight.value
       if (xs.length === 0 || ys.length === 0 || !(width > 0) || !(height > 0)) {
         return {
-          cells: [] as GridCell<HeatmapCell>[],
+          cells: [] as GridCell[],
           xLabels: [] as MovingLabel[],
           yLabels: [] as MovingLabel[],
           gap: 0,
@@ -144,27 +149,16 @@ const _Heatmap = defineComponent({
             max = cell.value!
         }
       }
-      const levels = props.colors?.length ? props.colors.length - 1 : Math.max(0, Math.floor(props.levels))
-      const fills = props.colors?.length ? props.colors : levels > 0 ? levelColors(props.color, props.emptyColor, levels) : undefined
-      const fillOf = (value: number | null) => {
-        if (value === null || !(max! > 0))
-          return fills?.[0] ?? props.emptyColor
-        if (fills) {
-          const level = levelOf(value, max!, levels)
-          return fills[level]
-        }
-        const ratio = Math.min(1, Math.max(0, value / max!))
-        return mixColor(props.color, props.emptyColor, ratio)
-      }
+      const scale = cellColorScale({ color: props.color, empty: props.emptyColor, levels: props.levels, colors: props.colors, max })
 
-      const cells: GridCell<HeatmapCell>[] = []
+      const cells: GridCell[] = []
       ys.forEach((y, row) => {
         xs.forEach((x, column) => {
           const cell = byKey.get(cellKey(x, y))
           if (!cell && !props.fillMissing)
             return
           const data = cell ?? { x, y, value: null, rows: [] }
-          const fill = fillOf(data.value)
+          const fill = scale.fill(data.value)
           const text = data.value === null ? undefined : props.valueFormatter ? props.valueFormatter(data.value, data) : String(data.value)
           cells.push({
             key: cellKey(x, y),
@@ -176,9 +170,10 @@ const _Heatmap = defineComponent({
             row,
             column,
             label: `${yText(y)}, ${xText(x)}`,
-            value: text ?? null,
+            value: data.value,
+            valueText: text,
             text: props.showValues ? text : undefined,
-            payload: data,
+            payload: props.cellPayload ? props.cellPayload(data) : data,
           })
         })
       })
@@ -239,14 +234,7 @@ const _Heatmap = defineComponent({
               title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
-              {...{
-                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-                'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
-                'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
-                'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),
-                'onAnimation-start': () => emit('animation-start'),
-                'onAnimation-end': () => emit('animation-end'),
-              }}
+              {...cellGridListeners(emit)}
             >
               {{ cell: slots.cell }}
             </CellGridLayer>
@@ -271,19 +259,16 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  */
 export type HeatmapSlots<Row = unknown> = CellGridSlots<HeatmapCell<Row>> & { default?: () => VNode[] }
 
-export type HeatmapProps<Row = unknown> = Omit<InstanceType<typeof _Heatmap>['$props'], 'data' | 'xKey' | 'yKey' | 'dataKey' | 'valueFormatter' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
-  'data': readonly Row[]
-  'xKey'?: RowDataKey<NoInfer<Row>>
-  'yKey'?: RowDataKey<NoInfer<Row>>
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'valueFormatter'?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
-  'onCellClick'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-click'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-}
+export type HeatmapProps<Row = unknown> = StandaloneChartProps<Omit<InstanceType<typeof _Heatmap>['$props'], 'cellPayload'>, CellEvents<HeatmapCell<NoInfer<Row>>> & {
+  data: readonly Row[]
+  xKey?: RowDataKey<NoInfer<Row>>
+  yKey?: RowDataKey<NoInfer<Row>>
+  dataKey?: RowDataKey<NoInfer<Row>>
+  valueFormatter?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
+}>
+
+/** The untyped component, for charts derived from a heatmap that expose their own cell payload. */
+export const HeatmapView = _Heatmap
 
 export const Heatmap = _Heatmap as unknown as <Row>(
   props: HeatmapProps<Row>,

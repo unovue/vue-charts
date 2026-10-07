@@ -218,7 +218,7 @@ const _Tooltip = defineComponent({
       if (tooltip.controlled.value !== undefined && source.index.value !== tooltip.requestedIndex.value)
         return
       const entries = finalPayload.value.flatMap((entry, position, payload) => {
-        const formatter = entry.formatter ?? props.formatter
+        const formatter = props.formatter ?? entry.formatter
         const formatted: unknown = formatter
           ? formatter(entry.value!, entry.name!, entry, position, payload)
           : entry.value

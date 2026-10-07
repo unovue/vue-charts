@@ -97,8 +97,12 @@ export type TooltipPayloadConfiguration = {
   keyboardItems?: ReadonlyArray<TooltipKeyboardItem>
   /** Pointer-only targets do not enter keyboard order. */
   pointerItems?: ReadonlyArray<TooltipKeyboardItem>
-  /** Hierarchy totals come from layout; parent rows need not store a value. */
-  values?: Readonly<Record<string, number>>
+  /**
+   * Value and name per item (numeric index or payload key) when they are not fields of the
+   * payload: hierarchy totals come from layout, and a cell's payload is its domain object.
+   */
+  values?: Readonly<Record<string, ValueType | null>>
+  names?: Readonly<Record<string, string>>
   /** Per-entry swatch colours (Pie sectors, Funnel trapezoids), by item index; see core/color entryColor. */
   colors?: ReadonlyArray<string | undefined>
 

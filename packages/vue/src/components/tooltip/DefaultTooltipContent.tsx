@@ -78,7 +78,8 @@ export const DefaultTooltipContent = defineComponent({
                 color: 'var(--v-charts-tooltip-foreground, #000)',
                 ...itemStyle,
               }
-              const finalFormatter = entry.formatter || formatter || defaultFormatter
+              // A chart's entry formatter is a default; the Tooltip's own formatter replaces it.
+              const finalFormatter = formatter || entry.formatter || defaultFormatter
               const { value, name } = entry
               let finalValue: VNodeChild = value
               let finalName: VNodeChild = name

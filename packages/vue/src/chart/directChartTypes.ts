@@ -8,3 +8,9 @@ type ChartPointerListeners = {
 }
 
 export type ChartRootAttributes = Omit<DirectChartAttributes, keyof ChartPointerListeners> & ChartPointerListeners
+
+/**
+ * Public props of a standalone chart: the component's own props and emits (`$props`), the root
+ * attributes, and the row-typed overrides in `Typed`.
+ */
+export type StandaloneChartProps<Props, Typed> = ChartRootAttributes & Omit<Props, keyof Typed> & Typed

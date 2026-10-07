@@ -10,10 +10,12 @@ export interface GridCell<P = unknown> {
   /** Grid position for keyboard navigation. */
   row: number
   column: number
-  /** Accessible text and default tooltip name, e.g. "Sep 3, 2026". */
+  /** Accessible text and tooltip name, e.g. "Sep 3, 2026". */
   label: string
-  /** Default tooltip value, e.g. "4" or "Operational". */
+  /** Raw tooltip value, e.g. 4 or `'up'`; `null` when the cell has none. */
   value: string | number | null
+  /** Readable value for screen readers and the default tooltip, e.g. "42%" or "Operational". */
+  valueText?: string
   /** Text drawn centered on the cell, e.g. "42%"; hidden when it does not fit. */
   text?: string
   payload: P
@@ -96,4 +98,32 @@ export function levelOf(value: number, max: number, levels: number): number {
   if (!(value > 0) || !(max > 0))
     return 0
   return Math.min(levels, Math.max(1, Math.ceil(value / max * levels)))
+}
+
+interface CellColorOptions {
+  /** Full-intensity color. */
+  color: string
+  empty: string
+  /** Steps above empty; `0` mixes continuously. */
+  levels: number
+  /** Explicit fill per level, from empty to full; overrides `color`, `empty` and `levels`. */
+  colors?: readonly string[]
+  /** Value that reaches full color. */
+  max: number
+  /** Fewest steps above empty, e.g. 1 for charts that never mix continuously. */
+  minLevel?: number
+}
+
+/** One color rule for every cell chart: the level and fill of a value. */
+export function cellColorScale({ color, empty, levels, colors, max, minLevel = 0 }: CellColorOptions) {
+  const steps = colors?.length ? colors.length - 1 : Math.max(minLevel, Math.floor(levels))
+  const fills = colors?.length ? colors : steps > 0 ? levelColors(color, empty, steps) : undefined
+  return {
+    level: (value: number | null) => value === null ? 0 : levelOf(value, max, steps),
+    fill: (value: number | null) => {
+      if (value === null || !(max > 0))
+        return fills?.[0] ?? empty
+      return fills ? fills[levelOf(value, max, steps)] : mixColor(color, empty, value / max)
+    },
+  }
 }

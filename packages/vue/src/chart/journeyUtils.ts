@@ -79,7 +79,7 @@ export interface JourneyLayoutOptions {
 
 const SEPARATOR = '\u0001'
 
-const journeyNodeId = (step: number, name: string) => `${step}${SEPARATOR}${name}`
+export const journeyNodeId = (step: number, name: string) => `${step}${SEPARATOR}${name}`
 
 /**
  * Lays out journeys as columns of steps. Nodes in a column are grouped under their main parent
