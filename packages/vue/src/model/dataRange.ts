@@ -1,12 +1,23 @@
 import type { BrushStartEndIndex, ChartData } from '@/types/chartData'
 
-import { computed, shallowRef, watch } from 'vue'
+import { computed, shallowRef } from 'vue'
 
-export function createChartData(source: () => ChartData | undefined) {
-  const range = shallowRef<BrushStartEndIndex>({ startIndex: 0, endIndex: 0 })
-  watch([source, () => source()?.length], ([data]) => {
-    setRange({ startIndex: range.value.startIndex, endIndex: (data?.length ?? 1) - 1 })
-  }, { immediate: true, flush: 'sync' })
+/**
+ * The displayed row window. A registered Brush owns it (`null` = all rows); without a Brush the
+ * chart follows the last range received from a synchronised peer. `undefined` from `brushRange`
+ * means no Brush is registered.
+ */
+export function createChartData(
+  source: () => ChartData | undefined,
+  brushRange: () => BrushStartEndIndex | null | undefined = () => undefined,
+) {
+  const synced = shallowRef<BrushStartEndIndex | null>(null)
+  const range = computed(() => {
+    const length = source()?.length ?? 0
+    const owned = brushRange()
+    return normalizeBrushRange(owned === undefined ? synced.value : owned, length)
+      ?? { startIndex: 0, endIndex: Math.max(0, length - 1) }
+  })
 
   const state = computed(() => ({
     chartData: source(),
@@ -14,14 +25,9 @@ export function createChartData(source: () => ChartData | undefined) {
     dataEndIndex: range.value.endIndex,
   }))
 
-  function setRange(value: Partial<BrushStartEndIndex>) {
-    const current = range.value
-    const next = normalizeBrushRange({
-      startIndex: value.startIndex ?? current.startIndex,
-      endIndex: value.endIndex ?? current.endIndex,
-    }, source()?.length ?? 0) ?? { startIndex: 0, endIndex: 0 }
-    if (current.startIndex !== next.startIndex || current.endIndex !== next.endIndex)
-      range.value = next
+  /** Follow a synchronised peer's range; used only when this chart has no Brush. */
+  function receiveSyncedRange(value: BrushStartEndIndex) {
+    synced.value = value
   }
 
   function displayedData<T extends readonly unknown[]>(
@@ -43,7 +49,7 @@ export function createChartData(source: () => ChartData | undefined) {
       : data
   }
 
-  return { state, setRange, displayedData, tooltipData }
+  return { state, receiveSyncedRange, displayedData, tooltipData }
 }
 
 export function normalizeBrushRange(value: BrushStartEndIndex | null, length: number): BrushStartEndIndex | null {

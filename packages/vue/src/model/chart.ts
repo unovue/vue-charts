@@ -75,9 +75,9 @@ export function createChart(inputs: ChartInputs): Chart {
     scale.value = value
   }
 
-  const dataRange = createChartData(() => data.value)
   const registries = createRegistries()
   const brush = createChartBrush()
+  const dataRange = createChartData(() => data.value, () => brush.range.value)
   const legend = createChartLegend(registries.legendEntries)
   const geometry = createLayout({
     layout: () => layout.value,

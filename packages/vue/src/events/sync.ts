@@ -164,7 +164,7 @@ function useBrushSyncEventsListener(chart: Chart) {
         if (requestRange)
           requestRange(range)
         else
-          data.setRange(range)
+          data.receiveSyncedRange(range)
       }
     }
 
