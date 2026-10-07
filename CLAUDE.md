@@ -73,7 +73,7 @@ packages/vue/src/           # Library source (published as vccs)
 docs/                       # Documentation site (Nuxt, Docus)
 playground/nuxt/            # Nuxt playground (Tailwind v4, shadcn-nuxt)
 scripts/                    # Release checks: verify, motion lab, check:play, check:docs, check:seen, bench, bundle, code
-internals/release-1.0/      # 1.0 run: PLAN, DECISIONS, PROGRESS, LATER, reviews
+internals/                  # decisions.md, open-items.md, migrations.md
 ```
 
 ### Key Decisions

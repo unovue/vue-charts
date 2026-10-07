@@ -14,7 +14,6 @@ export default antfu(
       'packages/vue/src/__breakit__/**',
       'packages/vue/test/fixtures/lab/**',
       '.evidence/**',
-      'internals/release-1.0/**',
     ],
   },
   {

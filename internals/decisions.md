@@ -1,10 +1,11 @@
 # Decisions for vccs 1.0
 
-Binding for the whole run. Each decision says what to do and, where it is not obvious, why.
-If a consumer test disproves an implementation choice, record the reproduction and amend that
-choice here before proceeding. Preserve the intended public behavior and verification strength;
-this is not permission to weaken a check or change taste without evidence.
-"Review" references point to [reviews/](reviews/).
+Library and public API decisions, with reasons. Docs-site design decisions are in
+`docs/adr/`. Each decision says what to do and, where it is not obvious, why. To change a
+decision, amend it here in the same commit as the code.
+
+"PLAN x.y" names a step of the 1.0 run plan, and "Review" names a review file of that run. Both
+are in git history: [PLAN.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/PLAN.md) and [reviews/](https://github.com/Mat4m0/fork_vue-charts/tree/070c752/internals/release-1.0/reviews) at commit 070c752.
 
 ## Product
 
@@ -15,7 +16,7 @@ without JavaScript uses fixed width and height with `:is-animation-active="false
 server sends the final chart. Disabling animation alone does not reveal an unmeasured chart.
 Responsive charts keep reserving their box on the server and stay hidden until measured: the
 audit measured 0 px box shift, and showing them before measurement would draw them at a wrong
-width and then snap. The docs must say exactly this (PLAN 1.14). Review: ssr-a11y.md, P1 row 4.
+width and then snap. The docs must say exactly this (PLAN 1.14). Review: [ssr-a11y.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/reviews/ssr-a11y.md), P1 row 4.
 
 **D-2 Order of work.** Release blockers first (phase 1), then the core model (phase 2), then the
 1.0 API batch (phase 3), then remaining test cleanup, performance, size and docs (phase 4).
@@ -37,8 +38,19 @@ regression threshold to make it pass.
 
 ## Architecture
 
-**D-5 Target design** is section 3 of [reviews/architecture.md](reviews/architecture.md), with
-these names and places:
+**D-5 Target design.** One `createChart()` per chart builds a typed model. Inputs are getters
+over the chart props (no copies). Children register `computed` settings into registries (no
+watch, no replace logic). Derived values are `computed`s, created once per chart inside the
+chart's effect scope and cached by key when they take a parameter (`chart.axis('xAxis', 0)`).
+The ported Recharts math stays as pure `combine*` functions: each former
+`createSelector([a, b], combine)` becomes `computed(() => combine(a.value, b.value))`. Item
+geometry is a `computed` in the item composable that reads the shared axis models. Interaction
+state (tooltip, brush range, legend hidden) has explicit local or controlled ownership with
+request operations; `v-model` does not give renderers write access to the owner. Standalone
+charts use a read-only `TooltipSource` instead of the cartesian model. Two constraints: keyed
+models live in the chart's `EffectScope`, not in the first child that asks; and children still
+register during setup, so server rendering sees them. Full text: section 3 of
+[reviews/architecture.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/reviews/architecture.md). Names and places:
 
 | Concept | Name | Place |
 | --- | --- | --- |
@@ -78,7 +90,7 @@ Document the observable contract, not a required watcher implementation.
 ```ts
 interface TooltipSource {
   active: ComputedRef<boolean>
-  index: ComputedRef<number | null>  // derived from the selection controller
+  index: ComputedRef<number | null> // derived from the selection controller
   label: ComputedRef<string | undefined>
   payload: ComputedRef<readonly TooltipPayloadEntry[]>
   coordinate: ComputedRef<Coordinate | undefined>
@@ -124,7 +136,7 @@ mismatch (ssr-a11y.md P1 row 1).
 
 Stance: Recharts concepts, names of concepts and math. Vue patterns for customizing (slots),
 listening (typed emits), controlling (`v-model`) and typing (generics). One way per job.
-Full background: [reviews/api.md](reviews/api.md).
+Full background: [reviews/api.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/reviews/api.md).
 
 **D-12a Exports.** `index.ts` uses explicit export lists (no `export *` from internal modules).
 Removed: `LineContextKey`, `provideLineContext`, `useLineContext`, `useLine`, `LineContext`,
@@ -346,7 +358,7 @@ stays in the report and gates only with `--strict-timing`. This reduces default 
 the frame-exact checks remain unchanged. Keep the separate real-clock benchmark and report
 inconclusive timing evidence explicitly; deterministic geometry does not prove runtime speed.
 
-**D-26 Motion fixes** (reviews/motion.md):
+**D-26 Motion fixes** ([reviews/motion.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/reviews/motion.md)):
 - A data change that changes nothing on screen (equal content) runs no animation, renders no
   frames and emits no `animation-start`/`animation-end`.
 - A change during a cascade entrance keeps each item's turn: items that had not started keep
@@ -407,17 +419,17 @@ with shadcn-vue / Nuxt UI components (`Tooltip`, `Legend`, `Label`, …) and sho
 
 ## Amendments
 
-- **D-22a (2.0/2.3):** preserve registration paint order through hydration, reduced motion and updates; keep cursor → graphical → label tiers and geometry. [Reproduction](../../../.evidence/release-1.0/paint-order/result.json) shows hydrated Bar→Area→Line versus static Area→Bar→Line.
-- **D-17 (3.3/3.6):** remove Bar's internal `needClip`/`id`; replace its old one-way `activeIndex` with D-13's model prop and update emit. The model prop remains public. [Conflicting baseline contracts](../../../.evidence/release-1.0/model-prop-contract.md).
-- **D-25b (1.9):** motion checks require visible fill or stroke, including resolved alpha/opacity and stroke width; retain thresholds and positive opaque/stroke-only controls. [121 zero-alpha cell flags](../../../.evidence/breakit/B9/cell-charts-1280-result.json) are checker artifacts; unexplained overflow/entrance still fails.
-- **D-27a (1.2):** prototype-safe grouping must cover axis stack groups and bar sizing. The [one-path fix reproduction](../../../.evidence/release-1.0/step-1.2-regression-after.log) still crashes all three prototype-named IDs in `combineBarSizeList`; preserve literal bar heights and ordinary/numeric grouping.
+- **D-22a (2.0/2.3):** preserve registration paint order through hydration, reduced motion and updates; keep cursor → graphical → label tiers and geometry. Reproduction (local run evidence, not in git) shows hydrated Bar→Area→Line versus static Area→Bar→Line.
+- **D-17 (3.3/3.6):** remove Bar's internal `needClip`/`id`; replace its old one-way `activeIndex` with D-13's model prop and update emit. The model prop remains public. Conflicting baseline contracts (local run evidence, not in git).
+- **D-25b (1.9):** motion checks require visible fill or stroke, including resolved alpha/opacity and stroke width; retain thresholds and positive opaque/stroke-only controls. 121 zero-alpha cell flags (local run evidence, not in git) are checker artifacts; unexplained overflow/entrance still fails.
+- **D-27a (1.2):** prototype-safe grouping must cover axis stack groups and bar sizing. The one-path fix reproduction (local run evidence, not in git) still crashes all three prototype-named IDs in `combineBarSizeList`; preserve literal bar heights and ordinary/numeric grouping.
 - **D-25c (1.13 true baseline):** build `31da149` and HEAD reproduce the same Journey fold flags.
   `top8`: four backwards samples, a 7 px jump and a 78 px² overlap; `top15`: two jumps (15/14 px) and an 83 px² overlap.
   These predate this run and are accepted under D-25, by scenario, kind and element.
-  [Baseline and HEAD comparison](../../../.evidence/release-1.0/true-baseline-comparison.json); [baseline report](../../../.evidence/release-1.0/true-baseline-journey/report.json).
+  Baseline and HEAD comparison (local run evidence, not in git); baseline report (local run evidence, not in git).
 - **D-25d (Phase 1 playground gate):** 0.1 and freshly built `31da149` both exit 1 for inherited playground flags.
   Gate on zero new scenario/kind/element flags against the same corrected recorder at baseline; retain raw failures and thresholds.
-  [130 matching flags and baseline causes](../../../.evidence/release-1.0/play-flags.md).
+  130 matching flags and baseline causes (local run evidence, not in git).
 - **D-25e (Product slice, Opus):** preserve Journey's geometric fold; backwards/jump flags are
   intended height shrink-and-grow, accepted with reasons. Only overlaps are defects: folding
-  slots follow neighbours on shared eased progress. No recorder change. [Analysis and frames](../../../.evidence/release-1.0/product-fix/journey-question.md).
+  slots follow neighbours on shared eased progress. No recorder change. Analysis and frames (local run evidence, not in git).

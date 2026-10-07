@@ -1,4 +1,4 @@
-// Data and chart cases from reviews/ssr-a11y/fixture.mjs.
+// Data and chart cases for the SSR, hydration and accessibility audit (check-a11y.mjs).
 import { createSSRApp, h, ref } from 'vue'
 // eslint-disable-next-line antfu/no-import-dist -- exercise the built public package
 import * as C from '../../packages/vue/dist/es/index.mjs'
