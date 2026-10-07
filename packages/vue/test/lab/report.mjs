@@ -401,6 +401,7 @@ for (const signal of ['SIGTERM', 'SIGINT']) {
 }
 
 async function runScenario(s) {
+  current = `${s} (opening pages)`
   const backSteps = s === 'journey' ? { ...BACK, ...JOURNEY_BACK } : BACK
   const dir = join(out, s)
   if (existsSync(dir))
