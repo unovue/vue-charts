@@ -36,7 +36,7 @@ export const ActivePoints = defineComponent({
     /** The series main colour (see core/color mainColor). */
     mainColor: { type: String, default: undefined },
     itemDataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true },
-    activeDot: { type: [Object, Boolean, Function] as PropType<boolean | object | Function | undefined>, required: true },
+    activeDot: { type: [Object, Boolean] as PropType<boolean | Record<string, unknown>>, required: true },
   },
   slots: Object as SlotsType<ActivePointsSlots>,
   setup(props, { slots }) {

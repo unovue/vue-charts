@@ -15,7 +15,7 @@ import { classProp } from '@/types'
 
 export const AreaVueProps = {
   type: CurveVueProps.type,
-  activeDot: { type: [Boolean, Object, Function], default: true },
+  activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   baseValue: {
     type: [Number, String] as PropType<BaseValue>,
     default: undefined,
@@ -26,7 +26,7 @@ export const AreaVueProps = {
     type: [String, Number, Function] as PropType<ChartDataKey>,
     required: true as const,
   },
-  dot: { type: [Boolean, Object, Function], default: false },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
   fill: { type: String, default: undefined },
   fillOpacity: { type: Number, default: 0.6 },
   strokeWidth: { type: Number },

@@ -64,7 +64,7 @@ const RadarViewProps = {
     type: Object as PropType<ValueAnimationTransition<number>>,
     default: undefined,
   },
-  activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
+  activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   class: classProp,
 }
 

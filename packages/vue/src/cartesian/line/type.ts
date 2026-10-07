@@ -13,7 +13,7 @@ import { classProp } from '@/types'
 export type { LinePointItem } from '@/types/line'
 
 export const LineVueProps = {
-  activeDot: { type: [Boolean, Object, Function], default: true },
+  activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   isAnimationActive: { type: Boolean, default: undefined },
   connectNulls: { type: Boolean, default: false },
   data: { type: Array, default: undefined },
@@ -21,7 +21,7 @@ export const LineVueProps = {
     type: [String, Number, Function] as PropType<ChartDataKey>,
     required: true as const,
   },
-  dot: { type: [Boolean, Object, Function], default: true },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   hide: { type: Boolean, default: false },
   label: { type: [Boolean, Object] },
   legendType: { type: String as PropType<LegendType>, default: 'line' },

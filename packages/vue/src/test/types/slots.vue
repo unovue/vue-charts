@@ -89,6 +89,10 @@ function text(value: string | undefined) { return value }
       {{ value }} {{ number(index) }}
     </template>
   </Line>
+  <!-- @vue-expect-error Render functions are not dot options; use the #dot slot. -->
+  <Line data-key="value" :dot="() => null" />
+  <!-- @vue-expect-error Render functions are not activeDot options; use the #activeDot slot. -->
+  <Area data-key="value" :active-dot="() => null" />
   <Area data-key="value">
     <template #label="{ index }">
       {{ number(index) }}
