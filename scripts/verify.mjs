@@ -8,7 +8,7 @@ if (docsBrowsers && !/^(?:chromium|firefox|webkit)(?:,(?:chromium|firefox|webkit
   throw new Error('Expected --docs-browser=chromium,firefox,webkit or a subset')
 const docsCommand = `pnpm check:docs${docsBrowsers ? ` --browser=${docsBrowsers}` : ''}`
 
-// Tiers: default (about 15 min), --release adds the slow browser gates, --quick skips the browser sweeps.
+// Tiers: default (about 10 min, see VERIFY.md), --release adds the slow browser gates, --quick skips the browser sweeps.
 const quick = process.argv.includes('--quick')
 const release = process.argv.includes('--release')
 if (quick && release)

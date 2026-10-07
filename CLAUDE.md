@@ -19,7 +19,7 @@ pnpm lint                 # ESLint, zero warnings
 pnpm typecheck            # vue-tsc for the library, including the type probes
 pnpm docs                 # docs site (Nuxt dev server)
 pnpm play                 # playground (Nuxt dev server)
-pnpm verify               # the gates and a verdict table (~15 min); --quick skips browsers,
+pnpm verify               # the gates and a verdict table (~10 min, see VERIFY.md); --quick skips browsers,
                           # --release adds motion geometry and the playground sweep
 pnpm lab <command>        # motion instruments: film, timing, seen, dev (never a gate)
 pnpm compare:upstream     # bundle, dependency and line comparison with vccs 0.6.0
@@ -39,7 +39,7 @@ tier) and the benchmark against vccs 0.6.0.
 packages/vue/src/           # Library source (published as vccs)
 ├── model/                  # One Vue model per chart: createChart/useChart, registries, axis, polar, tooltip, legend, brush
 ├── core/                   # Pure math (layout, scales, series geometry, tooltip payloads); no Vue imports
-├── chart/                  # Chart roots (chartRoot.tsx defines the 9 categorical charts), ChartShell, standalone charts
+├── chart/                  # Chart roots (chartRoot.tsx is the shared root of the 9 categorical charts), ChartShell, standalone charts
 ├── cartesian/              # Area, Bar, Line, Scatter, axes, Brush, CartesianGrid, ErrorBar, Reference*; funnel/
 ├── polar/                  # Pie, Radar, RadialBar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 ├── components/             # Legend, Tooltip, Text, Label, LabelList, Cell, Customized (deprecated)
@@ -153,5 +153,5 @@ heading or table entry (`node scripts/check-docs-coverage.mjs`).
 ## Dependencies
 
 Peers: `vue` ^3.5, `motion-v` ^2.4 (animation) and `@nuxt/kit` ^4 (only for `vccs/nuxt`). Runtime:
-`d3-scale`, `d3-shape`, `d3-hierarchy`, `d3-sankey`, `d3-time`, `d3-color` (scales, shapes,
+`d3-scale`, `d3-shape`, `d3-hierarchy`, `d3-sankey`, `d3-color` (scales, shapes,
 layouts), `es-toolkit`, `@vueuse/core` and `decimal.js-light` (exact tick arithmetic).
