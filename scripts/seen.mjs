@@ -17,7 +17,7 @@ import { checkPorts, portText } from './lib/ports.mjs'
 const ports = checkPorts(4690, 4699)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/seen')
+const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/lab/seen')
 
 const option = name => process.argv.find(a => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 const fixture = process.argv.includes('--fixture')

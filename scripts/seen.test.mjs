@@ -40,7 +40,7 @@ chromium.launch = async (options) => {
   const result = spawnSync(process.execPath, [
     '--import',
     preload,
-    'scripts/check-seen.mjs',
+    'scripts/seen.mjs',
     '--fixture',
     `--out=${out}`,
   ], { cwd: root, encoding: 'utf8' })
@@ -56,7 +56,7 @@ test('visitor CLI checks chart routes without requiring charts in the navigation
   const root = fileURLToPath(new URL('../', import.meta.url))
   const out = `${root}.evidence/release-1.0/seen-route-control`
   const args = [
-    'scripts/check-seen.mjs',
+    'scripts/seen.mjs',
     '--only=play',
     '--width=390',
     '--skip-build',
