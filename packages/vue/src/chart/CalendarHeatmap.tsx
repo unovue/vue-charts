@@ -1,7 +1,7 @@
 import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
@@ -81,8 +81,8 @@ const _CalendarHeatmap = defineComponent({
         const day = toDayNumber(getValueByDataKey(row, props.dateKey) as string | Date | null | undefined)
         if (day !== undefined && (latest === undefined || day > latest))
           latest = day
-        const value = Number(getValueByDataKey(row, props.dataKey))
-        if (day === undefined || !Number.isFinite(value))
+        const value = toFiniteNumber(getValueByDataKey(row, props.dataKey))
+        if (day === undefined || value === null)
           continue
         values.set(day, (values.get(day) ?? 0) + value)
         const sourceRows = contributing.get(day) ?? []

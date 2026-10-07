@@ -60,3 +60,30 @@ it('keeps finite geometry and rows when numeric data contains non-finite values'
     }
   }
 }, 30000)
+
+// A null or empty-string value is a missing value, as it is for Sparkline and the cartesian charts; it must not read as 0.
+it.each([null, ''])('treats a %o value as missing in the standalone charts', async (blank) => {
+  const read = (container: Element) => [
+    ...Array.from(container.querySelectorAll('[aria-label]'), element => element.getAttribute('aria-label')),
+    container.textContent,
+  ]
+  const draws = {
+    Heatmap: (value: unknown) => h(Charts.Heatmap, { width: 300, height: 100, showValues: true, data: [{ x: 'A', y: 'r', value }, { x: 'C', y: 'r', value: 4 }] }),
+    CalendarHeatmap: (value: unknown) => h(Charts.CalendarHeatmap, { start: '2026-01-01', end: '2026-01-03', data: [{ date: '2026-01-01', value }, { date: '2026-01-02', value: 4 }] }),
+    BarList: (value: unknown) => h(Charts.BarList, { data: [{ name: 'n', value }, { name: 'f', value: 4 }] }),
+    JourneySankey: (value: unknown) => h(Charts.JourneySankey, { width: 300, height: 200, data: [{ path: ['a', 'b'], count: value }, { path: ['a', 'c'], count: 4 }] }),
+    CohortChart: (value: unknown) => h(Charts.CohortChart, { width: 300, height: 100, mode: 'percent', data: [{ cohort: 'Jan', values: [value, 3] }, { cohort: 'Feb', values: [4, 2] }] }),
+  }
+  for (const [name, draw] of Object.entries(draws)) {
+    const blankRender = render(() => draw(blank))
+    await nextTick()
+    const actual = read(blankRender.container)
+    blankRender.unmount()
+    const missingRender = render(() => draw(undefined))
+    await nextTick()
+    expect(actual, name).toEqual(read(missingRender.container))
+    if (name === 'CohortChart')
+      expect(missingRender.container.textContent?.match(/%/g), 'only the Feb cohort, which has a size, shows percentages').toHaveLength(2)
+    missingRender.unmount()
+  }
+})

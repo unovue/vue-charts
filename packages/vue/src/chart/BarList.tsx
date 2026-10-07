@@ -1,6 +1,6 @@
 import type { DirectChartAttributes } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type ComponentPublicInstance, type PropType, type SlotsType, type VNodeChild, computed, defineComponent, getCurrentInstance, ref } from 'vue'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
@@ -76,8 +76,8 @@ const BarListInner = defineComponent({
 
     const target = computed<RowState[]>(() => {
       const list = (rows.value ?? []).flatMap((row) => {
-        const value = Number(getValueByDataKey(row, props.dataKey))
-        return row && Number.isFinite(value) ? [{ row, name: String(getValueByDataKey(row, props.nameKey) ?? ''), value }] : []
+        const value = toFiniteNumber(getValueByDataKey(row, props.dataKey))
+        return row && value !== null ? [{ row, name: String(getValueByDataKey(row, props.nameKey) ?? ''), value }] : []
       })
       if (props.sort !== 'none')
         list.sort((a, b) => props.sort === 'descending' ? b.value - a.value : a.value - b.value)

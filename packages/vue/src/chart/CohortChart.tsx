@@ -1,6 +1,6 @@
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent } from 'vue'
 import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
@@ -84,7 +84,7 @@ const _CohortChart = defineComponent({
     const model = computed(() => {
       const rows: CohortPeriod[] = []
       const cohorts: string[] = []
-      const sizes = new Map<string, number>()
+      const sizes = new Map<string, number | null>()
       let periods = 0
       for (const row of props.data ?? []) {
         const cohort = getValueByDataKey(row, props.cohortKey)
@@ -92,18 +92,19 @@ const _CohortChart = defineComponent({
         if (cohort == null || !Array.isArray(values) || values.length === 0)
           continue
         const name = String(cohort)
-        const size = Number(values[0])
+        const size = toFiniteNumber(values[0])
         cohorts.push(name)
         sizes.set(name, size)
         periods = Math.max(periods, values.length)
         values.forEach((raw: unknown, period: number) => {
-          if (raw == null)
+          const count = toFiniteNumber(raw)
+          if (count === null)
             return
-          const count = Number(raw)
-          if (!Number.isFinite(count))
-            return
-          const value = props.mode === 'percent' ? (size > 0 ? count / size * 100 : 0) : count
-          rows.push({ cohort: name, period, value, row })
+          if (props.mode !== 'percent')
+            rows.push({ cohort: name, period, value: count, row })
+          // A percentage needs a positive cohort size; without one the cell stays blank.
+          else if (size !== null && size > 0)
+            rows.push({ cohort: name, period, value: count / size * 100, row })
         })
       }
       return { rows, cohorts, sizes, periods: Array.from({ length: periods }, (_, i) => i) }
@@ -128,7 +129,10 @@ const _CohortChart = defineComponent({
         showValues
         valueFormatter={(value, cell) => props.valueFormatter ? props.valueFormatter(value, cohortCell(cell as HeatmapCell<CohortPeriod>)) : format(value)}
         xTickFormatter={x => props.periodFormatter(Number(x))}
-        yTickFormatter={y => `${y} · ${numbers.value.format(model.value.sizes.get(String(y)) ?? 0)}`}
+        yTickFormatter={(y) => {
+          const size = model.value.sizes.get(String(y))
+          return size == null ? String(y) : `${y} · ${numbers.value.format(size)}`
+        }}
         color={props.color}
         emptyColor={props.emptyColor}
         gap={props.gap}

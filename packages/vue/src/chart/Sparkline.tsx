@@ -1,6 +1,6 @@
 import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, computed, defineComponent, reactive, toRefs, useId } from 'vue'
 import { curveLinear, curveMonotoneX, area as d3Area, line as d3Line } from 'd3-shape'
@@ -82,8 +82,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
 
   const values = computed(() => (rows.value ?? []).map((row) => {
     const raw = row !== null && typeof row === 'object' ? getValueByDataKey(row, props.dataKey) : row
-    const value = Number(raw)
-    return raw == null || !Number.isFinite(value) ? null : value
+    return toFiniteNumber(raw)
   }))
 
   const domain = computed(() => {

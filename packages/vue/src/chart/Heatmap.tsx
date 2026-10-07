@@ -1,7 +1,7 @@
 import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
@@ -103,8 +103,8 @@ const _Heatmap = defineComponent({
         }
         const key = cellKey(x, y)
         const cell = cells.get(key) ?? { x, y, value: null, rows: [] }
-        const value = Number(getValueByDataKey(row, props.dataKey))
-        if (Number.isFinite(value))
+        const value = toFiniteNumber(getValueByDataKey(row, props.dataKey))
+        if (value !== null)
           cell.value = (cell.value ?? 0) + value
         cell.rows.push(row)
         cells.set(key, cell)

@@ -1,5 +1,5 @@
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
-import { getValueByDataKey } from '@/utils/chart'
+import { getValueByDataKey, toFiniteNumber } from '@/utils/chart'
 import { type EmitFn, type ExtractPropTypes, type SlotsType, computed, defineComponent, reactive, ref, toRaw, toRefs, watch } from 'vue'
 import { motionTokens } from '@/animation/motion'
 import { useReducedMotion } from '@/animation/useReducedMotion'
@@ -66,8 +66,8 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
 
   const journeys = computed<JourneyInput[]>(() => (rows.value ?? []).flatMap((row) => {
     const path = getValueByDataKey(row, props.pathKey)
-    const count = Number(getValueByDataKey(row, props.dataKey))
-    return Array.isArray(path) && Number.isFinite(count) && count > 0
+    const count = toFiniteNumber(getValueByDataKey(row, props.dataKey))
+    return Array.isArray(path) && count !== null && count > 0
       ? [{ path: path.map(String), count, rows: [row] }]
       : []
   }))
