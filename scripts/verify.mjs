@@ -19,7 +19,7 @@ const checks = [
   ['library build', 'pnpm --filter vccs build'],
   ['size budgets', 'pnpm --filter vccs size'],
   ['package exports and types', 'pnpm check:package'],
-  ['packed consumers offline', 'node scripts/check-consumers.mjs'],
+  ['packed consumers', 'node scripts/check-consumers.mjs'],
   ['code health', 'pnpm check:code'],
   ['standalone bundles', 'pnpm check:bundle --assert-standalone'],
   ['Nuxt SSR fixture', 'pnpm --filter vccs test:nuxt'],

@@ -1,52 +1,19 @@
-# Locked packed consumers
+# Packed consumers
 
-These Vite and Nuxt applications compile and build against the packed library, outside the
-repository's pnpm workspace. Their source files and dependency lockfiles are checked in.
-`vccs` always resolves to `file:../vccs.tgz` in the disposable application directory.
+`node scripts/check-consumers.mjs` packs the library and installs it into a fresh Vite app and a
+fresh Nuxt 4 app outside the workspace. `vccs` resolves to `file:../vccs.tgz`. Each app then
+typechecks with `strict: true` and `strictTemplates: true` and makes a production build.
 
-Prepare the dependency store with network access before an offline run:
+- Direct dependencies in `vite/package.json` and `nuxt/package.json` are exact versions. There is
+  no lockfile, so their own dependencies resolve fresh, as for a new user. A new upstream patch
+  release can turn the check red; that is real consumer breakage. To move a fixture to a new
+  version, change its pin.
+- The template probes are the library's own vue-tsc probes in `packages/vue/src/test/types/`
+  (`api-example-0.vue`, `api-example-1.vue`, `standalone.vue`, `renames.vue`), copied with
+  `from 'vccs'` in place of `from '../../index'`. `nullability.ts` and `publicProps.ts` exist only
+  here: they check the packed declarations.
+- `scripts/check-consumer-declarations.mjs` checks every packed vccs declaration with
+  `skipLibCheck: false` in the Nuxt app. Errors in vccs files fail; third-party diagnostics are
+  only reported.
 
-```sh
-node scripts/check-consumers.mjs --prepare
-```
-
-Preparation packs the current library, asks pnpm to refresh its local archive resolution,
-fetches the locked production and development dependencies, then installs with
-`--offline --frozen-lockfile`, typechecks and builds both consumers. It saves the resulting
-lockfiles. Review their diff before committing them. Preparation does not update other direct
-consumer dependencies; make any intended fixture dependency upgrades explicitly.
-
-The normal check creates fresh applications and uses the prepared pnpm store:
-
-```sh
-node scripts/check-consumers.mjs
-```
-
-Repacking changes the archive's integrity even when its path stays the same. Before each
-frozen installation, `pnpm update vccs --offline --lockfile-only` refreshes that local resolution
-using pnpm's own integrity calculation. The runner does not edit hashes or change archive
-paths. The refresh was checked with a modified packed README: only the local archive integrity
-changed, and the frozen offline install contained the modified README. Registry resolutions
-remained unchanged. Library dependency changes may require another network-enabled preparation;
-an absent dependency fails the check instead of falling back to network resolution.
-
-To prove network isolation on macOS, run the normal command under a profile that denies all
-network access (including child processes):
-
-```sh
-sandbox-exec -p '(version 1)(allow default)(deny network*)' node scripts/check-consumers.mjs
-```
-
-On other systems, run it in a network-disabled container after preparation. `--offline` alone
-proves pnpm's install mode; it does not prove a framework build made no network request.
-Temporary applications are removed on success or failure. No server starts during these checks.
-
-Consumer templates use `strict: true`, `strictTemplates: true` and `skipLibCheck: true`.
-Template probes reject removed props as well as invalid row keys and payloads.
-The wrapper's `data-slot` and `data-chart` attributes remain accepted. `data-key` stays a checked
-component prop. The nullability probe still
-checks consumer source against packed declarations. A separate guard checks every packed
-vccs declaration with `skipLibCheck: false` in the Nuxt fixture (which supplies Nuxt's optional
-integration types). Errors located in vccs fail the guard; dependency diagnostics are reported.
-This retains detection of missing declaration dependencies and malformed library types while
-matching the official templates' treatment of third-party declaration errors.
+The check needs network access for the first install; pnpm reuses its store after that.

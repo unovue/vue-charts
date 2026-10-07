@@ -70,11 +70,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Prepare locked consumer dependencies
-        run: node scripts/check-consumers.mjs --prepare
-
-      - name: Reconfirm frozen consumers offline
-        run: node scripts/check-consumers.mjs
+      - run: node scripts/check-consumers.mjs
 
   motion:
     runs-on: ubuntu-latest

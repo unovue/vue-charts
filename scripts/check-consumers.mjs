@@ -1,7 +1,6 @@
 /* eslint-disable no-console -- CLI check results. */
 import { Buffer } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { copyFile, cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -9,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixtures = join(root, 'scripts/fixtures/consumers')
-const prepare = process.argv.includes('--prepare')
 const temporary = await mkdtemp(join(tmpdir(), 'vccs-consumers-'))
 const env = { ...process.env, CI: 'true', NODE_ENV: 'production' }
 delete env.NODE_PATH
@@ -35,7 +33,7 @@ function check(cwd, args) {
 }
 
 try {
-  console.log(`Packed consumers; Node ${process.version}; ${prepare ? 'network-enabled preparation' : 'offline frozen installation'}; ${temporary}`)
+  console.log(`Packed consumers; Node ${process.version}; ${temporary}`)
   run(root, ['--filter', 'vccs', 'build'])
   run(join(root, 'packages/vue'), ['pack', '--pack-destination', temporary])
   const archives = (await readdir(temporary)).filter(name => name.endsWith('.tgz'))
@@ -46,26 +44,19 @@ try {
   for (const name of ['vite', 'nuxt']) {
     const app = join(temporary, name)
     await cp(join(fixtures, name), app, { recursive: true })
-    for (const probe of ['nullability.ts', 'publicProps.ts', 'api-example-0.vue', 'api-example-1.vue', 'standalone.vue', 'renames.vue']) {
-      const directory = name === 'vite' ? 'src' : 'app'
-      if (probe === 'standalone.vue') {
-        const source = await readFile(join(root, 'packages/vue/src/test/types/standalone.vue'), 'utf8')
-        await writeFile(join(app, directory, probe), source.replace('from \'../../index\'', 'from \'vccs\''))
-      }
-      else {
-        await copyFile(join(fixtures, probe), join(app, directory, probe))
-      }
+    const directory = name === 'vite' ? 'src' : 'app'
+    // Consumer-only probes live with the fixtures.
+    for (const probe of ['nullability.ts', 'publicProps.ts'])
+      await copyFile(join(fixtures, probe), join(app, directory, probe))
+    // The other probes are the library's own vue-tsc probes, importing the packed 'vccs' instead.
+    for (const probe of ['api-example-0.vue', 'api-example-1.vue', 'standalone.vue', 'renames.vue']) {
+      const source = await readFile(join(root, 'packages/vue/src/test/types', probe), 'utf8')
+      if (!source.includes('from \'../../index\''))
+        throw new Error(`${probe} must import the library from '../../index'`)
+      await writeFile(join(app, directory, probe), source.replaceAll('from \'../../index\'', 'from \'vccs\''))
     }
-    // pnpm refreshes the local archive's integrity. Existing registry resolutions
-    // stay locked; fixture preparation is required if a new dependency is absent.
-    run(app, ['update', 'vccs', '--lockfile-only', ...(prepare ? [] : ['--offline'])])
-    if (prepare)
-      run(app, ['fetch', '--prod=false'])
-    run(app, ['install', '--prod=false', '--offline', '--frozen-lockfile'])
-    const lock = await readFile(join(app, 'pnpm-lock.yaml'))
-    console.log(`${name} lockfile SHA-256: ${createHash('sha256').update(lock).digest('hex')}`)
-    if (prepare)
-      await copyFile(join(app, 'pnpm-lock.yaml'), join(fixtures, name, 'pnpm-lock.yaml'))
+    // Direct dependencies are pinned; their dependencies resolve fresh, as for a new user.
+    run(app, ['install', '--prod=false', '--prefer-offline', '--no-frozen-lockfile'])
 
     if (name === 'vite') {
       const config = JSON.parse(await readFile(join(app, 'tsconfig.json'), 'utf8'))
