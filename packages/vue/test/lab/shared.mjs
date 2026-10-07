@@ -51,10 +51,28 @@ export function collectErrors(page) {
 
 // Playwright schedules rAF on 16 ms boundaries and rounds runFor up to whole ms.
 // Advancing 1000/60 therefore occasionally executes TWO animation frames per sample.
+// Web Animations (motion-v's tooltip fade, CSS transitions) run on the document timeline, which the
+// fake clock does not control. Each advance pauses them and sets their time from the fake clock,
+// counted from the frame they were first seen, so their end callbacks follow the recorded frames.
 export const FRAME = 16
 export async function advanceFrame(page) {
   const now = await page.evaluate(() => performance.now())
   await page.clock.runFor(FRAME - now % FRAME)
+  await page.evaluate(() => {
+    const now = performance.now()
+    const starts = window.__labAnimationStarts ??= new WeakMap()
+    for (const animation of document.getAnimations()) {
+      if (!starts.has(animation)) {
+        starts.set(animation, now)
+        animation.pause()
+      }
+      const end = animation.effect?.getComputedTiming().endTime
+      if (Number.isFinite(end) && now - starts.get(animation) >= end)
+        animation.finish()
+      else
+        animation.currentTime = now - starts.get(animation)
+    }
+  })
 }
 export async function settle(page) {
   let previous = JSON.stringify(await page.evaluate(() => window.__snapshot()))

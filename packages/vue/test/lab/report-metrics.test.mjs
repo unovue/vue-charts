@@ -64,6 +64,31 @@ test('each clock advance samples exactly one animation frame at every phase', as
   }
 })
 
+// Catch Web Animations (the tooltip fade, CSS transitions) running on the real clock while the
+// recorder steps a fake one: the tooltip then stays visible after pointer-leave and the gate fails.
+test('each clock advance also drives Web Animations on the fake clock', async () => {
+  const browser = await launchBrowser()
+  try {
+    const page = await browser.newPage()
+    await page.clock.install({ time: 0 })
+    await page.clock.pauseAt(1000)
+    await page.setContent('<div id="box">fade</div>')
+    await page.evaluate(() => {
+      window.fade = document.getElementById('box').animate({ opacity: [1, 0] }, { duration: 160 })
+      window.fade.finished.then(() => window.faded = true)
+    })
+    await advanceFrame(page)
+    await page.waitForTimeout(400)
+    assert.equal(await page.evaluate(() => window.faded ?? false), false, 'real time must not finish it')
+    for (let i = 0; i < 12; i++)
+      await advanceFrame(page)
+    assert.equal(await page.evaluate(() => window.faded ?? false), true, 'fake time must finish it')
+  }
+  finally {
+    await browser.close()
+  }
+})
+
 // Catch HTML rows being lost/reidentified on rerank, or percent spans treated as pixels.
 test('HTML bar list geometry keeps row identities and resolves widths to pixels', async () => {
   const browser = await launchBrowser()
