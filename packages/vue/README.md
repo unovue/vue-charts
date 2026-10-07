@@ -34,9 +34,10 @@ palette, which you can change with CSS variables.
 ## Requirements
 
 - Vue `^3.5`
-- [`motion-v`](https://motion.dev/docs/vue) `^2.4` (peer dependency, drives all animation)
+- [`motion-v`](https://motion.dev/docs/vue) `^2.4`, a required peer dependency that drives all animation
 - An ESM build setup (Vite, Nuxt, or another bundler). vccs ships ES modules only.
-- For the Nuxt module: Nuxt `^4`.
+- For the Nuxt module (`vccs/nuxt`): Nuxt `^4`
+- For the resolver (`vccs/resolver`): [`unplugin-vue-components`](https://github.com/unplugin/unplugin-vue-components) in your own dev dependencies
 
 ## Install
 
@@ -44,11 +45,12 @@ palette, which you can change with CSS variables.
 pnpm add vccs motion-v
 ```
 
-npm and yarn work the same way: `npm install vccs motion-v`.
+npm, yarn and bun work the same way: `npm install vccs motion-v`.
 
 ### Nuxt
 
-Add the module. It registers every component, so you can use them without imports.
+Add the module. It registers every component and composable, so you can use them without
+imports. Import types and `defineChartComponents` from `vccs`.
 
 ```ts
 // nuxt.config.ts
@@ -124,14 +126,24 @@ Standalone charts such as `Heatmap` and `BarList` infer the row type from `data`
 | `CohortChart` | Retention by cohort and period |
 | `JourneySankey` | Paths that users take, step by step |
 
-Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `ReferenceArea`,
-`ReferenceDot`, `ErrorBar`, `Brush`, `PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`, `Tooltip`,
-`Legend`, `Label`, `LabelList`, `Cell`, and the shapes `Rectangle`, `Dot`,
-`Sector`, `Curve`, `Symbols`.
+Building blocks:
+
+- Series: `Area`, `Bar`, `Line`, `Scatter`, `Pie`, `Radar`, `RadialBar`, `Funnel`
+- Axes and grids: `XAxis`, `YAxis`, `ZAxis`, `CartesianAxis`, `CartesianGrid`, `PolarGrid`,
+  `PolarAngleAxis`, `PolarRadiusAxis`
+- Annotations: `ReferenceLine`, `ReferenceArea`, `ReferenceDot`, `ErrorBar`, `Brush`
+- Tooltip, legend and text: `Tooltip`, `Legend`, `Label`, `LabelList`, `Text`, `Cell`
+- Shapes: `Rectangle`, `Dot`, `Sector`, `Curve`, `Symbols`, `Cross`, `Polygon`, `Trapezoid`
+
+`ResponsiveContainer` and `Customized` still work but are deprecated and are removed in 2.0.
+Charts are responsive without a wrapper, and custom SVG goes in the chart's default slot (see
+the migration guide).
 
 ## What works the Vue way
 
-- **Models:** `v-model:active-index` on charts and series, `v-model:range` on `Brush`.
+- **Models:** `v-model:active-index` on `Tooltip`, `Bar`, `Pie` and the standalone charts
+  (`Sparkline`, `Tracker`, `Heatmap`, `CohortChart`, `CalendarHeatmap`); `v-model:range` on
+  `Brush`; `v-model:hidden` on `Legend`.
 - **Slots:** custom shapes, dots, ticks, labels and tooltip content are named slots.
 - **Events:** item events receive `(item, index, event)`.
 - **Server rendering:** charts render on the server and hydrate without layout jumps.
@@ -141,14 +153,14 @@ Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `R
 ## Upgrading from 0.x
 
 1.0 changes some props, events and exports. The
-[migration guide](https://github.com/rick-hup/vuecharts/blob/main/docs/content/1.getting-started/3.migration.md)
+[migration guide](https://github.com/unovue/vue-charts/blob/main/docs/content/1.getting-started/3.migration.md)
 lists every change with a before and after example.
 
 ## Links
 
-- [Documentation source](https://github.com/rick-hup/vuecharts/tree/main/docs/content)
-- [Changelog](https://github.com/rick-hup/vuecharts/blob/main/CHANGELOG.md)
-- [Issues](https://github.com/rick-hup/vuecharts/issues)
+- [Documentation](https://vue-charts.com) ([source](https://github.com/unovue/vue-charts/tree/main/docs/content))
+- [Changelog](https://github.com/unovue/vue-charts/blob/main/CHANGELOG.md)
+- [Issues](https://github.com/unovue/vue-charts/issues)
 
 ## Contribute
 

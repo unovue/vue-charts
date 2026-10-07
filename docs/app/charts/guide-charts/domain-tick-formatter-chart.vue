@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from 'vccs'
 
 const solarSystem = [
   { name: 'Sun', orbitalDistanceKm: 0, radiusKm: 696340, massKg: 1.989e30, fill: '#ffa700' },
@@ -23,32 +23,30 @@ function kgToYottagram(value) {
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="solarSystem"
     :height="400"
   >
-    <BarChart :data="solarSystem">
-      <XAxis data-key="name" />
-      <YAxis
-        scale="log"
-        :domain="[1e22, 3e30]"
-        :tick-formatter="kgToYottagram"
-        :width="100"
-      />
-      <Bar
-        data-key="massKg"
-        name="mass"
-        unit=" yottagram"
-      />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-    </BarChart>
-  </ResponsiveContainer>
+    <XAxis data-key="name" />
+    <YAxis
+      scale="log"
+      :domain="[1e22, 3e30]"
+      :tick-formatter="kgToYottagram"
+      :width="100"
+    />
+    <Bar
+      data-key="massKg"
+      name="mass"
+      unit=" yottagram"
+    />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+  </BarChart>
 </template>

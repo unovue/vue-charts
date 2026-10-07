@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -25,53 +25,49 @@ function getIntroOfPage(label) {
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    :margin="{ top: 5, right: 20, left: 10, bottom: 20 }"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      :margin="{ top: 5, right: 20, left: 10, bottom: 20 }"
-    >
-      <XAxis data-key="name">
-        <template #tick="{ x, y, payload }">
-          <g :transform="`translate(${x},${y})`">
-            <text
-              :x="0"
-              :y="0"
-              dy="16"
-              text-anchor="end"
-              fill="#666"
-              transform="rotate(-35)"
-            >
-              {{ payload.value }}
-            </text>
-          </g>
-        </template>
-      </XAxis>
-      <YAxis />
-      <Tooltip>
-        <template #content="{ active, payload, label }">
-          <div
-            v-if="active && payload?.length"
-            style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 4px;"
+    <XAxis data-key="name">
+      <template #tick="{ x, y, payload }">
+        <g :transform="`translate(${x},${y})`">
+          <text
+            :x="0"
+            :y="0"
+            dy="16"
+            text-anchor="end"
+            fill="#666"
+            transform="rotate(-35)"
           >
-            <p style="margin: 0 0 4px; font-weight: 600;">
-              {{ label }} : {{ payload[0].value }}
-            </p>
-            <p style="margin: 0 0 4px; color: #999;">
-              {{ getIntroOfPage(label) }}
-            </p>
-            <p style="margin: 0; color: #999;">
-              Anything you want can be displayed here.
-            </p>
-          </div>
-        </template>
-      </Tooltip>
-      <Bar
-        data-key="uv"
-        fill="#8884d8"
-      />
-    </BarChart>
-  </ResponsiveContainer>
+            {{ payload.value }}
+          </text>
+        </g>
+      </template>
+    </XAxis>
+    <YAxis />
+    <Tooltip>
+      <template #content="{ active, payload, label }">
+        <div
+          v-if="active && payload?.length"
+          style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 4px;"
+        >
+          <p style="margin: 0 0 4px; font-weight: 600;">
+            {{ label }} : {{ payload[0].value }}
+          </p>
+          <p style="margin: 0 0 4px; color: #999;">
+            {{ getIntroOfPage(label) }}
+          </p>
+          <p style="margin: 0; color: #999;">
+            Anything you want can be displayed here.
+          </p>
+        </div>
+      </template>
+    </Tooltip>
+    <Bar
+      data-key="uv"
+      fill="#8884d8"
+    />
+  </BarChart>
 </template>

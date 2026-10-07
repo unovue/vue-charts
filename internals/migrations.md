@@ -4,9 +4,9 @@
 
 - Why: charts are responsive by default since 1.0; the wrapper only keeps 0.x templates working.
 - Introduced: 2026-10 (vccs 1.0 run, phase 3).
-- Dependents: user templates written for 0.x, and in this repo the docs demos in
-  `docs/app/charts/**` (59 files wrap their chart in it) plus the guides
-  `docs/content/2.guides/05.chart-size.md` and `16.shadcn-vue.md`. No library code depends on it.
+- Dependents: user templates written for 0.x. In this repo only the deprecation section of
+  `docs/content/2.guides/05.chart-size.md`, the migration guide and the type probe
+  `packages/vue/src/test/types/renames.vue` mention it; no library code and no docs demo uses it.
 - Code: `packages/vue/src/container/ResponsiveContainer.vue` (logs the D-21 warning once per app).
 - Remove when: vccs 2.0. Delete the component, its export, docs mentions and the migration row.
 

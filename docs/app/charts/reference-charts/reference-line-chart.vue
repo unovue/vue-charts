@@ -1,5 +1,5 @@
 <script setup>
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Jan', value: 400 },
@@ -12,34 +12,32 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <LineChart
+    :data="data"
     :height="300"
   >
-    <LineChart :data="data">
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Line
-        type="monotone"
-        data-key="value"
-        stroke="#f97316"
-      />
-      <ReferenceLine
-        :y="400"
-        stroke="#14b8a6"
-        stroke-dasharray="3 3"
-        label="Average"
-      />
-    </LineChart>
-  </ResponsiveContainer>
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Line
+      type="monotone"
+      data-key="value"
+      stroke="#f97316"
+    />
+    <ReferenceLine
+      :y="400"
+      stroke="#14b8a6"
+      stroke-dasharray="3 3"
+      label="Average"
+    />
+  </LineChart>
 </template>

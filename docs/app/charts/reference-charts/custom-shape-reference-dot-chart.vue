@@ -1,5 +1,5 @@
 <script setup>
-import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { CartesianGrid, Line, LineChart, ReferenceDot, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Jan', value: 400 },
@@ -12,57 +12,55 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <LineChart
+    :data="data"
     :height="300"
   >
-    <LineChart :data="data">
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Line
+      type="monotone"
+      data-key="value"
+      stroke="#f97316"
+    />
+    <ReferenceDot
+      x="Mar"
+      :y="600"
+      :r="14"
+      fill="#f97316"
+      stroke="#fff"
+    >
+      <template #shape="{ cx, cy, r, fill, stroke }">
+        <g>
+          <circle
+            :cx="cx"
+            :cy="cy"
+            :r="r"
+            :fill="fill"
+            :stroke="stroke"
+            :stroke-width="2"
+            opacity="0.2"
           />
-        </template>
-      </Tooltip>
-      <Line
-        type="monotone"
-        data-key="value"
-        stroke="#f97316"
-      />
-      <ReferenceDot
-        x="Mar"
-        :y="600"
-        :r="14"
-        fill="#f97316"
-        stroke="#fff"
-      >
-        <template #shape="{ cx, cy, r, fill, stroke }">
-          <g>
-            <circle
-              :cx="cx"
-              :cy="cy"
-              :r="r"
-              :fill="fill"
-              :stroke="stroke"
-              :stroke-width="2"
-              opacity="0.2"
-            />
-            <circle
-              :cx="cx"
-              :cy="cy"
-              :r="r * 0.5"
-              :fill="fill"
-              :stroke="stroke"
-              :stroke-width="2"
-            />
-          </g>
-        </template>
-      </ReferenceDot>
-    </LineChart>
-  </ResponsiveContainer>
+          <circle
+            :cx="cx"
+            :cy="cy"
+            :r="r * 0.5"
+            :fill="fill"
+            :stroke="stroke"
+            :stroke-width="2"
+          />
+        </g>
+      </template>
+    </ReferenceDot>
+  </LineChart>
 </template>

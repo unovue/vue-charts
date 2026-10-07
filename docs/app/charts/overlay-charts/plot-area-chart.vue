@@ -1,5 +1,6 @@
 <script setup>
-import { CartesianGrid, Line, LineChart, ReferenceArea, Tooltip, XAxis, YAxis } from 'vccs'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'vccs'
+import PlotAreaTop from './PlotAreaTop.vue'
 
 const data = [
   { name: 'Jan', value: 400 },
@@ -14,32 +15,18 @@ const data = [
 <template>
   <LineChart
     :data="data"
+    :margin="{ top: 20, right: 30, left: 20, bottom: 5 }"
     :height="300"
   >
     <CartesianGrid stroke-dasharray="3 3" />
     <XAxis data-key="name" />
     <YAxis />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
     <Line
       type="monotone"
       data-key="value"
       stroke="#f97316"
+      :dot="false"
     />
-    <ReferenceArea
-      x1="Feb"
-      x2="Apr"
-      fill="#14b8a6"
-      :fill-opacity="0.15"
-      stroke="#14b8a6"
-      label="Target Zone"
-    />
+    <PlotAreaTop />
   </LineChart>
 </template>

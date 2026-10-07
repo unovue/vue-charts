@@ -11,6 +11,8 @@ export default antfu(
       '**/.data/**',
       '**/coverage/**',
       '.evidence/**',
+      // Symlink to packages/vue/README.md; lint the file once, at its source.
+      'README.md',
     ],
   },
   {
