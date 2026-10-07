@@ -55,7 +55,7 @@ type ActivePointSlotProps = {
   'value'?: number
 }
 
-export type ActivePointsSlots = {
+type ActivePointsSlots = {
   activeDot?: (props: ActivePointSlotProps) => VNodeChild
 }
 

@@ -11,7 +11,7 @@ export interface Coordinate {
 }
 
 /** Where the tooltip points in a Cartesian chart. */
-export interface CartesianChartCoordinate extends Coordinate {
+interface CartesianChartCoordinate extends Coordinate {
   xAxis?: unknown
   yAxis?: unknown
   width?: number

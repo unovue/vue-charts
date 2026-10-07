@@ -30,7 +30,7 @@ import {
 import type { StandaloneChartProps } from './directChartTypes'
 import { type JourneySankeySlots, JourneySankeyVueProps } from './journeyTypes'
 
-export type { JourneyHeaderSlotProps, JourneyLabelSlotProps, JourneySankeySlots } from './journeyTypes'
+export type { JourneySankeySlots } from './journeyTypes'
 
 const HEADER_BAND = 28
 const LABEL_HEIGHT = 34

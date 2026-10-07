@@ -72,7 +72,7 @@ export function formatDay(day: number, locale: string, options: Intl.DateTimeFor
  * The fill for each intensity level: level 0 is the empty color, the last level is the full
  * color, and the steps between mix the two so any CSS color or variable works as a base.
  */
-export function levelColors(color: string, empty: string, levels: number): string[] {
+function levelColors(color: string, empty: string, levels: number): string[] {
   const count = Math.max(1, Math.floor(levels))
   return Array.from({ length: count + 1 }, (_, level) => {
     if (level === 0)
@@ -84,7 +84,7 @@ export function levelColors(color: string, empty: string, levels: number): strin
 }
 
 /** A continuous mix: ratio 0 is `empty`, 1 is `color`. */
-export function mixColor(color: string, empty: string, ratio: number): string {
+function mixColor(color: string, empty: string, ratio: number): string {
   const percent = Math.round(Math.min(1, Math.max(0, ratio)) * 100)
   if (percent === 0)
     return empty

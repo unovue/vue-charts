@@ -23,8 +23,6 @@ import {
   computeSunburstLayout,
 } from './sunburstUtils'
 
-export type { SunburstData }
-
 export interface SunburstContentSlotProps extends SunburstLayoutNode {
   index: number
 }

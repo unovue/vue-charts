@@ -1,7 +1,7 @@
 import type { ChartDataKey } from '@/types/base'
 import type { ChartOffset, Coordinate, TickItem, VueClassValue } from './base'
 
-export type { DataKey, Coordinate, ChartCoordinate, CartesianChartCoordinate, PolarChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
+export type { DataKey, Coordinate, ChartCoordinate, PolarChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
 import type { TooltipPayload } from '@/types/tooltip'
 import type { PropType, SVGAttributes } from 'vue'
 

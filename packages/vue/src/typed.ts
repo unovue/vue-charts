@@ -12,8 +12,6 @@ import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
 import type { TooltipPayload } from '@/types/tooltip'
 
-export type { RowDataKey } from './types/typed'
-
 type RowArray<Value, Row> = Value extends readonly unknown[] ? RowItem<Value, Row> : Value
 
 // A string index alone does not guarantee that the runtime object has a payload.

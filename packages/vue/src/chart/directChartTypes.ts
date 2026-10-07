@@ -7,7 +7,7 @@ type ChartPointerListeners = {
   (...args: Parameters<typeof chartEmits[Event]>) => void
 }
 
-export type ChartRootAttributes = Omit<DirectChartAttributes, keyof ChartPointerListeners> & ChartPointerListeners
+type ChartRootAttributes = Omit<DirectChartAttributes, keyof ChartPointerListeners> & ChartPointerListeners
 
 /**
  * Public props of a standalone chart: the component's own props and emits (`$props`), the root

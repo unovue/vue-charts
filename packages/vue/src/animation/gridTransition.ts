@@ -10,7 +10,7 @@ export interface GridItem {
   height: number
 }
 
-export interface GridSeams<C extends GridItem> {
+interface GridSeams<C extends GridItem> {
   /** Where an arriving cell starts: a zero-thick line on the seam it opens. */
   enter: Map<string, C>
   /** Where a leaving cell ends: a zero-thick line on the seam it closes. */
