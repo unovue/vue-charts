@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { build, version as esbuildVersion } from 'esbuild'
 
@@ -19,39 +19,11 @@ const dist = resolve(root, distArg ?? 'packages/vue/dist')
 const entry = join(dist, 'es/index.mjs')
 await readFile(entry)
 
-const charts = [
-  'AreaChart',
-  'BarChart',
-  'LineChart',
-  'ComposedChart',
-  'ScatterChart',
-  'PieChart',
-  'RadarChart',
-  'RadialBarChart',
-  'FunnelChart',
-  'Treemap',
-  'Sankey',
-  'SunburstChart',
-  'Tracker',
-  'Heatmap',
-  'CohortChart',
-  'CalendarHeatmap',
-  'JourneySankey',
-  'BarList',
-  'Sparkline',
-]
-const standalone = new Set([
-  'Tracker',
-  'Heatmap',
-  'CohortChart',
-  'CalendarHeatmap',
-  'BarList',
-  'Sparkline',
-  'JourneySankey',
-  'Treemap',
-  'Sankey',
-  'SunburstChart',
-])
+// One chart list for size budgets and this check: size-limit owns the budgets, and this check
+// only proves that standalone charts leave the cartesian engine out.
+const chartList = (await import(pathToFileURL(join(root, 'packages/vue/.size-limit.mjs')).href)).charts
+const charts = chartList.map(chart => chart.name)
+const standalone = new Set(chartList.filter(chart => chart.standalone).map(chart => chart.name))
 const external = ['vue', 'vue/*', 'motion-v', 'motion-v/*']
 // Modules only the cartesian engine needs. A standalone chart that keeps one of them pulls in axis code.
 const forbidden = /\/core\/axis\/|decimal\.js-light|d3-time-format/
@@ -124,11 +96,7 @@ try {
     console.log(`${chart.padEnd(20)} ${String(result.minifiedBytes).padStart(11)} ${String(result.gzipBytes).padStart(9)}`)
   }
   const offenders = report.results.filter(result => result.offendingModules.length > 0)
-  const barList = report.results.find(result => result.chart === 'BarList')
-  const oversizedBarList = assertStandalone && barList.gzipBytes > 8947
-  if (oversizedBarList)
-    console.error(`BarList: ${barList.gzipBytes} gzip bytes exceeds the 8947-byte baseline`)
-  report.passed = !assertStandalone || (offenders.length === 0 && !oversizedBarList)
+  report.passed = !assertStandalone || offenders.length === 0
   if (!report.passed) {
     for (const result of offenders) {
       for (const module of result.offendingModules) {
