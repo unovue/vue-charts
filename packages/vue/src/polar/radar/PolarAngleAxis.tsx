@@ -88,7 +88,7 @@ const PolarAngleAxisView = defineComponent({
         : tickItems
 
       return (
-        <g class="v-charts-polar-angle-axis">
+        <g data-slot="angle-axis" class="v-charts-polar-angle-axis">
           {/* Axis line */}
           {axisLine && (
             axisLineType === 'circle'

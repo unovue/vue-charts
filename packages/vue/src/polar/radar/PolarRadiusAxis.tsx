@@ -75,7 +75,7 @@ const PolarRadiusAxisView = defineComponent({
       const textAnchor = orientation === 'left' ? 'end' : orientation === 'right' ? 'start' : 'middle'
 
       return (
-        <g class="v-charts-polar-radius-axis">
+        <g data-slot="radius-axis" class="v-charts-polar-radius-axis">
           {axisLine && showTicks && (
             (() => {
               const coords = tickItems!.map(t => t.coordinate)
