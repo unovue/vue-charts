@@ -34,7 +34,7 @@ try {
     }
     assert(entry.types.endsWith('.d.ts'), `${name}: expected a .d.ts declaration`)
   }
-  const forbidden = [...files].filter(path => /(?:^|\/)(?:src|tests?|__tests__|__breakit__|stories|__stories__|storybook|fixtures|\.evidence)(?:\/|$)|\.(?:test|spec|stories|story)\.|\.tsbuildinfo$/.test(path))
+  const forbidden = [...files].filter(path => /(?:^|\/)(?:src|tests?|__tests__|__breakit__|fixtures|\.evidence)(?:\/|$)|\.(?:test|spec)\.|\.tsbuildinfo$/.test(path))
   assert.deepEqual(forbidden, [], 'Tarball contains development files')
   run('pnpm', ['exec', 'publint', archive, '--strict'])
   // Strict profile checks every resolution, including legacy node10. Only the

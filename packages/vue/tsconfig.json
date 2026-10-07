@@ -50,10 +50,6 @@
   "exclude": [
     "node_modules",
     "src/**/__tests__/**",
-    "src/test/*.ts",
-    "src/**/__stories__/**",
-    "src/storybook/**",
-    "src/**/*.stories.*",
-    "src/**/*.story.*"
+    "src/test/*.ts"
   ]
 }

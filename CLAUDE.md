@@ -38,7 +38,6 @@ pnpm dev                  # Watch mode
 pnpm build                # Build library (alias for --filter vccs build)
 pnpm test                 # Run tests
 pnpm test:coverage        # Tests with coverage
-pnpm storybook            # Storybook
 pnpm play                 # Playground
 pnpm docs                 # Docs site (Nuxt 3, port 3001)
 pnpm pub:release          # Publish
@@ -97,7 +96,7 @@ internals/                  # decisions.md, open-items.md, migrations.md
 
 ### Naming
 - Components: PascalCase; Directories: kebab-case; Hooks: `use` prefix; Types: `Props` suffix
-- Type files: `type.ts`; Tests: `__tests__/*.spec.tsx`; Stories: `__stories__/*.stories.tsx`
+- Type files: `type.ts`; Tests: `__tests__/*.spec.tsx`
 
 ### Component Pattern
 ```typescript
@@ -184,10 +183,6 @@ Three-tier z-ordering: cursor → graphical → label (via `Surface.tsx`).
   then 2× `nextTick()`; a default active index needs 3× `nextTick()`.
 - Type contracts: vue-tsc probes in `src/test/types/` (with `// @ts-expect-error` for what must fail).
 - Release checks: `pnpm verify` (or `--quick` without browsers); `VERIFY.md` lists each check.
-
-### Storybook
-- Story titles must match Recharts conventions
-- Clone array data in `render`: `data={[...data1]}` (Vue proxy errors)
 
 ### Docs Demos
 - Color palette: `#f97316` orange, `#14b8a6` teal, `#f59e0b` amber, `#06b6d4` cyan
