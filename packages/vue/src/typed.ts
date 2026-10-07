@@ -7,40 +7,7 @@ import type { TrackerProps, TrackerSlots } from './chart/Tracker'
 import type { BarListProps, BarListSlots } from './chart/BarList'
 import type { SparklineProps, SparklineSlots } from './chart/Sparkline'
 import type { JourneySankeyProps, JourneySankeySlots } from './chart/JourneySankey'
-import type { AreaChart } from './chart/AreaChart'
-import type { BarChart } from './chart/BarChart'
-import type { ComposedChart } from './chart/ComposedChart'
-import type { FunnelChart } from './chart/FunnelChart'
-import type { LineChart } from './chart/LineChart'
-import type { PieChart } from './chart/PieChart'
-import type { RadarChart } from './chart/RadarChart'
-import type { RadialBarChart } from './chart/RadialBarChart'
-import type { Sankey } from './chart/Sankey'
-import type { ScatterChart } from './chart/ScatterChart'
-import type { SunburstChart } from './chart/SunburstChart'
-import type { Treemap } from './chart/Treemap'
-import type { Area } from './cartesian/area/Area'
-import type { Bar } from './cartesian/bar/Bar'
-import type { Brush } from './cartesian/brush/Brush'
-import type { ErrorBar } from './cartesian/error-bar/ErrorBar'
-import type { Funnel } from './cartesian/funnel/Funnel'
-import type { Line } from './cartesian/line/Line'
-import type { ReferenceArea } from './cartesian/reference-area/ReferenceArea'
-import type { ReferenceDot } from './cartesian/reference-dot/ReferenceDot'
-import type { ReferenceLine } from './cartesian/reference-line/ReferenceLine'
-import type { Scatter } from './cartesian/scatter/Scatter'
-import type { XAxis } from './cartesian/axis/XAxis'
-import type { YAxis } from './cartesian/axis/YAxis'
-import type { ZAxis } from './cartesian/z-axis/ZAxis'
-import type { Pie } from './polar/pie/Pie'
-import type { PolarAngleAxis } from './polar/radar/PolarAngleAxis'
-import type { PolarRadiusAxis } from './polar/radar/PolarRadiusAxis'
-import type { Radar } from './polar/radar/Radar'
-import type { RadialBar } from './polar/radial-bar/RadialBar'
-import type { Cell } from './components/Cell'
-import type { LabelList } from './components/label/LabelList'
-import type Legend from './components/legend/Legend'
-import type { Tooltip, TooltipContentProps } from './components/tooltip/Tooltip'
+import type { TooltipContentProps } from './components/tooltip/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
 import type { TooltipPayload } from '@/types/tooltip'
@@ -116,50 +83,15 @@ type TypedComponent<Component extends ComponentConstructor, Row, Slots = RowSlot
     }
   }
 
-// Keep component references in emitted declarations instead of expanding Vue internals.
-type RuntimeComponents = {
-  AreaChart: typeof AreaChart
-  BarChart: typeof BarChart
-  ComposedChart: typeof ComposedChart
-  FunnelChart: typeof FunnelChart
-  LineChart: typeof LineChart
-  PieChart: typeof PieChart
-  RadarChart: typeof RadarChart
-  RadialBarChart: typeof RadialBarChart
-  Sankey: typeof Sankey
-  ScatterChart: typeof ScatterChart
-  SunburstChart: typeof SunburstChart
-  Treemap: typeof Treemap
-  Area: typeof Area
-  Bar: typeof Bar
-  Funnel: typeof Funnel
-  ErrorBar: typeof ErrorBar
-  Line: typeof Line
-  Pie: typeof Pie
-  Radar: typeof Radar
-  RadialBar: typeof RadialBar
-  Scatter: typeof Scatter
-  XAxis: typeof XAxis
-  YAxis: typeof YAxis
-  ZAxis: typeof ZAxis
-  PolarAngleAxis: typeof PolarAngleAxis
-  PolarRadiusAxis: typeof PolarRadiusAxis
-  Tooltip: typeof Tooltip
-  Legend: typeof Legend
-  Brush: typeof Brush
-  ReferenceLine: typeof ReferenceLine
-  ReferenceArea: typeof ReferenceArea
-  ReferenceDot: typeof ReferenceDot
-  LabelList: typeof LabelList
-  Cell: typeof Cell
-}
-
-export type TypedComponents<Row, Components = RuntimeComponents & StandaloneComponents<Row>> = {
+/** The components passed to `defineChartComponents`, re-typed for one row type. */
+export type TypedComponents<Row, Components> = {
   [Key in keyof Components]: Key extends keyof StandaloneComponents<Row>
     ? StandaloneComponents<Row>[Key]
     : Components[Key] extends ComponentConstructor
+      // Tooltip and Legend content props hold a top-level `payload` array, which the generic
+      // row mapping would replace with a single row, so they get explicit slot types.
       ? Key extends 'Tooltip'
-        ? TypedComponent<Components[Key], Row, Omit<InstanceType<typeof Tooltip>['$slots'], 'content'> & {
+        ? TypedComponent<Components[Key], Row, Omit<InstanceType<Components[Key]>['$slots'], 'content'> & {
           content?: (props: TypedTooltipContentProps<Row>) => VNodeChild
         }>
         : Key extends 'Legend'
