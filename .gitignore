@@ -30,3 +30,6 @@ openspec
 
 # Local check recordings and reports
 .evidence/
+
+# Agent plans and scratch files
+docs/superpowers/
