@@ -1,3 +1,5 @@
+const repository = 'https://github.com/unovue/vue-charts'
+
 export default defineAppConfig({
   seo: {
     title: 'vccs',
@@ -11,11 +13,8 @@ export default defineAppConfig({
       alt: 'vccs logo',
     },
   },
-  socials: {
-    // github: 'https://github.com/unovue/vue-charts',
-  },
   github: {
-    url: 'https://github.com/unovue/vue-charts',
+    url: repository,
   },
   toc: {
     bottom: {
@@ -24,7 +23,7 @@ export default defineAppConfig({
         {
           icon: 'i-lucide-star',
           label: 'Star on GitHub',
-          to: 'https://github.com/unovue/vue-charts',
+          to: repository,
           target: '_blank',
         },
       ],
