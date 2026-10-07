@@ -38,6 +38,12 @@ for (const [script, args, message] of [
       assert.equal(result.status, 1, result.stdout + result.stderr)
       const report = readFileSync(`${root}${out}/summary.json`, 'utf8')
       assert.ok(report.includes(message), report)
+      if (script === 'check-seen') {
+        const summary = JSON.parse(report)
+        assert.deepEqual(summary.rows, [])
+        assert.deepEqual(summary.recordings, [])
+        assert.equal(summary.errors.length, 1)
+      }
     }
     finally {
       unlinkSync(file)
