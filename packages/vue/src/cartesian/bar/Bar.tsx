@@ -22,6 +22,7 @@ import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import { entryColor } from '@/core/color'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   dataPoint,
@@ -158,7 +159,7 @@ const BarView = defineComponent({
   },
 })
 
-export const Bar = defineComponent({
+export const Bar = forwardsSvgAttributes(defineComponent({
   name: 'Bar',
   emits: barEvents.emits,
   props: BarVueProps,
@@ -172,4 +173,4 @@ export const Bar = defineComponent({
     const { data, settings } = useSetupGraphicalItem(props, 'bar', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
     return () => h(BarView, { item: props, svgAttrs: attrs, data, settings }, slots)
   },
-})
+}))

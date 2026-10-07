@@ -1,5 +1,6 @@
 import type { SVGAttributes } from 'vue'
 import { defineComponent } from 'vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 /**
  * Cell is a marker component used to define per-item colors and styles.
@@ -13,13 +14,13 @@ import { defineComponent } from 'vue'
  * </Bar>
  * ```
  */
-export const Cell = defineComponent({
+export const Cell = forwardsSvgAttributes(defineComponent({
   name: 'Cell',
   inheritAttrs: false,
   setup() {
     return () => null
   },
-})
+}))
 
 export type CellProps = SVGAttributes & {
   fill?: string

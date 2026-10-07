@@ -11,6 +11,7 @@ import type { YAxisOrientation, YAxisPadding } from '@/types/axis'
 import { AxisVueProps } from './AxisProps'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 // Implementation of the YAxis rendering logic
 const YAxisImpl = defineComponent({
@@ -115,7 +116,7 @@ const YAxisImpl = defineComponent({
   },
 })
 
-export const YAxis = defineComponent({
+export const YAxis = forwardsSvgAttributes(defineComponent({
   name: 'YAxis',
   props: {
     ...AxisVueProps,
@@ -153,4 +154,4 @@ export const YAxis = defineComponent({
     const View = useDeferredView(YAxisImpl)
     return () => <View {...props} {...attrs} onMeasure-width={updateWidth} v-slots={slots} />
   },
-})
+}))

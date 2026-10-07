@@ -1,15 +1,19 @@
 import { defineComponent } from 'vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 import { chartRoot } from '@/chart/generateCategoricalChart'
 import { cartesianChartProps } from '@/chart/chartProps'
 import type { TooltipEventType } from '@/types'
 
 const allowedTooltipTypes: ReadonlyArray<TooltipEventType> = ['axis', 'item']
 
-export const LineChart = defineComponent({
-  ...chartRoot({
-    chartName: 'LineChart',
-    defaultTooltipEventType: 'axis',
-    validateTooltipEventTypes: allowedTooltipTypes,
-  }),
-  props: cartesianChartProps,
+const root = chartRoot({
+  chartName: 'LineChart',
+  defaultTooltipEventType: 'axis',
+  validateTooltipEventTypes: allowedTooltipTypes,
 })
+
+export const LineChart = forwardsSvgAttributes(defineComponent({
+  ...root,
+  props: cartesianChartProps,
+  setup: (props, context) => root.setup(props, context),
+}))

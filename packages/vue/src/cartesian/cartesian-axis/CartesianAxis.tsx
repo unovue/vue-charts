@@ -16,13 +16,14 @@ import Text from '@/components/Text.vue'
 import { Label } from '@/components/label/Label'
 import { Layer } from '@/container/Layer'
 import { getTicks } from '@/cartesian/utils/get-ticks'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 /** The orientation of the axis in correspondence to the chart */
 export type Orientation = 'top' | 'bottom' | 'left' | 'right'
 /** A unit to be appended to a value */
 export type Unit = string | number
 
-export const CartesianAxis = defineComponent({
+export const CartesianAxis = forwardsSvgAttributes(defineComponent({
   name: 'CartesianAxis',
   props: {
     x: { type: Number, default: 0 },
@@ -308,4 +309,4 @@ export const CartesianAxis = defineComponent({
     }
   },
 },
-)
+))

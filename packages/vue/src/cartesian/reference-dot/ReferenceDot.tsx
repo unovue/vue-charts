@@ -10,6 +10,7 @@ import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export interface ReferenceDotShapeProps extends SVGAttributes {
   cx: number
@@ -136,7 +137,7 @@ const ReferenceDotView = defineComponent({
   },
 })
 
-export const ReferenceDot = defineComponent({
+export const ReferenceDot = forwardsSvgAttributes(defineComponent({
   name: 'ReferenceDot',
   props: ReferenceDotVueProps,
   inheritAttrs: false,
@@ -157,4 +158,4 @@ export const ReferenceDot = defineComponent({
     const View = useDeferredView(ReferenceDotView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

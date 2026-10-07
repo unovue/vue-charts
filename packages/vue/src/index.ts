@@ -62,22 +62,28 @@ export type { TrackerRow, TrackerSlots } from './chart/Tracker'
 export type { TreemapContentSlotProps, TreemapSlots } from './chart/Treemap'
 
 // Containers
+
+import type { SvgTemplateAttributes, WithAttributes } from './utils/attributes'
+import { forwardsSvgAttributes } from './utils/attributes'
 import ResponsiveContainerComponent from './container/ResponsiveContainer.vue'
 
 /**
  * @deprecated Charts are responsive by default: remove the wrapper and set `width`, `height`
  * or `aspect` on the chart. Removed in 2.0 (see internals/migrations.md).
  */
-export const ResponsiveContainer = ResponsiveContainerComponent
+export const ResponsiveContainer: typeof ResponsiveContainerComponent = ResponsiveContainerComponent
 export type { ResponsiveContainerProps } from './container/ResponsiveContainer.vue'
 
 // General components
+import TextComponent from './components/Text.vue'
+
+/** SVG text with wrapping and scaling; forwards SVG attributes such as `font-size`. */
+export const Text: WithAttributes<typeof TextComponent, SvgTemplateAttributes> = forwardsSvgAttributes(TextComponent)
 export { Cell } from './components/Cell'
 export { Customized } from './components/Customized'
 export { Label } from './components/label/Label'
 export { LabelList } from './components/label/LabelList'
 export { default as Legend } from './components/legend/Legend'
-export { default as Text } from './components/Text.vue'
 export { Tooltip } from './components/tooltip/Tooltip'
 export type { CellProps } from './components/Cell'
 export type { CustomizedSlotProps, CustomizedSlots } from './components/Customized'

@@ -8,6 +8,7 @@ import type { AngleAxisSettings } from '@/types/axisSettings'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
 import Text from '@/components/Text.vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const eps = 1e-5
 const COS_45 = Math.cos(45 * RADIAN)
@@ -150,7 +151,7 @@ const PolarAngleAxisView = defineComponent({
   },
 })
 
-export const PolarAngleAxis = defineComponent({
+export const PolarAngleAxis = forwardsSvgAttributes(defineComponent({
   name: 'PolarAngleAxis',
   props: PolarAngleAxisViewProps,
   slots: Object as SlotsType<PolarAngleAxisSlots>,
@@ -179,4 +180,4 @@ export const PolarAngleAxis = defineComponent({
     const View = useDeferredView(PolarAngleAxisView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

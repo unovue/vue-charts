@@ -1,4 +1,5 @@
 import type { Area } from './cartesian/area/Area'
+import type { DeclaredProps } from './utils/attributes'
 import type { AreaChart } from './chart/AreaChart'
 import type { Bar } from './cartesian/bar/Bar'
 import type { BarChart } from './chart/BarChart'
@@ -45,54 +46,55 @@ import type { ZAxis } from './cartesian/z-axis/ZAxis'
 
 // Every public component props type is derived from the component itself, so
 // declared props, emits (onX listeners, v-model updates) and defaults cannot drift.
-export type AreaChartProps = InstanceType<typeof AreaChart>['$props']
-export type AreaProps = InstanceType<typeof Area>['$props']
-export type BarChartProps = InstanceType<typeof BarChart>['$props']
+
+export type AreaChartProps = DeclaredProps<typeof AreaChart>
+export type AreaProps = DeclaredProps<typeof Area>
+export type BarChartProps = DeclaredProps<typeof BarChart>
 export type { BarListProps } from './chart/BarList'
-export type BarProps = InstanceType<typeof Bar>['$props']
-export type BrushProps = InstanceType<typeof Brush>['$props']
+export type BarProps = DeclaredProps<typeof Bar>
+export type BrushProps = DeclaredProps<typeof Brush>
 export type { CalendarHeatmapProps } from './chart/CalendarHeatmap'
-export type CartesianAxisProps = InstanceType<typeof CartesianAxis>['$props']
-export type CartesianGridProps = InstanceType<typeof CartesianGrid>['$props']
+export type CartesianAxisProps = DeclaredProps<typeof CartesianAxis>
+export type CartesianGridProps = DeclaredProps<typeof CartesianGrid>
 export type { CohortChartProps } from './chart/CohortChart'
-export type ComposedChartProps = InstanceType<typeof ComposedChart>['$props']
-export type CurveProps = InstanceType<typeof Curve>['$props']
-export type CustomizedProps = InstanceType<typeof Customized>['$props']
-export type DotProps = InstanceType<typeof Dot>['$props']
-export type ErrorBarProps = InstanceType<typeof ErrorBar>['$props']
-export type FunnelChartProps = InstanceType<typeof FunnelChart>['$props']
-export type FunnelProps = InstanceType<typeof Funnel>['$props']
+export type ComposedChartProps = DeclaredProps<typeof ComposedChart>
+export type CurveProps = DeclaredProps<typeof Curve>
+export type CustomizedProps = DeclaredProps<typeof Customized>
+export type DotProps = DeclaredProps<typeof Dot>
+export type ErrorBarProps = DeclaredProps<typeof ErrorBar>
+export type FunnelChartProps = DeclaredProps<typeof FunnelChart>
+export type FunnelProps = DeclaredProps<typeof Funnel>
 export type { HeatmapProps } from './chart/Heatmap'
 export type { JourneySankeyProps } from './chart/JourneySankey'
-export type LabelListProps = InstanceType<typeof LabelList>['$props']
-export type LabelProps = InstanceType<typeof Label>['$props']
-export type LegendProps = InstanceType<typeof Legend>['$props']
-export type LineChartProps = InstanceType<typeof LineChart>['$props']
-export type LineProps = InstanceType<typeof Line>['$props']
-export type PieChartProps = InstanceType<typeof PieChart>['$props']
-export type PieProps = InstanceType<typeof Pie>['$props']
-export type PolarAngleAxisProps = InstanceType<typeof PolarAngleAxis>['$props']
-export type PolarGridProps = InstanceType<typeof PolarGrid>['$props']
-export type PolarRadiusAxisProps = InstanceType<typeof PolarRadiusAxis>['$props']
-export type RadarChartProps = InstanceType<typeof RadarChart>['$props']
-export type RadarProps = InstanceType<typeof Radar>['$props']
-export type RadialBarChartProps = InstanceType<typeof RadialBarChart>['$props']
-export type RadialBarProps = InstanceType<typeof RadialBar>['$props']
-export type RectangleProps = InstanceType<typeof Rectangle>['$props']
-export type ReferenceAreaProps = InstanceType<typeof ReferenceArea>['$props']
-export type ReferenceDotProps = InstanceType<typeof ReferenceDot>['$props']
-export type ReferenceLineProps = InstanceType<typeof ReferenceLine>['$props']
-export type SankeyProps = InstanceType<typeof Sankey>['$props']
-export type ScatterChartProps = InstanceType<typeof ScatterChart>['$props']
-export type ScatterProps = InstanceType<typeof Scatter>['$props']
-export type SectorProps = InstanceType<typeof Sector>['$props']
+export type LabelListProps = DeclaredProps<typeof LabelList>
+export type LabelProps = DeclaredProps<typeof Label>
+export type LegendProps = DeclaredProps<typeof Legend>
+export type LineChartProps = DeclaredProps<typeof LineChart>
+export type LineProps = DeclaredProps<typeof Line>
+export type PieChartProps = DeclaredProps<typeof PieChart>
+export type PieProps = DeclaredProps<typeof Pie>
+export type PolarAngleAxisProps = DeclaredProps<typeof PolarAngleAxis>
+export type PolarGridProps = DeclaredProps<typeof PolarGrid>
+export type PolarRadiusAxisProps = DeclaredProps<typeof PolarRadiusAxis>
+export type RadarChartProps = DeclaredProps<typeof RadarChart>
+export type RadarProps = DeclaredProps<typeof Radar>
+export type RadialBarChartProps = DeclaredProps<typeof RadialBarChart>
+export type RadialBarProps = DeclaredProps<typeof RadialBar>
+export type RectangleProps = DeclaredProps<typeof Rectangle>
+export type ReferenceAreaProps = DeclaredProps<typeof ReferenceArea>
+export type ReferenceDotProps = DeclaredProps<typeof ReferenceDot>
+export type ReferenceLineProps = DeclaredProps<typeof ReferenceLine>
+export type SankeyProps = DeclaredProps<typeof Sankey>
+export type ScatterChartProps = DeclaredProps<typeof ScatterChart>
+export type ScatterProps = DeclaredProps<typeof Scatter>
+export type SectorProps = DeclaredProps<typeof Sector>
 export type { SparklineProps } from './chart/Sparkline'
-export type SunburstChartProps = InstanceType<typeof SunburstChart>['$props']
-export type TextProps = InstanceType<typeof Text>['$props']
-export type TooltipProps = InstanceType<typeof Tooltip>['$props']
+export type SunburstChartProps = DeclaredProps<typeof SunburstChart>
+export type TextProps = DeclaredProps<typeof Text>
+export type TooltipProps = DeclaredProps<typeof Tooltip>
 export type { TrackerProps } from './chart/Tracker'
-export type TrapezoidProps = InstanceType<typeof Trapezoid>['$props']
-export type TreemapProps = InstanceType<typeof Treemap>['$props']
-export type XAxisProps = InstanceType<typeof XAxis>['$props']
-export type YAxisProps = InstanceType<typeof YAxis>['$props']
-export type ZAxisProps = InstanceType<typeof ZAxis>['$props']
+export type TrapezoidProps = DeclaredProps<typeof Trapezoid>
+export type TreemapProps = DeclaredProps<typeof Treemap>
+export type XAxisProps = DeclaredProps<typeof XAxis>
+export type YAxisProps = DeclaredProps<typeof YAxis>
+export type ZAxisProps = DeclaredProps<typeof ZAxis>

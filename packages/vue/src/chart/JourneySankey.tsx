@@ -29,6 +29,7 @@ import {
 
 import type { StandaloneChartProps } from './directChartTypes'
 import { type JourneySankeySlots, JourneySankeyVueProps } from './journeyTypes'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export type { JourneySankeySlots } from './journeyTypes'
 
@@ -572,6 +573,6 @@ export type JourneySankeyProps<Row = unknown> = StandaloneChartProps<InstanceTyp
  * ```
  */
 export const JourneySankey = _JourneySankey as unknown as <Row>(
-  props: JourneySankeyProps<Row>,
+  props: JourneySankeyProps<Row> & Omit<SvgTemplateAttributes, keyof JourneySankeyProps<Row>>,
   context?: ChartRenderContext<JourneySankeySlots<Row>>,
 ) => ChartVNode<JourneySankeyProps<Row>, JourneySankeySlots<Row>>

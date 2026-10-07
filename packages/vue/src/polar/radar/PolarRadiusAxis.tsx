@@ -12,6 +12,7 @@ import { isCategoricalAxis } from '@/utils'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { POLAR_LABEL_VIEW_BOX_KEY } from '@/context/polarLabelViewBoxContext'
 import Text from '@/components/Text.vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 /**
  * Resolve 'auto' type based on chart layout, matching Recharts behavior.
@@ -125,7 +126,7 @@ const PolarRadiusAxisView = defineComponent({
   },
 })
 
-export const PolarRadiusAxis = defineComponent({
+export const PolarRadiusAxis = forwardsSvgAttributes(defineComponent({
   name: 'PolarRadiusAxis',
   props: PolarRadiusAxisViewProps,
   slots: Object as SlotsType<AxisSlots>,
@@ -157,4 +158,4 @@ export const PolarRadiusAxis = defineComponent({
     const View = useDeferredView(PolarRadiusAxisView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

@@ -166,7 +166,10 @@ function createChartSetup({
 
 /**
  * The component options shared by every chart root. Spread into `defineComponent` next to the
- * chart's prop set: `defineComponent({ ...chartRoot(options), props: cartesianChartProps })`.
+ * chart's prop set, and call `root.setup` from the chart's own `setup`:
+ * `defineComponent({ ...root, props: cartesianChartProps, setup: (props, context) => root.setup(props, context) })`.
+ * The wrapper keeps the public props type equal to the chart's prop set; passing the shared
+ * setup directly would let its parameter type add the props of every chart family.
  */
 export function chartRoot(options: CategoricalChartOptions) {
   return { name: options.chartName, inheritAttrs: false, emits: chartEmits, setup: createChartSetup(options) }

@@ -21,6 +21,7 @@ import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
+import { forwardsHtmlAttributes } from '@/utils/attributes'
 
 interface TreemapData extends Record<string, unknown> {
   children?: TreemapData[]
@@ -430,7 +431,7 @@ function useTreemap(
  * </Treemap>
  * ```
  */
-export const Treemap = defineComponent({
+export const Treemap = forwardsHtmlAttributes(defineComponent({
   name: 'Treemap',
   props: { ...TreemapVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -458,4 +459,4 @@ export const Treemap = defineComponent({
       )
     }
   },
-})
+}))

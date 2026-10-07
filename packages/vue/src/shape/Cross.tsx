@@ -1,4 +1,4 @@
-import type { SVGAttributes } from 'vue'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 import { isNumber } from '@/utils'
 import { svgAttrs } from '@/utils/VueUtils'
 
@@ -15,7 +15,7 @@ function getCrossPath(x: number, y: number, width: number, height: number, top: 
   return `M${x},${top}v${height}M${left},${y}h${width}`
 }
 
-export function Cross(props: CrossProps & SVGAttributes) {
+export function Cross(props: CrossProps & Omit<SvgTemplateAttributes, keyof CrossProps>) {
   const { x = 0, y = 0, top = 0, left = 0, width = 0, height = 0, ...rest } = props
 
   if (!isNumber(x) || !isNumber(y) || !isNumber(width) || !isNumber(height) || !isNumber(top) || !isNumber(left)) {

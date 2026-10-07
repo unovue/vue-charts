@@ -3,8 +3,9 @@ import { defineComponent, h } from 'vue'
 import type { LabelSlots } from './types'
 import { LabelVueProps } from './types'
 import { LabelView } from './LabelView'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
-export const Label = defineComponent({
+export const Label = forwardsSvgAttributes(defineComponent({
   name: 'Label',
   props: LabelVueProps,
   inheritAttrs: false,
@@ -15,4 +16,4 @@ export const Label = defineComponent({
       return h(LabelView, { ...svgAttrs, ...props }, slots)
     }
   },
-})
+}))

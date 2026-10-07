@@ -25,6 +25,7 @@ import { polarToCartesian } from '@/utils/polar'
 import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import { RadialBarVueProps } from './type'
 import type { LabelListSlotProps } from '@/components/label/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export type RadialBarShapeSlotProps = RadialBarDataItem & {
   innerRadius: number
@@ -337,7 +338,7 @@ const RadialBarView = defineComponent({
   },
 })
 
-export const RadialBar = defineComponent({
+export const RadialBar = forwardsSvgAttributes(defineComponent({
   slots: Object as SlotsType<RadialBarSlots>,
   name: 'RadialBar',
   emits: radialBarEvents.emits,
@@ -367,4 +368,4 @@ export const RadialBar = defineComponent({
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

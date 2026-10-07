@@ -115,7 +115,11 @@ export const Component = defineComponent({
 ```
 
 Export the component directly. `slots: Object as SlotsType<Slots>` types template slots in
-source and in the emitted `.d.ts`; do not add a constructor cast for `$slots`.
+source and in the emitted `.d.ts`; do not add a constructor cast for `$slots`. A component that
+forwards undeclared attributes to its root SVG element is wrapped once:
+`export const Component = forwardsSvgAttributes(defineComponent({ ... }))` (`utils/attributes.ts`),
+so strict templates accept `stroke-dasharray`, `data-*` and `aria-*`. Public `XxxProps` types use
+`DeclaredProps<typeof Component>` and stay limited to the declared props and events.
 
 ### Props Pattern
 ```typescript

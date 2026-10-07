@@ -22,6 +22,7 @@ import {
   computeSankeyLayout,
   linkPathGenerator,
 } from './sankeyUtils'
+import { forwardsHtmlAttributes } from '@/utils/attributes'
 
 export interface SankeyNodeSlotProps {
   payload: SankeyLayoutNode
@@ -397,7 +398,7 @@ function useSankey(
  *
  * Supports `<Tooltip>` as a child component for hover info on both nodes and links.
  */
-export const Sankey = defineComponent({
+export const Sankey = forwardsHtmlAttributes(defineComponent({
   name: 'Sankey',
   props: { ...SankeyVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -425,4 +426,4 @@ export const Sankey = defineComponent({
       )
     }
   },
-})
+}))

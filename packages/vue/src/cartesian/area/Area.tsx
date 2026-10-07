@@ -17,6 +17,7 @@ import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { mainColor } from '@/core/color'
 import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export type AreaSlots = ActivePointsSlots & {
   label?: (props: LabelListSlotProps) => VNodeChild
@@ -79,7 +80,7 @@ const AreaView = defineComponent({
   },
 })
 
-export const Area = defineComponent({
+export const Area = forwardsSvgAttributes(defineComponent({
   name: 'Area',
   emits: areaEvents.emits,
   props: AreaVueProps,
@@ -92,4 +93,4 @@ export const Area = defineComponent({
     const View = useDeferredView(AreaView)
     return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
   },
-})
+}))

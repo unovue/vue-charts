@@ -3,6 +3,7 @@
  */
 import { defineComponent } from 'vue'
 import type { WithSVGProps } from '@/types'
+import { classProp } from '@/types'
 import { svgAttrs } from '@/utils/VueUtils'
 
 const DotVueProps = {
@@ -10,6 +11,7 @@ const DotVueProps = {
   cy: { type: [Number, String] },
   r: { type: [Number, String] },
   clipDot: { type: Boolean },
+  class: classProp,
 }
 
 type DotInput = WithSVGProps<typeof DotVueProps>

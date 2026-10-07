@@ -8,6 +8,7 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/model/runtime'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { cellGridSharedProps } from './cellGridProps'
+import type { HtmlTemplateAttributes } from '@/utils/attributes'
 
 export type BarListRow = Record<string, unknown>
 
@@ -258,6 +259,6 @@ const _BarList = defineComponent({
  * ```
  */
 export const BarList = _BarList as unknown as <Row>(
-  props: BarListProps<Row>,
+  props: BarListProps<Row> & Omit<HtmlTemplateAttributes, keyof BarListProps<Row>>,
   context?: ChartRenderContext<BarListSlots<Row>>,
 ) => ChartVNode<BarListProps<Row>, BarListSlots<Row>>

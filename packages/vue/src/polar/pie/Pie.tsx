@@ -20,6 +20,7 @@ import { computePieSectors, pieLegend } from '@/core/pie'
 import { polarToCartesian } from '@/utils/polar'
 import type { PieInput } from './type'
 import { PieVueProps } from './type'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const LABEL_OFFSET = 20
 /** Horizontal distance from the centre over which a label's anchor blends from start to end. */
@@ -249,7 +250,7 @@ function rounded({ x, y }: { x: number, y: number }) {
   return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 }
 }
 
-export const Pie = defineComponent({
+export const Pie = forwardsSvgAttributes(defineComponent({
   name: 'Pie',
   emits: pieEvents.emits,
   props: PieVueProps,
@@ -300,4 +301,4 @@ export const Pie = defineComponent({
     const View = useDeferredView(PieView)
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings, cells }, slots)
   },
-})
+}))

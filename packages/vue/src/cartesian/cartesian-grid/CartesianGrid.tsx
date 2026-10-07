@@ -17,6 +17,7 @@ import HorizontalStripes from './HorizontalStripes'
 import VerticalStripes from './VerticalStripes'
 import HorizontalGridLines from './HorizontalGridLines'
 import VerticalGridLines from './VerticalGridLines'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const defaultHorizontalCoordinatesGenerator: HorizontalCoordinatesGenerator = (
   { yAxis, width, height, offset },
@@ -283,7 +284,7 @@ const CartesianGridView = defineComponent({
   },
 })
 
-export const CartesianGrid = defineComponent({
+export const CartesianGrid = forwardsSvgAttributes(defineComponent({
   slots: Object as SlotsType<CartesianGridSlots>,
   name: 'CartesianGrid',
   inheritAttrs: false,
@@ -292,4 +293,4 @@ export const CartesianGrid = defineComponent({
     const View = useDeferredView(CartesianGridView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

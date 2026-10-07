@@ -4,6 +4,7 @@ import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { polarToCartesian } from '@/utils/polar'
 import { polygonPath } from '@/core/polygon'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 function getPolygonPath(radius: number, cx: number, cy: number, polarAngles: ReadonlyArray<number>): string {
   return polygonPath(polarAngles.map(angle => polarToCartesian(cx, cy, radius, angle)))
@@ -135,7 +136,7 @@ const PolarGridView = defineComponent({
   },
 })
 
-export const PolarGrid = defineComponent({
+export const PolarGrid = forwardsSvgAttributes(defineComponent({
   name: 'PolarGrid',
   props: PolarGridViewProps,
   inheritAttrs: false,
@@ -143,4 +144,4 @@ export const PolarGrid = defineComponent({
     const View = useDeferredView(PolarGridView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

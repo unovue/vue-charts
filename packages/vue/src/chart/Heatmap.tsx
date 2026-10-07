@@ -14,6 +14,7 @@ import { standaloneChartOptions } from './shell'
 import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
 import { cellGridSharedProps } from './cellGridProps'
 import { type GridCell, cellColorScale } from './cellGridUtils'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export type HeatmapKey = string | number
 
@@ -271,6 +272,6 @@ export type HeatmapProps<Row = unknown> = StandaloneChartProps<Omit<InstanceType
 export const HeatmapView = _Heatmap
 
 export const Heatmap = _Heatmap as unknown as <Row>(
-  props: HeatmapProps<Row>,
+  props: HeatmapProps<Row> & Omit<SvgTemplateAttributes, keyof HeatmapProps<Row>>,
   context?: ChartRenderContext<HeatmapSlots<Row>>,
 ) => ChartVNode<HeatmapProps<Row>, HeatmapSlots<Row>>

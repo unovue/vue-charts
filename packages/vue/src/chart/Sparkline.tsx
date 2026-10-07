@@ -20,6 +20,7 @@ import { cellGridSharedProps } from './cellGridProps'
 import { standaloneChartOptions } from './shell'
 import { useItemKeyboard } from '@/events/useItemKeyboard'
 import type { GridCell } from './cellGridUtils'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 type SparkValue = number | null | undefined
 type SparkRow = SparkValue | Record<string, unknown>
@@ -375,6 +376,6 @@ const _Sparkline = defineComponent({
  * ```
  */
 export const Sparkline = _Sparkline as unknown as <Row>(
-  props: SparklineProps<Row>,
+  props: SparklineProps<Row> & Omit<SvgTemplateAttributes, keyof SparklineProps<Row>>,
   context?: ChartRenderContext<SparklineSlots<Row>>,
 ) => ChartVNode<SparklineProps<Row>, SparklineSlots<Row>>

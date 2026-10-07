@@ -26,6 +26,7 @@ import type { ScatterSlots } from './type'
 import { ScatterVueProps } from './type'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const interpolateNumber = (from: number, to: number) => (t: number) => from + (to - from) * t
 
@@ -288,7 +289,7 @@ const ScatterView = defineComponent({
   },
 })
 
-export const Scatter = defineComponent({
+export const Scatter = forwardsSvgAttributes(defineComponent({
   name: 'Scatter',
   emits: scatterEvents.emits,
   props: ScatterVueProps,
@@ -302,4 +303,4 @@ export const Scatter = defineComponent({
     const { data } = useSetupGraphicalItem(props, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
     return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
-})
+}))

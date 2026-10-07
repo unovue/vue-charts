@@ -14,6 +14,7 @@ import { standaloneChartOptions } from './shell'
 import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
 import { cellGridSharedProps } from './cellGridProps'
 import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export interface CalendarDay<Row = unknown> {
   /** `YYYY-MM-DD`. */
@@ -258,6 +259,6 @@ export type CalendarHeatmapProps<Row = unknown> = StandaloneChartProps<InstanceT
 }>
 
 export const CalendarHeatmap = _CalendarHeatmap as unknown as <Row>(
-  props: CalendarHeatmapProps<Row>,
+  props: CalendarHeatmapProps<Row> & Omit<SvgTemplateAttributes, keyof CalendarHeatmapProps<Row>>,
   context?: ChartRenderContext<CalendarHeatmapSlots<Row>>,
 ) => ChartVNode<CalendarHeatmapProps<Row>, CalendarHeatmapSlots<Row>>

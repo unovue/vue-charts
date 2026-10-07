@@ -28,6 +28,7 @@ import type { LineSlots } from '@/cartesian/line/type'
 import { mainColor } from '@/core/color'
 import { getTooltipNameProp } from '@/core/tooltip'
 import { classProp } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export type RadarShapeSlotProps = RadarComposedData & {
   fill?: string
@@ -285,7 +286,7 @@ const RadarView = defineComponent({
   },
 })
 
-export const Radar = defineComponent({
+export const Radar = forwardsSvgAttributes(defineComponent({
   slots: Object as SlotsType<RadarSlots>,
   name: 'Radar',
   emits: radarEvents.emits,
@@ -334,4 +335,4 @@ export const Radar = defineComponent({
     const View = useDeferredView(RadarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

@@ -11,6 +11,7 @@ import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr, isWellBehavedNumber } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const ReferenceLineVueProps = {
   x: { type: [Number, String] as PropType<number | string>, default: undefined },
@@ -147,7 +148,7 @@ export interface ReferenceLineSlots {
   shape?: (props: { x1: number, y1: number, x2: number, y2: number }) => VNodeChild
 }
 
-export const ReferenceLine = defineComponent({
+export const ReferenceLine = forwardsSvgAttributes(defineComponent({
   name: 'ReferenceLine',
   props: ReferenceLineVueProps,
   inheritAttrs: false,
@@ -167,4 +168,4 @@ export const ReferenceLine = defineComponent({
     const View = useDeferredView(ReferenceLineView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

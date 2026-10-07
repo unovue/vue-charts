@@ -11,6 +11,7 @@ import { implicitXAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
 import type { XAxisOrientation, XAxisPadding } from '@/types/axis'
 import { AxisVueProps } from './AxisProps'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const XAxisImpl = defineComponent({
   props: {
@@ -55,7 +56,7 @@ const XAxisImpl = defineComponent({
   },
 })
 
-export const XAxis = defineComponent({
+export const XAxis = forwardsSvgAttributes(defineComponent({
   name: 'XAxis',
   props: {
     ...AxisVueProps,
@@ -73,4 +74,4 @@ export const XAxis = defineComponent({
     const View = useDeferredView(XAxisImpl)
     return () => <View {...props} {...attrs} v-slots={slots} />
   },
-})
+}))

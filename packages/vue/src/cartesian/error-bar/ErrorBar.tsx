@@ -8,6 +8,7 @@ import { errorBarLines } from '@/core/errorBar'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { ErrorBarsSettings } from '@/types/graphical'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const ErrorBarVueProps = {
   dataKey: { type: [String, Number, Function] as PropType<string | number | ((obj: unknown) => unknown)>, required: true as const },
@@ -67,7 +68,7 @@ const ErrorBarView = defineComponent({
   },
 })
 
-export const ErrorBar = defineComponent({
+export const ErrorBar = forwardsSvgAttributes(defineComponent({
   name: 'ErrorBar',
   props: ErrorBarVueProps,
   setup(props, { attrs, slots }) {
@@ -85,4 +86,4 @@ export const ErrorBar = defineComponent({
     const View = useDeferredView(ErrorBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

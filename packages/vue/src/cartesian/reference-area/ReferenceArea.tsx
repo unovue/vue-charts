@@ -11,6 +11,7 @@ import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr } from '@/utils'
 import { rangeMax, rangeMin, scaleValue } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const ReferenceAreaVueProps = {
   x1: { type: [Number, String] as PropType<number | string>, default: undefined },
@@ -129,7 +130,7 @@ export interface ReferenceAreaSlots {
   shape?: (props: { x: number, y: number, width: number, height: number }) => VNodeChild
 }
 
-export const ReferenceArea = defineComponent({
+export const ReferenceArea = forwardsSvgAttributes(defineComponent({
   name: 'ReferenceArea',
   props: ReferenceAreaVueProps,
   inheritAttrs: false,
@@ -151,4 +152,4 @@ export const ReferenceArea = defineComponent({
     const View = useDeferredView(ReferenceAreaView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
-})
+}))

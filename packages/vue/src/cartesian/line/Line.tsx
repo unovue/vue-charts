@@ -16,6 +16,7 @@ import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemCl
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { mainColor } from '@/core/color'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export type { LineSlots } from './type'
 
@@ -81,7 +82,7 @@ const LineView = defineComponent({
   },
 })
 
-export const Line = defineComponent({
+export const Line = forwardsSvgAttributes(defineComponent({
   name: 'Line',
   emits: lineEvents.emits,
   props: LineVueProps,
@@ -94,4 +95,4 @@ export const Line = defineComponent({
     const View = useDeferredView(LineView)
     return () => h(View, { item: props, svgAttrs: attrs, data }, slots)
   },
-})
+}))

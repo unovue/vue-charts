@@ -11,6 +11,7 @@ import { standaloneChartOptions } from './shell'
 import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
 import { cellGridSharedProps } from './cellGridProps'
 import { type GridCell, formatDay, toDayNumber } from './cellGridUtils'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 /** Default fill per status. Every color reads a CSS variable first, so themes can restyle it. */
 const trackerStatusColors: Record<string, string> = {
@@ -151,6 +152,6 @@ const _Tracker = defineComponent({
  * ```
  */
 export const Tracker = _Tracker as unknown as <Row>(
-  props: TrackerProps<Row>,
+  props: TrackerProps<Row> & Omit<SvgTemplateAttributes, keyof TrackerProps<Row>>,
   context?: ChartRenderContext<TrackerSlots<Row>>,
 ) => ChartVNode<TrackerProps<Row>, TrackerSlots<Row>>

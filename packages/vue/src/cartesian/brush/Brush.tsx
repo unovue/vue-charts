@@ -17,6 +17,7 @@ import type { BrushStartEndIndex } from '@/types/chartData'
 import { isNumber } from '@/utils'
 import { useChartGesture } from '@/model/runtime'
 import { normalizeBrushRange } from '@/model/dataRange'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const brushEmits = {
   'update:range': (_range: BrushStartEndIndex | null) => true,
@@ -243,7 +244,7 @@ const BrushView = defineComponent({
   },
 })
 
-export const Brush = defineComponent({
+export const Brush = forwardsSvgAttributes(defineComponent({
   name: 'Brush',
   emits: brushEmits,
   props: BrushVueProps,
@@ -318,7 +319,7 @@ export const Brush = defineComponent({
       'onUpdate:range': updateRange,
     }, slots)
   },
-})
+}))
 
 function sameRange(left: BrushStartEndIndex | null, right: BrushStartEndIndex | null) {
   return left === right || (left != null && right != null

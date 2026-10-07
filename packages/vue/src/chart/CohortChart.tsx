@@ -9,6 +9,7 @@ import type { StandaloneChartProps } from './directChartTypes'
 import type { CellGridSlots } from './CellGridLayer'
 import { cellGridSharedProps } from './cellGridProps'
 import { type HeatmapCell, type HeatmapKey, HeatmapView } from './Heatmap'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export interface CohortCell<Row = unknown> {
   x: HeatmapKey
@@ -157,6 +158,6 @@ export type CohortChartProps<Row = unknown> = StandaloneChartProps<InstanceType<
 }>
 
 export const CohortChart = _CohortChart as unknown as <Row>(
-  props: CohortChartProps<Row>,
+  props: CohortChartProps<Row> & Omit<SvgTemplateAttributes, keyof CohortChartProps<Row>>,
   context?: ChartRenderContext<CohortChartSlots<Row>>,
 ) => ChartVNode<CohortChartProps<Row>, CohortChartSlots<Row>>

@@ -16,6 +16,7 @@ import { provideCartesianLabelListData } from '@/context/cartesianLabelListConte
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export interface FunnelSlots {
   shape?: (props: FunnelTrapezoidItem) => VNodeChild
@@ -186,7 +187,7 @@ const FunnelView = defineComponent({
   },
 })
 
-export const Funnel = defineComponent({
+export const Funnel = forwardsSvgAttributes(defineComponent({
   name: 'Funnel',
   emits: funnelEvents.emits,
   props: FunnelVueProps,
@@ -253,4 +254,4 @@ export const Funnel = defineComponent({
     const View = useDeferredView(FunnelView)
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)
   },
-})
+}))

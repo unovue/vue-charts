@@ -1,4 +1,4 @@
-import type { SVGAttributes } from 'vue'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 import { isNumber } from '@/utils'
 import { svgAttrs } from '@/utils/VueUtils'
 import { polygonPath } from '@/core/polygon'
@@ -12,7 +12,7 @@ export interface PolygonProps {
   points?: PolygonPoint[]
 }
 
-export function Polygon(props: PolygonProps & SVGAttributes) {
+export function Polygon(props: PolygonProps & Omit<SvgTemplateAttributes, keyof PolygonProps>) {
   const { points = [], ...rest } = props
 
   if (!points || !points.length) {

@@ -22,6 +22,7 @@ import {
   type SunburstLayoutNode,
   computeSunburstLayout,
 } from './sunburstUtils'
+import { forwardsHtmlAttributes } from '@/utils/attributes'
 
 export interface SunburstContentSlotProps extends SunburstLayoutNode {
   index: number
@@ -251,7 +252,7 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
   )
 }
 
-export const SunburstChart = defineComponent({
+export const SunburstChart = forwardsHtmlAttributes(defineComponent({
   name: 'SunburstChart',
   props: { ...SunburstChartVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -275,4 +276,4 @@ export const SunburstChart = defineComponent({
       )
     }
   },
-})
+}))
