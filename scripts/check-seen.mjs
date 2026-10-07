@@ -12,6 +12,9 @@ import { collectSeen } from './lib/seen-capture.mjs'
 import { launchBrowser } from './lib/browser.mjs'
 import { stopProcess, waitForServer } from './lib/check-process.mjs'
 import { seenVerdict } from './lib/check-verdicts.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4690, 4699)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/seen')
@@ -62,7 +65,7 @@ async function serve(dir) {
       res.writeHead(400).end()
     }
   })
-  for (let port = 4690; port <= 4699; port++) {
+  for (const port of ports) {
     try {
       await new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -82,10 +85,10 @@ async function serve(dir) {
         throw e
     }
   }
-  throw new Error('No free port in 4690–4699')
+  throw new Error(`No free port in ${portText(ports)}`)
 }
 async function servePlay() {
-  for (let port = 4690; port <= 4699; port++) {
+  for (const port of ports) {
     let log = ''
     const child = spawn(process.execPath, ['.output/server/index.mjs'], { cwd: join(root, 'playground/nuxt'), env: { ...process.env, PORT: String(port), HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] })
     child.stdout.on('data', chunk => log += chunk)
@@ -100,7 +103,7 @@ async function servePlay() {
       return base
     await stop()
   }
-  throw new Error('Play server did not become ready on 4690–4699')
+  throw new Error(`Play server did not become ready on ${portText(ports)}`)
 }
 
 async function run(base, route, width, tabs = false) {

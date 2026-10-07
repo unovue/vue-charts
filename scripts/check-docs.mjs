@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url'
 
 import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
 import { emptySurface } from './lib/check-verdicts.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4680, 4689)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(root, 'docs/.output/public')
@@ -57,7 +60,7 @@ const server = createServer(async (req, res) => {
   }
 })
 async function listen() {
-  for (let port = 4680; port <= 4689; port++) {
+  for (const port of ports) {
     try {
       await new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -73,7 +76,7 @@ async function listen() {
         throw error
     }
   }
-  throw new Error('No free port in 4680–4689')
+  throw new Error(`No free port in ${portText(ports)}`)
 }
 const results = []
 const errors = []

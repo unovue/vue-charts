@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url'
 
 import { launchBrowser } from './lib/browser.mjs'
 import { stopProcess, waitForServer } from './lib/check-process.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4690, 4699)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B9')
@@ -387,7 +390,7 @@ try {
       throw new Error(`${filter} build exited ${build.status}; see build-${filter}.log`)
   }
   let base
-  for (let port = 4690; !process.argv.includes('--fixture-only') && port <= 4699; port++) {
+  for (const port of process.argv.includes('--fixture-only') ? [] : ports) {
     if (!await portAvailable(port))
       continue
     serverLog = ''
@@ -401,7 +404,7 @@ try {
     await stopProcess(server)
   }
   if (!base && !process.argv.includes('--fixture-only'))
-    throw new Error('No server started in ports 4690–4699')
+    throw new Error(`No server started in ports ${portText(ports)}`)
   browser = await launchBrowser()
   async function run(route, width, fixture = false) {
     const name = `${fixture ? 'fixture' : route.replaceAll('/', '') || 'index'}-${width}`

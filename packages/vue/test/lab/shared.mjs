@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, createServer, preview } from 'vite'
 import { launchBrowser as launch } from '../../../../scripts/lib/browser.mjs'
+import { checkPorts } from '../../../../scripts/lib/ports.mjs'
 
 export const here = dirname(fileURLToPath(import.meta.url))
 export const repo = join(here, '../../../..')
@@ -24,10 +25,10 @@ export async function startServer() {
   if (has('prod') || process.env.LAB_PROD) {
     const outDir = join(here, 'dist')
     await build({ configFile, logLevel: 'error', mode: 'production', build: { outDir, emptyOutDir: true, minify: false } })
-    const server = await preview({ configFile, logLevel: 'error', build: { outDir }, preview: { port: Number(flag('port', 4680)), strictPort: true, host: '127.0.0.1' } })
+    const server = await preview({ configFile, logLevel: 'error', build: { outDir }, preview: { port: Number(flag('port', checkPorts(4680, 4689)[0])), strictPort: true, host: '127.0.0.1' } })
     return { url: server.resolvedUrls.local[0], close: () => new Promise(resolve => server.httpServer.close(resolve)) }
   }
-  const server = await createServer({ configFile, logLevel: 'error', server: { port: Number(flag('port', 4680)), strictPort: true, host: '127.0.0.1' } })
+  const server = await createServer({ configFile, logLevel: 'error', server: { port: Number(flag('port', checkPorts(4680, 4689)[0])), strictPort: true, host: '127.0.0.1' } })
   await server.listen()
   return { url: server.resolvedUrls.local[0], close: () => server.close() }
 }

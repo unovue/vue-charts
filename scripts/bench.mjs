@@ -7,6 +7,7 @@ import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, version as esbuildVersion } from 'esbuild'
 import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
+import { checkPorts } from './lib/ports.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const option = name => process.argv.find(arg => arg.startsWith(`--${name}=`))?.slice(name.length + 3)
@@ -72,9 +73,7 @@ async function openBrowser() {
     res.setHeader('Content-Type', req.url === '/' ? 'text/html' : 'text/javascript')
     res.writeHead(routes[req.url] ? 200 : 404).end(routes[req.url])
   })
-  const port = Number(process.env.BENCH_PORT ?? 4600)
-  if (port < 4600 || port > 4699)
-    throw new Error('BENCH_PORT must be in 4600–4699')
+  const port = Number(process.env.BENCH_PORT ?? checkPorts(4600, 4699)[0])
   await new Promise((resolve, reject) => server.once('error', reject).listen(port, '127.0.0.1', resolve))
   browser = await launchBrowser()
   page = await browser.newPage({ viewport: { width: 1100, height: 700 }, reducedMotion: 'no-preference' })

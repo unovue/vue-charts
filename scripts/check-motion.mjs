@@ -4,6 +4,9 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, preview } from 'vite'
 import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
+
+const ports = checkPorts(4600, 4699)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixture = join(root, 'packages/vue/test/fixtures/motion')
@@ -22,7 +25,7 @@ try {
   if (library.status !== 0)
     throw new Error(`Library build exited ${library.status}`)
   await build({ root: fixture, configFile: join(fixture, 'vite.config.mjs') })
-  for (let port = 4600; port <= 4699; port++) {
+  for (const port of ports) {
     try {
       server = await preview({ root: fixture, configFile: join(fixture, 'vite.config.mjs'), preview: { port, strictPort: true, host: '127.0.0.1' } })
       break
@@ -33,7 +36,7 @@ try {
     }
   }
   if (!server)
-    throw new Error('No free port in 4600–4699')
+    throw new Error(`No free port in ${portText(ports)}`)
   // CI uses Playwright's installed executable. Locally an explicit override is optional.
   browser = await launchBrowser()
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 }, reducedMotion: 'no-preference' })
