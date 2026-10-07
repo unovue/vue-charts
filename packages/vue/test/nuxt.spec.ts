@@ -3,12 +3,13 @@ import { fileURLToPath } from 'node:url'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
+import { checkPorts } from '../../../scripts/lib/ports.mjs'
 
 describe('nuxt auto-imported charts', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('./fixtures/nuxt-app', import.meta.url)),
     browser: false,
-    port: 4688,
+    port: checkPorts(4688, 4688)[0],
     nuxtConfig: {
       build: { transpile: process.env.VCCS_TEST_TRANSPILE === '1' ? ['vccs'] : [] },
     },
