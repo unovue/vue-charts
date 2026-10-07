@@ -62,7 +62,13 @@ export type { TrackerRow, TrackerSlots } from './chart/Tracker'
 export type { TreemapContentSlotProps, TreemapSlots } from './chart/Treemap'
 
 // Containers
-export { default as ResponsiveContainer } from './container/ResponsiveContainer.vue'
+import ResponsiveContainerComponent from './container/ResponsiveContainer.vue'
+
+/**
+ * @deprecated Charts are responsive by default: remove the wrapper and set `width`, `height`
+ * or `aspect` on the chart. Removed in 2.0 (see internals/migrations.md).
+ */
+export const ResponsiveContainer = ResponsiveContainerComponent
 export type { ResponsiveContainerProps } from './container/ResponsiveContainer.vue'
 
 // General components

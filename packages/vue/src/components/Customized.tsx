@@ -69,5 +69,9 @@ const _Customized = defineComponent({
   },
 })
 
+/**
+ * @deprecated Use the chart's default slot with `usePlotArea()` and the other chart composables.
+ * Removed in 2.0 (see internals/migrations.md).
+ */
 // Preserve template slot inference in published declarations.
 export const Customized: typeof _Customized & { new (): { $slots: CustomizedSlots } } = _Customized
