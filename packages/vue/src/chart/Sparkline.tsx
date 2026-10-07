@@ -17,7 +17,8 @@ import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { CellGridLayer } from './CellGridLayer'
 import { cellGridSharedProps } from './cellGridProps'
-import { isFocusVisible, standaloneChartOptions } from './shell'
+import { standaloneChartOptions } from './shell'
+import { useItemKeyboard } from '@/events/useItemKeyboard'
 import type { GridCell } from './cellGridUtils'
 
 type SparkValue = number | null | undefined
@@ -242,19 +243,18 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
     setActive(nearest)
   }
 
-  function onKeydown(event: KeyboardEvent) {
-    const n = points.value.length
-    if (!n)
-      return
-    const current = active.value ?? n
-    const next = event.key === 'ArrowLeft' ? Math.max(0, current - 1) : event.key === 'ArrowRight' ? Math.min(n - 1, current + 1) : event.key === 'Home' ? 0 : event.key === 'End' ? n - 1 : undefined
-    if (event.key === 'Escape')
-      setActive(null, true)
-    if (next === undefined)
-      return
-    event.preventDefault()
-    setActive(next, true)
-  }
+  // Keyboard focus must show where it is: start on the latest point.
+  const { onFocus, onKeydown } = useItemKeyboard<number>({
+    empty: () => points.value.length === 0,
+    start: () => active.value == null ? points.value.length - 1 : undefined,
+    neighbour: (key) => {
+      const n = points.value.length
+      const current = active.value ?? n
+      return key === 'ArrowLeft' ? Math.max(0, current - 1) : key === 'ArrowRight' ? Math.min(n - 1, current + 1) : key === 'Home' ? 0 : key === 'End' ? n - 1 : undefined
+    },
+    activate: index => setActive(index, true),
+    clear: () => setActive(null, true),
+  })
 
   const lastPoint = computed(() => {
     const shown = display.points.value as SparkPoint[]
@@ -303,10 +303,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
                 onMousemove={onPointer}
                 onMouseleave={() => setActive(null)}
                 onKeydown={onKeydown}
-                onFocus={(event: FocusEvent) => {
-                  if (active.value == null && points.value.length && isFocusVisible(event.target as Element))
-                    setActive(points.value.length - 1, true)
-                }}
+                onFocus={onFocus}
                 onBlur={() => setActive(null, true)}
               >
                 <defs>

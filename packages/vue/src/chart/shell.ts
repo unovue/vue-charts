@@ -29,13 +29,3 @@ export function rootAttrs(attrs: Record<string, unknown>) {
   const { class: _class, style: _style, ...rest } = attrs
   return rest
 }
-
-export function isFocusVisible(element: Element) {
-  try {
-    return element.matches(':focus-visible')
-  }
-  catch {
-    // Engines without :focus-visible (older test DOMs) treat every focus as keyboard focus.
-    return true
-  }
-}

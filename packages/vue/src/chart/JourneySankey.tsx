@@ -12,7 +12,8 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { ChartShell, useChartShell } from './ChartShell'
-import { isFocusVisible, standaloneChartOptions } from './shell'
+import { standaloneChartOptions } from './shell'
+import { useItemKeyboard } from '@/events/useItemKeyboard'
 import {
   type JourneyInput,
   type JourneyLink,
@@ -331,55 +332,51 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
     emit('link-click', link, linkIndex(link), event)
   }
 
-  // --- Keyboard: arrows walk the nodes, Enter pins, Escape clears.
+  // --- Keyboard: arrows walk the nodes, Enter pins, Escape clears. Focus starts on the first node.
   const focused = ref<string>()
-  function onKeydown(event: KeyboardEvent) {
-    const nodes = layout.value.nodes
-    if (!nodes.length)
-      return
-    const current = nodes.find(node => node.id === focused.value)
-    let next: JourneyNode | undefined
-    if (!current) {
-      next = event.key.startsWith('Arrow') ? nodes[0] : undefined
-    }
-    else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      const column = nodes.filter(node => node.step === current.step)
-      next = column[column.indexOf(current) + (event.key === 'ArrowDown' ? 1 : -1)]
-    }
-    else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-      const forward = event.key === 'ArrowRight'
-      const candidates = layout.value.links
-        .filter(link => forward ? link.source === current.id : link.target === current.id)
-        .sort((a, b) => b.count - a.count)
-      const nextId = candidates[0] && (forward ? candidates[0].target : candidates[0].source)
-      next = nodes.find(node => node.id === nextId)
-    }
-    else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      clickNode(current, event)
-      return
-    }
-    else if (event.key === 'Escape') {
+  const focusedNode = () => layout.value.nodes.find(node => node.id === focused.value)
+  const { onFocus, onKeydown } = useItemKeyboard<JourneyNode>({
+    empty: () => layout.value.nodes.length === 0,
+    start: () => focused.value === undefined ? layout.value.nodes[0] : undefined,
+    neighbour: (key) => {
+      const nodes = layout.value.nodes
+      const current = focusedNode()
+      if (!current)
+        return key.startsWith('Arrow') ? nodes[0] : undefined
+      if (key === 'ArrowDown' || key === 'ArrowUp') {
+        const column = nodes.filter(node => node.step === current.step)
+        return column[column.indexOf(current) + (key === 'ArrowDown' ? 1 : -1)]
+      }
+      if (key === 'ArrowRight' || key === 'ArrowLeft') {
+        const forward = key === 'ArrowRight'
+        const candidates = layout.value.links
+          .filter(link => forward ? link.source === current.id : link.target === current.id)
+          .sort((a, b) => b.count - a.count)
+        const nextId = candidates[0] && (forward ? candidates[0].target : candidates[0].source)
+        return nodes.find(node => node.id === nextId)
+      }
+      return undefined
+    },
+    activate: (node) => {
+      focused.value = node.id
+      enterNode(node)
+    },
+    clear: () => {
+      if (!focusedNode())
+        return
       setPinned(null)
       focused.value = undefined
       leave()
-      return
-    }
-    if (!next)
-      return
-    event.preventDefault()
-    focused.value = next.id
-    enterNode(next)
-  }
-
-  // Keyboard focus must show where it is: start on the first node.
-  function onFocus(event: FocusEvent) {
-    const first = layout.value.nodes[0]
-    if (focused.value === undefined && first && isFocusVisible(event.target as Element)) {
-      focused.value = first.id
-      enterNode(first)
-    }
-  }
+    },
+    keydown: (event) => {
+      const current = focusedNode()
+      if (!current || (event.key !== 'Enter' && event.key !== ' '))
+        return false
+      event.preventDefault()
+      clickNode(current, event)
+      return true
+    },
+  })
 
   const linkPath = (link: JourneyLink) => {
     const mid = (link.x1 - link.x0) * CURVATURE

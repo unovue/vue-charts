@@ -1,4 +1,4 @@
-import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, ref, toRaw, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, toRaw, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { useTooltipController } from '@/model/tooltip'
@@ -10,7 +10,7 @@ import { emptyGridTransitionPlan, planGridTransition } from '@/animation/gridTra
 import { cellGridSharedProps } from './cellGridProps'
 import { cellGridEmits } from '@/events/componentEvents'
 import type { GridCell } from './cellGridUtils'
-import { isFocusVisible } from './shell'
+import { useItemKeyboard } from '@/events/useItemKeyboard'
 
 export interface CellSlotProps<P = unknown> {
   cell: GridCell<P>
@@ -58,7 +58,6 @@ export const CellGridLayer = defineComponent({
     const tooltip = useTooltipController()
     const reducedMotion = useReducedMotion()
     const baseId = useId()
-    const keyboard = ref(false)
 
     const indexByKey = computed(() => new Map(props.cells.map((cell, index) => [cell.key, index])))
 
@@ -221,29 +220,18 @@ export const CellGridLayer = defineComponent({
     }
 
     // Keyboard focus must show where it is: start on the latest cell, the one people look for first.
-    function onFocus(event: FocusEvent) {
-      if (activeKey.value !== undefined || props.cells.length === 0 || !isFocusVisible(event.target as Element))
-        return
-      keyboard.value = true
-      activate(props.cells[props.cells.length - 1], props.cells.length - 1)
-    }
-
-    function onKeydown(event: KeyboardEvent) {
-      if (props.cells.length === 0)
-        return
-      if (event.key === 'Escape') {
-        keyboard.value = true
-        clear()
-        return
-      }
-      const current = activeKey.value === undefined ? undefined : props.cells[indexByKey.value.get(activeKey.value)!]
-      const next = current ? neighbour(current, event.key) : event.key === 'Home' ? props.cells[0] : (event.key.startsWith('Arrow') || event.key === 'End') ? props.cells[props.cells.length - 1] : undefined
-      if (!next)
-        return
-      event.preventDefault()
-      keyboard.value = true
-      activate(next, indexByKey.value.get(next.key)!)
-    }
+    const { keyboard, onFocus, onKeydown } = useItemKeyboard<GridCell>({
+      empty: () => props.cells.length === 0,
+      start: () => activeKey.value === undefined ? props.cells[props.cells.length - 1] : undefined,
+      neighbour: (key) => {
+        const current = activeKey.value === undefined ? undefined : props.cells[indexByKey.value.get(activeKey.value) ?? -1]
+        if (current)
+          return neighbour(current, key)
+        return key === 'Home' ? props.cells[0] : key.startsWith('Arrow') || key === 'End' ? props.cells[props.cells.length - 1] : undefined
+      },
+      activate: cell => activate(cell, indexByKey.value.get(cell.key) ?? -1),
+      clear,
+    })
 
     // Cells sliding in or out are visible only inside the grid's own bounds.
     const clip = computed(() => {
