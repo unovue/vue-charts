@@ -39,6 +39,9 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
+  "files": [
+    "./src/test/events-contract.ts"
+  ],
   "include": [
     "./src/**/*.vue",
     "./src/**/*.ts",
@@ -52,8 +55,5 @@
     "src/storybook/**",
     "src/**/*.stories.*",
     "src/**/*.story.*"
-  ],
-  "files": [
-    "./src/test/events-contract.ts"
   ]
 }
