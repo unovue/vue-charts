@@ -21,7 +21,7 @@ const checks = [
   ['library build', 'pnpm --filter vccs build'],
   ['size budgets', 'pnpm --filter vccs size'],
   ['package exports and types', 'pnpm check:package'],
-  ['packed consumers', 'node scripts/check-consumers.mjs'],
+  ['packed consumers', `node scripts/check-consumers.mjs${quick ? ' --skip-dev' : ''}`],
   ['code health', 'pnpm check:code'],
   ['docs cover every public component', 'node scripts/check-docs-coverage.mjs'],
   ['standalone bundles', 'pnpm check:bundle --assert-standalone'],

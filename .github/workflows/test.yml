@@ -68,6 +68,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Install locked Playwright Chromium headless shell
+        run: node scripts/lib/browser.mjs --install-browser --with-deps chromium-headless-shell
+
       - run: node scripts/check-consumers.mjs
 
   motion:

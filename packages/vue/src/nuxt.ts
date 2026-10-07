@@ -1,5 +1,5 @@
 import type { NuxtModule } from 'nuxt/schema'
-import { addComponent, addImports, defineNuxtModule } from '@nuxt/kit'
+import { addComponent, addImports, defineNuxtModule, extendViteConfig } from '@nuxt/kit'
 import { componentNames, composableNames } from './componentNames'
 
 export interface ModuleOptions {
@@ -17,6 +17,12 @@ const module: NuxtModule<ModuleOptions, ModuleOptions> = defineNuxtModule<Module
       addComponent({ name: options.prefix + name, export: name, filePath: 'vccs' })
     // Composables keep their names: the prefix only applies to components.
     addImports(composableNames.map(name => ({ name, from: 'vccs' })))
+    // Nuxt transpiles module packages, so Vite does not pre-bundle vccs in dev. decimal.js-light then
+    // resolves through its "browser" field to a UMD file without a default export; pre-bundle it.
+    extendViteConfig((config) => {
+      config.optimizeDeps ??= {}
+      ;(config.optimizeDeps.include ??= []).push('vccs > decimal.js-light')
+    })
   },
 })
 

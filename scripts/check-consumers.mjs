@@ -1,10 +1,14 @@
 /* eslint-disable no-console -- CLI check results. */
 import { Buffer } from 'node:buffer'
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { copyFile, cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { launchBrowser } from './lib/browser.mjs'
+import { stopProcess, waitForServer } from './lib/check-process.mjs'
+import { checkPorts, portText } from './lib/ports.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixtures = join(root, 'scripts/fixtures/consumers')
@@ -20,6 +24,70 @@ function run(cwd, args) {
     throw result.error
   if (result.status !== 0)
     throw new Error(`pnpm ${args.join(' ')} failed (exit ${result.status}, signal ${result.signal})`)
+}
+
+/**
+ * `nuxi dev` serves the packed library without pre-bundling it (Nuxt transpiles module packages),
+ * so a dependency that only works pre-bundled breaks the dev client while `nuxi build` passes.
+ * Load the page in a browser and require rendered bars, no page errors and clean hydration.
+ * `--skip-dev` skips this browser step (used by `pnpm verify --quick`).
+ */
+async function checkNuxtDev(app) {
+  const ports = checkPorts(4670, 4679)
+  const port = await firstFreePort(ports)
+  if (!port)
+    return failures.push(new Error(`Nuxt dev: no free port in ${portText(ports)}`))
+  const origin = `http://127.0.0.1:${port}`
+  let output = ''
+  // Own process group: nuxi forks the dev server, and the whole group must stop.
+  const server = spawn(process.execPath, [join(app, 'node_modules/nuxt/bin/nuxt.mjs'), 'dev', '--port', String(port), '--host', '127.0.0.1'], {
+    cwd: app,
+    env: { ...env, NODE_ENV: 'development' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
+  })
+  server.stdout.on('data', chunk => output += chunk)
+  server.stderr.on('data', chunk => output += chunk)
+  let browser
+  try {
+    if (!await waitForServer(server, origin, 120000))
+      throw new Error(`nuxi dev did not start on ${origin}:\n${output.slice(-2000)}`)
+    browser = await launchBrowser()
+    const page = await browser.newPage()
+    const problems = []
+    page.on('pageerror', error => problems.push(`pageerror: ${error.message}`))
+    page.on('console', (message) => {
+      if (message.type() === 'error' || /hydration/i.test(message.text()))
+        problems.push(`console ${message.type()}: ${message.text()}`)
+    })
+    await page.goto(origin, { waitUntil: 'networkidle', timeout: 120000 })
+    const bars = await page.locator('.v-charts-bar-rectangle').count()
+    console.log(`Nuxt dev: ${bars} bars, ${problems.length} problems`)
+    if (bars === 0 || problems.length)
+      failures.push(new Error(`Nuxt dev page: ${bars} bars; ${problems.join('; ') || 'no problems logged'}`))
+  }
+  catch (error) {
+    failures.push(error)
+  }
+  finally {
+    await browser?.close()
+    try {
+      process.kill(-server.pid, 'SIGTERM')
+    }
+    catch {}
+    await stopProcess(server)
+  }
+}
+
+async function firstFreePort(ports) {
+  for (const port of ports) {
+    const free = await new Promise((resolve) => {
+      const probe = createServer().once('error', () => resolve(false))
+      probe.listen(port, '127.0.0.1', () => probe.close(() => resolve(true)))
+    })
+    if (free)
+      return port
+  }
 }
 
 function check(cwd, args) {
@@ -92,11 +160,13 @@ try {
         failures.push(new Error('Strict packed vccs declaration guard failed'))
       check(app, ['exec', 'nuxi', 'typecheck'])
       check(app, ['exec', 'nuxi', 'build'])
+      if (!process.argv.includes('--skip-dev'))
+        await checkNuxtDev(app)
     }
   }
   if (failures.length)
     throw new AggregateError(failures, `${failures.length} packed consumer checks failed`)
-  console.log('\nPASS: fresh packed Vite and Nuxt consumers typecheck strictly and build.')
+  console.log('\nPASS: fresh packed Vite and Nuxt consumers typecheck strictly and build, and the Nuxt dev page renders.')
 }
 catch (error) {
   console.error(error)
