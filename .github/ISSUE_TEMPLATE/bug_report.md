@@ -10,7 +10,9 @@ assignees: ''
 **1. Describe the bug**
 A clear and concise description of what the bug is.
 
-**2. IMPORTANT: Provide a CodeSandbox reproduction of the bug**
+**2. IMPORTANT: Provide a minimal reproduction**
+
+A link to a small project that shows the bug (StackBlitz, CodeSandbox or a GitHub repository).
 
 **3. Steps to reproduce**
 
@@ -31,4 +33,9 @@ If applicable, add a video or screenshots to help explain the bug.
 
 **6. Environment details**
 
-If applicable, let us know which OS, browser, browser version etc you're using.
+- vccs version:
+- Vue version:
+- motion-v version:
+- Nuxt version (if you use Nuxt):
+- Does the bug happen during server rendering or hydration (SSR)? yes / no
+- OS, browser and browser version:
