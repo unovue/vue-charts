@@ -1,8 +1,8 @@
 import type { CartesianViewBoxRequired, PolarViewBoxRequired, ViewBox } from '@/types/viewBox'
 import type { Data, LabelViewProps } from '@/components/label/types'
-import type { Coordinate } from '@/types'
 import { isNumber, isPercent } from '@/utils'
 import { getPercentValue, mathSign } from '@/utils/data'
+import { polarToCartesian } from '@/utils/polar'
 
 export function parseViewBox(props: Data & {
   angle?: number
@@ -94,15 +94,6 @@ export function normalizeViewBox(viewBox: ViewBox): LabelViewBox {
 
 export function isPolar(viewBox: LabelViewBox): viewBox is PolarViewBoxRequired {
   return 'cx' in viewBox
-}
-
-const RADIAN = Math.PI / 180
-
-function polarToCartesian(cx: number, cy: number, radius: number, angle: number): Coordinate {
-  return {
-    x: cx + Math.cos(-RADIAN * angle) * radius,
-    y: cy + Math.sin(-RADIAN * angle) * radius,
-  }
 }
 
 type PolarLabelPosition = 'insideStart' | 'insideEnd' | 'end'

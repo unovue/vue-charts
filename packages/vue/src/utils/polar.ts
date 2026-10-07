@@ -48,10 +48,16 @@ export function reverseFormatAngleOfSector(angle: number, { startAngle, endAngle
   return angle + min * 360
 }
 
+/**
+ * Node and browsers may return cos/sin values that differ in the last bit. Rounding to 1e-6 px
+ * makes the server and the browser print the same SVG attributes, so hydration matches.
+ */
+const roundCoordinate = (value: number) => Math.round(value * 1e6) / 1e6
+
 export function polarToCartesian(cx: number, cy: number, radius: number, angle: number): Coordinate {
   return {
-    x: cx + Math.cos(-RADIAN * angle) * radius,
-    y: cy + Math.sin(-RADIAN * angle) * radius,
+    x: roundCoordinate(cx + Math.cos(-RADIAN * angle) * radius),
+    y: roundCoordinate(cy + Math.sin(-RADIAN * angle) * radius),
   }
 }
 
