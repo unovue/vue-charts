@@ -1,6 +1,7 @@
 import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
-import { computed, defineComponent } from 'vue'
+import { useTooltipEntry } from '@/model/tooltip'
+import { defineComponent } from 'vue'
 import type { PropType, SlotsType, VNodeChild } from 'vue'
 import type { Point } from '@/types/shape'
 import { Dot } from '@/shape/Dot'
@@ -39,8 +40,11 @@ export const ActivePoints = defineComponent({
   },
   slots: Object as SlotsType<ActivePointsSlots>,
   setup(props, { slots }) {
-    const chart = useChart()
-    const activeTooltipIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
+    const entry = useTooltipEntry()
+    if (!entry)
+      throw new Error('vccs: ActivePoints requires its series tooltip entry.')
+    // In item mode only the hovered series shows its dot; in axis mode every series does.
+    const activeTooltipIndex = useChart().tooltip.activeIndexFor(entry)
 
     return () => {
       const index = activeTooltipIndex.value

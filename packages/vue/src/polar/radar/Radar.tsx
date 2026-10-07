@@ -4,6 +4,7 @@ import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h } from 'vue'
+import { provideTooltipEntry } from '@/model/tooltip'
 import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-v'
@@ -316,7 +317,7 @@ export const Radar = forwardsSvgAttributes(defineComponent({
       inactive: props.hide,
     }]))
 
-    useChart().tooltip.entries.register(computed(() => ({
+    const tooltipEntry = computed(() => ({
       dataDefinedOnItem: undefined,
       positions: undefined,
       settings: {
@@ -330,7 +331,9 @@ export const Radar = forwardsSvgAttributes(defineComponent({
         stroke: props.stroke,
         unit: '',
       },
-    })))
+    }))
+    useChart().tooltip.entries.register(tooltipEntry)
+    provideTooltipEntry(tooltipEntry)
 
     const View = useDeferredView(RadarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

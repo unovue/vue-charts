@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -349,5 +350,31 @@ describe('lineChart', () => {
       const curves = getLineCurves(container)
       expect(curves).toHaveLength(0)
     })
+  })
+
+  // Item mode highlights only the hovered series: the other Line must not draw an active dot.
+  it.each([
+    { shared: false, dots: 1 },
+    { shared: true, dots: 2 },
+  ])('draws $dots active dots for two Lines with shared=$shared', async ({ shared, dots }) => {
+    const rows = [{ name: 'A', uv: 4, pv: 2 }, { name: 'B', uv: 3, pv: 5 }]
+    const { container } = render(() => (
+      <LineChart width={400} height={300} data={rows}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip shared={shared} isAnimationActive={false} />
+        <Line dataKey="uv" isAnimationActive={false} />
+        <Line dataKey="pv" isAnimationActive={false} />
+      </LineChart>
+    ))
+    await nextTick()
+    if (shared)
+      container.querySelector('.v-charts-wrapper')!.dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 150 }))
+    else
+      container.querySelectorAll('.v-charts-line-dots')[0]!.querySelectorAll('[data-v-charts-item-index]')[1]!.dispatchEvent(new MouseEvent('mouseenter'))
+    await nextTick()
+    await nextTick()
+    expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain('uv')
+    expect(container.querySelectorAll('.v-charts-active-dot')).toHaveLength(dots)
   })
 })
