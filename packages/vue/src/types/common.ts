@@ -3,7 +3,7 @@ import type { ChartOffset, Coordinate, TickItem, VueClassValue } from './base'
 
 export type { DataKey, Coordinate, ChartCoordinate, PolarChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
 import type { TooltipPayload } from '@/types/tooltip'
-import type { PropType } from 'vue'
+import type { PropType, SVGAttributes } from 'vue'
 import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export type LayoutType = 'horizontal' | 'vertical' | 'centric' | 'radial'
@@ -95,8 +95,11 @@ export type VuePropsToType<Props> = {
   [K in keyof Props as Props[K] extends { required: boolean } ? never : K]?: VuePropField<Props[K]>
 }
 
-/** Declared props plus the SVG attributes a template may pass (see `SvgTemplateAttributes`). */
-export type WithSVGProps<T> = VuePropsToType<T> & Omit<SvgTemplateAttributes, keyof T>
+/**
+ * Declared props plus SVG attributes, in both spellings: kebab-case as in `SVGAttributes` and
+ * camelized as strict templates check them (see `SvgTemplateAttributes`).
+ */
+export type WithSVGProps<T> = VuePropsToType<T> & Omit<SVGAttributes, keyof T> & Omit<SvgTemplateAttributes, keyof T>
 
 export type AllowInDimension = {
   x?: boolean
