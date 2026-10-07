@@ -24,8 +24,10 @@ it.each([
   ['Cohort retention', (title?: string) => <CohortChart {...size} title={title} data={[{ cohort: 'A', values: [2, 1] }]} />],
   ['Activity calendar', (title?: string) => <CalendarHeatmap {...size} title={title} start="2026-01-01" data={[{ date: '2026-01-01', value: 1 }]} />],
   ['Bar list', (title?: string) => <BarList title={title} data={[{ name: 'A', value: 1 }]} />],
-  ['Journeys of 1 sessions over 2 steps', (title?: string) => <JourneySankey {...size} title={title} data={[{ path: ['A', 'B'], count: 1 }]} />],
+  ['Journeys of 1 session over 2 steps', (title?: string) => <JourneySankey {...size} title={title} data={[{ path: ['A', 'B'], count: 1 }]} />],
+  ['Journeys of 5 sessions over 1 step', (title?: string) => <JourneySankey {...size} title={title} data={[{ path: ['A'], count: 5 }]} />],
   ['Trend: 2 values from 1 to 2', (title?: string) => <Sparkline {...size} title={title} data={[1, 2]} />],
+  ['Trend: 1 value from 5 to 5', (title?: string) => <Sparkline {...size} title={title} data={[5]} />],
 ])('%s supports a human default and a caller title', async (expected, view) => {
   const title = ref<string>()
   const { container } = render(() => view(title.value))

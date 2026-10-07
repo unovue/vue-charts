@@ -290,7 +290,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
   const summary = computed(() => {
     const shown = points.value.filter(point => point.value !== null)
     const text = (point: SparkPoint | undefined) => point?.value == null ? '' : valueText(point.value, point.payload)
-    return props.title ?? (shown.length ? `Trend: ${shown.length} values from ${text(shown[0])} to ${text(shown.at(-1))}` : 'Trend')
+    return props.title ?? (shown.length ? `Trend: ${shown.length} ${shown.length === 1 ? 'value' : 'values'} from ${text(shown[0])} to ${text(shown.at(-1))}` : 'Trend')
   })
 
   return () => {

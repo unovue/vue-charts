@@ -388,7 +388,11 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
     const steps = layout.value.steps
     return steps.length > 1 ? steps[1].x - steps[0].x : props.width
   })
-  const summary = computed(() => props.title ?? `Journeys of ${numbers.value.format(layout.value.steps[0]?.total ?? 0)} sessions over ${layout.value.steps.length} steps`)
+  const summary = computed(() => {
+    const sessions = layout.value.steps[0]?.total ?? 0
+    const steps = layout.value.steps.length
+    return props.title ?? `Journeys of ${numbers.value.format(sessions)} ${sessions === 1 ? 'session' : 'sessions'} over ${steps} ${steps === 1 ? 'step' : 'steps'}`
+  })
   const focusedLabel = computed(() => {
     const node = focused.value ? nodeById.value.get(focused.value) : undefined
     return node ? `${node.name}, step ${node.step + 1}: ${subtitleOf(node)}` : summary.value
