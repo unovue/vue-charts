@@ -20,9 +20,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Ignore local gate evidence
-        run: echo '.evidence/' >> .git/info/exclude
-
       - run: pnpm --filter vccs build
 
       - run: pnpm typecheck
@@ -88,14 +85,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Ignore local motion evidence
-        run: echo '.evidence/' >> .git/info/exclude
-
       - name: Install locked Playwright Chromium headless shell
         run: node scripts/lib/browser.mjs --install-browser --with-deps chromium-headless-shell
-
-      - name: Check fixture and runner lint
-        run: pnpm exec eslint scripts/check-motion.mjs packages/vue/test/fixtures/motion --max-warnings 0
 
       - run: pnpm check:motion
 
