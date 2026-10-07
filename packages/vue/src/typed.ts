@@ -81,22 +81,27 @@ type TypedComponent<Component extends ComponentConstructor, Row, Slots = RowSlot
     }
   }
 
+type SlotsOf<Component extends ComponentConstructor> = InstanceType<Component>['$slots']
+type ContentPropsOf<Slots> = Slots extends { content?: (props: infer Props) => unknown } ? Props : never
+
+// Tooltip and Legend content props hold a top-level `payload` array, which the generic row
+// mapping would replace with a single row. They are recognised by their content slot type, so
+// an aliased component (`{ Tip: Tooltip }`) keeps them.
+type TypedSlots<Component extends ComponentConstructor, Row> =
+  [ContentPropsOf<SlotsOf<Component>>] extends [never]
+    ? RowSlots<SlotsOf<Component>, Row>
+    : [ContentPropsOf<SlotsOf<Component>>] extends [TooltipContentProps]
+        ? Omit<SlotsOf<Component>, 'content'> & { content?: (props: TypedTooltipContentProps<Row>) => VNodeChild }
+        : [ContentPropsOf<SlotsOf<Component>>] extends [LegendContentProps]
+            ? { content?: (props: Omit<LegendContentProps, 'payload'> & { payload: TypedLegendPayload<Row>[] }) => VNodeChild }
+            : RowSlots<SlotsOf<Component>, Row>
+
 /** The components passed to `defineChartComponents`, re-typed for one row type. */
 export type TypedComponents<Row, Components> = {
   [Key in keyof Components]: Key extends keyof StandaloneComponents<Row>
     ? StandaloneComponents<Row>[Key]
     : Components[Key] extends ComponentConstructor
-      // Tooltip and Legend content props hold a top-level `payload` array, which the generic
-      // row mapping would replace with a single row, so they get explicit slot types.
-      ? Key extends 'Tooltip'
-        ? TypedComponent<Components[Key], Row, Omit<InstanceType<Components[Key]>['$slots'], 'content'> & {
-          content?: (props: TypedTooltipContentProps<Row>) => VNodeChild
-        }>
-        : Key extends 'Legend'
-          ? TypedComponent<Components[Key], Row, {
-            content?: (props: Omit<LegendContentProps, 'payload'> & { payload: TypedLegendPayload<Row>[] }) => VNodeChild
-          }>
-          : TypedComponent<Components[Key], Row>
+      ? TypedComponent<Components[Key], Row, TypedSlots<Components[Key], Row>>
       : Components[Key]
 }
 

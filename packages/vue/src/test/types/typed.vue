@@ -2,7 +2,7 @@
 import { Area, Bar, BarChart, CartesianGrid, ErrorBar, Funnel, LabelList, Legend, Line, Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar, ReferenceArea, ReferenceDot, ReferenceLine, Scatter, Tooltip, XAxis, YAxis, ZAxis, defineChartComponents } from '../../index'
 
 interface Visit { name: string, desktop: number, mobile: number }
-const Chart = defineChartComponents<Visit>()({ BarChart, Bar, XAxis, Tooltip, Legend, Area, Line, Pie, Scatter, Radar, RadialBar, Funnel, YAxis, ZAxis, PolarAngleAxis, PolarRadiusAxis, LabelList, ErrorBar, ReferenceLine, ReferenceDot, ReferenceArea, CartesianGrid })
+const Chart = defineChartComponents<Visit>()({ BarChart, Bar, XAxis, Tooltip, Tip: Tooltip, Legend, Key: Legend, Area, Line, Pie, Scatter, Radar, RadialBar, Funnel, YAxis, ZAxis, PolarAngleAxis, PolarRadiusAxis, LabelList, ErrorBar, ReferenceLine, ReferenceDot, ReferenceArea, CartesianGrid })
 const rows: Visit[] = [{ name: 'A', desktop: 10, mobile: 5 }]
 function number<T extends number>(value: T & (0 extends (1 & T) ? never : unknown)) { return value }
 function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | undefined) { return value }
@@ -38,6 +38,19 @@ function key(value: 'name' | 'desktop' | 'mobile' | ((row: Visit) => unknown) | 
         {{ key(payload[0]?.dataKey) }} {{ payload[0]?.value?.toUpperCase() }}
       </template>
     </Chart.Legend>
+    <!-- An aliased Tooltip and Legend keep their typed content slots. -->
+    <Chart.Tip>
+      <template #content="{ payload }">
+        {{ number(payload?.[0]?.payload.desktop) }}
+        <!-- @vue-expect-error Row payload does not contain nope. -->
+        {{ payload[0]?.payload.nope }}
+      </template>
+    </Chart.Tip>
+    <Chart.Key>
+      <template #content="{ payload }">
+        {{ key(payload[0]?.dataKey) }}
+      </template>
+    </Chart.Key>
     <Chart.Area data-key="desktop" /><Chart.Line data-key="mobile" />
     <Chart.Pie
       data-key="desktop"
