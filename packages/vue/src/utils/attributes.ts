@@ -54,14 +54,17 @@ export type DeclaredProps<C extends ComponentConstructor> = C extends { readonly
 /**
  * Marks a component that forwards undeclared attributes (`stroke-dasharray`, `data-*`,
  * `aria-*`) to its root SVG element, so strict templates (`strictTemplates`) accept them.
- * Runtime behaviour is unchanged: Vue already forwards these attributes.
+ * Runtime behaviour is unchanged: Vue already forwards these attributes. `@__NO_SIDE_EFFECTS__`
+ * tells bundlers that a call can be dropped, so an unused wrapped component is tree-shaken.
  */
+/* @__NO_SIDE_EFFECTS__ */
 export function forwardsSvgAttributes<C extends ComponentConstructor>(component: C): WithAttributes<C, SvgTemplateAttributes> {
   // Only optional template props are added, so every component satisfies the wider type.
   return component as WithAttributes<C, SvgTemplateAttributes>
 }
 
 /** Like `forwardsSvgAttributes`, for components whose root is an HTML element. */
+/* @__NO_SIDE_EFFECTS__ */
 export function forwardsHtmlAttributes<C extends ComponentConstructor>(component: C): WithAttributes<C, HtmlTemplateAttributes> {
   return component as WithAttributes<C, HtmlTemplateAttributes>
 }
