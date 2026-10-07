@@ -1,5 +1,5 @@
 <script setup>
-import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -13,44 +13,42 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <LineChart
+    :data="data"
     :height="300"
   >
-    <LineChart :data="data">
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <ReferenceArea
-        x1="Page B"
-        x2="Page D"
-        fill="#8884d8"
-        :fill-opacity="0.1"
-      />
-      <ReferenceLine
-        :y="1200"
-        stroke="red"
-        stroke-dasharray="3 3"
-      />
-      <Line
-        type="monotone"
-        data-key="uv"
-        stroke="#8884d8"
-      />
-      <Line
-        type="monotone"
-        data-key="pv"
-        stroke="#82ca9d"
-      />
-    </LineChart>
-  </ResponsiveContainer>
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <ReferenceArea
+      x1="Page B"
+      x2="Page D"
+      fill="#8884d8"
+      :fill-opacity="0.1"
+    />
+    <ReferenceLine
+      :y="1200"
+      stroke="red"
+      stroke-dasharray="3 3"
+    />
+    <Line
+      type="monotone"
+      data-key="uv"
+      stroke="#8884d8"
+    />
+    <Line
+      type="monotone"
+      data-key="pv"
+      stroke="#82ca9d"
+    />
+  </LineChart>
 </template>

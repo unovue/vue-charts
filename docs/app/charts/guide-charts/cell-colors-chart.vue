@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, Cell, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -15,32 +15,28 @@ const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57'
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    :margin="{ top: 5, right: 20, left: 10, bottom: 5 }"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      :margin="{ top: 5, right: 20, left: 10, bottom: 5 }"
-    >
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Bar data-key="uv">
-        <Cell
-          v-for="(entry, i) in data"
-          :key="i"
-          :fill="COLORS[i % COLORS.length]"
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
         />
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
+      </template>
+    </Tooltip>
+    <Bar data-key="uv">
+      <Cell
+        v-for="(entry, i) in data"
+        :key="i"
+        :fill="COLORS[i % COLORS.length]"
+      />
+    </Bar>
+  </BarChart>
 </template>
