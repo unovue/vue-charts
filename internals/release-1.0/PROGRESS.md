@@ -56,7 +56,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 4.5 | Changelog | assess | 3.11 | todo | | |
 | 4.6 | Release mechanics | yes | 1.9, 2.14, 4.3 | todo | | |
 | 4.7 | Agent and maintainer docs | assess | phase 3, 4.6 | todo | | |
-| 4.8 | Final verification list | yes | 4.1–4.7 | todo | | |
+| 4.8 | Final verification list | yes | 4.1–4.7 | done | `c24e748`, `bab34f4`, `5b7b4e4`, `a70466e`, this log commit | Final verifier exit 0; baseline and detailed verdicts below; manual review pending Opus. |
 | 4.9 | Final report | yes | 4.8 | todo | | |
 
 ## Phase gates
@@ -67,7 +67,7 @@ Statuses: `todo`, `done`, `deferred`. Evidence is ignored under `.evidence/`; un
 | 1 | 2026-10-06 | Prior full run FAIL; repaired checks below | Prior PASS: 21 rounds / 18 metrics | Playground comparison PASS; visitor capture completes | DEFERRED: visitor timing remains unreliable |
 | 2 | | | | | |
 | 3 | 2026-10-06 | FAIL retained; focused corrections below | FAIL retry: 17/18 metrics | Part B complete; numeric/a11y/docs/isolated play PASS | Complete with recorded gate failures; no all-green claim |
-| 4 | | | | | |
+| 4 | 2026-10-07 | Final exit 0; prior failures retained | Exit 0; 16 PASS / 2 INCONCLUSIVE | 4.8 automated gate complete; manual review pending Opus | PASS for 4.8 automated gate; remaining phase work outside this slice |
 
 ## Step 0.1 evidence
 - Commits: `c0c4d81`, `745da98`, `9e82e9b`, `a25538c`, `9e505eb`; source baseline `83dc1b0`, release checkout `fork_vue-charts-cellgrid-main`; original checkout preserved. Node22.23.3/pnpm9.15.0; frozen install, build and current-config typing PASS.
@@ -737,3 +737,132 @@ Evidence: .evidence/release-1.0/regression-follow-up/. Assumptions: cache forms 
 - Cold preparation and subsequent frozen offline Vite/Nuxt consumers PASS; unprepared empty-store control fails.
 - Evidence: .evidence/release-1.0/phase-4/4.6-*.log; fixture locks restored unchanged.
 - Assumptions: two workers; archive install ignores lifecycle hooks; GitHub execution remains unverified locally.
+
+### 4.8 Final verification — done
+
+- Commits: c24e748, bab34f4, 5b7b4e4, a70466e and this log commit; checker fixes only.
+- Final footer: every check PASS or declared INCONCLUSIVE; exit 0 follows the verifier rule.
+- Gate: 142 files / 1407 tests; typecheck PASS; changed-file ESLint zero warnings.
+- Baseline bench exits 0: 16 PASS / 2 INCONCLUSIVE / 0 FAIL; spread below.
+- Reverse controls fail without each fix; production source, geometry, motion and thresholds unchanged.
+- Evidence: .evidence/release-1.0/step-4.8/; raw failed logs and summaries retained.
+- Assumptions: fixed 100 ms margin; static target geometry; navigation index covered by check:play.
+Visual, keyboard and screen-reader pass: pending Opus
+
+### 4.8 final gate verdicts
+
+All commands use `PATH=/private/tmp/vccs-node22-bin:$PATH`. Final command: `pnpm verify --docs-browser=chromium,webkit`; exit 0 derived from the complete final footer and the verifier’s exit rule in [verify-final-exit.json](../../.evidence/release-1.0/step-4.8/verify-final-exit.json). Exact subcommands and outputs are in [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log); parsed footer: [verify-verdicts.json](../../.evidence/release-1.0/step-4.8/verify-verdicts.json).
+
+| Check | Verdict | Final result | Evidence |
+| --- | --- | --- | --- |
+| unit and regression tests | PASS | 142 files / 1407 tests passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| tooling verdict regressions | PASS | 6 tests passed; failure/uncertainty controls retained. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| lint | PASS | Repository ESLint exited 0; changed files also pass --max-warnings 0 (changed-eslint-final.log). | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| typecheck | PASS | Current-config vue-tsc exited 0. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| library build | PASS | Production library build exited 0. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| size budgets | PASS | All 22 chart/preset budgets passed; thresholds unchanged. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| package exports and types | PASS | 552 packed files / 3 exports; strict publint/attw passed with the existing CJS-to-ESM exception. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| packed consumers offline | PASS | Fresh frozen offline Vite/Nuxt typechecks and builds passed; strict declarations: 303 files, 0 vccs errors, 100 third-party diagnostics. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| code health | PASS | 0 cycles, unused files/exports, real any, any disables or ts-ignore; longest production file 562 lines. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| standalone bundles | PASS | 19 chart entries; 0 forbidden modules; gzip table below. | [bundle-final.json](../../.evidence/release-1.0/step-4.8/bundle-final.json) |
+| Nuxt SSR fixture | PASS | Nuxt fixture test passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| accessibility, contrast and hydration | PASS | 100 cases passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| motion guide tokens | PASS | Generated guide timings match canonical source tokens. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| motion metrics regressions | PASS | 9 tests passed, including cut-off recording rejection. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| production motion fixture | PASS | 12 scenarios passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| motion target error regression | PASS | 2 CLI tests passed; complete entrance and static-target error controls. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| frame-exact motion (lab) | PASS | 285 transitions accepted; 283 raw clean, 7 unchanged D-25 Journey flags, 0 errors. Token/data-derived windows 1100–2100 ms; no unaccepted/stale flags. | [motion-comparison.json](../../.evidence/release-1.0/step-4.8/motion-comparison.json) |
+| playground pages in a browser | PASS | 22 real views / 211 captures / 0 real flags; deliberate fixture control passed. | [play-final.json](../../.evidence/release-1.0/step-4.8/play-final.json) |
+| playground recorder regression | PASS | 2 tests passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| docs pages in selected browsers | PASS | 126 Chromium/WebKit visits; 0 failed visits / 0 engine errors. Firefox is a declared environment limit. | [docs-final.json](../../.evidence/release-1.0/step-4.8/docs-final.json) |
+| docs checker regression | PASS | 3 tests passed. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| entrances visitors actually see | INCONCLUSIVE | 322 rows; 133 exceed the unchanged 50 ms near-seen gap; 7 flagged rows all unreliable; 0 reliable flags / 0 errors. No timing conclusion for unreliable rows. | [seen-final.json](../../.evidence/release-1.0/step-4.8/seen-final.json) |
+| visitor recorder regression | PASS | 4 tests passed, including pending external asset and navigation-index coverage guards. | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+
+### 4.8 retained failures and focused proof
+
+| Run/check | Verdict | Result | Evidence |
+| --- | --- | --- | --- |
+| First full run in this slice | FAIL, archived | Exit 1: fixed motion window cut off valid entrances; visitor checker required charts on the navigation index. | [verify-first.log](../../.evidence/release-1.0/step-4.8/verify-first.log), [seen-first.json](../../.evidence/release-1.0/step-4.8/seen-first.json), [motion-first/report.json](../../.evidence/release-1.0/step-4.8/motion-first/report.json), [motion-first/index.html](../../.evidence/release-1.0/step-4.8/motion-first/index.html) |
+| Second full run in this slice | FAIL, archived | Exit 1: visitor LineChart/RadarChart desktop navigation waited for load and timed out; other checks passed. Exact external request cause is unproven. | [verify-second.log](../../.evidence/release-1.0/step-4.8/verify-second.log), [seen-second.json](../../.evidence/release-1.0/step-4.8/seen-second.json), [motion-second.json](../../.evidence/release-1.0/step-4.8/motion-second.json) |
+| Third full run in this slice | FAIL, archived | Exit 1: empty-page regression expected missing-chart coverage, but readiness reported a generic timeout. Visitor sweep had no errors; other checks passed or were declared INCONCLUSIVE. | [verify-third.log](../../.evidence/release-1.0/step-4.8/verify-third.log), [seen-third.json](../../.evidence/release-1.0/step-4.8/seen-third.json), [motion-third.json](../../.evidence/release-1.0/step-4.8/motion-third.json) |
+| Focused visitor retry | INCONCLUSIVE | Exit 0; 322 rows, 131 unreliable, 0 reliable flags, 0 errors. | [seen-retry.log](../../.evidence/release-1.0/step-4.8/seen-retry.log), [seen-retry.json](../../.evidence/release-1.0/step-4.8/seen-retry.json) |
+| Reverse regression controls | PASS | Each reversed fix exits 1; restored tests pass in the final verifier. Pending external asset reproduces the load-wait failure; empty-page assertions remain strict. | [reverse-proof.json](../../.evidence/release-1.0/step-4.8/reverse-proof.json), [resource-reverse-proof.json](../../.evidence/release-1.0/step-4.8/resource-reverse-proof.json), [empty-readiness-reverse-proof.json](../../.evidence/release-1.0/step-4.8/empty-readiness-reverse-proof.json) |
+| Focused empty-page correction | PASS | 7 docs/visitor regressions passed; empty coverage reports no rows or recordings and one explicit missing-chart error. | [empty-readiness-tests.log](../../.evidence/release-1.0/step-4.8/empty-readiness-tests.log) |
+| Changed-file lint | PASS | ESLint --max-warnings 0 exits 0, no warnings. | [changed-eslint-final.log](../../.evidence/release-1.0/step-4.8/changed-eslint-final.log) |
+| Separate baseline benchmark | INCONCLUSIVE | pnpm bench --compare=.evidence/baseline/dist exits 0; 21 interleaved rounds, 16 PASS / 2 Heatmap INCONCLUSIVE / 0 FAIL. Intervals cross the unchanged 1.10 boundary. | [bench.log](../../.evidence/release-1.0/step-4.8/bench.log), [bench-final.json](../../.evidence/release-1.0/step-4.8/bench-final.json), [benchmark-spread.json](../../.evidence/release-1.0/step-4.8/benchmark-spread.json) |
+
+### 4.8 final numbers
+
+| Metric | Final result | Source |
+| --- | ---: | --- |
+| Vitest files / tests | 142 / 1407 | [verify-final.log](../../.evidence/release-1.0/step-4.8/verify-final.log) |
+| Coverage statements | 90.85% (7890/8684) | [coverage.log](../../.evidence/release-1.0/step-4.8/coverage.log) |
+| Coverage branches | 79.47% (5665/7128) | [coverage.log](../../.evidence/release-1.0/step-4.8/coverage.log) |
+| Coverage functions | 93.76% (2376/2534) | [coverage.log](../../.evidence/release-1.0/step-4.8/coverage.log) |
+| Coverage lines | 90.45% (7144/7898) | [coverage.log](../../.evidence/release-1.0/step-4.8/coverage.log) |
+| Production files / physical lines | 304 / 29269 | [counts.json](../../.evidence/release-1.0/step-4.8/counts.json) |
+| watch( / real any | 26 / 0 | [counts.json](../../.evidence/release-1.0/step-4.8/counts.json) |
+
+Coverage command: `pnpm --filter vccs exec vitest run --coverage --maxWorkers=2 --coverage.reportsDirectory=../../.evidence/release-1.0/step-4.8/coverage`. Counts command: `node .evidence/release-1.0/step-4.8/counts.mjs HEAD`; excludes tests, stories and fixtures; any uses TypeScript syntax nodes, and watch uses textual calls. Production source is identical to the starting commit ([source-identity.json](../../.evidence/release-1.0/step-4.8/source-identity.json)).
+
+### 4.8 chart gzip
+
+Chart-only esbuild measurements in bytes; each final value equals step 4.3. Source: [bundle-comparison.json](../../.evidence/release-1.0/step-4.8/bundle-comparison.json); size-limit budgets use their separate measurements.
+
+| Chart | Step 4.3 gzip B | Final gzip B |
+| --- | ---: | ---: |
+| AreaChart | 46323 | 46323 |
+| BarChart | 46335 | 46335 |
+| LineChart | 46336 | 46336 |
+| ComposedChart | 46327 | 46327 |
+| ScatterChart | 46339 | 46339 |
+| PieChart | 46386 | 46386 |
+| RadarChart | 46374 | 46374 |
+| RadialBarChart | 46398 | 46398 |
+| FunnelChart | 46344 | 46344 |
+| Treemap | 28646 | 28646 |
+| Sankey | 29198 | 29198 |
+| SunburstChart | 28169 | 28169 |
+| Tracker | 25087 | 25087 |
+| Heatmap | 25843 | 25843 |
+| CohortChart | 26496 | 26496 |
+| CalendarHeatmap | 26130 | 26130 |
+| JourneySankey | 26846 | 26846 |
+| BarList | 8008 | 8008 |
+| Sparkline | 29340 | 29340 |
+
+### 4.8 baseline benchmark medians and spread
+
+Source: [benchmark-spread.json](../../.evidence/release-1.0/step-4.8/benchmark-spread.json), from the final separate benchmark command. A is the saved baseline; B is the current build. Equal-work samples were interleaved without another verifier. Static units are ms; animated units are CPU ms/frame. Range is min–max; spread is max minus min. Display values are rounded; verdicts use unrounded values. No timing comparison with unequal-load earlier runs.
+
+| Case | Mode/metric | A median (range; spread) | B median (range; spread) | B/A (interval) | Verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| LineChart 100 | static / mountMs | 11.300 (10.000–13.200; 3.200) | 10.100 (9.400–11.500; 2.100) | 0.8938 (0.8707–0.9391) | PASS |
+| LineChart 100 | static / updateMs | 3.300 (3.100–3.700; 0.600) | 3.100 (2.800–3.400; 0.600) | 0.9394 (0.8824–0.9697) | PASS |
+| LineChart 1000 | static / mountMs | 40.400 (36.500–45.000; 8.500) | 39.400 (34.600–55.600; 21.000) | 0.9752 (0.9496–1.0103) | PASS |
+| LineChart 1000 | static / updateMs | 16.400 (15.200–20.400; 5.200) | 15.300 (14.600–18.200; 3.600) | 0.9329 (0.9096–0.9571) | PASS |
+| LineChart 10000 | static / mountMs | 365.100 (337.100–538.800; 201.700) | 329.500 (314.100–437.600; 123.500) | 0.9025 (0.8425–0.9323) | PASS |
+| LineChart 10000 | static / updateMs | 164.600 (148.600–270.300; 121.700) | 155.100 (141.700–309.300; 167.600) | 0.9423 (0.8996–1.0210) | PASS |
+| BarChart 100 | static / mountMs | 9.300 (8.500–32.900; 24.400) | 8.700 (7.900–18.200; 10.300) | 0.9355 (0.8544–0.9681) | PASS |
+| BarChart 100 | static / updateMs | 2.900 (2.600–4.000; 1.400) | 2.600 (2.400–2.800; 0.400) | 0.8966 (0.8276–0.9310) | PASS |
+| BarChart 1000 | static / mountMs | 27.700 (25.300–33.600; 8.300) | 25.700 (24.000–37.200; 13.200) | 0.9278 (0.9018–0.9554) | PASS |
+| BarChart 1000 | static / updateMs | 11.700 (10.700–15.000; 4.300) | 11.100 (10.100–13.700; 3.600) | 0.9487 (0.9174–0.9912) | PASS |
+| BarChart 10000 | static / mountMs | 231.800 (210.900–324.400; 113.500) | 225.500 (207.200–318.600; 111.400) | 0.9728 (0.9260–1.0031) | PASS |
+| BarChart 10000 | static / updateMs | 107.200 (100.400–163.400; 63.000) | 103.400 (91.700–129.700; 38.000) | 0.9646 (0.8966–0.9943) | PASS |
+| Heatmap 168 | static / mountMs | 5.100 (4.700–6.700; 2.000) | 5.400 (4.900–7.400; 2.500) | 1.0588 (1.0000–1.1373) | INCONCLUSIVE |
+| Heatmap 168 | static / updateMs | 2.900 (2.700–3.300; 0.600) | 3.200 (2.800–3.500; 0.700) | 1.1034 (1.0333–1.1379) | INCONCLUSIVE |
+| CalendarHeatmap 365 | static / mountMs | 19.600 (18.800–22.500; 3.700) | 10.400 (9.200–12.400; 3.200) | 0.5306 (0.5152–0.5544) | PASS |
+| CalendarHeatmap 365 | static / updateMs | 16.900 (16.200–19.200; 3.000) | 6.900 (6.600–8.200; 1.600) | 0.4083 (0.3941–0.4152) | PASS |
+| LineChart 1000 | animated / cpuMsPerFrame | 8.707 (7.958–11.258; 3.299) | 7.813 (7.288–9.876; 2.588) | 0.8973 (0.8504–0.9300) | PASS |
+| BarChart 1000 | animated / cpuMsPerFrame | 5.992 (5.501–6.548; 1.047) | 4.983 (4.541–6.170; 1.629) | 0.8317 (0.8014–0.8763) | PASS |
+
+### 4.8 observations and limits
+
+Coverage is slightly below the 4.1 result (lines 90.49%, branches 79.61%; [4.1-coverage.log](../../.evidence/release-1.0/phase-4/4.1-coverage.log)). The later production denominator changed: final lines 7144/7898 and branches 5665/7128 versus 4.1 lines 7102/7848 and branches 5649/7095. This slice changes no production source or unit tests; no coverage threshold was changed.
+
+The Heatmap update median ratio exceeds 1.10, while its interval crosses that boundary; both Heatmap cases remain INCONCLUSIVE. Sampling uncertainty is the declared reason, and no performance conclusion is drawn. Visitor flagged rows are all timing-unreliable; no defect or success is inferred from those flags. The lab footer counts accepted transitions, including the existing Journey flags, rather than claiming every raw row has no flags.
+
+The original motion capture was shorter than canonical entrance/draw/cascade tokens. The replacement uses target geometry and bounded tokens, never observed completion or item-count growth; Sparkline uses static rendered SVG length as its geometry input. The fixed margin is 100 ms; interruption keeps its existing 150 ms delay. The original navigation timeout request is not identified: a held external asset regression proves the checker failure mode, and the focused/full results record the recovery.
+
+Firefox remains the declared browser environment limit; it was not run. Visual, keyboard and representative screen-reader review remain with Opus. The completed process session expired before its raw exit status was retrieved. The saved complete footer contains only PASS/INCONCLUSIVE, which scripts/verify.mjs maps to exit 0; verify-final-exit.json explicitly records this derivation rather than an observed process status. Existing third-party packed declaration diagnostics are retained in the table; Vite/Nuxt strict consumer checks pass. No publication, push, branch creation or GitHub workflow execution occurred.
