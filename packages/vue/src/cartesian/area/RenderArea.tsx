@@ -41,6 +41,7 @@ const Dots = defineComponent({
         return null
       }
       const clipDot = isClipDot(props.dot)
+      const dotObjProps = typeof props.dot === 'object' && props.dot !== null ? props.dot : {}
       const dotsProps = {
         'fill': props.fill,
         'fill-opacity': props.fillOpacity,
@@ -57,7 +58,7 @@ const Dots = defineComponent({
               const index = _props.indices[position] ?? position
               const exiting = _props.exiting[position]
               const handlers = exiting ? {} : listeners(point as AreaPointItem, index)
-              const dotProps = { ...dotsProps, ...attrs, r: 3, cx: point.x, cy: point.y, class: 'v-charts-area-dot', clipDot }
+              const dotProps = { ...dotsProps, ...attrs, r: 3, ...dotObjProps, cx: point.x, cy: point.y, class: 'v-charts-area-dot', clipDot }
               if (dotSlot) {
                 return <g key={_props.keys[position]} pointer-events={exiting ? 'none' : undefined} {...handlers}>{dotSlot(dotProps)}</g>
               }
