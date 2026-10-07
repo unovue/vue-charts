@@ -2,7 +2,6 @@ import { useIntersectionObserver } from '@vueuse/core'
 import { useChartId } from '@/hooks/useChartId'
 import type { CategoricalChartProps } from '@/types'
 import type { InjectionKey, Ref } from 'vue'
-import { isServer } from '@/utils/env'
 import { computed, getCurrentInstance, hasInjectionContext, inject, onMounted, onScopeDispose, provide, ref, ssrContextKey } from 'vue'
 
 interface ChartRuntime {
@@ -101,6 +100,16 @@ export function isServerRender(): boolean {
 }
 
 /**
+ * True while Vue hydrates this component: Vue assigns the existing DOM node to the vnode before
+ * setup runs. That `el` field is Vue internal state; this is its only reader. The standard pattern
+ * (open the gate one frame after mount) changed entrance geometry, and the auto-width hydration
+ * test (53eed3f) fails without this check (internals/release-1.0/LATER.md). Call during setup.
+ */
+export function isHydrating(): boolean {
+  return getCurrentInstance()?.vnode.el != null
+}
+
+/**
  * Called by every chart root. The server sends the entrance start; hydration preserves that
  * geometry. The entrance plays after hydration when the chart is measured and on screen.
  *
@@ -110,8 +119,7 @@ export function isServerRender(): boolean {
  */
 export function provideRenderPhase() {
   const server = isServerRender()
-  // During hydration Vue assigns the existing DOM node to the vnode before setup runs.
-  const skip = ref(server || getCurrentInstance()?.vnode.el != null)
+  const skip = ref(server || isHydrating())
   if (skip.value && !server) {
     onMounted(() => requestAnimationFrame(() => {
       skip.value = false
@@ -128,7 +136,7 @@ export function shouldSkipEntrance(): boolean {
 /** Reactive permission for DOM text measurement. Call during setup. */
 export function useCanMeasureText() {
   const phase = inject(runtimeKey, null)?.renderPhase
-  return computed(() => phase ? !phase.value : !isServer())
+  return computed(() => phase ? !phase.value : !isServerRender())
 }
 
 const clipPathKey: InjectionKey<string> = Symbol('v-charts-clip-path')

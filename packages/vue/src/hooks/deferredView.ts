@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
-import { defineAsyncComponent, getCurrentInstance, inject, ssrContextKey } from 'vue'
+import { defineAsyncComponent } from 'vue'
+import { isHydrating, isServerRender } from '@/model/runtime'
 
 /**
  * Returns the component that renders a chart item's geometry. Call during setup.
@@ -12,10 +13,7 @@ import { defineAsyncComponent, getCurrentInstance, inject, ssrContextKey } from 
  * because an async component renders synchronously once it has resolved.
  */
 export function useDeferredView<T extends Component>(view: T): T {
-  const isServer = inject(ssrContextKey, null) != null
-  // During hydration Vue assigns the existing DOM node to the vnode before setup runs.
-  const isHydrating = getCurrentInstance()?.vnode.el != null
-  if (!isServer && !isHydrating)
+  if (!isServerRender() && !isHydrating())
     return view
   return defineAsyncComponent({ loader: () => Promise.resolve(view) }) as T
 }
