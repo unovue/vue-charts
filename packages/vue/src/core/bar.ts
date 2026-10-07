@@ -56,7 +56,7 @@ export function computeBarRectangles({
   offset,
 }: {
   layout: 'horizontal' | 'vertical'
-  barSettings: BarSettings
+  barSettings: { dataKey: BarSettings['dataKey'] | undefined, minPointSize?: MinPointSize }
   pos: BarPositionPosition
   bandSize: number
   xAxis: BaseAxisWithScale
@@ -95,7 +95,7 @@ export function computeBarRectangles({
         : [baseValue as number, rawValue as number]
     }
 
-    const minPointSize = minPointSizeCallback(minPointSizeProp, defaultMinPointSize)(value[1], index)
+    const minPointSize = minPointSizeCallback(minPointSizeProp ?? defaultMinPointSize, defaultMinPointSize)(value[1], index)
 
     if (layout === 'horizontal') {
       const [baseValueScale, currentValueScale] = [yAxis.scale(value[0]), yAxis.scale(value[1])]

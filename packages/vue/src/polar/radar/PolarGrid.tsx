@@ -3,14 +3,10 @@ import { computed, defineComponent, h } from 'vue'
 import type { ExtractPropTypes, PropType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { polarToCartesian } from '@/utils/polar'
+import { polygonPath } from '@/core/polygon'
 
 function getPolygonPath(radius: number, cx: number, cy: number, polarAngles: ReadonlyArray<number>): string {
-  let path = ''
-  polarAngles.forEach((angle, i) => {
-    const point = polarToCartesian(cx, cy, radius, angle)
-    path += i === 0 ? `M ${point.x},${point.y}` : `L ${point.x},${point.y}`
-  })
-  return `${path}Z`
+  return polygonPath(polarAngles.map(angle => polarToCartesian(cx, cy, radius, angle)))
 }
 
 const PolarGridViewProps = {

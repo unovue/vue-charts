@@ -1,8 +1,8 @@
-import type { ComputedRef, PropType, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
+import type { ComputedRef, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { pieEvents } from '@/events/itemEvents'
 import { delegateItemEvents } from '@/events/delegateItemEvents'
-import { computed, defineComponent, h } from 'vue'
+import { computed, defineComponent, h, shallowRef } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { useChart } from '@/model/chart'
@@ -11,7 +11,10 @@ import { Sector } from '@/shape/Sector'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
-import { extractCellProps, filterOutCells } from '@/utils/cell'
+import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
+import { entryColor } from '@/core/color'
+
+type CellProps = ReturnType<typeof extractCellProps>[number]
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/core/pie'
 import { computePieSectors, pieLegend } from '@/core/pie'
 import { polarToCartesian } from '@/utils/polar'
@@ -34,9 +37,10 @@ const PieView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<PieProps>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
+    cells: { type: Object as PropType<ShallowRef<CellProps[]>>, required: true },
   },
   slots: Object as SlotsType<Omit<PieSlots, 'default'> & { default?: () => VNode[] }>,
   setup(view, { slots }) {
@@ -45,6 +49,7 @@ const PieView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const pieSettings = view.pieSettings
+    const cells = view.cells
     const tooltip = useChart().tooltip
     const chart = useChart()
     const displayedData = computed(() => data.value?.length ? data.value : chart.data.value)
@@ -85,6 +90,7 @@ const PieView = defineComponent({
       model: { index: () => props.activeIndex, request: (index: number | null) => emit('update:activeIndex', index) },
       dataDefinedOnItem: displayedData.value ?? [],
       positions: sectors.value?.map(s => s.tooltipPosition),
+      colors: sectors.value?.map((sector, index) => entryColor({ cell: cells.value[index], row: sector.payload, seriesFill: props.fill, index })),
       settings: {
         dataKey: props.dataKey,
         nameKey: props.nameKey,
@@ -186,15 +192,15 @@ const PieView = defineComponent({
       // Cell fills override the entry/pie fill. Slots are read here, during render, so their
       // dependencies are tracked and server rendering sees them too.
       const children = slots.default?.() ?? []
-      const cells = extractCellProps(children)
+      assignCells(cells, extractCellProps(children))
       // Events read this exact render's sectors, including Cell fill overrides.
-      sectorList = cells.length
-        ? items.value.map(item => cells[item.value.index]?.fill != null ? { ...item, value: { ...item.value, fill: cells[item.value.index].fill! } } : item)
+      sectorList = cells.value.length
+        ? items.value.map(item => ({ ...item, value: { ...item.value, fill: entryColor({ cell: cells.value[item.value.index], row: item.value.payload, seriesFill: props.fill, index: item.value.index }) } }))
         : items.value
       if (!sectorList || sectorList.length === 0) {
         return null
       }
-      const stroke = (attrs.stroke as string) ?? props.stroke
+      const stroke = props.stroke
       return (
         <Layer data-slot="series" class={['v-charts-pie', props.class]} {...listeners}>
           {sectorList.map(({ key, value: sector }, position) => {
@@ -283,14 +289,16 @@ const _Pie = defineComponent({
     })))
 
     const chart = useChart()
+    const cells = shallowRef<CellProps[]>([])
     const legendPayload = computed(() => pieLegend(
       data.value?.length ? data.value : chart.data.value,
       pieSettings.value,
+      cells.value,
     ))
     useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map(entry => ({ ...entry, dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(PieView)
-    return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings }, slots)
+    return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings, cells }, slots)
   },
 })
 

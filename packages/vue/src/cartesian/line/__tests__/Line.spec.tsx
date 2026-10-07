@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { CartesianGrid, LabelList, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
+import { Area, AreaChart, CartesianGrid, LabelList, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -411,5 +411,27 @@ it('updates dot clipping and size after the dot options change', async () => {
   await nextTick()
   expect(container.querySelector('.v-charts-line-dots')?.getAttribute('clip-path'))
     .toBe('url(#clipPath-dots-reactive-dot)')
+  // The referenced clip exists and grows by the dot size (2 * r + strokeWidth) around the plot.
+  const plot = container.querySelector('#clipPath-reactive-dot rect')!
+  const dots = container.querySelector('#clipPath-dots-reactive-dot rect')!
+  expect(Number(dots.getAttribute('height')) - Number(plot.getAttribute('height'))).toBe(20)
   expect(container.querySelector('.v-charts-line-dot')?.getAttribute('r')).toBe('8')
+})
+
+// The clip flags are refs; testing the ref itself clipped both axes whenever one overflowed.
+it.each([
+  { name: 'Line', Chart: LineChart, Item: Line },
+  { name: 'Area', Chart: AreaChart, Item: Area },
+])('$name clips only the axis that allows data overflow', async ({ Chart, Item }) => {
+  const { container } = render(() => (
+    <Chart width={400} height={300} margin={{ top: 10, right: 10, bottom: 10, left: 10 }} data={[{ value: 10 }, { value: 30 }]}>
+      <YAxis domain={[0, 20]} allowDataOverflow width={40} />
+      <Item id="overflow" dataKey="value" isAnimationActive={false} />
+    </Chart>
+  ))
+  await nextTick()
+  const rect = container.querySelector('#clipPath-overflow rect')!
+  // Plot: x 50..390 (width 340); only Y is clipped, so X reaches half a plot past each side.
+  expect([rect.getAttribute('x'), rect.getAttribute('width')]).toEqual(['-120', '680'])
+  expect(container.querySelector('[clip-path="url(#clipPath-overflow)"]')).not.toBeNull()
 })

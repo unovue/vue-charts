@@ -1,4 +1,4 @@
-import { seriesColor } from '@/utils/theme'
+import { entryColor } from '@/core/color'
 import type { ChartDataKey } from '@/types/base'
 import type { ChartOffset, Coordinate } from '@/types/common'
 import type { TooltipType } from '@/types/tooltip'
@@ -132,10 +132,7 @@ export function computePieSectors({
     const percent = val / sum
 
     const entryWithInfo: Record<string, unknown> = { ...(entry as object) }
-    const sectorColor: string
-      = (entryWithInfo != null && 'fill' in entryWithInfo && typeof entryWithInfo.fill === 'string')
-        ? entryWithInfo.fill
-        : pieSettings.fill ?? seriesColor(i)
+    const sectorColor = entryColor({ row: entry, seriesFill: pieSettings.fill, index: i })
 
     let tempStartAngle: number
     if (i) {
@@ -180,16 +177,13 @@ export function computePieSectors({
 export function pieLegend(
   displayedData: ChartData | undefined,
   settings: ResolvedPieSettings,
+  cells: readonly unknown[] = [],
 ): readonly LegendPayload[] | undefined {
   return displayedData?.map((entry, index) => {
     const name = getValueByDataKey(entry, settings.nameKey, settings.name)
-    const color = typeof entry === 'object' && entry != null
-      && 'fill' in entry && typeof entry.fill === 'string'
-      ? entry.fill
-      : settings.fill ?? seriesColor(index)
     return {
       value: (name ?? String(settings.dataKey ?? index)) as string,
-      color,
+      color: entryColor({ cell: cells[index], row: entry, seriesFill: settings.fill, index }),
       payload: entry as Record<string, unknown>,
       type: settings.legendType,
     }

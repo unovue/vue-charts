@@ -1,9 +1,10 @@
-import { seriesColor } from '@/utils/theme'
+import { entryColor, mainColor } from '@/core/color'
+import { getTooltipNameProp } from '@/core/tooltip'
 import { getValueByDataKey } from '@/utils/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChart } from '@/model/chart'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
@@ -33,6 +34,7 @@ export type RadialBarShapeSlotProps = RadialBarDataItem & {
   fill: string
   stroke: string
   fillOpacity?: number
+  isActive: boolean
 }
 
 export interface RadialBarSlots {
@@ -41,17 +43,13 @@ export interface RadialBarSlots {
   default?: () => VNodeChild
 }
 
-function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
-  return fill
-}
-
 const RadialBarView = defineComponent({
   name: 'RadialBarView',
   slots: Object as SlotsType<RadialBarSlots>,
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof RadialBarVueProps>>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
   },
   setup(view, { slots }) {
     const emit = radialBarEvents.use()
@@ -90,7 +88,7 @@ const RadialBarView = defineComponent({
     const sizeList = computed(() => barSizeList(visibleBars.value, chart.options.value.barSize))
     const positions = computed(() => barPositions(
       sizeList.value,
-      chart.options.value.maxBarSize!,
+      chart.options.value.maxBarSize,
       chart.options.value.barGap,
       chart.options.value.barCategoryGap,
       barBandSize.value,
@@ -138,7 +136,7 @@ const RadialBarView = defineComponent({
       })
     })
 
-    useChart().tooltip.entries.register(computed(() => ({
+    const tooltipConfiguration = computed(() => ({
       dataDefinedOnItem: undefined,
       positions: sectors.value?.map((sector) => {
         if (sector.innerRadius == null || sector.outerRadius == null || sector.startAngle == null)
@@ -150,18 +148,27 @@ const RadialBarView = defineComponent({
           (sector.startAngle + sector.endAngle) / 2,
         )
       }),
+      colors: sectors.value?.map((sector, index) => entryColor({ row: sector.payload, seriesFill: props.fill, index })),
       settings: {
         dataKey: props.dataKey,
         nameKey: undefined,
-        name: props.name ?? String(props.dataKey ?? ''),
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
-        color: getLegendItemColor(props.stroke, props.fill),
+        color: mainColor('radialBar', props),
         fill: props.fill,
         stroke: props.stroke,
         unit: '',
       },
-    })))
+    }))
+    tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
+    const activateSector = (channel: 'hover' | 'click', index: number) => tooltip.activate(channel, {
+      type: 'item',
+      configuration: tooltipConfiguration.value,
+      index,
+      dataKey: props.dataKey,
+    })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
@@ -187,7 +194,6 @@ const RadialBarView = defineComponent({
     provideCartesianLabelListData(computed(() => {
       if (items.value.length === 0)
         return undefined
-      const defaultFill = props.fill
       return items.value.map((item) => {
         const sector = item.value
         const opacity = labelOpacity(item)
@@ -197,7 +203,7 @@ const RadialBarView = defineComponent({
           value: sector.value ?? '',
           payload: sector.payload,
           parentViewBox: undefined,
-          fill: sector.fill ?? defaultFill ?? seriesColor(sector.index),
+          fill: entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index }),
           cx: sector.cx,
           cy: sector.cy,
           innerRadius: sector.innerRadius,
@@ -210,13 +216,12 @@ const RadialBarView = defineComponent({
     }))
 
     const renderSectors = (sectorData: RadialBarDataItem[]) => {
-      const defaultFill = props.fill
       const defaultStroke = props.stroke
       const showBackground = !!props.background
       const backgroundProps = typeof props.background === 'object' ? props.background : {}
 
       return (
-        <Layer data-slot="series" class="v-charts-radial-bar">
+        <Layer {...attrs} data-slot="series" class={['v-charts-radial-bar', props.class]}>
           {showBackground && sectors.value?.map((sector, i) => {
             if (!sector.background)
               return null
@@ -244,9 +249,9 @@ const RadialBarView = defineComponent({
               || sector.startAngle == null || sector.endAngle == null) {
               return null
             }
-            const sectorFill = sector.fill ?? defaultFill ?? seriesColor(sector.index)
+            const sectorFill = entryColor({ row: sector.payload, seriesFill: props.fill, index: sector.index })
             const onMouseenter = (event: MouseEvent) => {
-              tooltip.activate('hover', { type: 'item', index: sector.index, dataKey: props.dataKey })
+              activateSector('hover', sector.index)
               emit('mouseenter', sector, sector.index, event)
             }
             const onMouseleave = (event: MouseEvent) => {
@@ -261,7 +266,7 @@ const RadialBarView = defineComponent({
                   onMouseenter={onMouseenter}
                   onMouseleave={onMouseleave}
                   onClick={(event: MouseEvent) => {
-                    tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey })
+                    activateSector('click', sector.index)
                     emit('click', sector, sector.index, event)
                   }}
                 >
@@ -274,6 +279,7 @@ const RadialBarView = defineComponent({
                     fill: sectorFill,
                     stroke: defaultStroke ?? sectorFill,
                     fillOpacity: props.fillOpacity,
+                    isActive: activeIndex.value === sector.index,
                   })}
                 </g>
               )
@@ -298,7 +304,7 @@ const RadialBarView = defineComponent({
                 stroke-dasharray={props.strokeDasharray}
                 onMouseenter={onMouseenter}
                 onMouseleave={onMouseleave}
-                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey }); emit('click', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { activateSector('click', sector.index); emit('click', sector, sector.index, event) }}
               />
             )
           })}
@@ -356,7 +362,7 @@ const _RadialBar = defineComponent({
     const chart = useChart()
     const legendPayload = computed(() => radialBarLegend(chart.data.value, props.legendType))
     // Rows without their own fill are drawn in the series colour; their legend icons match.
-    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entry.color ?? props.fill ?? seriesColor(index), dataKey: props.dataKey, inactive: props.hide }))))
+    useChart().legend.entries.register(computed(() => (legendPayload.value ?? []).map((entry, index) => ({ ...entry, color: entryColor({ row: entry.payload, seriesFill: props.fill, index }), dataKey: props.dataKey, inactive: props.hide }))))
 
     const View = useDeferredView(RadialBarView)
     return () => h(View, { item: props, svgAttrs: attrs }, slots)

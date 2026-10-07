@@ -2,7 +2,6 @@ import type { BarSlots, ResolvedBarProps } from '../type'
 import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
-import { getNormalizedStackId } from '@/core/coordinates'
 import { sameAxis } from '@/core/axis/key'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
@@ -10,9 +9,9 @@ import { useChart } from '@/model/chart'
 import { computeBarRectangles } from '@/core/bar'
 import { barPositions, barSizeList, stackedData as getStackedData } from '@/core/barSizing'
 import type { BarRectangleItem } from '@/types/bar'
+import type { CartesianGraphicalItemSettings } from '@/types/graphical'
 
 export interface BarContext {
-  // 基础计算属性
   clipPathId: string
   layout: Ref<'horizontal' | 'vertical' | 'centric' | 'radial'>
   props: ResolvedBarProps
@@ -55,20 +54,13 @@ export function useBarContext(fallback?: BarContext | null) {
 export function useBar(
   props: ResolvedBarProps,
   attrs: SVGAttributes,
+  settings: Readonly<Ref<CartesianGraphicalItemSettings>>,
   shapeSlot?: BarSlots['shape'],
   activeBarSlot?: BarSlots['activeBar'],
 ) {
   const chart = useChart()
   const layout = useChartLayout()
   const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
-  const barSettings = computed(() => ({
-    barSize: props.barSize,
-    data: props.data,
-    dataKey: props.dataKey,
-    maxBarSize: props.maxBarSize,
-    minPointSize: props.minPointSize,
-    stackId: getNormalizedStackId(props.stackId),
-  }))
   const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))
   const yAxis = computed(() => chart.axis('yAxis', props.yAxisId))
   const categoricalAxis = computed(() => layout.value === 'horizontal' ? xAxis.value : yAxis.value)
@@ -88,7 +80,7 @@ export function useBar(
     ?? props.maxBarSize ?? chart.options.value.maxBarSize ?? 0)
   const positions = computed(() => barPositions(
     sizeList.value,
-    chart.options.value.maxBarSize!,
+    chart.options.value.maxBarSize,
     chart.options.value.barGap,
     chart.options.value.barCategoryGap,
     barBandSize.value,
@@ -96,9 +88,9 @@ export function useBar(
     props.maxBarSize,
   ))
   const position = computed(() => positions.value?.find(item =>
-    item.stackId === barSettings.value.stackId && item.dataKeys.includes(props.dataKey),
+    item.stackId === settings.value.stackId && item.dataKeys.includes(props.dataKey),
   )?.position)
-  const stackedData = computed(() => getStackedData(numericAxis.value.stackGroups.value, barSettings.value))
+  const stackedData = computed(() => getStackedData(numericAxis.value.stackGroups.value, settings.value))
   const rects = computed(() => {
     const x = xAxis.value.withScale.value
     const y = yAxis.value.withScale.value
@@ -113,7 +105,7 @@ export function useBar(
     }
     return computeBarRectangles({
       layout: type,
-      barSettings: barSettings.value,
+      barSettings: settings.value,
       pos,
       bandSize: bandSize.value!,
       xAxis: x,

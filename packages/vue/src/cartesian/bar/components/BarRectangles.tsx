@@ -147,6 +147,8 @@ export const BarRectangles = defineComponent({
 
     return () => {
       const baseProps = filterProps(props, false)
+      // `class` belongs to the series layer (Bar.tsx), not to every rectangle.
+      delete baseProps?.class
       // Without custom shapes every bar is a plain path: the series attributes are sanitised once
       // per frame instead of once per bar, and no component updates per bar per frame.
       const baseAttrs = shapeSlot || activeBarSlot ? undefined : svgAttrs(baseProps)

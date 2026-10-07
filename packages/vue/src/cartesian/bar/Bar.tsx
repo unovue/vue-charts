@@ -1,4 +1,5 @@
-import type { PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import type { ComputedRef, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import type { CartesianGraphicalItemSettings } from '@/types/graphical'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { barEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
@@ -12,7 +13,6 @@ import { useSetupGraphicalItem, useSetupTooltipEntry } from '@/hooks/useSetupGra
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { BarBackground } from '@/cartesian/bar/components/BarBackground'
 import { BarRectangles } from '@/cartesian/bar/components/BarRectangles'
-import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import { LabelList } from '@/components/label/LabelList'
@@ -21,6 +21,7 @@ import { getValueByDataKey } from '@/utils/chart'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
+import { entryColor } from '@/core/color'
 
 const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   dataPoint,
@@ -51,6 +52,7 @@ const BarView = defineComponent({
     item: { type: Object as PropType<ResolvedBarProps>, required: true },
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    settings: { type: Object as PropType<ComputedRef<CartesianGraphicalItemSettings>>, required: true },
   },
   slots: Object as SlotsType<BarSlots>,
   setup(view, { slots }) {
@@ -58,13 +60,12 @@ const BarView = defineComponent({
     const attrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
-    const { shouldRender, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, attrs, slots.shape, slots.activeBar)
+    const { shouldRender, needClip, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, attrs, view.settings, slots.shape, slots.activeBar)
     const emit = barEvents.use()
     useSetupTooltipEntry(props, 'bar', data, () => barData.value?.map(bar => bar.tooltipPosition), {
       index: () => props.activeIndex,
       request: index => emit('update:activeIndex', index),
-    }, attrs)
-    const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
+    })
     const layout = useChartLayout()
 
     const errorBarOffset = computed(() => {
@@ -85,7 +86,7 @@ const BarView = defineComponent({
     // Labels ride along with the bars as drawn on this frame and show the new value at once;
     // labels of entering and leaving bars fade with them.
     const labelListData = computed(() => drawn.value.map(({ bar: entry, index, opacity, key }) => {
-      const fill = cellPropsRef.value?.[index]?.fill ?? getValueByDataKey(entry.payload, 'fill') ?? props.fill
+      const fill = entryColor({ cell: cellPropsRef.value[index], row: entry.payload, seriesFill: props.fill, index })
       return {
         x: entry.x,
         y: entry.y,
@@ -95,7 +96,7 @@ const BarView = defineComponent({
         payload: entry.payload,
         parentViewBox: entry.parentViewBox,
         key,
-        ...(fill != null ? { fill } : {}),
+        fill,
         ...(opacity != null && opacity < 1 ? { opacity } : {}),
       }
     }))
@@ -147,7 +148,7 @@ const BarView = defineComponent({
       const cells = extractCellProps(children)
       assignCells(cellPropsRef, cells)
       return teleport((
-        <Layer data-slot="series" class={['v-charts-bar', attrs.class]}>
+        <Layer data-slot="series" class={['v-charts-bar', props.class]}>
           {h(Geometry)}
           {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
         </Layer>
@@ -168,8 +169,8 @@ const _Bar = defineComponent({
     barEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props, 'bar', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
-    return () => h(BarView, { item: props, svgAttrs: attrs, data }, slots)
+    const { data, settings } = useSetupGraphicalItem(props, 'bar', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    return () => h(BarView, { item: props, svgAttrs: attrs, data, settings }, slots)
   },
 })
 

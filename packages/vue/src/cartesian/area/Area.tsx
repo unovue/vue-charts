@@ -11,10 +11,12 @@ import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
 import { Layer } from '@/container/Layer'
 import { StaticArea } from '@/cartesian/area/RenderArea'
-import { ActivePoints } from '@/cartesian/area/ActivePoints'
-import type { ActivePointsSlots } from './ActivePoints'
+import { ActivePoints } from '@/cartesian/ActivePoints'
+import type { ActivePointsSlots } from '@/cartesian/ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { useGraphicalLayerRef } from '@/model/runtime'
+import { mainColor } from '@/core/color'
+import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 
 export type AreaSlots = ActivePointsSlots & {
   label?: (props: LabelListSlotProps) => VNodeChild
@@ -35,7 +37,7 @@ const AreaView = defineComponent({
     const props = view.item
     const attrs = view.svgAttrs
     const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
-    const { shouldRender, areaData } = useArea(trackedProps, attrs, slots.dot)
+    const { shouldRender, areaData, needClip, clipPathId } = useArea(trackedProps, attrs, slots.dot)
     const activeListeners = useSeriesPointEvents(areaEvents.use(), () => props.dataKey, () => areaData.value?.points ?? [])
     const teleport = useLayerTeleport()
     const graphicalLayerRef = useGraphicalLayerRef(null)
@@ -47,14 +49,20 @@ const AreaView = defineComponent({
 
       const areaContent = (
         <Fragment>
-          <Layer data-slot="series" class={['v-charts-area', attrs.class]}>
+          <Layer data-slot="series" class={['v-charts-area', props.class]}>
+            {needClip.value && (
+              <defs>
+                <GraphicalItemClipPath clipPathId={clipPathId.value} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />
+                <DotsClipPath clipPathId={clipPathId.value} dot={props.dot} />
+              </defs>
+            )}
             <StaticArea v-slots={{ label: slots.label }} />
           </Layer>
           <Layer {...activeListeners}>
             {!props.hide && (
               <ActivePoints
                 points={areaData.value?.points ?? []}
-                mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
+                mainColor={mainColor('area', props)}
                 itemDataKey={props.dataKey}
                 activeDot={props.activeDot}
                 isAnimationActive={props.isAnimationActive}
@@ -80,7 +88,7 @@ const _Area = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps, ['fill', 'stroke'])
     areaEvents.provide(emit)
-    const data = useSetupGraphicalItem(props, 'area')
+    const { data } = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)
     return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
   },
@@ -93,8 +101,4 @@ const _Area = defineComponent({
  */
 export const Area = _Area as typeof _Area & {
   new (): { $slots: AreaSlots }
-}
-
-function getLegendItemColor(stroke: string | undefined, fill: string): string {
-  return stroke && stroke !== 'none' ? stroke : fill
 }
