@@ -214,7 +214,6 @@ export type TooltipSyncInteraction = TooltipInteraction & {
   label: string | undefined
 }
 
-/** Selection requests carry the entry identity and interaction coordinate. */
 /**
  * A request to select a tooltip target. An axis request selects a category. Any other request
  * names its series by the registered configuration, because a dataKey is not unique (two

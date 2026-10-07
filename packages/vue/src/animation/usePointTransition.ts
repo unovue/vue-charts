@@ -1,14 +1,14 @@
 import { computed, shallowRef, watch } from 'vue'
 import type { Point } from '@/types/shape'
+import type { ChartTransition, PhaseTiming } from './motion'
+import { useAnimationCallbacks } from './useAnimationCallbacks'
+import { useKeyedTransition } from './useKeyedTransition'
 
 /** A point whose `y` may be `null`: a gap that is drawn as a break, never interpolated. */
 interface MaybeGapPoint {
   readonly x: number
   readonly y: number | null
 }
-import type { ChartTransition, PhaseTiming } from './motion'
-import { useAnimationCallbacks } from './useAnimationCallbacks'
-import { useKeyedTransition } from './useKeyedTransition'
 
 interface PointState<T> {
   point: T
