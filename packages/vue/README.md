@@ -165,8 +165,8 @@ lists every change with a before and after example.
 ## Contribute
 
 The repository holds the library (`packages/vue`), the docs site (`docs`) and a Nuxt playground
-(`playground/nuxt`). `pnpm install`, then `pnpm test` for the tests and `pnpm verify` for every
-release check (`--quick` skips the browser checks). `VERIFY.md` lists what each check proves.
+(`playground/nuxt`). `pnpm install`, then `pnpm test` for the tests and `pnpm verify` for the
+default checks (`--release` adds the slow browser gates, `--quick` skips the browser checks). `VERIFY.md` lists what each check proves.
 
 ## License
 
