@@ -254,7 +254,10 @@ try {
     }
     if (!only || only === 'play') {
       const base = await servePlay()
-      const routes = (await readdir(join(root, 'playground/nuxt/app/pages'))).filter(f => f.endsWith('.vue')).sort().map(f => f === 'index.vue' ? '/' : `/${f.slice(0, -4)}`)
+      // The index is navigation only; every chart example route must still produce rows.
+      const routes = (await readdir(join(root, 'playground/nuxt/app/pages')))
+        .filter(f => f.endsWith('.vue') && f !== 'index.vue')
+        .sort().map(f => `/${f.slice(0, -4)}`)
       for (const width of widths) {
         for (const route of routes.filter(r => !routeFilter || routeFilter.includes(r)))
           await run(base, route, width)

@@ -1,12 +1,37 @@
 import assert from 'node:assert/strict'
 import { constants } from 'node:buffer'
-import { mkdir, realpath, stat } from 'node:fs/promises'
+import { spawnSync } from 'node:child_process'
+import { mkdir, readFile, realpath, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 // eslint-disable-next-line test/no-import-node-test
 import { test } from 'node:test'
 import { collectSeen } from './lib/seen-capture.mjs'
 import { installSeenRecorder } from './lib/seen-recorder.mjs'
+
+// A navigation index has no entrance; empty chart coverage must still fail.
+test('visitor CLI checks chart routes without requiring charts in the navigation index', async () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const out = `${root}.evidence/release-1.0/seen-route-control`
+  const args = [
+    'scripts/check-seen.mjs',
+    '--only=play',
+    '--width=390',
+    '--skip-build',
+    `--out=${out}`,
+  ]
+  const result = spawnSync(process.execPath, [...args, '--route=/,/journey-charts'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+  const summary = JSON.parse(await readFile(`${out}/summary.json`, 'utf8'))
+  assert.deepEqual(summary.errors, [])
+  assert.ok(summary.rows.length > 0)
+  assert.ok(summary.rows.every(row => row.page === '/journey-charts'))
+  const empty = spawnSync(process.execPath, [...args, '--route=/'], { cwd: root, encoding: 'utf8' })
+  assert.equal(empty.status, 1, empty.stdout + empty.stderr)
+})
 
 // A long recording must finish even when its total JSON exceeds Node's string limit.
 test('visitor capture streams a recording larger than one transport string', async () => {
