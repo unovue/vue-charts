@@ -108,6 +108,14 @@ describe('label', () => {
       expect(found).toBe(true)
     })
 
+    // A partial viewBox used to reach the position math with undefined sizes and render NaN.
+    it.each(['top', 'bottom', 'insideRight', 'center'] as const)('renders finite coordinates at %s for a viewBox without a size', (position) => {
+      const { container } = renderLabelInChart({ viewBox: { x: 10, y: 20 }, value: 'partial', position })
+      const label = Array.from(container.querySelectorAll('text.v-charts-label')).find(l => l.textContent?.includes('partial'))!
+      expect(Number.isFinite(Number(label.getAttribute('x')))).toBe(true)
+      expect(Number.isFinite(Number(label.getAttribute('y')))).toBe(true)
+    })
+
     it('renders label at inside position', () => {
       const { container } = renderLabelInChart({
         viewBox: cartesianViewBox,

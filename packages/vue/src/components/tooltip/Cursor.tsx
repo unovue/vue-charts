@@ -11,6 +11,7 @@ import { Curve } from '@/shape/Curve'
 import { Rectangle } from '@/shape/Rectangle'
 import { Sector } from '@/shape/Sector'
 import { getCursorPoints } from '@/components/utils'
+import { isPolarCoordinate } from '@/types/base'
 import type { RadialCursorPoints } from '@/components/types'
 import type { Point } from '@/shape'
 
@@ -50,7 +51,9 @@ export const Cursor = defineComponent({
 
       let cursorElement: VNodeChild
       if (isScatterChart) {
-        const { offset: _offset, ...coord } = props.coordinate!
+        const at = props.coordinate!
+        // A scatter chart is Cartesian; a polar coordinate keeps only its point.
+        const { offset: _offset, ...coord } = isPolarCoordinate(at) ? { x: at.x, y: at.y, offset: undefined } : at
         const off = offset.value
         const crossProps = {
           stroke: 'var(--v-charts-cursor, #ccc)',
@@ -88,7 +91,7 @@ export const Cursor = defineComponent({
         }
         cursorElement = props.cursorSlot ? props.cursorSlot(rectProps) : <Rectangle {...rectProps} />
       }
-      else if (layout.value === 'radial' && props.coordinate?.cx != null) {
+      else if (layout.value === 'radial' && props.coordinate && isPolarCoordinate(props.coordinate)) {
         const radialPoints = points.value as RadialCursorPoints
         const off = offset.value
         const sectorProps = {
