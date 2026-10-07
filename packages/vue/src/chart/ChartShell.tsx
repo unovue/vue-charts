@@ -15,7 +15,7 @@ import { useResponsiveSize } from '@/hooks/useResponsiveSize'
 import { ChartWrapper } from './ChartWrapper'
 import { useItemInteractions } from '@/events/useItemInteractions'
 import Surface from '@/container/Surface'
-import { boxAttrs, rootAttrs } from './CellGridLayer'
+import { boxAttrs, rootAttrs } from './shell'
 
 /** Size and selection live in the root scope; descendants share only these capabilities. */
 export function useChartShell(

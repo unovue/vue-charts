@@ -15,7 +15,9 @@ import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, cellChartOptions, cellGridSharedProps, isFocusVisible } from './CellGridLayer'
+import { CellGridLayer } from './CellGridLayer'
+import { cellGridSharedProps } from './cellGridProps'
+import { isFocusVisible, standaloneChartOptions } from './shell'
 import type { GridCell } from './cellGridUtils'
 
 type SparkValue = number | null | undefined
@@ -353,7 +355,7 @@ const _Sparkline = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : 32)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('Sparkline'))
+    }), standaloneChartOptions('Sparkline'))
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (

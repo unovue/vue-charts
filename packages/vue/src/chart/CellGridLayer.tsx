@@ -1,14 +1,13 @@
-import { type PropType, type SlotsType, type StyleValue, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
+import { type PropType, type SlotsType, type VNodeChild, computed, defineComponent, ref, useId, watch } from 'vue'
 import { labelColor } from '@/utils/labelColor'
 import { useReducedMotion } from '@/animation/useReducedMotion'
 import { useTooltipController } from '@/model/tooltip'
-import type { ChartOptions } from '@/model/options'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { cascadeReveal, motionTokens } from '@/animation/motion'
-import type { VueClassValue } from '@/types/common'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { GridCell } from './cellGridUtils'
+import { isFocusVisible } from './shell'
 
 export interface CellSlotProps<P = unknown> {
   cell: GridCell<P>
@@ -24,16 +23,6 @@ export interface CellSlotProps<P = unknown> {
 
 export interface CellGridSlots<P = unknown> {
   cell?: (props: CellSlotProps<P>) => VNodeChild
-}
-
-export function isFocusVisible(element: Element) {
-  try {
-    return element.matches(':focus-visible')
-  }
-  catch {
-    // Engines without :focus-visible (older test DOMs) treat every focus as keyboard focus.
-    return true
-  }
 }
 
 interface Seams {
@@ -85,27 +74,6 @@ function findSeams(previous: readonly GridCell[], next: readonly GridCell[]): Se
     }
   }
   return seams
-}
-
-/** Chart options shared by every cell chart: tooltips belong to a single cell. */
-export function cellChartOptions(chartName: string): ChartOptions {
-  return {
-    chartName,
-    defaultTooltipEventType: 'item',
-    validateTooltipEventTypes: ['item'],
-    eventEmitter: undefined,
-  }
-}
-
-/** Caller `class` and `style` for the chart box. Attributes are untyped, so they are narrowed here once. */
-export function boxAttrs(attrs: Record<string, unknown>): { class?: VueClassValue, style?: StyleValue } {
-  return { class: attrs.class as VueClassValue, style: attrs.style as StyleValue }
-}
-
-/** Caller attributes for the SVG root: `class` and `style` go to the chart box instead. */
-export function rootAttrs(attrs: Record<string, unknown>) {
-  const { class: _class, style: _style, ...rest } = attrs
-  return rest
 }
 
 export const cellGridEmits = {

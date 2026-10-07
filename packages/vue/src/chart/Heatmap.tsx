@@ -9,8 +9,9 @@ import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
-import { type GridCell, levelColors, levelOf, mixColor } from './cellGridUtils'
+import { standaloneChartOptions } from './shell'
+import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { type GridCell, cellColorScale } from './cellGridUtils'
 
 export type HeatmapKey = string | number
 
@@ -119,7 +120,7 @@ const _Heatmap = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : Math.max(1, matrix.value.ys.length) * DEFAULT_ROW + bottom.value)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('Heatmap'))
+    }), standaloneChartOptions('Heatmap'))
 
     const layout = computed(() => {
       const { xs, ys, cells: byKey } = matrix.value
@@ -144,18 +145,7 @@ const _Heatmap = defineComponent({
             max = cell.value!
         }
       }
-      const levels = props.colors?.length ? props.colors.length - 1 : Math.max(0, Math.floor(props.levels))
-      const fills = props.colors?.length ? props.colors : levels > 0 ? levelColors(props.color, props.emptyColor, levels) : undefined
-      const fillOf = (value: number | null) => {
-        if (value === null || !(max! > 0))
-          return fills?.[0] ?? props.emptyColor
-        if (fills) {
-          const level = levelOf(value, max!, levels)
-          return fills[level]
-        }
-        const ratio = Math.min(1, Math.max(0, value / max!))
-        return mixColor(props.color, props.emptyColor, ratio)
-      }
+      const scale = cellColorScale({ color: props.color, empty: props.emptyColor, levels: props.levels, colors: props.colors, max })
 
       const cells: GridCell<HeatmapCell>[] = []
       ys.forEach((y, row) => {
@@ -164,7 +154,7 @@ const _Heatmap = defineComponent({
           if (!cell && !props.fillMissing)
             return
           const data = cell ?? { x, y, value: null, rows: [] }
-          const fill = fillOf(data.value)
+          const fill = scale.fill(data.value)
           const text = data.value === null ? undefined : props.valueFormatter ? props.valueFormatter(data.value, data) : String(data.value)
           cells.push({
             key: cellKey(x, y),

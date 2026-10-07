@@ -7,7 +7,8 @@ import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { standaloneChartOptions } from './shell'
+import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, formatDay, toDayNumber } from './cellGridUtils'
 
 /** Default fill per status. Every color reads a CSS variable first, so themes can restyle it. */
@@ -80,7 +81,7 @@ const _Tracker = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : 32)),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('Tracker'))
+    }), standaloneChartOptions('Tracker'))
     const rows = useTrackedData(() => props.data)
 
     // `YYYY-MM-DD` and `Date` names read as dates ("Aug 21, 2026"); anything else as written.

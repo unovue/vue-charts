@@ -9,8 +9,9 @@ import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import { CellGridLayer, type CellGridSlots, cellChartOptions, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
-import { type GridCell, dayNumberToIso, formatDay, levelColors, levelOf, toDayNumber, weekdayOf } from './cellGridUtils'
+import { standaloneChartOptions } from './shell'
+import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay<Row = unknown> {
   /** `YYYY-MM-DD`. */
@@ -112,7 +113,7 @@ const _CalendarHeatmap = defineComponent({
       height: computed(() => props.height),
       aspect: computed(() => props.aspect ?? (props.height === undefined ? (left.value + Math.max(columns.value, 1) * NOMINAL_STEP) / (top.value + 7 * NOMINAL_STEP) : undefined)),
       initialDimension: computed(() => props.initialDimension),
-    }), cellChartOptions('CalendarHeatmap'))
+    }), standaloneChartOptions('CalendarHeatmap'))
 
     const layout = computed(() => {
       const r = range.value
@@ -139,8 +140,7 @@ const _CalendarHeatmap = defineComponent({
             max = value
         }
       }
-      const levels = props.colors?.length ? props.colors.length - 1 : Math.max(1, Math.floor(props.levels))
-      const fills = props.colors?.length ? props.colors : levelColors(props.color, props.emptyColor, levels)
+      const scale = cellColorScale({ color: props.color, empty: props.emptyColor, levels: props.levels, colors: props.colors, max, minLevel: 1 })
       const dateFormat = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' } as const
 
       const cells: GridCell<CalendarDay>[] = []
@@ -149,7 +149,7 @@ const _CalendarHeatmap = defineComponent({
         const column = Math.floor((day - firstColumn) / 7)
         const row = weekdayOffset(day)
         const value = values.get(day) ?? null
-        const level = value === null ? 0 : levelOf(value, max, levels)
+        const level = scale.level(value)
         const iso = dayNumberToIso(day)
         cells.push({
           key: iso,
@@ -157,7 +157,7 @@ const _CalendarHeatmap = defineComponent({
           y: top.value + row * step,
           width: cellSize,
           height: cellSize,
-          fill: fills[level],
+          fill: scale.fill(value),
           row,
           column,
           label: formatDay(day, props.locale, dateFormat),

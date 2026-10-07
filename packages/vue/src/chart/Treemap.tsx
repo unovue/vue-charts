@@ -10,7 +10,6 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-v'
 import { labelOpacity } from '@/animation/ridingLabels'
 import { cascadeReveal } from '@/animation/motion'
@@ -19,8 +18,8 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import { getStringSize } from '@/utils/attrs'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/model/options'
-import type { TooltipPayloadConfiguration, TooltipPayloadSearcher } from '@/types/tooltip'
+import { standaloneChartOptions } from './shell'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
 
 interface TreemapData extends Record<string, unknown> {
@@ -52,27 +51,6 @@ function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
   }
   const val = toFiniteNumber(getValueByDataKey(item, dataKey))
   return val != null && val > 0 ? val : 0
-}
-
-/**
- * Tooltip payload searcher for Treemap — navigates nested node structure
- * using a path string like 'children[0].children[1]'.
- */
-const treemapPayloadSearcher: TooltipPayloadSearcher = (
-  data: unknown,
-  payloadKey: string,
-) => {
-  if (!data || !payloadKey)
-    return undefined
-  return get(data, payloadKey)
-}
-
-const treemapOptions: ChartOptions = {
-  chartName: 'Treemap',
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: treemapPayloadSearcher,
-  eventEmitter: undefined,
 }
 
 /**
@@ -477,7 +455,7 @@ const _Treemap = defineComponent({
   emits: { ...chartEmits, ...treemapEmits },
   slots: Object as SlotsType<TreemapSlots>,
   setup(props, { slots, emit, attrs }) {
-    const size = useChartShell(props, treemapOptions)
+    const size = useChartShell(props, standaloneChartOptions('Treemap'))
     function setupContent() {
       const { renderChart, renderBreadcrumb } = useTreemap(reactive({
         ...toRefs(props),

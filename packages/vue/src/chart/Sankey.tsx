@@ -4,16 +4,14 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { useTooltipController } from '@/model/tooltip'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { get } from 'es-toolkit/compat'
 import type { ValueAnimationTransition } from 'motion-v'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/model/options'
+import { standaloneChartOptions } from './shell'
 import type {
   TooltipPayloadConfiguration,
-  TooltipPayloadSearcher,
 } from '@/types/tooltip'
 import type { Coordinate } from '@/types'
 import {
@@ -47,23 +45,6 @@ export interface SankeySlots {
   node?: (props: SankeyNodeSlotProps) => VNodeChild
   link?: (props: SankeyLinkSlotProps) => VNodeChild
   default?: () => VNode[]
-}
-
-const sankeyPayloadSearcher: TooltipPayloadSearcher = (
-  data: unknown,
-  payloadKey: string,
-) => {
-  if (!data || payloadKey == null)
-    return undefined
-  return get(data, payloadKey)
-}
-
-const sankeyOptions: ChartOptions = {
-  chartName: 'Sankey',
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: sankeyPayloadSearcher,
-  eventEmitter: undefined,
 }
 
 const SankeyVueProps = {
@@ -429,7 +410,7 @@ const _Sankey = defineComponent({
   emits: { ...chartEmits, ...sankeyEmits },
   slots: Object as SlotsType<SankeySlots>,
   setup(props, { slots, emit, attrs }) {
-    const size = useChartShell(props, sankeyOptions)
+    const size = useChartShell(props, standaloneChartOptions('Sankey'))
     function setupContent() {
       const svg = useSankey(reactive({
         ...toRefs(props),

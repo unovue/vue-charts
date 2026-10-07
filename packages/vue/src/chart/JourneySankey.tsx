@@ -1,4 +1,3 @@
-import { get } from 'es-toolkit/compat'
 import type { ChartRenderContext, ChartVNode } from '@/types/typed'
 import { getValueByDataKey } from '@/utils/chart'
 import { type SlotsType, computed, defineComponent, reactive, ref, watch } from 'vue'
@@ -13,7 +12,7 @@ import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { ChartShell, useChartShell } from './ChartShell'
-import { cellChartOptions, isFocusVisible } from './CellGridLayer'
+import { isFocusVisible, standaloneChartOptions } from './shell'
 import {
   type JourneyInput,
   type JourneyLink,
@@ -513,10 +512,7 @@ const _JourneySankey = defineComponent({
       height: computed(() => props.height ?? (props.aspect ? undefined : Math.max(200, naturalHeight.value))),
       aspect: computed(() => props.aspect),
       initialDimension: computed(() => props.initialDimension),
-    }), {
-      ...cellChartOptions('JourneySankey'),
-      tooltipPayloadSearcher: (data, payloadKey) => get(data, payloadKey),
-    })
+    }), standaloneChartOptions('JourneySankey'))
     return () => {
       const { width: _w, height: _h, aspect: _a, initialDimension: _i, ...inner } = props
       return (

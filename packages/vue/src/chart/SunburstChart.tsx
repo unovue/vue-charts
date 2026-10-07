@@ -9,15 +9,13 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import type { ChartTransition } from '@/animation/motion'
-import { get } from 'es-toolkit/compat'
 import { Layer } from '@/container/Layer'
 import { Sector } from '@/shape/Sector'
 import { polarToCartesian } from '@/utils/polar'
 import { ChartShell, useChartShell } from './ChartShell'
-import type { ChartOptions } from '@/model/options'
+import { standaloneChartOptions } from './shell'
 import type {
   TooltipPayloadConfiguration,
-  TooltipPayloadSearcher,
 } from '@/types/tooltip'
 import {
   type SunburstData,
@@ -34,23 +32,6 @@ export interface SunburstContentSlotProps extends SunburstLayoutNode {
 export interface SunburstSlots {
   content?: (props: SunburstContentSlotProps) => VNodeChild
   default?: () => VNode[]
-}
-
-const sunburstPayloadSearcher: TooltipPayloadSearcher = (
-  data: unknown,
-  payloadKey: string,
-) => {
-  if (!data || !payloadKey)
-    return undefined
-  return get(data, payloadKey)
-}
-
-const sunburstOptions: ChartOptions = {
-  chartName: 'SunburstChart',
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: sunburstPayloadSearcher,
-  eventEmitter: undefined,
 }
 
 const SunburstChartVueProps = {
@@ -284,7 +265,7 @@ const _SunburstChart = defineComponent({
   emits: { ...chartEmits, ...sunburstItemEmits },
   slots: Object as SlotsType<SunburstSlots>,
   setup(props, { slots, emit, attrs }) {
-    const size = useChartShell(props, sunburstOptions)
+    const size = useChartShell(props, standaloneChartOptions('SunburstChart'))
 
     return () => {
       const { aspect, initialDimension, ...innerProps } = props
