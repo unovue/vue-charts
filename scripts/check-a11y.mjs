@@ -1,19 +1,15 @@
 /* eslint-disable no-console -- command-line check */
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
-import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { createServer as createViteServer } from 'vite'
 import { checkContrast } from './a11y/contrast.mjs'
 import { checkKeyboard } from './a11y/keyboard.mjs'
+import { launchBrowser } from './lib/browser.mjs'
 
 const evidence = resolve('.evidence/release-1.0/a11y')
-const require = createRequire(await realpath(
-  'packages/vue/node_modules/@nuxt/test-utils/package.json',
-))
-const { chromium } = require('playwright-core')
 
 let vite
 let server
@@ -123,12 +119,7 @@ async function checkPage(url, name, theme, reducedMotion, variant = 'default') {
 try {
   assert.equal(spawnSync('pnpm', ['--filter', 'vccs', 'build'], { stdio: 'inherit' }).status, 0)
   const { names, url } = await prepareFixture()
-  browser = await chromium.launch({
-    headless: true,
-    ...(process.env.MOTION_EXECUTABLE_PATH
-      ? { executablePath: process.env.MOTION_EXECUTABLE_PATH }
-      : {}),
-  })
+  browser = await launchBrowser()
   for (const theme of ['light', 'dark']) {
     for (const reducedMotion of ['no-preference', 'reduce']) {
       for (const name of names)

@@ -1,24 +1,11 @@
 // Shared setup for the motion lab scripts: a server for the lab app and a browser.
-import { realpathSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, createServer, preview } from 'vite'
+import { launchBrowser as launch } from '../../../../scripts/lib/browser.mjs'
 
 export const here = dirname(fileURLToPath(import.meta.url))
 export const repo = join(here, '../../../..')
-// The locked Playwright of the Nuxt test tooling, as scripts/check-motion.mjs uses it.
-const require = createRequire(realpathSync(join(repo, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
-const playwright = require('playwright-core')
-
-// `--install-browser` installs the locked engine(s), as `pnpm check:motion --install-browser` does.
-if (process.argv.includes('--install-browser')) {
-  const { spawnSync } = await import('node:child_process')
-  const cli = join(dirname(require.resolve('playwright-core')), 'cli.js')
-  const engines = ['chromium-headless-shell', 'firefox', 'webkit']
-  const install = spawnSync(process.execPath, [cli, 'install', ...engines], { stdio: 'inherit' })
-  process.exit(install.status ?? 1)
-}
 
 export const args = process.argv.slice(2)
 export function flag(name, fallback) {
@@ -46,12 +33,8 @@ export async function startServer() {
 }
 
 /** `--browser=chromium|firefox|webkit`; MOTION_EXECUTABLE_PATH overrides the Chromium binary. */
-export async function launchBrowser() {
-  const name = flag('browser', 'chromium')
-  const type = playwright[name]
-  if (!type)
-    throw new Error(`Unknown browser ${name}`)
-  return type.launch({ headless: true, ...(name === 'chromium' && process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
+export function launchBrowser() {
+  return launch({ browser: flag('browser', 'chromium') })
 }
 
 /** Collects page errors, console errors/warnings and Vue warnings for a page. */

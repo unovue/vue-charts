@@ -8,7 +8,7 @@ The runner uses `playwright-core` from the existing locked `@nuxt/test-utils`
 dependency. Install its matching shell with:
 
 ```sh
-node scripts/check-motion.mjs --install-browser
+node scripts/lib/browser.mjs --install-browser chromium-headless-shell
 ```
 
 This is equivalent to `playwright-core install --with-deps chromium-headless-shell`

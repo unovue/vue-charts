@@ -1,17 +1,15 @@
 import { Buffer } from 'node:buffer'
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdir, readdir, realpath, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { mkdir, readdir, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { launchBrowser } from './lib/browser.mjs'
 import { stopProcess, waitForServer } from './lib/check-process.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B9')
-const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
-const { chromium } = require('playwright-core')
 
 const seriesSelector = '.v-charts-bar,.v-charts-line,.v-charts-area,.v-charts-pie,.v-charts-radar,.v-charts-radial-bar,.v-charts-funnel,.v-charts-sankey,.v-charts-treemap,.v-charts-sunburst'
 const probeSelector = `${seriesSelector},.v-charts-scatter,.v-charts-tracker,.v-charts-calendar,.v-charts-heatmap,.v-charts-cohort,.v-charts-sparkline,.v-charts-journey`
@@ -404,7 +402,7 @@ try {
   }
   if (!base && !process.argv.includes('--fixture-only'))
     throw new Error('No server started in ports 4690–4699')
-  browser = await chromium.launch({ headless: true, ...(process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
+  browser = await launchBrowser()
   async function run(route, width, fixture = false) {
     const name = `${fixture ? 'fixture' : route.replaceAll('/', '') || 'index'}-${width}`
     const context = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 800 }, reducedMotion: 'no-preference', recordVideo: { dir: join(evidence, 'videos'), size: { width, height: width === 390 ? 844 : 800 } } })

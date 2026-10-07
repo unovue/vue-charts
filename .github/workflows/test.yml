@@ -96,7 +96,7 @@ jobs:
         run: echo '.evidence/' >> .git/info/exclude
 
       - name: Install locked Playwright Chromium headless shell
-        run: node scripts/check-motion.mjs --install-browser
+        run: node scripts/lib/browser.mjs --install-browser --with-deps chromium-headless-shell
 
       - name: Check fixture and runner lint
         run: pnpm exec eslint scripts/check-motion.mjs packages/vue/test/fixtures/motion --max-warnings 0

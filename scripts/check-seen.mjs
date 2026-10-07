@@ -1,22 +1,20 @@
 /* eslint-disable no-console -- CLI verdicts and progress. */
 import { spawn, spawnSync } from 'node:child_process'
 import { createReadStream } from 'node:fs'
-import { mkdir, readdir, realpath, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { analyzeSeen, installSeenRecorder } from './lib/seen-recorder.mjs'
 import { filmstrip } from './lib/seen-filmstrip.mjs'
 import { collectSeen } from './lib/seen-capture.mjs'
 
+import { launchBrowser } from './lib/browser.mjs'
 import { stopProcess, waitForServer } from './lib/check-process.mjs'
 import { seenVerdict } from './lib/check-verdicts.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const evidence = resolve(root, process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/seen')
-const require = createRequire(await realpath(join(root, 'packages/vue/node_modules/@nuxt/test-utils/package.json')))
-const { chromium } = require('playwright-core')
 
 const option = name => process.argv.find(a => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 const fixture = process.argv.includes('--fixture')
@@ -242,7 +240,7 @@ try {
         throw new Error(`${filter} build exited ${build.status}`)
     }
   }
-  browser = await chromium.launch({ headless: true, ...(process.env.MOTION_EXECUTABLE_PATH ? { executablePath: process.env.MOTION_EXECUTABLE_PATH } : {}) })
+  browser = await launchBrowser()
   if (fixture) {
     const base = await serve(join(root, 'scripts/fixtures'))
     await run(base, '/seen-motion.html', 1440)

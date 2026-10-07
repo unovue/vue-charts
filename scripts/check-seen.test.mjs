@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { constants } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
-import { mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 // eslint-disable-next-line test/no-import-node-test
 import { test } from 'node:test'
+import { launchBrowser } from './lib/browser.mjs'
 import { collectSeen } from './lib/seen-capture.mjs'
 import { installSeenRecorder } from './lib/seen-recorder.mjs'
 
@@ -16,10 +16,7 @@ test('visitor CLI captures charts while an external resource is still loading', 
   await mkdir(out, { recursive: true })
   const preload = `${out}/preload.mjs`
   await writeFile(preload, `
-import { realpath } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-const require = createRequire(await realpath('packages/vue/node_modules/@nuxt/test-utils/package.json'))
-const { chromium } = require('playwright-core')
+import { chromium } from '${root}scripts/lib/browser.mjs'
 const launch = chromium.launch.bind(chromium)
 chromium.launch = async (options) => {
   const browser = await launch(options)
@@ -81,9 +78,7 @@ test('visitor CLI checks chart routes without requiring charts in the navigation
 // A long recording must finish even when its total JSON exceeds Node's string limit.
 test('visitor capture streams a recording larger than one transport string', async () => {
   const root = fileURLToPath(new URL('../', import.meta.url))
-  const require = createRequire(await realpath(`${root}packages/vue/node_modules/@nuxt/test-utils/package.json`))
-  const { chromium } = require('playwright-core')
-  const browser = await chromium.launch({ headless: true, executablePath: process.env.MOTION_EXECUTABLE_PATH })
+  const browser = await launchBrowser()
   const out = `${root}.evidence/tooling/seen-stream-regression`
   await mkdir(out, { recursive: true })
   try {
@@ -114,10 +109,7 @@ test('visitor capture streams a recording larger than one transport string', asy
 
 // A paused recording must not mistake a newly rotated outgoing chart for the clicked chart.
 test('tab reset returns live chart identities after a paused replacement', async () => {
-  const root = fileURLToPath(new URL('../', import.meta.url))
-  const require = createRequire(await realpath(`${root}packages/vue/node_modules/@nuxt/test-utils/package.json`))
-  const { chromium } = require('playwright-core')
-  const browser = await chromium.launch({ headless: true, executablePath: process.env.MOTION_EXECUTABLE_PATH })
+  const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
     await page.evaluate(installSeenRecorder)

@@ -11,7 +11,7 @@ A Vite app with chart scenarios (`?s=bar`, `?s=areaStacked`, `?s=brush`, `?s=str
 | `pnpm motion:probe <scenario> <step\|-> "<expression>" [ms]` | The value of a page expression on every animation frame on the real clock (WAAPI fades, springs). |
 | `pnpm motion:lab` | Opens the lab app in a dev server for manual review. |
 
-Shared flags: `--browser=chromium|firefox|webkit`, `--prod` (production build; also `LAB_PROD=1`), `--install-browser` (installs the locked Playwright engines). Locally, `MOTION_EXECUTABLE_PATH` can point to another Chromium build, as for `pnpm check:motion`.
+Shared flags: `--browser=chromium|firefox|webkit`, `--prod` (production build; also `LAB_PROD=1`). `node scripts/lib/browser.mjs --install-browser` installs the locked Playwright engines. Locally, `MOTION_EXECUTABLE_PATH` can point to another Chromium build, as for `pnpm check:motion`.
 
 Cell scenarios: `tracker` starts with 30 ISO-date status rows at 720×36 and exercises
 `shift`, `shift3`, `status`, `to14`, `to30`, `empty`, and `refill`. `calendar` starts with

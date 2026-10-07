@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, version as esbuildVersion } from 'esbuild'
+import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const option = name => process.argv.find(arg => arg.startsWith(`--${name}=`))?.slice(name.length + 3)
@@ -19,8 +20,6 @@ const fixture = join(root, 'scripts/fixtures/bench.mjs')
 const output = join(root, '.evidence/bench', `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`)
 const peers = join(root, 'packages/vue/node_modules')
 const libraryRequire = createRequire(join(root, 'packages/vue/package.json'))
-const require = createRequire(await realpath(join(peers, '@nuxt/test-utils/package.json')))
-const { chromium } = require('playwright-core')
 
 const sides = compare ? ['A', 'B'] : ['B']
 const cases = ['LineChart', 'BarChart'].flatMap(kind => [100, 1000, 10000].map(n => ({ kind, n, mode: 'static' })))
@@ -70,8 +69,7 @@ async function openBrowser() {
   if (port < 4600 || port > 4699)
     throw new Error('BENCH_PORT must be in 4600–4699')
   await new Promise((resolve, reject) => server.once('error', reject).listen(port, '127.0.0.1', resolve))
-  const executablePath = process.env.MOTION_EXECUTABLE_PATH
-  browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) })
+  browser = await launchBrowser()
   page = await browser.newPage({ viewport: { width: 1100, height: 700 }, reducedMotion: 'no-preference' })
   page.on('pageerror', error => result.errors.push(error.message))
   page.on('console', (message) => {
@@ -126,8 +124,7 @@ async function sample() {
 }
 try {
   await mkdir(output, { recursive: true })
-  const playwright = require('playwright-core/package.json').version
-  result.tools = { node: process.version, esbuild: esbuildVersion, playwright }
+  result.tools = { node: process.version, esbuild: esbuildVersion, playwright: playwrightVersion }
   await bundle()
   await openBrowser()
   await sample()
