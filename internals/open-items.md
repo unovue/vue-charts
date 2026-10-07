@@ -19,7 +19,7 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
   `useChartHeight` return 0 inside `ChartShell` charts, because `ChartPresentation` repeats
   `Chart` fields. One source per field, and a narrower presentation for shell charts.
 - **P2 Page startup blocks the first frames on the docs site.** Docs Shiki WASM and Nuxt
-  hydration cause 55–95 ms long tasks, so `check:seen` marks some rows unreliable. No library
+  hydration cause 55–95 ms long tasks, so `pnpm lab seen` marks some rows unreliable. No library
   cause was found.
 - **P3 Function `dot`/`activeDot` on Line and Area** is accepted at runtime but never called
   (slots are the render path). Document that slots replace it, or narrow the runtime type.
@@ -77,13 +77,17 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
 - **P3 The docs build logs a landing-query POST 404** but exits 0. Cause unknown.
 - **P3 Motion timing noise.** Raw captures differ between runs, and throttled intervals
   sometimes run faster than unthrottled ones. Settled geometry is exact; the cause is unproven.
+- **P3 The motion geometry gate skips arc shapes** (pie and donut sectors, radial bars, sunburst
+  rings): `curves()` in `packages/vue/test/lab/report-metrics.mjs` drops paths with arc commands,
+  because their endpoints move along circles. Jumps, reversals and stalls in arcs are seen only in
+  `pnpm lab film`. Follow-up: measure angle progress (start and end angle, radius) along each arc.
 - **P3 The library is built several times in one `pnpm verify`** (`check-package`,
-  `check-a11y`, `check-play`, `check-seen`, `check-consumers`), and the docs and seen checkers
+  `check-a11y`, `check-play`, `check-consumers`), and the docs checker and `scripts/seen.mjs`
   repeat static serving code. Build once in the orchestrator; share one static-site helper.
 - **P3 Resolver not proven by `check-consumers`.** vue-tsc checks the checked-in
   `components.d.ts`, not `VccsResolver`. Regenerate the d.ts before the typecheck.
 - **P3 Brittle checker tests** depend on demo positions and generated ids
-  (`scripts/check-play.test.mjs`, `scripts/check-seen.test.mjs`).
+  (`scripts/check-play.test.mjs`, `scripts/seen.test.mjs`).
 
 ## Roadmap
 

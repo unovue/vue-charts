@@ -344,19 +344,22 @@ one development warning per app (through `src/utils/log.ts`), exactly:
 
 ## Motion
 
-**D-25 Accepted lab flags.** The only accepted flags in `pnpm motion:report --prod --check` are
+**D-25 Accepted lab flags.** The only accepted flags in the motion geometry gate
+(`node packages/vue/test/lab/report.mjs --prod --check`) are
 the JourneySankey fold of a re-ranked node in scenarios `journey top8` (backwards on
 `rect.v-charts-journey-node-continue#n:1/features/web-analytics@1`) and `journey top15` (jumps on
 the same element and one overlap of about 83 px² near 112 ms). They are the price of not sliding
 nodes through each other. Any other flag fails the gate.
 
-**D-25a Real-clock timing is reported, not gated by default.** `report.mjs --check` today also
-fails a transition with more than 2 slow frames measured on the real clock (`timing['1x'].slow`).
-That number depends on machine load, so a cloud machine cannot gate on it reliably. From step
-1.13: `--check` gates on the frame-exact flags (fake clock) and page errors; the slow-frame count
-stays in the report and gates only with `--strict-timing`. This reduces default timing coverage;
-the frame-exact checks remain unchanged. Keep the separate real-clock benchmark and report
-inconclusive timing evidence explicitly; deterministic geometry does not prove runtime speed.
+**D-25a Real-clock timing is an instrument, not a gate.** Real-clock frame timing depends on machine
+load, so no machine can gate on it reliably. The gate (`report.mjs --check`) steps a fake clock and
+judges geometry and page errors only; it records no video and runs no real-clock replays.
+Timing is measured on demand with `pnpm lab timing <scenario>`; the old `--strict-timing` gate is
+removed (2026-10-07). The separate real-clock benchmark (`pnpm bench`) still reports inconclusive
+timing explicitly; deterministic geometry does not prove runtime speed. For the same reason the
+visitor-viewpoint recorder (`pnpm lab seen`, formerly `check:seen`) is an instrument: its rows were
+mostly "unreliable" on real-clock gaps. The half-visible entrance rule it found is guarded by
+`packages/vue/src/chart/__tests__/clientEntranceSize.spec.tsx`.
 
 **D-26 Motion fixes** ([reviews/motion.md](https://github.com/Mat4m0/fork_vue-charts/blob/070c752/internals/release-1.0/reviews/motion.md)):
 - A data change that changes nothing on screen (equal content) runs no animation, renders no

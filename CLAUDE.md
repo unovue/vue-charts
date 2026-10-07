@@ -19,16 +19,19 @@ pnpm lint                 # ESLint, zero warnings
 pnpm typecheck            # vue-tsc for the library, including the type probes
 pnpm docs                 # docs site (Nuxt dev server)
 pnpm play                 # playground (Nuxt dev server)
-pnpm verify               # every release check and a verdict table; --quick skips browsers
+pnpm verify               # the gates and a verdict table (~15 min); --quick skips browsers,
+                          # --release adds motion geometry and the playground sweep
+pnpm lab <command>        # motion instruments: film, timing, seen, dev (never a gate)
 pnpm compare:upstream     # bundle, dependency and line comparison with vccs 0.6.0
 ```
 
-`VERIFY.md` lists every check, what it proves and its current result. Browser checks use
+`VERIFY.md` lists every gate (what it proves, its tier and latest result) and every instrument.
+To debug an animation, see "Debug a motion bug" in `packages/vue/test/lab/README.md`. Browser checks use
 `scripts/lib/browser.mjs`; `VCCS_PORTS=4620-4629` moves all check servers into one port range.
 
 **CI** (`test.yml`, PRs to `main`, Node 22) runs the fast checks in five jobs: `test`, `consumers`,
-`motion`, `package` and `docs`. `release-check.yml` (manual) runs the slow browser sweeps and the
-benchmark against vccs 0.6.0.
+`motion`, `package` and `docs`. `release-check.yml` (manual) runs the slow browser gates (the `--release`
+tier) and the benchmark against vccs 0.6.0.
 
 ## Architecture
 
