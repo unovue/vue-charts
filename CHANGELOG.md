@@ -51,6 +51,9 @@ every breaking change with a before and after example.
   support for `prefers-reduced-motion`.
 - Keyboard navigation and accessible names for every chart.
 - Theming through `--v-charts-*` CSS variables, including a shadcn-vue `ChartContainer` recipe.
+- `Heatmap`, `CalendarHeatmap`, `CohortChart`, `Sparkline` and `BarList` share `valueFormatter` and
+  `locale` for the value text in tooltips and accessible names. Without a formatter, values use the
+  locale number format (`1,234`); Heatmap and CalendarHeatmap showed raw numbers before.
 
 ### Fixed
 

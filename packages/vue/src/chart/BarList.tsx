@@ -7,7 +7,7 @@ import { useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { provideChartInView, provideRenderPhase } from '@/model/runtime'
 import { useTrackedData } from '@/hooks/useTrackedData'
-import { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps, useValueText, valueFormatProps } from './cellGridProps'
 import type { HtmlTemplateAttributes } from '@/utils/attributes'
 
 export type BarListRow = Record<string, unknown>
@@ -52,9 +52,7 @@ const BarListVueProps = {
   hrefKey: { type: [String, Number, Function] as PropType<RowDataKey<BarListRow>>, default: undefined },
   sort: { type: String as PropType<'descending' | 'ascending' | 'none'>, default: 'descending' },
   color: { type: String, default: seriesColor(0) },
-  valueFormatter: { type: Function as PropType<(value: number, row: BarListRow) => string>, default: undefined },
-  /** Locale for the default number format. Fixed by default so server and client render the same. */
-  locale: { type: String, default: 'en-US' },
+  ...valueFormatProps,
   rowHeight: { type: Number, default: 32 },
   gap: { type: Number, default: 4 },
   desc: String,
@@ -74,7 +72,7 @@ const BarListInner = defineComponent({
   slots: Object as SlotsType<BarListSlots<BarListRow>>,
   setup(props, { emit, slots }) {
     const rows = useTrackedData(() => props.data)
-    const numbers = computed(() => new Intl.NumberFormat(props.locale))
+    const valueText = useValueText<BarListRow>(props)
 
     const target = computed<RowState[]>(() => {
       const list = (rows.value ?? []).flatMap((row) => {
@@ -124,7 +122,7 @@ const BarListInner = defineComponent({
         sum + Math.max(0, Math.min(1, item.value.presence)), 0)
       return Math.max(0, count * (props.rowHeight + props.gap) - props.gap)
     })
-    const format = (state: RowState) => props.valueFormatter ? props.valueFormatter(state.value, state.row) : numbers.value.format(state.value)
+    const format = (state: RowState) => valueText(state.value, state.row)
 
     function renderName(slotProps: BarListSlotProps<BarListRow>, href: string | undefined, exiting: boolean) {
       if (slots.name)

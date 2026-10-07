@@ -12,7 +12,7 @@ import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
 import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
-import { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps, useValueText, valueFormatProps } from './cellGridProps'
 import { type GridCell, cellColorScale } from './cellGridUtils'
 import type { SvgTemplateAttributes } from '@/utils/attributes'
 
@@ -60,8 +60,7 @@ const HeatmapVueProps = {
   fillMissing: { type: Boolean, default: true },
   /** Draw each value on its cell when it fits. */
   showValues: { type: Boolean, default: false },
-  /** Text for a value, on the cell and in the tooltip. */
-  valueFormatter: { type: Function as PropType<(value: number, cell: HeatmapCell) => string>, default: undefined },
+  ...valueFormatProps,
   xTickFormatter: { type: Function as PropType<(x: HeatmapKey) => string>, default: undefined },
   yTickFormatter: { type: Function as PropType<(y: HeatmapKey) => string>, default: undefined },
   xLabels: { type: Boolean, default: true },
@@ -80,6 +79,7 @@ const _Heatmap = defineComponent({
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<HeatmapCell> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
+    const valueText = useValueText<HeatmapCell>(props)
     const rows = useTrackedData(() => props.data)
 
     const matrix = computed(() => {
@@ -160,7 +160,7 @@ const _Heatmap = defineComponent({
             return
           const data = cell ?? { x, y, value: null, rows: [] }
           const fill = scale.fill(data.value)
-          const text = data.value === null ? undefined : props.valueFormatter ? props.valueFormatter(data.value, data) : String(data.value)
+          const text = data.value === null ? undefined : valueText(data.value, data)
           cells.push({
             key: cellKey(x, y),
             x: left.value + column * stepX,

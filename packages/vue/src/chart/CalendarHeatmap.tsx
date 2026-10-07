@@ -12,7 +12,7 @@ import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
 import { CellGridLayer, type CellGridSlots } from './CellGridLayer'
-import { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps, useValueText, valueFormatProps } from './cellGridProps'
 import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
 import type { SvgTemplateAttributes } from '@/utils/attributes'
 
@@ -55,8 +55,8 @@ const CalendarHeatmapVueProps = {
   /** Value that reaches the top level. Defaults to the largest value in range. */
   max: { type: Number, default: undefined },
   gap: { type: Number, default: 3 },
-  /** Locale for month, weekday and date text. Fixed by default so server and client render the same. */
-  locale: { type: String, default: 'en-US' },
+  /** `locale` also sets month, weekday and date text. */
+  ...valueFormatProps,
   monthLabels: { type: Boolean, default: true },
   weekdayLabels: { type: Boolean, default: true },
   desc: String,
@@ -70,6 +70,7 @@ const _CalendarHeatmap = defineComponent({
   emits: { ...chartEmits, ...cellGridEmits },
   slots: Object as SlotsType<CellGridSlots<CalendarDay> & { default?: () => VNode[] }>,
   setup(props, { emit, slots, attrs }) {
+    const valueText = useValueText<CalendarDay>(props)
     const rows = useTrackedData(() => props.data)
 
     const days = computed(() => {
@@ -154,6 +155,7 @@ const _CalendarHeatmap = defineComponent({
         const value = values.get(day) ?? null
         const level = scale.level(value)
         const iso = dayNumberToIso(day)
+        const payload = { date: iso, value, level, rows: days.value.contributing.get(day) ?? [] }
         cells.push({
           key: iso,
           x: left.value + column * step,
@@ -165,7 +167,8 @@ const _CalendarHeatmap = defineComponent({
           column,
           label: formatDay(day, props.locale, dateFormat),
           value,
-          payload: { date: iso, value, level, rows: days.value.contributing.get(day) ?? [] },
+          valueText: value === null ? undefined : valueText(value, payload),
+          payload,
         })
         // A month is labelled at the first column whose top cell belongs to it.
         if (iso.endsWith('-01') || day === r.start) {
@@ -256,6 +259,7 @@ export type CalendarHeatmapProps<Row = unknown> = StandaloneChartProps<InstanceT
   data: readonly Row[]
   dateKey?: RowDataKey<NoInfer<Row>>
   dataKey?: RowDataKey<NoInfer<Row>>
+  valueFormatter?: (value: number, day: CalendarDay<NoInfer<Row>>) => string
 }>
 
 export const CalendarHeatmap = _CalendarHeatmap as unknown as <Row>(

@@ -16,7 +16,7 @@ import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { CellGridLayer } from './CellGridLayer'
-import { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps, useValueText, valueFormatProps } from './cellGridProps'
 import { standaloneChartOptions } from './shell'
 import { useItemKeyboard } from '@/events/useItemKeyboard'
 import type { GridCell } from './cellGridUtils'
@@ -58,6 +58,7 @@ const SparklineVueProps = {
   activeIndex: { type: Number as PropType<number | null>, default: undefined },
   gap: { type: Number, default: 1 },
   radius: { type: Number, default: 1 },
+  ...valueFormatProps,
   desc: String,
   title: { type: String, default: undefined },
 }
@@ -72,6 +73,8 @@ type SparklineInput = ExtractPropTypes<typeof SparklineVueProps> & { width: numb
 
 /** The drawing, set up inside the measured surface so its scope follows the surface's. */
 function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>) {
+  // The item is the row (or number) behind the value.
+  const valueText = useValueText<unknown>(props)
   const tooltip = useTooltipController()
   const id = useId()
   const size = { effectiveWidth: computed(() => props.width), effectiveHeight: computed(() => props.height) }
@@ -176,6 +179,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
       column: point.index,
       label: nameOf(point),
       value: point.value,
+      valueText: point.value === null ? undefined : valueText(point.value, point.payload),
       payload: point.payload,
     }))
   })
@@ -210,7 +214,19 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
       values: Object.fromEntries(points.value.map(point => [point.index, point.value])),
       names: Object.fromEntries(points.value.map(point => [point.index, nameOf(point)])),
       positions: undefined,
-      settings: { stroke: props.color, strokeWidth: undefined, fill: props.color, dataKey: 'value', nameKey: 'name', name: undefined, hide: false, type: undefined, color: props.color, unit: '' },
+      settings: {
+        stroke: props.color,
+        strokeWidth: undefined,
+        fill: props.color,
+        dataKey: 'value',
+        nameKey: 'name',
+        name: undefined,
+        hide: false,
+        type: undefined,
+        color: props.color,
+        unit: '',
+        formatter: (value, _name, entry) => typeof value === 'number' ? valueText(value, entry.payload) : value,
+      },
     }
   })
   tooltip.entries.register(configuration)
@@ -273,8 +289,9 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
     return point && defined(point) ? point : undefined
   })
   const summary = computed(() => {
-    const finite = values.value.filter((value): value is number => value !== null)
-    return props.title ?? (finite.length ? `Trend: ${finite.length} values from ${finite[0]} to ${finite.at(-1)}` : 'Trend')
+    const shown = points.value.filter(point => point.value !== null)
+    const text = (point: SparkPoint | undefined) => point?.value == null ? '' : valueText(point.value, point.payload)
+    return props.title ?? (shown.length ? `Trend: ${shown.length} values from ${text(shown[0])} to ${text(shown.at(-1))}` : 'Trend')
   })
 
   return () => {
@@ -305,7 +322,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
               <g
                 role="img"
                 tabindex={0}
-                aria-label={activePoint.value ? `${summary.value}. Point ${activePoint.value.index + 1}: ${activePoint.value.value ?? 'no value'}` : summary.value}
+                aria-label={activePoint.value ? `${summary.value}. Point ${activePoint.value.index + 1}: ${activePoint.value.value === null ? 'no value' : valueText(activePoint.value.value, activePoint.value.payload)}` : summary.value}
                 style={{ outline: 'none' }}
                 onMousemove={onPointer}
                 onMouseleave={() => setActive(null)}
@@ -348,6 +365,7 @@ export type SparklineProps<Row = unknown> = StandaloneChartProps<InstanceType<ty
   data: readonly Row[]
   dataKey?: RowDataKey<NoInfer<Row>>
   nameKey?: RowDataKey<NoInfer<Row>>
+  valueFormatter?: (value: number, row: NoInfer<Row>) => string
 }>
 
 const _Sparkline = defineComponent({

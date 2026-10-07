@@ -141,4 +141,33 @@ function text(value: string | undefined) { return value }
     :data="hits"
     x-key="nope"
   />
+  <!-- Every standalone chart with numbers takes the same valueFormatter and locale pair. -->
+  <Heatmap
+    :data="hits"
+    data-key="visits"
+    locale="de-DE"
+    :value-formatter="(value, cell) => `${value} ${cell.rows[0]?.weekday}`"
+  />
+  <CalendarHeatmap
+    :data="days"
+    locale="de-DE"
+    :value-formatter="(value, day) => `${value} ${day.rows[0]?.detail}`"
+  />
+  <CohortChart
+    :data="cohorts"
+    locale="de-DE"
+    :value-formatter="(value, cell) => `${value} ${cell.row.detail}`"
+  />
+  <Sparkline
+    :data="[1, 2]"
+    locale="de-DE"
+    :value-formatter="(value, row) => `${value + row}`"
+  />
+  <BarList
+    :data="hits"
+    data-key="visits"
+    name-key="weekday"
+    locale="de-DE"
+    :value-formatter="(value, row) => `${value} ${row.hour}`"
+  />
 </template>

@@ -7,7 +7,7 @@ import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartLis
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import type { StandaloneChartProps } from './directChartTypes'
 import type { CellGridSlots } from './CellGridLayer'
-import { cellGridSharedProps } from './cellGridProps'
+import { cellGridSharedProps, valueFormatProps } from './cellGridProps'
 import { type HeatmapCell, type HeatmapKey, HeatmapView } from './Heatmap'
 import type { SvgTemplateAttributes } from '@/utils/attributes'
 
@@ -57,8 +57,8 @@ const CohortChartVueProps = {
   periodFormatter: { type: Function as PropType<(period: number) => string>, default: (period: number) => String(period) },
   color: { type: String, default: seriesColor(0) },
   emptyColor: { type: String, default: 'var(--v-charts-muted, #eef2f7)' },
-  /** Locale for numbers. Fixed by default so server and client render the same. */
-  locale: { type: String, default: 'en-US' },
+  /** Without `valueFormatter`, values show as a rounded percent (`mode: 'percent'`) or a count. */
+  ...valueFormatProps,
   gap: { type: Number, default: 2 },
   desc: String,
   title: { type: String, default: 'Cohort retention' },
@@ -126,7 +126,7 @@ const _CohortChart = defineComponent({
         max={props.mode === 'percent' ? 100 : undefined}
         fillMissing={false}
         showValues
-        valueFormatter={value => format(value)}
+        valueFormatter={(value, cell) => props.valueFormatter ? props.valueFormatter(value, cohortCell(cell as HeatmapCell<CohortPeriod>)) : format(value)}
         xTickFormatter={x => props.periodFormatter(Number(x))}
         yTickFormatter={y => `${y} · ${numbers.value.format(model.value.sizes.get(String(y)) ?? 0)}`}
         color={props.color}
@@ -155,6 +155,7 @@ export type CohortChartProps<Row = unknown> = StandaloneChartProps<InstanceType<
   data: readonly Row[]
   cohortKey?: RowDataKey<NoInfer<Row>>
   valuesKey?: RowDataKey<NoInfer<Row>>
+  valueFormatter?: (value: number, cell: CohortCell<NoInfer<Row>>) => string
 }>
 
 export const CohortChart = _CohortChart as unknown as <Row>(

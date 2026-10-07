@@ -2,7 +2,7 @@ import { clock, frame } from '@/test/motionClock'
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { BarList, CalendarHeatmap, CohortChart, Heatmap, Tooltip, Tracker } from '@/index'
+import { BarList, CalendarHeatmap, CohortChart, Heatmap, Sparkline, Tooltip, Tracker } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { motionTokens } from '@/animation/motion'
 import { levelOf, toDayNumber } from '../cellGridUtils'
@@ -623,3 +623,25 @@ it('moves BarList height with entering and leaving row presence', async () => {
 
 vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
 vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))
+
+// One value-text rule for every standalone chart with numbers: a `valueFormatter` reaches the
+// tooltip and the accessible name of the active item (BarList, without a tooltip, its row text).
+it.each([
+  { name: 'Heatmap', chart: (format: (value: number) => string) => <Heatmap width={300} height={200} isAnimationActive={false} activeIndex={0} valueFormatter={format} data={[{ x: 'A', y: 'B', value: 3 }]}><Tooltip isAnimationActive={false} /></Heatmap> },
+  { name: 'CalendarHeatmap', chart: (format: (value: number) => string) => <CalendarHeatmap width={600} height={120} isAnimationActive={false} activeIndex={0} valueFormatter={format} start="2024-01-01" end="2024-01-07" data={[{ date: '2024-01-01', value: 3 }]}><Tooltip isAnimationActive={false} /></CalendarHeatmap> },
+  { name: 'CohortChart', chart: (format: (value: number) => string) => <CohortChart width={300} height={200} isAnimationActive={false} activeIndex={0} mode="count" valueFormatter={format} data={[{ cohort: 'Jan', values: [3] }]}><Tooltip isAnimationActive={false} /></CohortChart> },
+  { name: 'Sparkline', chart: (format: (value: number) => string) => <Sparkline width={100} height={30} isAnimationActive={false} activeIndex={0} valueFormatter={format} data={[3, 4]}><Tooltip isAnimationActive={false} /></Sparkline> },
+  { name: 'BarList', chart: (format: (value: number) => string) => <BarList isAnimationActive={false} valueFormatter={format} data={[{ name: 'A', value: 3 }]} /> },
+])('$name writes values with valueFormatter', async ({ name, chart }) => {
+  const { container } = render(() => chart(value => `${value} u`))
+  await nextTick()
+  await nextTick()
+  await nextTick()
+  if (name === 'BarList') {
+    expect(container.textContent).toContain('3 u')
+    return
+  }
+  expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain('3 u')
+  const named = [...container.querySelectorAll('[aria-label]')].map(element => element.getAttribute('aria-label'))
+  expect(named.some(label => label?.includes('3 u'))).toBe(true)
+})
