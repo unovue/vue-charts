@@ -1,6 +1,6 @@
 import type { Coordinate, DataKey, VueClassValue } from '@/types/common'
 import type { ChartData } from '@/types/chartData'
-import type { MinPointSize } from '@/shape'
+import type { MinPointSize } from '@/types/shape'
 import type { CartesianViewBox } from '@/types/viewBox'
 
 export type BarPositionPosition = {

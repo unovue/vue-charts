@@ -1,8 +1,7 @@
-import type { CartesianAxisProps } from '@/cartesian/cartesian-axis/CartesianAxis'
+import type { AxisPropsNeededForTicksGenerator, CartesianTickItem, GetTicksInput } from '@/types/tick'
 import type { ViewBox } from '@/types/viewBox'
 import type { ChartOffset } from '@/types'
 import type { AxisId, AxisInterval, XAxisOrientation, YAxisOrientation } from '@/types/axis'
-import type { AxisPropsNeededForTicksGenerator, GetTicksInput } from '@/types/tick'
 import type { SVGAttributes, VNode, VNodeChild } from 'vue'
 
 type AxisPropsForCartesianGridTicksGeneration = AxisPropsNeededForTicksGenerator &
@@ -59,7 +58,7 @@ type GridLineType =
   | boolean
 
 export interface CartesianGridProps extends InternalCartesianGridProps {
-  ticks?: CartesianAxisProps['ticks']
+  ticks?: ReadonlyArray<CartesianTickItem>
   orientation?: XAxisOrientation | YAxisOrientation
   viewBox?: ViewBox
   ry?: SVGAttributes['ry']

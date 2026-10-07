@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 import { useChart } from '@/model/chart'
-import type { BrushProps, BrushStartEndIndex } from '../type'
+import type { BrushInput, BrushStartEndIndex } from '../type'
 
-export function useBrushSetting(props: BrushProps, onRangeChange: (range: BrushStartEndIndex) => void) {
+export function useBrushSetting(props: BrushInput, onRangeChange: (range: BrushStartEndIndex) => void) {
   const chart = useChart()
   chart.brush.register(computed(() => ({
     x: props.x,

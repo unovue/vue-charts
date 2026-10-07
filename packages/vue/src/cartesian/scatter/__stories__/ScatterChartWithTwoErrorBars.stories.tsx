@@ -1,9 +1,10 @@
 import type { StoryObj } from '@storybook/vue3-vite'
 import { ScatterChart } from '@/chart/ScatterChart'
-import { Scatter } from '@/cartesian/scatter'
-import { ErrorBar } from '@/cartesian/error-bar'
-import { XAxis, YAxis } from '@/cartesian/axis'
-import { CartesianGrid } from '@/cartesian/cartesian-grid'
+import { Scatter } from '@/cartesian/scatter/Scatter'
+import { ErrorBar } from '@/cartesian/error-bar/ErrorBar'
+import { XAxis } from '@/cartesian/axis/XAxis'
+import { YAxis } from '@/cartesian/axis/YAxis'
+import { CartesianGrid } from '@/cartesian/cartesian-grid/CartesianGrid'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 
 export default {

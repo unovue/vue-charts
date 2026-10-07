@@ -7,38 +7,40 @@ import type { TrackerProps, TrackerSlots } from './chart/Tracker'
 import type { BarListProps, BarListSlots } from './chart/BarList'
 import type { SparklineProps, SparklineSlots } from './chart/Sparkline'
 import type { JourneySankeyProps, JourneySankeySlots } from './chart/JourneySankey'
-import type {
-  AreaChart,
-  BarChart,
-  ComposedChart,
-  FunnelChart,
-  LineChart,
-  PieChart,
-  RadarChart,
-  RadialBarChart,
-  Sankey,
-  ScatterChart,
-  SunburstChart,
-  Treemap,
-} from './chart'
-import type {
-  Area,
-  Bar,
-  Brush,
-  ErrorBar,
-  Funnel,
-  Line,
-  ReferenceArea,
-  ReferenceDot,
-  ReferenceLine,
-  Scatter,
-  XAxis,
-  YAxis,
-  ZAxis,
-} from './cartesian'
-import type { Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar } from './polar'
-import type { Cell, LabelList, Legend, Tooltip } from './components'
-import type { TooltipContentProps } from './components/tooltip/Tooltip'
+import type { AreaChart } from './chart/AreaChart'
+import type { BarChart } from './chart/BarChart'
+import type { ComposedChart } from './chart/ComposedChart'
+import type { FunnelChart } from './chart/FunnelChart'
+import type { LineChart } from './chart/LineChart'
+import type { PieChart } from './chart/PieChart'
+import type { RadarChart } from './chart/RadarChart'
+import type { RadialBarChart } from './chart/RadialBarChart'
+import type { Sankey } from './chart/Sankey'
+import type { ScatterChart } from './chart/ScatterChart'
+import type { SunburstChart } from './chart/SunburstChart'
+import type { Treemap } from './chart/Treemap'
+import type { Area } from './cartesian/area/Area'
+import type { Bar } from './cartesian/bar/Bar'
+import type { Brush } from './cartesian/brush/Brush'
+import type { ErrorBar } from './cartesian/error-bar/ErrorBar'
+import type { Funnel } from './cartesian/funnel/Funnel'
+import type { Line } from './cartesian/line/Line'
+import type { ReferenceArea } from './cartesian/reference-area/ReferenceArea'
+import type { ReferenceDot } from './cartesian/reference-dot/ReferenceDot'
+import type { ReferenceLine } from './cartesian/reference-line/ReferenceLine'
+import type { Scatter } from './cartesian/scatter/Scatter'
+import type { XAxis } from './cartesian/axis/XAxis'
+import type { YAxis } from './cartesian/axis/YAxis'
+import type { ZAxis } from './cartesian/z-axis/ZAxis'
+import type { Pie } from './polar/pie/Pie'
+import type { PolarAngleAxis } from './polar/radar/PolarAngleAxis'
+import type { PolarRadiusAxis } from './polar/radar/PolarRadiusAxis'
+import type { Radar } from './polar/radar/Radar'
+import type { RadialBar } from './polar/radial-bar/RadialBar'
+import type { Cell } from './components/Cell'
+import type { LabelList } from './components/label/LabelList'
+import type Legend from './components/legend/Legend'
+import type { Tooltip, TooltipContentProps } from './components/tooltip/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
 import type { TooltipPayload } from '@/types/tooltip'

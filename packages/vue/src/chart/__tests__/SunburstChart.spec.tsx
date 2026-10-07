@@ -3,7 +3,7 @@ import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { SunburstChart } from '../SunburstChart'
 import { computeSunburstLayout } from '../sunburstUtils'
-import { Tooltip } from '@/components'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 
 const simpleData = {
   name: 'root',

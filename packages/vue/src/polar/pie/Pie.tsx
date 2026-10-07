@@ -15,7 +15,7 @@ import { extractCellProps, filterOutCells } from '@/utils/cell'
 import type { PieSectorDataItem, ResolvedPieSettings } from '@/core/pie'
 import { computePieSectors, pieLegend } from '@/core/pie'
 import { polarToCartesian } from '@/utils/polar'
-import type { PieProps } from './type'
+import type { PieInput } from './type'
 import { PieVueProps } from './type'
 
 const LABEL_OFFSET = 20
@@ -33,7 +33,7 @@ const PieView = defineComponent({
   name: 'PieView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<PieProps>, required: true },
+    item: { type: Object as PropType<PieInput>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },

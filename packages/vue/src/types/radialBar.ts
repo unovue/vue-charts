@@ -1,4 +1,4 @@
-import type { SectorProps } from '@/shape/Sector'
+import type { SectorInput } from '@/shape/Sector'
 
 export interface RadialBarDataItem {
   cx: number
@@ -11,6 +11,6 @@ export interface RadialBarDataItem {
   fill?: string
   value?: unknown
   payload?: unknown
-  background?: SectorProps
+  background?: SectorInput
   [key: string]: unknown
 }

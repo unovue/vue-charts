@@ -1,4 +1,4 @@
-import type { LinePointItem, LineSlots, ResolvedLineProps } from '../type'
+import type { LineInput, LinePointItem, LineSlots } from '../type'
 import { useChartId } from '@/hooks/useChartId'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartPresentation } from '@/model/presentation'
@@ -14,7 +14,7 @@ export interface LineContext {
   clipPathId: Ref<string>
   layout: Readonly<Ref<string>>
   points: Ref<ReadonlyArray<LinePointItem> | undefined>
-  props: ResolvedLineProps
+  props: LineInput
   attrs: SVGAttributes
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
   needClip: ComputedRef<boolean>
@@ -44,7 +44,7 @@ export function useLineContext() {
 }
 
 export function useLine(
-  props: ResolvedLineProps,
+  props: LineInput,
   attrs: SVGAttributes = {},
   shapeSlot?: LineSlots['shape'],
   dotSlot?: LineSlots['dot'],

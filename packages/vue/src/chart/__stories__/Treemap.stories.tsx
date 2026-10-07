@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { Treemap } from '@/chart/Treemap'
-import { ResponsiveContainer } from '@/container'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 
 const meta = {
   title: 'Examples/Treemap',

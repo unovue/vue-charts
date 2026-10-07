@@ -1,4 +1,4 @@
-import type { CartesianAxisProps } from '@/cartesian/cartesian-axis/CartesianAxis'
+import type { CartesianTickItem } from '@/types/tick'
 import type { CartesianGridProps } from '@/cartesian/cartesian-grid/type'
 
 export const CartesianGridDefaultProps: Partial<CartesianGridProps> = {
@@ -10,7 +10,7 @@ export const CartesianGridDefaultProps: Partial<CartesianGridProps> = {
   // The orientation of axis
   orientation: 'bottom',
   // The ticks
-  ticks: [] as CartesianAxisProps['ticks'],
+  ticks: [] as ReadonlyArray<CartesianTickItem>,
 
   stroke: 'var(--v-charts-axis, #666)',
   tickLine: true,

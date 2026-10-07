@@ -2,12 +2,10 @@ import { useCanMeasureText } from '@/model/runtime'
 /**
  * @fileOverview Cartesian Axis
  */
-import type { LabelProps } from '@/components/label/types'
-import type { CartesianViewBox, CartesianViewBoxRequired } from '@/types/viewBox'
-import type { VueClassValue } from '@/types/common'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { AxisInterval } from '@/types/axis'
 import type { RechartsScale } from '@/types/scale'
-import type { CartesianTickItem } from '@/types/tick'
+import type { CartesianTickItem, TickFormatter } from '@/types/tick'
 import type { PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
@@ -15,7 +13,7 @@ import { computed, defineComponent, reactive } from 'vue'
 import { useTickMotion } from '@/animation/useTickMotion'
 import { get } from 'es-toolkit/compat'
 import Text from '@/components/Text.vue'
-import { Label } from '@/components/label'
+import { Label } from '@/components/label/Label'
 import { Layer } from '@/container/Layer'
 import { getTicks } from '@/cartesian/utils/get-ticks'
 
@@ -23,31 +21,6 @@ import { getTicks } from '@/cartesian/utils/get-ticks'
 export type Orientation = 'top' | 'bottom' | 'left' | 'right'
 /** A unit to be appended to a value */
 export type Unit = string | number
-/** The formatter function of tick */
-export type TickFormatter = (value: unknown, index: number) => string
-
-export interface CartesianAxisProps {
-  class?: VueClassValue
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  unit?: Unit
-  orientation?: Orientation
-  viewBox?: CartesianViewBox
-  mirror?: boolean
-  tickMargin?: number
-  hide?: boolean
-  label?: string | number | LabelProps
-  minTickGap?: number
-  ticks?: ReadonlyArray<CartesianTickItem>
-  tickSize?: number
-  tickFormatter?: TickFormatter
-  interval?: AxisInterval
-  angle?: number
-  scale: RechartsScale
-  axisLine?: boolean | SVGAttributes
-}
 
 export const CartesianAxis = defineComponent({
   name: 'CartesianAxis',

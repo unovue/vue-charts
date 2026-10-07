@@ -12,9 +12,9 @@ const DotVueProps = {
   clipDot: { type: Boolean },
 }
 
-export type DotProps = WithSVGProps<typeof DotVueProps>
+type DotInput = WithSVGProps<typeof DotVueProps>
 
-export const Dot = defineComponent<DotProps>({
+export const Dot = defineComponent<DotInput>({
   name: 'Dot',
   props: DotVueProps,
   inheritAttrs: false,

@@ -7,7 +7,7 @@ import { Bar } from '@/cartesian/bar/Bar'
 import { Line } from '@/cartesian/line/Line'
 import { XAxis } from '@/cartesian/axis/XAxis'
 import { YAxis } from '@/cartesian/axis/YAxis'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('legendSelectors', () => {

@@ -23,6 +23,7 @@ import {
 } from 'd3-shape'
 import { classProp } from '@/types'
 import type { LayoutType, WithSVGProps } from '@/types'
+import type { Point } from '@/types/shape'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils'
 import { svgAttrs } from '@/utils/VueUtils'
@@ -65,12 +66,6 @@ export type CurveType =
   | 'stepAfter'
   | CurveFactory
 
-export interface Point {
-  readonly x: number
-  readonly y: number
-  readonly payload?: unknown
-}
-
 const defined = (p: Point) => p.x === +p.x && p.y === +p.y
 const getX = (p: Point) => p.x
 const getY = (p: Point) => p.y
@@ -88,7 +83,7 @@ function getCurveFactory(type: CurveType, layout: LayoutType | undefined) {
   return CURVE_FACTORIES[name] || curveLinear
 }
 
-type GetPathProps = Pick<CurveProps, 'type' | 'points' | 'baseLine' | 'layout' | 'connectNulls'>
+type GetPathProps = Pick<CurveInput, 'type' | 'points' | 'baseLine' | 'layout' | 'connectNulls'>
 
 /**
  * Calculate the path of curve. Returns null if points is an empty array.
@@ -149,8 +144,9 @@ export const CurveVueProps = {
   class: classProp,
 }
 
-export type CurveProps = WithSVGProps<typeof CurveVueProps>
-export const Curve = defineComponent<CurveProps>({
+/** Props as seen inside Curve; the public `CurveProps` is derived from the component in publicProps.ts. */
+export type CurveInput = WithSVGProps<typeof CurveVueProps>
+export const Curve = defineComponent<CurveInput>({
   name: 'Curve',
   props: CurveVueProps,
   inheritAttrs: false,

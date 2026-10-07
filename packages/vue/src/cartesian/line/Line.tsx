@@ -5,7 +5,7 @@ import { lineEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { LineSlots, ResolvedLineProps } from './type'
+import type { LineInput, LineSlots } from './type'
 import { LineVueProps } from './type'
 import { useLine } from '@/cartesian/line/hooks/useLine'
 import { Layer } from '@/container/Layer'
@@ -22,7 +22,7 @@ const LineView = defineComponent({
   name: 'LineView',
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<ResolvedLineProps>, required: true },
+    item: { type: Object as PropType<LineInput>, required: true },
     svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },

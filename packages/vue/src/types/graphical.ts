@@ -2,8 +2,7 @@ import type { ChartDataKey } from '@/types/base'
 import type { ChartData } from './chartData'
 import type { AxisId } from './axis'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { MinPointSize } from '@/shape'
-import type { NormalizedStackId } from '@/types/shape'
+import type { MinPointSize, NormalizedStackId } from '@/types/shape'
 import type { StackId } from '@/types/tick'
 
 /**

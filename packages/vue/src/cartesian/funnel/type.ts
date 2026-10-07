@@ -2,26 +2,10 @@ import type { ChartDataKey } from '@/types/base'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { PropType } from 'vue'
 import { classProp } from '@/types'
-import type { TooltipType, WithSVGProps } from '@/types'
+import type { TooltipType } from '@/types'
 import type { LegendType } from '@/types/legend'
 
 export type { FunnelTrapezoidItem } from '@/types/funnel'
-
-export interface FunnelProps {
-  // activeShape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
-  data?: unknown[]
-  dataKey: ChartDataKey
-  hide?: boolean
-  id?: string
-  isAnimationActive?: boolean
-  transition?: ValueAnimationTransition<number>
-  lastShapeType?: 'triangle' | 'rectangle'
-  legendType?: LegendType
-  nameKey?: ChartDataKey
-  reversed?: boolean
-  // shape?: ActiveShape<FunnelTrapezoidItem, SVGPathElement>
-  tooltipType?: TooltipType
-}
 
 export const FunnelVueProps = {
   data: { type: Array as PropType<Array<Record<string, unknown>>>, default: undefined },
@@ -42,5 +26,3 @@ export const FunnelVueProps = {
   width: { type: [Number, String] as PropType<number | string>, default: undefined },
   class: classProp,
 }
-
-export type FunnelPropsWithSVG = WithSVGProps<typeof FunnelVueProps>

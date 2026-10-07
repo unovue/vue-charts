@@ -2,7 +2,7 @@ import type { ChartDataKey } from '@/types/base'
 import type { PropType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-v'
 import { classProp } from '@/types'
-import type { VuePropsToType, WithSVGProps } from '@/types'
+import type { VuePropsToType } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 
@@ -34,5 +34,5 @@ export const PieVueProps = {
   class: classProp,
 }
 
-export type PieProps = VuePropsToType<typeof PieVueProps>
-export type PiePropsWithSVG = WithSVGProps<typeof PieVueProps>
+/** Resolved Pie props inside the library; the public `PieProps` is derived from the component. */
+export type PieInput = VuePropsToType<typeof PieVueProps>

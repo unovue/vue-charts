@@ -1,1 +1,0 @@
-export { ErrorBar } from './ErrorBar'

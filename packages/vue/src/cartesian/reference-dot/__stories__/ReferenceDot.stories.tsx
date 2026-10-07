@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { LineChart } from '@/chart/LineChart'
-import { Line } from '@/cartesian/line'
-import { XAxis, YAxis } from '@/cartesian/axis'
-import { CartesianGrid } from '@/cartesian/cartesian-grid'
-import { ReferenceDot } from '@/cartesian/reference-dot'
-import { ReferenceLine } from '@/cartesian/reference-line'
+import { Line } from '@/cartesian/line/Line'
+import { XAxis } from '@/cartesian/axis/XAxis'
+import { YAxis } from '@/cartesian/axis/YAxis'
+import { CartesianGrid } from '@/cartesian/cartesian-grid/CartesianGrid'
+import { ReferenceDot } from '@/cartesian/reference-dot/ReferenceDot'
+import { ReferenceLine } from '@/cartesian/reference-line/ReferenceLine'
 import { ResponsiveContainer } from '@/index'
 
 const meta = {

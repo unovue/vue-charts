@@ -3,7 +3,7 @@ import { nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Funnel, FunnelChart } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 

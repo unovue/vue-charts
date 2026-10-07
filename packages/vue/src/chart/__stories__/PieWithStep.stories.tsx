@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { defineComponent } from 'vue'
 import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
-import { ResponsiveContainer } from '@/container'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 
 const meta = {
   title: 'Examples/Pie/PieWithStep',

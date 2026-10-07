@@ -2,7 +2,7 @@ import type { LinePointItem } from '@/types/line'
 import type { LabelListSlotProps } from '@/components/label/types'
 import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
 import type { ChartDataKey } from '@/types/base'
-import type { TooltipType, VueClassValue, WithSVGProps } from '@/types'
+import type { TooltipType } from '@/types'
 import type { AxisId } from '@/types/axis'
 import type { ValueAnimationTransition } from 'motion-v'
 import type { LegendType } from '@/types/legend'
@@ -11,31 +11,6 @@ import type { CurveType } from '@/shape/Curve'
 import { classProp } from '@/types'
 
 export type { LinePointItem } from '@/types/line'
-
-// Complete LineProps interface
-export interface LineProps {
-  activeDot?: unknown
-  animateNewValues?: boolean
-  class?: VueClassValue
-  connectNulls?: boolean
-  data?: unknown[]
-  dataKey: ChartDataKey
-  dot?: unknown
-  hide?: boolean
-  id?: string
-  isAnimationActive?: boolean
-  label?: unknown
-  legendType?: LegendType
-  name?: string | number
-  stroke?: string
-  strokeWidth?: number
-  tooltipType?: TooltipType
-  transition?: ValueAnimationTransition<number>
-  type?: CurveType
-  unit?: string | number
-  xAxisId?: AxisId
-  yAxisId?: AxisId
-}
 
 export const LineVueProps = {
   activeDot: { type: [Boolean, Object, Function], default: true },
@@ -66,9 +41,7 @@ export const LineVueProps = {
   class: classProp,
 }
 
-export type LinePropsWithSVG = WithSVGProps<typeof LineVueProps>
-
-export type ResolvedLineProps = ExtractPropTypes<typeof LineVueProps>
+export type LineInput = ExtractPropTypes<typeof LineVueProps>
 type ActivePointSlotProps = {
   'index': number
   'dataKey': ChartDataKey
@@ -88,7 +61,7 @@ export type ActivePointsSlots = {
 
 export type LineSlots = ActivePointsSlots & {
   default?: () => VNode[]
-  shape?: (props: import('@/shape/Curve').CurveProps) => VNodeChild
+  shape?: (props: import('@/shape/Curve').CurveInput) => VNodeChild
   dot?: (props: { cx: number, cy: number, index: number, value?: number, payload?: unknown }) => VNodeChild
   label?: (props: LabelListSlotProps) => VNodeChild
 }

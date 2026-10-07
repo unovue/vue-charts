@@ -3,7 +3,7 @@ import type { LayoutType } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LegendType } from '@/types/legend'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
-import type { VuePropsToType, WithSVGProps } from '@/types/common'
+import type { VuePropsToType } from '@/types/common'
 
 export interface LegendSlots {
   content?: (params: LegendContentProps) => VNodeChild
@@ -60,9 +60,9 @@ export const LegendVueProps = {
   to: [String, Object] as PropType<string | HTMLElement>,
 } as const
 
-export type LegendProps = VuePropsToType<typeof LegendVueProps>
-export type LegendPropsWithSVG = WithSVGProps<typeof LegendVueProps>
+/** Resolved Legend props inside the library; the public `LegendProps` is derived from the component. */
+export type LegendInput = VuePropsToType<typeof LegendVueProps>
 
-export interface LegendContentProps extends LegendProps {
+export interface LegendContentProps extends LegendInput {
   payload: LegendPayload[]
 }

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('scatterChart', () => {

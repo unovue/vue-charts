@@ -5,7 +5,7 @@ import { RadialBar } from '@/polar/radial-bar/RadialBar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 import { pageData, pageDataWithFillColor } from '@/storybook/data'
 

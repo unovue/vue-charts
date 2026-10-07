@@ -52,6 +52,7 @@ import type {
   TooltipPayloadEntry,
   TooltipProps,
   TrackerProps,
+  TrapezoidItem,
   TrapezoidProps,
   TreemapProps,
   XAxisProps,
@@ -111,6 +112,7 @@ export type PublicPropsProbe = [
   TextProps,
   TooltipProps,
   TrackerProps,
+  TrapezoidItem,
   TrapezoidProps,
   TreemapProps,
   XAxisProps,
@@ -157,3 +159,23 @@ export type StandaloneSelection = [
   CalendarHeatmapProps['activeIndex'],
   SparklineProps['activeIndex'],
 ]
+
+// Props types are derived from the components, so they carry emits and reject removed props.
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Expect<T extends true> = T
+type Has<Props, Key extends PropertyKey> = Key extends keyof Props ? true : false
+
+export type DerivedPropsAssertions = [
+  Expect<Has<AreaProps, 'onClick'>>,
+  Expect<Has<BarProps, 'onClick'>>,
+  Expect<Has<LineProps, 'onClick'>>,
+  Expect<Has<PieProps, 'onClick'>>,
+  Expect<Has<BrushProps, 'onUpdate:range'>>,
+  Expect<Has<LegendProps, 'onUpdate:hidden'>>,
+  Expect<Has<FunnelProps, 'fill'>>,
+  Expect<Has<FunnelProps, 'class'>>,
+  Expect<Equal<Has<LineProps, 'animateNewValues'>, false>>,
+  Expect<Equal<Has<TrapezoidItem, 'onClick'>, false>>,
+  Expect<Equal<undefined extends CartesianAxisProps['scale'] ? true : false, true>>,
+]
+export const axisWithoutScale: CartesianAxisProps = {}

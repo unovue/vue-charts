@@ -12,7 +12,7 @@ import { Rectangle } from '@/shape/Rectangle'
 import { Sector } from '@/shape/Sector'
 import { getCursorPoints } from '@/components/utils'
 import type { RadialCursorPoints } from '@/components/types'
-import type { Point } from '@/shape'
+import type { Point } from '@/types/shape'
 
 import type { CursorSlotProps } from './types'
 

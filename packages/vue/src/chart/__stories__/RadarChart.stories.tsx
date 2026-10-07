@@ -5,9 +5,9 @@ import { Radar } from '@/polar/radar/Radar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
 import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { Tooltip } from '@/components/tooltip/Tooltip'
-import { ResponsiveContainer } from '@/container'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 import { rangeData } from '@/storybook/data'
 
 const meta = {

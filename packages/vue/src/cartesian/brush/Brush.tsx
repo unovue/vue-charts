@@ -2,7 +2,7 @@ import type { CSSProperties, PropType, VNode } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h, nextTick, reactive, watch } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { BrushProps, BrushTravellerId } from './type'
+import type { BrushInput, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
 import { Layer } from '../../container/Layer'
 import { Background } from './components/Background'
@@ -30,7 +30,7 @@ const BrushView = defineComponent({
   emits: brushEmits,
   inheritAttrs: false,
   props: {
-    item: { type: Object as PropType<BrushProps>, required: true },
+    item: { type: Object as PropType<BrushInput>, required: true },
     svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
     range: { type: Object as PropType<BrushStartEndIndex | null>, default: null },
     controlled: { type: Function as PropType<() => boolean>, required: true },

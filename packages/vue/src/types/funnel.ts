@@ -1,8 +1,8 @@
 import type { Coordinate } from '@/types/common'
 import type { ViewBox } from '@/types/viewBox'
-import type { TrapezoidProps } from '@/shape'
+import type { TrapezoidItem } from '@/types/shape'
 
-export interface FunnelTrapezoidItem extends TrapezoidProps {
+export interface FunnelTrapezoidItem extends TrapezoidItem {
   x: number
   y: number
   upperWidth: number
