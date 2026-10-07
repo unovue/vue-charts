@@ -26,6 +26,8 @@ Arc shapes (pie, radial and sunburst sectors) are not measured by the progress c
 
 The report advances to each Playwright fake-clock animation frame (16 ms, encoded at 62.5 fps), and uses the actual clock time for curves. This avoids combining two animation frames into one sample when fractional clock advances round up. Before each data or pointer step, it waits for three unchanged geometry frames, up to 2 seconds; failure adds a `did not settle` flag. Entrance is recorded immediately so its motion remains visible. Interrupt resets the data with `fromOne` before settling.
 
+Each capture has a budget derived from the independent static target: the longest enter/update/exit token, the bounded cascade token when present, and `drawTiming` for the target line geometry. Curve components supply their point geometry; Sparkline supplies its rendered path length. The budget adds a fixed 100 ms settlement margin and, for interruption, its scheduled 150 ms delay. Item count never extends the cascade duration. The report records these inputs in each row's `budget`; geometry must reach the independent target within that budget. Real-clock timing still samples 900 ms. Cut-off and stalled transitions remain failures.
+
 Use `--frames` to also save each transition's geometry as `<scenario>/<step>.frames.json` beside the videos. Run `node --test packages/vue/test/lab/report-metrics.test.mjs` to check that a synthetic one-frame 40 px jump still triggers the jump flag. The jump, backwards, stall, unsettled and overlap thresholds are unchanged.
 
 Dashboard scenarios:

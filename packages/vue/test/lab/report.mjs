@@ -7,7 +7,8 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { motionTokens } from '../../src/animation/motion.ts'
+import { cascadeTiming, drawTiming, motionTokens } from '../../src/animation/motion.ts'
+import { polylineLength } from '../../src/animation/ridingLabels.ts'
 import { checkReport, curves, flags } from './report-metrics.mjs'
 import { installHTMLGeometry } from './html-geometry.mjs'
 import { FRAME, advanceFrame, flag, has, launchBrowser, positional, repo, settle, startServer } from './shared.mjs'
@@ -16,7 +17,9 @@ const out = resolve(flag('out', join(repo, '.evidence/motion-report')))
 const accepted = JSON.parse(readFileSync(new URL('./accepted-flags.json', import.meta.url), 'utf8'))
 const only = flag('steps', '')
 const throttle = !has('no-throttle')
-const WINDOW = 900
+const TIMING_WINDOW = 900
+const SETTLEMENT_MARGIN = 100
+const INTERRUPTION_DELAY = 150
 const all = ['bar', 'barStacked', 'barHorizontal', 'barNegative', 'line', 'lineMonotone', 'area', 'areaStacked', 'composed', 'scatter', 'pie', 'donut', 'radar', 'radial', 'funnel', 'treemap', 'sankey', 'journey', 'tracker', 'calendar', 'heatmap', 'cohort', 'sparkline', 'barList', 'sunburst', 'tooltip', 'resize', 'barMany', 'lineMany']
 const scenarios = positional()
 if (scenarios.some(s => !all.includes(s)))
@@ -192,13 +195,13 @@ function stats(intervals) {
   return { frames: intervals.length, worst: sorted.at(-1) ?? 0, p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0, slow: intervals.filter(v => v > 20).length }
 }
 
-function svgCurves(curveList, kind) {
+function svgCurves(curveList, kind, durationMs) {
   const W = 380
   const H = 170
   const P = 22
-  const x = t => P + (t / WINDOW) * (W - P - 6)
+  const x = t => P + (t / durationMs) * (W - P - 6)
   const y = p => H - P - p * (H - 2 * P)
-  const idealPts = Array.from({ length: 91 }, (_, i) => i * 10).map(t => `${x(t).toFixed(1)},${y(ideal[kind](t)).toFixed(1)}`).join(' ')
+  const idealPts = Array.from({ length: Math.ceil(durationMs / 10) + 1 }, (_, i) => i * 10).map(t => `${x(t).toFixed(1)},${y(ideal[kind](t)).toFixed(1)}`).join(' ')
   const lines = curveList.slice(0, 120).map((c, i) => `<polyline fill="none" stroke="hsl(${(i * 47) % 360} 70% 45%)" stroke-opacity=".55" stroke-width="1.2" points="${c.pts.map(([t, p]) => `${x(t).toFixed(1)},${y(Math.max(-0.3, Math.min(1.3, p))).toFixed(1)}`).join(' ')}"><title>${c.id}</title></polyline>`).join('')
   const grid = [0, 0.5, 1].map(p => `<line x1="${P}" x2="${W - 6}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".12"/><text x="2" y="${y(p) + 3}" font-size="9" fill="currentColor" opacity=".5">${p * 100}%</text>`).join('')
   const ticks = [0, 250, 500, 750].map(t => `<text x="${x(t) - 6}" y="${H - 6}" font-size="9" fill="currentColor" opacity=".5">${t}ms</text>`).join('')
@@ -207,7 +210,7 @@ function svgCurves(curveList, kind) {
 
 // Frame-exact rendering: advance to each fake-clock animation frame, one screenshot per frame.
 // What each frame shows is exact; real-time cost is measured separately on a real clock.
-async function record(page, dir, name, act) {
+async function record(page, dir, name, act, durationMs) {
   const frameDir = join(dir, `${name}-frames`)
   mkdirSync(frameDir, { recursive: true })
   const clip = await page.locator('.frame').boundingBox()
@@ -215,7 +218,7 @@ async function record(page, dir, name, act) {
   const before = await page.evaluate(() => window.__snapshot())
   await act()
   const started = await page.evaluate(() => performance.now())
-  for (let i = 0, t = 0; t <= WINDOW; i++) {
+  for (let i = 0, t = 0; t <= durationMs; i++) {
     frames.push({ t, ...await page.evaluate(() => ({ shapes: window.__snapshot(), overlap: window.__overlap() })) })
     await page.screenshot({ path: join(frameDir, `${String(i).padStart(4, '0')}.jpg`), clip, type: 'jpeg', quality: 88 })
     await advanceFrame(page)
@@ -261,6 +264,43 @@ async function openPage(s, fake, reduced = false) {
   await page.waitForSelector('svg.v-charts-surface, .v-charts-bar-list')
   return { context, page, errors }
 }
+// Use independent target data, never an observed animation duration, to bound capture.
+async function recordingBudget(page, step) {
+  const geometry = await page.evaluate(() => {
+    const paths = [...document.querySelectorAll('path.v-charts-line-curve, path.v-charts-area-curve, path.v-charts-sparkline-line')]
+    return {
+      lines: paths.map(path => ({
+        points: path.__vueParentComponent?.props.points?.map(({ x, y }) => ({ x, y })),
+        length: path.getTotalLength(),
+      })),
+      cascade: !!document.querySelector('.v-charts-treemap')
+        || [...document.querySelectorAll('.v-charts-cell-grid')]
+          .some(grid => grid.__vueParentComponent?.props.entrance === 'cascade'),
+    }
+  })
+  const lengths = geometry.lines.map(line => line.points ? polylineLength(line.points) : line.length)
+  // Cascade delays take a bounded share of the token duration, independent of item count.
+  const cascadeSeconds = geometry.cascade
+    ? cascadeTiming.duration * cascadeTiming.spread + cascadeTiming.duration * (1 - cascadeTiming.spread)
+    : 0
+  const seconds = Math.max(
+    motionTokens.enter.duration,
+    motionTokens.update.duration,
+    motionTokens.exit.duration,
+    cascadeSeconds,
+    ...lengths.map(length => drawTiming(length).duration),
+  )
+  const interruptionMs = step === 'interrupt' ? INTERRUPTION_DELAY : 0
+  return {
+    lengths,
+    cascadeSeconds,
+    seconds,
+    interruptionMs,
+    marginMs: SETTLEMENT_MARGIN,
+    durationMs: Math.ceil(seconds * 1000) + interruptionMs + SETTLEMENT_MARGIN,
+  }
+}
+
 function actions(page, box) {
   return async (step) => {
     if (step === 'pointer-enter')
@@ -270,7 +310,7 @@ function actions(page, box) {
     if (step === 'pointer-leave')
       return page.mouse.move(box.x + 520, box.y + box.height + 60)
     if (step === 'interrupt')
-      return page.evaluate(() => { window.lab.step('values'); setTimeout(() => window.lab.step('removeMiddle'), 150) })
+      return page.evaluate((delay) => { window.lab.step('values'); setTimeout(() => window.lab.step('removeMiddle'), delay) }, INTERRUPTION_DELAY)
     if (step !== 'entrance')
       return page.evaluate(name => window.lab.step(name), step)
   }
@@ -303,13 +343,13 @@ try {
         await timingPage.page.waitForTimeout(900)
       }
       const settled = step === 'entrance' || await settle(visual.page)
-      const recorded = await record(visual.page, dir, step, () => act(step))
       await actTarget(step)
-      // The static control computes the target independently of the recorded curve.
-      // Run pending interruption timers too; a stable early sample is not the target.
-      await targetPage.page.clock.runFor(WINDOW)
+      // Static controls have no animation; release pending interruption actions and layout.
+      await targetPage.page.clock.runFor(TIMING_WINDOW)
       const targetSettled = await settle(targetPage.page)
       const target = await targetPage.page.evaluate(() => window.__snapshot())
+      const budget = await recordingBudget(targetPage.page, step)
+      const recorded = await record(visual.page, dir, step, () => act(step), budget.durationMs)
       const curveList = curves(recorded.frames)
       let { issues } = flags(curveList, recorded.frames, target)
       if (!targetSettled)
@@ -350,7 +390,7 @@ try {
           const beforeReplay = step.startsWith('pointer') ? await timingPage.page.evaluate(() => window.__snapshot()) : undefined
           const cdp = await timingPage.context.newCDPSession(timingPage.page)
           await cdp.send('Emulation.setCPUThrottlingRate', { rate: rate ?? 1 })
-          const t = timingPage.page.evaluate(ms => window.__timing(ms), WINDOW)
+          const t = timingPage.page.evaluate(ms => window.__timing(ms), TIMING_WINDOW)
           await actReal(step)
           const r = await t
           await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
@@ -367,7 +407,7 @@ try {
         const id = issue.slice(10)
         return { id, recorded: recorded.frames.at(-1).shapes[id], target: target[id] }
       })
-      report.push({ scenario: s, step, kind, issues, settlement, timing, curves: curveList.length, video: recorded.video, slow: recorded.slow, svg: svgCurves(curveList, kind), errors })
+      report.push({ scenario: s, step, kind, issues, settlement, budget, timing, curves: curveList.length, video: recorded.video, slow: recorded.slow, svg: svgCurves(curveList, kind, budget.durationMs), errors })
       const last = report.at(-1)
       console.log(`${s.padEnd(13)} ${step.padEnd(13)} curves=${String(last.curves).padStart(3)} issues=${String(issues.length).padStart(2)} 1x worst=${timing['1x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['1x']?.slow ?? '-'} 4x worst=${timing['4x']?.worst.toFixed(0) ?? '-'}ms slow=${timing['4x']?.slow ?? '-'} lt=${JSON.stringify(timing['4x']?.longtasks ?? [])}${issues.length ? `\n    ${issues.slice(0, 6).join('\n    ')}` : ''}${errors.length ? `\n    ERR ${errors.slice(0, 3).join(' | ')}` : ''}`)
     }
