@@ -71,7 +71,6 @@
   },
   "pnpm": {
     "overrides": {
-      "nuxt-og-image>@unhead/vue": "2.1.12",
       "vue": "3.5.18"
     }
   },

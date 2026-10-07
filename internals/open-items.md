@@ -64,6 +64,12 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
 
 ## Checks and tooling
 
+- **P2 The workspace pins Vue to 3.5.18** (`pnpm.overrides` in the root `package.json`), so unit
+  tests do not run on the Vue that consumers get (3.5.43 in the consumer fixtures). Without the
+  pin, `pnpm typecheck` fails with 4 errors where JSX spreads props into `Trapezoid`
+  (`cartesian/funnel/Funnel.tsx`), `Symbols` (`cartesian/scatter/Scatter.tsx`), `Text`
+  (`components/label/LabelView.tsx`) and `Sector` (`polar/pie/Pie.tsx`). Fix the prop types,
+  then remove the override.
 - **P2 Playground recorder times out on `/line-charts`** in some full sweeps; an isolated
   retry passes. Find whether the capture stalls or the page never settles.
 - **P3 Firefox does not launch on the maintainer's Mac** (timeout after 30 s, also outside the
