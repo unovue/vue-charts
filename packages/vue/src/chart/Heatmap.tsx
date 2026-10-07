@@ -1,16 +1,17 @@
+import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
-import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, cellColorScale } from './cellGridUtils'
 
 export type HeatmapKey = string | number
@@ -229,14 +230,7 @@ const _Heatmap = defineComponent({
               title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
-              {...{
-                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-                'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
-                'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
-                'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),
-                'onAnimation-start': () => emit('animation-start'),
-                'onAnimation-end': () => emit('animation-end'),
-              }}
+              {...cellGridListeners(emit)}
             >
               {{ cell: slots.cell }}
             </CellGridLayer>
@@ -261,19 +255,13 @@ function cellKey(x: HeatmapKey, y: HeatmapKey) {
  */
 export type HeatmapSlots<Row = unknown> = CellGridSlots<HeatmapCell<Row>> & { default?: () => VNode[] }
 
-export type HeatmapProps<Row = unknown> = Omit<InstanceType<typeof _Heatmap>['$props'], 'data' | 'xKey' | 'yKey' | 'dataKey' | 'valueFormatter' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
-  'data': readonly Row[]
-  'xKey'?: RowDataKey<NoInfer<Row>>
-  'yKey'?: RowDataKey<NoInfer<Row>>
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'valueFormatter'?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
-  'onCellClick'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-click'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (cell: HeatmapCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-}
+export type HeatmapProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _Heatmap>['$props'], CellEvents<HeatmapCell<NoInfer<Row>>> & {
+  data: readonly Row[]
+  xKey?: RowDataKey<NoInfer<Row>>
+  yKey?: RowDataKey<NoInfer<Row>>
+  dataKey?: RowDataKey<NoInfer<Row>>
+  valueFormatter?: (value: number, cell: HeatmapCell<NoInfer<Row>>) => string
+}>
 
 export const Heatmap = _Heatmap as unknown as <Row>(
   props: HeatmapProps<Row>,

@@ -6,6 +6,7 @@ import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import { cascadeReveal, motionTokens } from '@/animation/motion'
 import { type Move, useKeyedTransition } from '@/animation/useKeyedTransition'
 import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
+import { cellGridEmits } from '@/events/componentEvents'
 import type { GridCell } from './cellGridUtils'
 import { isFocusVisible } from './shell'
 
@@ -74,15 +75,6 @@ function findSeams(previous: readonly GridCell[], next: readonly GridCell[]): Se
     }
   }
   return seams
-}
-
-export const cellGridEmits = {
-  'update:activeIndex': (_index: number | null) => true,
-  'cell-click': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'cell-mouseenter': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'cell-mouseleave': (_payload: unknown, _index: number, _event: MouseEvent) => true,
-  'animation-start': () => true,
-  'animation-end': () => true,
 }
 
 export { cellGridSharedProps } from './cellGridProps'

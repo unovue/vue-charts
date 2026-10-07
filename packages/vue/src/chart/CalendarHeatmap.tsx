@@ -1,16 +1,17 @@
+import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
 import { type MovingLabel, MovingLabels } from '@/animation/MovingLabels'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
-import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, cellColorScale, dayNumberToIso, formatDay, toDayNumber, weekdayOf } from './cellGridUtils'
 
 export interface CalendarDay<Row = unknown> {
@@ -229,14 +230,7 @@ const _CalendarHeatmap = defineComponent({
               title={props.title}
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
-              {...{
-                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-                'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
-                'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
-                'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),
-                'onAnimation-start': () => emit('animation-start'),
-                'onAnimation-end': () => emit('animation-end'),
-              }}
+              {...cellGridListeners(emit)}
             >
               {{ cell: slots.cell }}
             </CellGridLayer>
@@ -256,17 +250,11 @@ const _CalendarHeatmap = defineComponent({
  */
 export type CalendarHeatmapSlots<Row = unknown> = CellGridSlots<CalendarDay<Row>> & { default?: () => VNode[] }
 
-export type CalendarHeatmapProps<Row = unknown> = Omit<InstanceType<typeof _CalendarHeatmap>['$props'], 'data' | 'dateKey' | 'dataKey' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
-  'data': readonly Row[]
-  'dateKey'?: RowDataKey<NoInfer<Row>>
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'onCellClick'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-click'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (cell: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (day: CalendarDay<NoInfer<Row>>, index: number, event: MouseEvent) => void
-}
+export type CalendarHeatmapProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _CalendarHeatmap>['$props'], CellEvents<CalendarDay<NoInfer<Row>>> & {
+  data: readonly Row[]
+  dateKey?: RowDataKey<NoInfer<Row>>
+  dataKey?: RowDataKey<NoInfer<Row>>
+}>
 
 export const CalendarHeatmap = _CalendarHeatmap as unknown as <Row>(
   props: CalendarHeatmapProps<Row>,

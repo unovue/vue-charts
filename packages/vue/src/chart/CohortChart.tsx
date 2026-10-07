@@ -3,9 +3,10 @@ import type { DataKey } from '@/types/common'
 import { getValueByDataKey } from '@/utils/chart'
 import { seriesColor } from '@/utils/theme'
 import { type PropType, type SlotsType, type VNode, computed, defineComponent } from 'vue'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
-import { type CellGridSlots, type CellSlotProps, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import type { StandaloneChartProps } from './directChartTypes'
+import { type CellGridSlots, type CellSlotProps, cellGridSharedProps } from './CellGridLayer'
 import { Heatmap, type HeatmapCell, type HeatmapKey } from './Heatmap'
 
 export interface CohortCell<Row = unknown> {
@@ -112,26 +113,7 @@ const _CohortChart = defineComponent({
       <Heatmap
         {...attrs}
         {...chartListeners(emit)}
-        {...{
-          'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-          'onCell-click': (payload: HeatmapCell<CohortPeriod>, index: number, event: MouseEvent) => {
-            const cell = cohortCell(payload)
-            if (cell)
-              emit('cell-click', cell, index, event)
-          },
-          'onCell-mouseenter': (payload: HeatmapCell<CohortPeriod>, index: number, event: MouseEvent) => {
-            const cell = cohortCell(payload)
-            if (cell)
-              emit('cell-mouseenter', cell, index, event)
-          },
-          'onCell-mouseleave': (payload: HeatmapCell<CohortPeriod>, index: number, event: MouseEvent) => {
-            const cell = cohortCell(payload)
-            if (cell)
-              emit('cell-mouseleave', cell, index, event)
-          },
-          'onAnimation-start': () => emit('animation-start'),
-          'onAnimation-end': () => emit('animation-end'),
-        }}
+        {...cellGridListeners(emit, cohortCell)}
         data={model.value.rows}
         xKey="period"
         yKey="cohort"
@@ -171,17 +153,11 @@ const _CohortChart = defineComponent({
 
 export type CohortChartSlots<Row = unknown> = CellGridSlots<CohortCell<Row>> & { default?: () => VNode[] }
 
-export type CohortChartProps<Row = unknown> = Omit<InstanceType<typeof _CohortChart>['$props'], 'data' | 'cohortKey' | 'valuesKey' | 'onCell-click' | 'onCell-mouseenter' | 'onCell-mouseleave'> & {
-  'data': readonly Row[]
-  'cohortKey'?: RowDataKey<NoInfer<Row>>
-  'valuesKey'?: RowDataKey<NoInfer<Row>>
-  'onCellClick'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-click'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (cell: CohortCell<NoInfer<Row>>, index: number, event: MouseEvent) => void
-}
+export type CohortChartProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _CohortChart>['$props'], CellEvents<CohortCell<NoInfer<Row>>> & {
+  data: readonly Row[]
+  cohortKey?: RowDataKey<NoInfer<Row>>
+  valuesKey?: RowDataKey<NoInfer<Row>>
+}>
 
 export const CohortChart = _CohortChart as unknown as <Row>(
   props: CohortChartProps<Row>,

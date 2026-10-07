@@ -1,14 +1,14 @@
-import type { ChartRootAttributes } from './directChartTypes'
+import type { StandaloneChartProps } from './directChartTypes'
 import type { ChartRenderContext, ChartVNode, RowDataKey } from '@/types/typed'
 import { getValueByDataKey } from '@/utils/chart'
-import { type ExtractPublicPropTypes, type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
-import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { type PropType, type SlotsType, type VNode, computed, defineComponent, reactive } from 'vue'
+import { type CellEvents, cellGridEmits, cellGridListeners, chartEmits, chartListeners } from '@/events/componentEvents'
 import { chartSizeProps } from '@/hooks/useResponsiveSize'
 import { useTrackedData } from '@/hooks/useTrackedData'
 import { Layer } from '@/container/Layer'
 import { ChartShell, useChartShell } from './ChartShell'
 import { standaloneChartOptions } from './shell'
-import { CellGridLayer, type CellGridSlots, cellGridEmits, cellGridSharedProps } from './CellGridLayer'
+import { CellGridLayer, type CellGridSlots, cellGridSharedProps } from './CellGridLayer'
 import { type GridCell, formatDay, toDayNumber } from './cellGridUtils'
 
 /** Default fill per status. Every color reads a CSS variable first, so themes can restyle it. */
@@ -50,23 +50,11 @@ const TrackerVueProps = {
 }
 
 export type TrackerSlots<Row = unknown> = CellGridSlots<Row> & { default?: () => VNode[] }
-export type TrackerProps<Row = unknown> = ChartRootAttributes & Omit<
-  ExtractPublicPropTypes<typeof TrackerVueProps & typeof chartSizeProps>,
-  'data' | 'dataKey' | 'nameKey'
-> & {
-  'data': readonly Row[]
-  'dataKey'?: RowDataKey<NoInfer<Row>>
-  'nameKey'?: RowDataKey<NoInfer<Row>>
-  'onCell-click'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onCellClick'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onCell-mouseenter'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onCellMouseenter'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onCell-mouseleave'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onCellMouseleave'?: (row: NoInfer<Row>, index: number, event: MouseEvent) => void
-  'onUpdate:activeIndex'?: (index: number | null) => void
-  'onAnimation-start'?: () => void
-  'onAnimation-end'?: () => void
-}
+export type TrackerProps<Row = unknown> = StandaloneChartProps<InstanceType<typeof _Tracker>['$props'], CellEvents<NoInfer<Row>> & {
+  data: readonly Row[]
+  dataKey?: RowDataKey<NoInfer<Row>>
+  nameKey?: RowDataKey<NoInfer<Row>>
+}>
 
 const _Tracker = defineComponent({
   name: 'Tracker',
@@ -142,14 +130,7 @@ const _Tracker = defineComponent({
               isAnimationActive={props.isAnimationActive}
               transition={props.transition}
               entrance="slide"
-              {...{
-                'onUpdate:activeIndex': (index: number | null) => emit('update:activeIndex', index),
-                'onCell-click': (payload: unknown, index: number, event: MouseEvent) => emit('cell-click', payload, index, event),
-                'onCell-mouseenter': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseenter', payload, index, event),
-                'onCell-mouseleave': (payload: unknown, index: number, event: MouseEvent) => emit('cell-mouseleave', payload, index, event),
-                'onAnimation-start': () => emit('animation-start'),
-                'onAnimation-end': () => emit('animation-end'),
-              }}
+              {...cellGridListeners(emit)}
             >
               {{ cell: slots.cell }}
             </CellGridLayer>
