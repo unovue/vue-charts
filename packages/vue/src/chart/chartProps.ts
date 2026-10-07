@@ -1,5 +1,4 @@
 import type { PropType, StyleValue } from 'vue'
-import type { ChartDataKey } from '@/types/base'
 import type { ChartData } from '@/types/chartData'
 import type { LayoutType, Margin, StackOffsetType, SyncMethod } from '@/types'
 import type { ChartTransition } from '@/animation/motion'
@@ -19,9 +18,6 @@ export const commonChartProps = {
   data: {
     type: Array as PropType<ChartData>,
     default: () => [],
-  },
-  dataKey: {
-    type: [String, Number, Function] as PropType<ChartDataKey>,
   },
   desc: {
     type: String,

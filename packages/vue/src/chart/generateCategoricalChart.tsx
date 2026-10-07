@@ -82,7 +82,7 @@ function createChartSetup({
     const descriptionId = useChartId('v-charts-desc')
 
     return () => {
-      const { compact, width, height, title, desc, aspect, initialDimension, ...rest } = props
+      const { compact, title, desc } = props
       const attributes = { ...attrs }
 
       if (compact) {
@@ -91,7 +91,7 @@ function createChartSetup({
         }
         return (
           <Fragment>
-            <ChartSurface {...attrs} {...rest} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
+            <ChartSurface {...attrs} class={props.class} style={props.style} {...{ role: props.accessibilityLayer ? undefined : 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
               <ClipPath clipPathId={clipPathId} />
               {slots.default?.()}
             </ChartSurface>
