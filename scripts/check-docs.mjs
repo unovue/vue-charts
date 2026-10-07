@@ -15,7 +15,7 @@ const ports = checkPorts(4680, 4689)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = join(root, 'docs/.output/public')
-const output = process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/breakit/B12/docs'
+const output = process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? '.evidence/docs'
 const evidence = resolve(root, output)
 
 const selected = process.argv.find(arg => arg.startsWith('--browser='))?.slice(10)

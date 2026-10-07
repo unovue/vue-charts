@@ -10,9 +10,9 @@ const ports = checkPorts(4600, 4699)
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixture = join(root, 'packages/vue/test/fixtures/motion')
-const evidence = join(root, '.evidence/s21')
+const evidence = join(root, '.evidence/motion')
 
-const ignored = spawnSync('git', ['check-ignore', '.evidence/s21/results.json'], { cwd: root })
+const ignored = spawnSync('git', ['check-ignore', '.evidence/motion/results.json'], { cwd: root })
 if (ignored.status !== 0)
   throw new Error('Evidence must be git-ignored: add .evidence/ to .git/info/exclude before running')
 await mkdir(evidence, { recursive: true })
@@ -64,7 +64,7 @@ try {
       result.failures.push(...diagnostics)
       result.passed = result.failures.length === 0
       if (!result.passed) {
-        result.screenshot = `.evidence/s21/${name}-failure.png`
+        result.screenshot = `.evidence/motion/${name}-failure.png`
         await page.screenshot({ path: join(root, result.screenshot) })
       }
       results.push(result)

@@ -12,7 +12,7 @@ import { checkPorts, portText } from './lib/ports.mjs'
 
 const ports = checkPorts(4600, 4699)
 
-const evidence = resolve('.evidence/release-1.0/a11y')
+const evidence = resolve('.evidence/a11y')
 
 let vite
 let server

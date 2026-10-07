@@ -2,7 +2,7 @@
 
 `pnpm check:motion` builds the library and this plain Vite app, which imports `vccs` from
 `packages/vue/dist/es/index.mjs`. It runs every scenario in headless Chromium on a free port in
-4600–4699 and writes results and failure screenshots to `.evidence/s21/`.
+4600–4699 and writes results and failure screenshots to `.evidence/motion/`.
 
 Each scenario measures the 800 ms after a data change: at least 42 frames, no frame interval over
 34 ms except one up to 50 ms, no Vue warnings or page errors, and no recreated DOM element for a

@@ -101,8 +101,8 @@ jobs:
           name: motion-results
           include-hidden-files: true
           path: |
-            .evidence/s21/
-            .evidence/release-1.0/a11y/
+            .evidence/motion/
+            .evidence/a11y/
           if-no-files-found: warn
 
   package:
