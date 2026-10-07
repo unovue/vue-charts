@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { createRegistry } from './registry'
-import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/types/legend'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
 import type { LayoutType, Size } from '@/types'
 

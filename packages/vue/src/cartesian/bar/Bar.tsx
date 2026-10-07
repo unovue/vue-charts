@@ -13,10 +13,11 @@ import { useSetupGraphicalItem, useSetupTooltipEntry } from '@/hooks/useSetupGra
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { BarBackground } from '@/cartesian/bar/components/BarBackground'
 import { BarRectangles } from '@/cartesian/bar/components/BarRectangles'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import { LabelList } from '@/components/label/LabelList'
-import type { ErrorBarDataItem, ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
+import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
+import type { ErrorBarDataItem } from '@/core/errorBar'
 import { getValueByDataKey } from '@/utils/chart'
 import { useGraphicalLayerRef } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
@@ -44,8 +45,6 @@ const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   }
 }
 
-export type { BarSlots } from './type'
-
 const BarView = defineComponent({
   name: 'BarView',
   inheritAttrs: false,
@@ -67,7 +66,7 @@ const BarView = defineComponent({
       index: () => props.activeIndex,
       request: index => emit('update:activeIndex', index),
     })
-    const layout = useChartLayout()
+    const layout = useChartPresentation().layout
 
     const errorBarOffset = computed(() => {
       const first = barData.value?.[0]

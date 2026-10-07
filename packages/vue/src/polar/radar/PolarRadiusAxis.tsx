@@ -9,7 +9,7 @@ import { polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
 import type { LayoutType } from '@/types'
 import { isCategoricalAxis } from '@/utils'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { POLAR_LABEL_VIEW_BOX_KEY } from '@/context/polarLabelViewBoxContext'
 import Text from '@/components/Text.vue'
 import { forwardsSvgAttributes } from '@/utils/attributes'
@@ -132,7 +132,7 @@ export const PolarRadiusAxis = forwardsSvgAttributes(defineComponent({
   slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
     const { radiusAxis } = useChart().axes
-    const layout = useChartLayout()
+    const layout = useChartPresentation().layout
 
     const settings = computed<RadiusAxisSettings>(() => ({
       id: props.radiusAxisId,

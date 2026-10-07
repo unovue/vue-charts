@@ -5,8 +5,6 @@ import { classProp } from '@/types'
 import type { TooltipType } from '@/types'
 import type { LegendType } from '@/types/legend'
 
-export type { FunnelTrapezoidItem } from '@/types/funnel'
-
 export const FunnelVueProps = {
   data: { type: Array as PropType<Array<Record<string, unknown>>>, default: undefined },
   dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },

@@ -1,12 +1,7 @@
 import { useChart } from '@/model/chart'
 import { useTooltipSource } from '@/model/tooltip'
 import { type ComputedRef, computed } from 'vue'
-import {
-  useChartHeight,
-  useChartWidth,
-  useMargin,
-  useViewBox,
-} from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import type { AxisId } from '@/types/axisSettings'
 import type { Coordinate } from '@/types/common'
 
@@ -19,8 +14,20 @@ export interface CartesianDataPoint {
   y: number | string
 }
 
-// Re-export existing layout hooks
-export { useChartWidth, useChartHeight, useMargin }
+/** Returns the chart width in px. Must be used inside a chart component tree. */
+export function useChartWidth() {
+  return useChartPresentation().width
+}
+
+/** Returns the chart height in px. Must be used inside a chart component tree. */
+export function useChartHeight() {
+  return useChartPresentation().height
+}
+
+/** Returns the chart margin. Must be used inside a chart component tree. */
+export function useMargin() {
+  return useChartPresentation().margin
+}
 
 /**
  * Returns whether the tooltip is currently active (visible).
@@ -64,7 +71,7 @@ export function useActiveTooltipLabel() {
  * @returns A reactive object with x, y, width, height or undefined if offset is not yet available
  */
 export function usePlotArea() {
-  return useViewBox()
+  return useChartPresentation().viewBox
 }
 
 /**

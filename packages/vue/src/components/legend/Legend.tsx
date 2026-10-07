@@ -11,7 +11,7 @@ import { useLegendContent } from './hooks/useLegendContent'
 import Surface from '@/container/Surface'
 import type { Size } from '@/types'
 import { isOutsidePosition } from '@/cartesian/getCartesianPosition'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
+import type { LegendPayload } from '@/types/legend'
 import { LegendSymbol, SIZE } from './LegendSymbol'
 
 export type LegendBoundingBox = { width: number, height: number } | null

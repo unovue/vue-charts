@@ -18,8 +18,6 @@ import { mainColor } from '@/core/color'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
 import { forwardsSvgAttributes } from '@/utils/attributes'
 
-export type { LineSlots } from './type'
-
 const LineView = defineComponent({
   name: 'LineView',
   inheritAttrs: false,

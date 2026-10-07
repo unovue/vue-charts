@@ -4,14 +4,14 @@ import { useCanMeasureText, useLegendPortal } from '@/model/runtime'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
-import { useChartHeight, useChartWidth, useMargin, useViewBox } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { getUniqPayload } from '@/utils/payload/getUniqPayload'
 import { sortBy } from 'es-toolkit/compat'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { LayoutType } from '@/types'
 import { getCartesianPosition, isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
+import type { LegendPayload } from '@/types/legend'
 import type { LegendInput } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
@@ -20,10 +20,10 @@ export function useLegend(props: LegendInput) {
   const canMeasureText = useCanMeasureText()
   const contextPayload = chart.legend.payload
   const legendPortalFromContext = useLegendPortal()
-  const margin = useMargin()
-  const chartWidth = useChartWidth()
-  const chartHeight = useChartHeight()
-  const viewBox = useViewBox()
+  const margin = useChartPresentation().margin
+  const chartWidth = useChartPresentation().width
+  const chartHeight = useChartPresentation().height
+  const viewBox = useChartPresentation().viewBox
   const legendArea = chart.legendArea
 
   // Element ref for bounding box calculation

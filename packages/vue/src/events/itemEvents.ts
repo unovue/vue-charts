@@ -1,13 +1,13 @@
 import type { EmitFn, InjectionKey } from 'vue'
 import { inject, provide } from 'vue'
 import type { BarRectangleItem } from '@/types/bar'
-import type { LinePointItem } from '@/cartesian/line/type'
+import type { LinePointItem } from '@/types/line'
 import type { AreaPointItem } from '@/core/area'
 import type { ScatterPointItem } from '@/types/common'
 import type { PieSectorDataItem } from '@/core/pie'
 import type { RadarPoint } from '@/types/radar'
 import type { RadialBarDataItem } from '@/types/radialBar'
-import type { FunnelTrapezoidItem } from '@/cartesian/funnel/type'
+import type { FunnelTrapezoidItem } from '@/types/funnel'
 
 // Views are deferred descendants of the public item; the emitter stays with its owner.
 function createItemEvents<Entry, Extra extends Record<string, (...args: never[]) => boolean> = Record<never, never>>(extra: Extra) {

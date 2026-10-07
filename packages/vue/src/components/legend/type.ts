@@ -1,8 +1,7 @@
 import type { CSSProperties, PropType, VNodeChild } from 'vue'
 import type { LayoutType } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
-import type { LegendType } from '@/types/legend'
-import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { HorizontalAlignmentType, LegendPayload, LegendType, VerticalAlignmentType } from '@/types/legend'
 import type { VuePropsToType } from '@/types/common'
 
 export interface LegendSlots {

@@ -3,10 +3,10 @@ import { delegateItemEvents } from '@/events/delegateItemEvents'
 import { lineEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
 import { Fragment, computed, defineComponent } from 'vue'
-import { useOffset } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { Layer } from '@/container/Layer'
 import { Curve } from '@/shape/Curve'
-import type { LinePointItem } from './type'
+import type { LinePointItem } from '@/types/line'
 import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
@@ -94,7 +94,7 @@ export const StaticLine = defineComponent({
     const emit = lineEvents.use()
     const { points, clipPathId, layout, attrs, props, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
     const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => points.value ?? [])
-    const offset = useOffset()
+    const offset = useChartPresentation().offset
     const chart = useChart()
     const categoryAxis = computed(() => layout.value === 'vertical'
       ? chart.axis('yAxis', props.yAxisId).settings.value

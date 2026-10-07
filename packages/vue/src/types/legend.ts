@@ -27,3 +27,6 @@ export interface LegendPayload {
   inactive?: boolean
   dataKey?: ChartDataKey
 }
+
+export type HorizontalAlignmentType = 'left' | 'center' | 'right'
+export type VerticalAlignmentType = 'top' | 'middle' | 'bottom'

@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { BarChart } from '@/chart/BarChart'
-import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
+import { useChartHeight, useChartWidth } from '@/index'
 
 /**
  * Vue version of ChartSizeDimensions from Recharts storybook.

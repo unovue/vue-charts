@@ -5,7 +5,7 @@ import { Layer } from '@/container/Layer'
 import { useErrorBarContext, useErrorBarRegistry } from './ErrorBarContext'
 import { useChart } from '@/model/chart'
 import { errorBarLines } from '@/core/errorBar'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import type { ErrorBarDirection } from '@/types/bar'
 import type { ErrorBarsSettings } from '@/types/graphical'
 import { forwardsSvgAttributes } from '@/utils/attributes'
@@ -28,7 +28,7 @@ const ErrorBarView = defineComponent({
   setup(view, { slots }) {
     const props = view.item
     const attrs = view.svgAttrs
-    const layout = useChartLayout()
+    const layout = useChartPresentation().layout
     const context = useErrorBarContext()
     const chart = useChart()
     const errorBars = computed(() => {
@@ -72,7 +72,7 @@ export const ErrorBar = forwardsSvgAttributes(defineComponent({
   name: 'ErrorBar',
   props: ErrorBarVueProps,
   setup(props, { attrs, slots }) {
-    const layout = useChartLayout()
+    const layout = useChartPresentation().layout
     // Register this ErrorBar's settings into the parent's registry so the graphical item
     // can report them to chart state, allowing axis domain to extend for error bar ranges.
     const registry = useErrorBarRegistry(null)

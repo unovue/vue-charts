@@ -7,9 +7,9 @@ import type { TrackerProps, TrackerSlots } from './chart/Tracker'
 import type { BarListProps, BarListSlots } from './chart/BarList'
 import type { SparklineProps, SparklineSlots } from './chart/Sparkline'
 import type { JourneySankeyProps, JourneySankeySlots } from './chart/JourneySankey'
-import type { TooltipContentProps } from './components/tooltip/Tooltip'
+import type { TooltipContentProps } from './components/tooltip/types'
 import type { LegendContentProps } from './components/legend/type'
-import type { LegendPayload } from './components/DefaultLegendContent'
+import type { LegendPayload } from './types/legend'
 import type { TooltipPayload } from '@/types/tooltip'
 
 type RowArray<Value, Row> = Value extends readonly unknown[] ? RowItem<Value, Row> : Value

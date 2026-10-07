@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'vue'
 import type { LayoutType, Margin } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
-import type { HorizontalAlignmentType, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { HorizontalAlignmentType, VerticalAlignmentType } from '@/types/legend'
 import { isNumber } from '@/utils'
 
 type PositionInput = {

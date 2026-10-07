@@ -313,5 +313,3 @@ export type TooltipSlots = {
   content?: (props: TooltipContentProps) => VNodeChild
   cursor?: (props: CursorSlotProps) => VNodeChild
 }
-
-export type { TooltipContentProps, CursorSlotProps } from './types'

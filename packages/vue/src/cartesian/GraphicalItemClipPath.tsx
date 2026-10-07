@@ -1,7 +1,7 @@
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
-import { useOffset } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { isClipDot } from '@/core/coordinates'
 
 export const GraphicalItemClipPath = defineComponent({
@@ -21,7 +21,7 @@ export const GraphicalItemClipPath = defineComponent({
     },
   },
   setup(props) {
-    const offset = useOffset()
+    const offset = useChartPresentation().offset
     const { needClipX, needClipY, needClip } = useNeedsClip(() => props.xAxisId!, () => props.yAxisId!)
 
     return () => {
@@ -56,7 +56,7 @@ export const DotsClipPath = defineComponent({
     dot: { type: [Boolean, Object, Function] as PropType<boolean | object>, default: undefined },
   },
   setup(props) {
-    const offset = useOffset()
+    const offset = useChartPresentation().offset
     return () => {
       if (isClipDot(props.dot))
         return null

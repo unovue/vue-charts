@@ -1,7 +1,6 @@
 import type { CSSProperties, Component, VNodeChild } from 'vue'
 import type { LayoutType } from '@/types'
-import type { LegendType } from '@/types/legend'
-import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { HorizontalAlignmentType, LegendPayload, LegendType, VerticalAlignmentType } from '@/types/legend'
 
 interface LegendContentProps {
   layout?: LayoutType | 'auto'

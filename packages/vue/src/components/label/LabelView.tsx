@@ -3,7 +3,7 @@ import type { SlotsType } from 'vue'
 import { defineComponent } from 'vue'
 import type { LabelSlots } from './types'
 import { LabelViewVueProps } from './types'
-import { useViewBox } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { usePolarLabelViewBox } from '@/context/polarLabelViewBoxContext'
 import { isNullish } from '@/utils'
 import { getAttrsOfCartesianLabel, getAttrsOfPolarLabel, isPolar, normalizeViewBox, renderRadialLabel } from '@/components/label/utils'
@@ -15,7 +15,7 @@ export const LabelView = defineComponent({
   slots: Object as SlotsType<LabelSlots>,
   setup(props, { slots, attrs }) {
     const radialLabelId = useChartId('v-charts-radial-line')
-    const viewBoxFromContext = useViewBox()
+    const viewBoxFromContext = useChartPresentation().viewBox
     const polarLabelViewBox = usePolarLabelViewBox()
 
     return () => {

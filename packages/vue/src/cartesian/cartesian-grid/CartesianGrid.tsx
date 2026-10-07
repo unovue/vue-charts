@@ -4,7 +4,7 @@ import { useTickMotion } from '@/animation/useTickMotion'
 import { useCanMeasureText } from '@/model/runtime'
 import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
-import { useChartHeight, useChartWidth, useOffset } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { isNumber, warn } from '@/utils'
 import type { CartesianGridProps, CartesianGridSlots, HorizontalCoordinatesGenerator, VerticalCoordinatesGenerator } from './type'
 import { getCoordinatesOfGrid } from '@/utils/grid'
@@ -102,9 +102,9 @@ const CartesianGridView = defineComponent({
     const chart = useChart()
     const props = view.item
     const attrs = view.svgAttrs
-    const chartWidth = useChartWidth()
-    const chartHeight = useChartHeight()
-    const offset = useOffset()
+    const chartWidth = useChartPresentation().width
+    const chartHeight = useChartPresentation().height
+    const offset = useChartPresentation().offset
 
     // Like the axes, the grid measures tick labels only after hydration, so the client's first
     // render reproduces the server's lines.

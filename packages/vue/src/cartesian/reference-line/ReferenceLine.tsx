@@ -6,7 +6,7 @@ import { classProp } from '@/types'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
 import type { AxisId } from '@/types/axisSettings'
-import { useViewBox } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr, isWellBehavedNumber } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
@@ -39,7 +39,7 @@ const ReferenceLineView = defineComponent({
     const attrs = view.svgAttrs
 
     const clipPathId = useClipPathId()
-    const viewBox = useViewBox()
+    const viewBox = useChartPresentation().viewBox
 
     const xAxisSettings = computed(() => chart.axis('xAxis', props.xAxisId).settings.value)
     const yAxisSettings = computed(() => chart.axis('yAxis', props.yAxisId).settings.value)

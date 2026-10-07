@@ -1,6 +1,6 @@
-import type { LineInput, LinePointItem, LineSlots } from '../type'
+import type { LineInput, LineSlots } from '../type'
+import type { LinePointItem } from '@/types/line'
 import { useChartId } from '@/hooks/useChartId'
-import { useChartLayout } from '@/context/chartLayoutContext'
 import { useChartPresentation } from '@/model/presentation'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { computed, inject, provide, shallowRef } from 'vue'
@@ -47,7 +47,7 @@ export function useLine(
   labelSlot?: LineSlots['label'],
 ) {
   const chart = useChart()
-  const layout = useChartLayout()
+  const layout = useChartPresentation().layout
   const capabilities = useChartPresentation().capabilities
   const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)

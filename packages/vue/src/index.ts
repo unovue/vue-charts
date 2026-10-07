@@ -171,7 +171,7 @@ export type { RadarPoint } from './types/radar'
 export type { RadialBarDataItem } from './types/radialBar'
 
 export type { BrushStartEndIndex } from '@/types/chartData'
-export type { LegendPayload } from './components/DefaultLegendContent'
+export type { LegendPayload } from './types/legend'
 export type { LegendBoundingBox } from './components/legend/Legend'
 export type { BrushIndex } from './cartesian/brush/type'
 export type { TooltipActiveIndex } from '@/types/tooltip'

@@ -3,7 +3,7 @@ import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { sameAxis } from '@/core/axis/key'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useChart } from '@/model/chart'
 import { computeBarRectangles } from '@/core/bar'
@@ -57,7 +57,7 @@ export function useBar(
   activeBarSlot?: BarSlots['activeBar'],
 ) {
   const chart = useChart()
-  const layout = useChartLayout()
+  const layout = useChartPresentation().layout
   const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
   const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))
   const yAxis = computed(() => chart.axis('yAxis', props.yAxisId))

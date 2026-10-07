@@ -15,7 +15,7 @@ import { labelOpacity, polylineLength, sweepShare, sweptLabels } from '@/animati
 import { drawTiming } from '@/animation/motion'
 import { useChart } from '@/model/chart'
 import { useAreaContext } from './hooks/useArea'
-import { useOffset } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { LabelList } from '@/components/label/LabelList'
 
 // The area's dots; series props and slots come from the Area context.
@@ -78,7 +78,7 @@ export const StaticArea = defineComponent({
     const emit = areaEvents.use()
     const { points, clipPathId, layout, attrs, areaData, props, needClip } = useAreaContext()
     const seriesListeners = useSeriesPointEvents<AreaPointItem>(emit, () => points.value ?? [])
-    const offset = useOffset()
+    const offset = useChartPresentation().offset
     const chart = useChart()
     const categoryAxis = computed(() => layout.value === 'vertical'
       ? chart.axis('yAxis', props.yAxisId).settings.value

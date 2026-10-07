@@ -7,8 +7,6 @@ import type { ErrorBarsSettings } from '@/types/graphical'
 
 import type { ErrorBarDataItem } from '@/core/errorBar'
 
-export type { ErrorBarDataItem } from '@/core/errorBar'
-
 export type ErrorBarDataPointFormatter<T> = (
   entry: T,
   dataKey: ChartDataKey,

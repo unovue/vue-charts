@@ -10,8 +10,6 @@ import type { CurveFactory } from 'd3-shape'
 import type { CurveType } from '@/shape/Curve'
 import { classProp } from '@/types'
 
-export type { LinePointItem } from '@/types/line'
-
 export const LineVueProps = {
   activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   isAnimationActive: { type: Boolean, default: undefined },
