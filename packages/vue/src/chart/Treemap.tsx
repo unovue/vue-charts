@@ -87,8 +87,6 @@ const TreemapVueProps = {
   data: { type: Array as PropType<TreemapData[]>, required: true as const },
   dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'value' },
   nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
-  width: { type: Number, required: true as const },
-  height: { type: Number, required: true as const },
   tileAspectRatio: { type: Number, default: 4 / 3 },
   fill: { type: String, default: seriesColor(0) },
   stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
@@ -107,7 +105,7 @@ const treemapEmits = {
 }
 
 function useTreemap(
-  props: ExtractPropTypes<typeof TreemapVueProps>,
+  props: ExtractPropTypes<typeof TreemapVueProps> & { width: number, height: number },
   slots: TreemapSlots,
   emit: EmitFn<typeof treemapEmits>,
 ) {

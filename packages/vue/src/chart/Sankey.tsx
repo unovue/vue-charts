@@ -54,8 +54,6 @@ const SankeyVueProps = {
     type: Object as PropType<{ nodes: SankeyInputNode[], links: SankeyInputLink[] }>,
     required: true as const,
   },
-  width: { type: Number, required: true as const },
-  height: { type: Number, required: true as const },
   nameKey: { type: String, default: 'name' },
   dataKey: { type: String, default: 'value' },
   nodePadding: { type: Number, default: 10 },
@@ -88,7 +86,7 @@ const sankeyEmits = {
 }
 
 function useSankey(
-  props: ExtractPropTypes<typeof SankeyVueProps>,
+  props: ExtractPropTypes<typeof SankeyVueProps> & { width: number, height: number },
   slots: SankeySlots,
   emit: EmitFn<typeof sankeyEmits>,
 ) {

@@ -20,6 +20,7 @@ import {
   computeJourneyLayout,
   connectedLinks,
   journeyLinksOf,
+  journeyNodeId,
   largestJourneyThrough,
   reorderedNodes,
   truncateMiddle,
@@ -201,7 +202,7 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
     }
     if (pinnedPath.value?.length) {
       const ids = journeyLinksOf(pinnedPath.value, stepCount.value)
-      const nodes = new Set(pinnedPath.value.slice(0, stepCount.value).map((name, step) => `${step}\u0001${name}`))
+      const nodes = new Set(pinnedPath.value.slice(0, stepCount.value).map((name, step) => journeyNodeId(step, name)))
       return { links: ids, nodes, pinned: true }
     }
     return undefined
