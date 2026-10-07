@@ -35,7 +35,9 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
   (`components/label/LabelView.tsx`) and `Sector` (`polar/pie/Pie.tsx`). Fix the prop types,
   then remove the override.
 - **P2 Playground recorder times out on `/line-charts`** in some full sweeps; an isolated
-  retry passes. Find whether the capture stalls or the page never settles.
+  retry passes. Find whether the capture stalls or the page never settles. In the d414ded run
+  on a loaded machine, `/motion` at 1280 px also flagged 30 Tracker cells as "unsettled" with
+  0 px change (only their style string differed at 2.5 s). Rerun on a quiet machine first.
 - **P3 Firefox does not launch on the maintainer's Mac** (timeout after 30 s, also outside the
   checker). `check:docs` covers Chromium and WebKit.
 - **P3 The docs build logs a landing-query POST 404** but exits 0. Cause unknown.
