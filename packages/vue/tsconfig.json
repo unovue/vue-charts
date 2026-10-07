@@ -16,14 +16,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "d3-hierarchy": [
-        "../../node_modules/.pnpm/node_modules/@types/d3-hierarchy"
-      ],
       "@/*": [
         "./src/*"
-      ],
-      "@nuxt/schema": [
-        "./node_modules/@nuxt/schema"
       ]
     },
     "resolveJsonModule": true,
