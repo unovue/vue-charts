@@ -9,7 +9,7 @@ export const TravellerLayer = defineComponent({
   props: {
     id: String,
     travellerX: Number,
-    otherProps: { type: Object as () => BrushInput & BrushStartEndIndex & { y: number }, required: true },
+    otherProps: { type: Object as () => BrushInput & BrushStartEndIndex & { y: number, data: unknown[] }, required: true },
   },
   emits: [
     'mouseenter',
@@ -56,7 +56,7 @@ export const TravellerLayer = defineComponent({
         role="slider"
         aria-label={props.id === 'startX' ? 'Range start' : 'Range end'}
         aria-valuemin={0}
-        aria-valuemax={Math.max(0, (props.otherProps.data?.length ?? 0) - 1)}
+        aria-valuemax={Math.max(0, props.otherProps.data.length - 1)}
         aria-valuenow={index.value}
         aria-valuetext={String(category.value ?? '')}
         class="v-charts-brush-traveller"

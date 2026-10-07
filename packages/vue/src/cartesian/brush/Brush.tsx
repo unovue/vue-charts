@@ -97,7 +97,6 @@ const BrushView = defineComponent({
         emit('drag-end', indexes)
         nextTick(restoreControlledPositions)
       },
-      get data() { return props.data },
     })
 
     const handlers = useBrushHandlers(

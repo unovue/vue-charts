@@ -35,6 +35,7 @@ every breaking change with a before and after example.
   Tooltip `formatter` wins over a chart's default formatter.
 - Bar `class` sits on the series layer, not on every rectangle.
 - The chart `dataKey` prop is removed (it was never read).
+- The Brush `data` prop is removed (it was never read; Brush uses the chart data).
 - The Nuxt module requires Nuxt 4, and its `components` option is removed.
 - `unplugin-vue-components` is no longer a peer dependency.
 - Line and Area `dot`/`activeDot` no longer accept a function (it was ignored); use the `#dot` and

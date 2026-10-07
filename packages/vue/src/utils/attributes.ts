@@ -4,8 +4,13 @@ type CamelCase<Name extends string> = Name extends `${infer Head}-${infer Tail}`
   ? `${Head}${Capitalize<CamelCase<Tail>>}`
   : Name
 
-/** `data-*` attributes, in the camelized form strict templates check on components. */
-type DataAttributes = { [key: `data${Capitalize<string>}`]: unknown }
+type Letter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+
+/**
+ * `data-*` attributes, in the camelized form strict templates check on components. At least one
+ * letter follows `data`: a bare `data` is no data attribute, so undeclared it stays an error.
+ */
+type DataAttributes = { [key: `data${Letter}${string}`]: unknown }
 
 /**
  * SVG attributes in the form that strict Vue templates check on a component: Volar camelizes

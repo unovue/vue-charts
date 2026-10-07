@@ -15,7 +15,6 @@ export interface UseBrushHandlersProps {
   leaveTimeOut: number
   onChange?: (index: BrushStartEndIndex) => void
   onDragEnd?: (index: BrushStartEndIndex) => void
-  data?: unknown[]
 }
 
 export function useBrushHandlers(

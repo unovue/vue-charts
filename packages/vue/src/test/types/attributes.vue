@@ -73,6 +73,8 @@ export type GridDash = CartesianGridProps['strokeDasharray']
       aria-label="Date range"
       data-testid="range"
     />
+    <!-- @vue-expect-error Brush always uses the chart data. -->
+    <Brush :data="[{ v: 1 }]" />
     <!-- @vue-expect-error Unknown props stay errors. -->
     <Line
       data-key="v"

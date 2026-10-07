@@ -53,9 +53,6 @@ export const BrushVueProps = {
     type: Number,
   },
   class: classProp,
-  data: {
-    type: Array as PropType<unknown[]>,
-  },
   dataKey: [String, Function] as PropType<ChartDataKey>,
   range: {
     type: Object as PropType<BrushStartEndIndex | null>,
