@@ -27,7 +27,8 @@ type SparkRow = SparkValue | Record<string, unknown>
 
 interface SparkPoint {
   x: number
-  y: number
+  /** `null` is a gap. */
+  y: number | null
   value: number | null
   index: number
   payload: SparkRow
@@ -114,7 +115,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
     return values.value.map((value, index) => ({
       x: n === 1 ? width / 2 : PAD + index * (width - PAD * 2) / (n - 1),
       // A gap stays a gap; the transition never interpolates through it.
-      y: value === null ? (null as unknown as number) : yOf(value),
+      y: value === null ? null : yOf(value),
       value,
       index,
       payload: rows.value?.[index],
@@ -146,9 +147,10 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
   })
 
   const curve = computed(() => props.curve === 'linear' ? curveLinear : curveMonotoneX)
-  const defined = (p: { y: number | null }) => p.y != null && Number.isFinite(p.y)
-  const linePath = computed(() => d3Line<SparkPoint>().defined(defined).x(p => p.x).y(p => p.y).curve(curve.value)(display.points.value as SparkPoint[]) ?? '')
-  const areaPath = computed(() => d3Area<SparkPoint>().defined(defined).x(p => p.x).y0(baselineY.value).y1(p => p.y).curve(curve.value)(display.points.value as SparkPoint[]) ?? '')
+  const defined = (p: SparkPoint): p is SparkPoint & { y: number } => p.y != null && Number.isFinite(p.y)
+  // `defined` skips gaps, so `y` is only read for drawn points.
+  const linePath = computed(() => d3Line<SparkPoint>().defined(defined).x(p => p.x).y(p => p.y ?? 0).curve(curve.value)(display.points.value) ?? '')
+  const areaPath = computed(() => d3Area<SparkPoint>().defined(defined).x(p => p.x).y0(baselineY.value).y1(p => p.y ?? 0).curve(curve.value)(display.points.value) ?? '')
 
   const bars = computed<GridCell<SparkRow>[]>(() => {
     if (props.type !== 'bar')
@@ -200,7 +202,8 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
         identity: point.payload !== null && typeof point.payload === 'object'
           ? counts.get(identities[point.index]) === 1 ? identities[point.index] : point.payload
           : positionalIdentities[point.index] ??= Symbol(),
-        coordinate: { x: point.x, y: point.y },
+        // A gap has no value; its keyboard tooltip sits at the top edge.
+        coordinate: { x: point.x, y: point.y ?? 0 },
       })),
       // The payload is the caller's row; value and name come per point.
       dataDefinedOnItem: points.value.map(point => point.payload),
@@ -221,7 +224,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
     const action = {
       index: point ? point.index : null,
       configuration: configuration.value,
-      coordinate: point ? { x: point.x, y: point.y } : undefined,
+      coordinate: point && defined(point) ? { x: point.x, y: point.y } : undefined,
     }
     if (keyboard)
       tooltip.activate('keyboard', { ...action, active: !!point })
@@ -257,14 +260,18 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
   })
 
   const lastPoint = computed(() => {
-    const shown = display.points.value as SparkPoint[]
+    const shown = display.points.value
     for (let i = shown.length - 1; i >= 0; i--) {
-      if (defined(shown[i]))
-        return shown[i]
+      const point = shown[i]
+      if (point && defined(point))
+        return point
     }
     return undefined
   })
-  const activePoint = computed(() => active.value == null ? undefined : points.value[active.value])
+  const activePoint = computed(() => {
+    const point = active.value == null ? undefined : points.value[active.value]
+    return point && defined(point) ? point : undefined
+  })
   const summary = computed(() => {
     const finite = values.value.filter((value): value is number => value !== null)
     return props.title ?? (finite.length ? `Trend: ${finite.length} values from ${finite[0]} to ${finite.at(-1)}` : 'Trend')

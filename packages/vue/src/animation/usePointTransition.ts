@@ -1,5 +1,11 @@
 import { computed, shallowRef, watch } from 'vue'
 import type { Point } from '@/types/shape'
+
+/** A point whose `y` may be `null`: a gap that is drawn as a break, never interpolated. */
+interface MaybeGapPoint {
+  readonly x: number
+  readonly y: number | null
+}
 import type { ChartTransition, PhaseTiming } from './motion'
 import { useAnimationCallbacks } from './useAnimationCallbacks'
 import { useKeyedTransition } from './useKeyedTransition'
@@ -24,7 +30,7 @@ function stable<V>(read: () => V[]) {
 }
 
 /** Top and baseline share identity and a clock, including the initial clip sweep. */
-export function usePointTransition<T extends Point>(
+export function usePointTransition<T extends MaybeGapPoint>(
   target: () => readonly T[] | undefined,
   options: {
     key: (point: T, index: number) => PropertyKey
@@ -48,7 +54,7 @@ export function usePointTransition<T extends Point>(
 ) {
   let appeared = false
   const callbacks = useAnimationCallbacks(options.onStart, options.onEnd)
-  const mixPoint = <P extends Point>(from: P, to: P, t: number): P => {
+  const mixPoint = <P extends MaybeGapPoint>(from: P, to: P, t: number): P => {
     if (from.x === to.x && from.y === to.y)
       return to
     return {
