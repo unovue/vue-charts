@@ -83,7 +83,8 @@ const FunnelView = defineComponent({
         unit: '',
       },
     }))
-    useChart().tooltip.entries.register(tooltipConfiguration)
+    tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
 
     // LabelList children ride along with the trapezoids as drawn, show the new values at once
     // and fade with trapezoids that enter or leave.
@@ -111,7 +112,7 @@ const FunnelView = defineComponent({
     }))
 
     function handleTrapezoidEnter(trap: FunnelTrapezoidItem, index: number) {
-      tooltip.activate('hover', { type: 'item', index, dataKey: props.dataKey, coordinate: trap.tooltipPosition })
+      tooltip.activate('hover', { type: 'item', configuration: tooltipConfiguration.value, index, dataKey: props.dataKey, coordinate: trap.tooltipPosition })
     }
 
     function handleTrapezoidLeave() {
@@ -144,9 +145,7 @@ const FunnelView = defineComponent({
 
             const trapezoidProps = {
               ...trap,
-              isActive: tooltip.keyboardInteraction.value.active
-                && tooltip.keyboardInteraction.value.configuration === tooltipConfiguration.value
-                && tooltip.keyboardInteraction.value.index === trap.index,
+              isActive: activeIndex.value === trap.index,
               fill: trapFill,
               stroke: trapStroke,
               animationProgress: isAnimating.value ? 0 : 1,
@@ -173,7 +172,7 @@ const FunnelView = defineComponent({
                 key={key}
                 onMouseenter={(event: MouseEvent) => { handleTrapezoidEnter(trap, trap.index); emit('mouseenter', trap, trap.index, event) }}
                 onMouseleave={(event: MouseEvent) => { handleTrapezoidLeave(); emit('mouseleave', trap, trap.index, event) }}
-                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: trap.index, dataKey: props.dataKey, coordinate: trap.tooltipPosition }); emit('click', trap, trap.index, event) }}
+                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index: trap.index, dataKey: props.dataKey, coordinate: trap.tooltipPosition }); emit('click', trap, trap.index, event) }}
               >
                 {content}
               </g>

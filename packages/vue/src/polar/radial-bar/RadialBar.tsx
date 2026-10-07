@@ -33,6 +33,7 @@ export type RadialBarShapeSlotProps = RadialBarDataItem & {
   fill: string
   stroke: string
   fillOpacity?: number
+  isActive: boolean
 }
 
 export interface RadialBarSlots {
@@ -138,7 +139,7 @@ const RadialBarView = defineComponent({
       })
     })
 
-    useChart().tooltip.entries.register(computed(() => ({
+    const tooltipConfiguration = computed(() => ({
       dataDefinedOnItem: undefined,
       positions: sectors.value?.map((sector) => {
         if (sector.innerRadius == null || sector.outerRadius == null || sector.startAngle == null)
@@ -161,7 +162,15 @@ const RadialBarView = defineComponent({
         stroke: props.stroke,
         unit: '',
       },
-    })))
+    }))
+    tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
+    const activateSector = (channel: 'hover' | 'click', index: number) => tooltip.activate(channel, {
+      type: 'item',
+      configuration: tooltipConfiguration.value,
+      index,
+      dataKey: props.dataKey,
+    })
 
     const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
     const { items } = useKeyedTransition(() => sectors.value?.map((sector, index) => ({ ...sector, index })), {
@@ -246,7 +255,7 @@ const RadialBarView = defineComponent({
             }
             const sectorFill = sector.fill ?? defaultFill ?? seriesColor(sector.index)
             const onMouseenter = (event: MouseEvent) => {
-              tooltip.activate('hover', { type: 'item', index: sector.index, dataKey: props.dataKey })
+              activateSector('hover', sector.index)
               emit('mouseenter', sector, sector.index, event)
             }
             const onMouseleave = (event: MouseEvent) => {
@@ -261,7 +270,7 @@ const RadialBarView = defineComponent({
                   onMouseenter={onMouseenter}
                   onMouseleave={onMouseleave}
                   onClick={(event: MouseEvent) => {
-                    tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey })
+                    activateSector('click', sector.index)
                     emit('click', sector, sector.index, event)
                   }}
                 >
@@ -274,6 +283,7 @@ const RadialBarView = defineComponent({
                     fill: sectorFill,
                     stroke: defaultStroke ?? sectorFill,
                     fillOpacity: props.fillOpacity,
+                    isActive: activeIndex.value === sector.index,
                   })}
                 </g>
               )
@@ -298,7 +308,7 @@ const RadialBarView = defineComponent({
                 stroke-dasharray={props.strokeDasharray}
                 onMouseenter={onMouseenter}
                 onMouseleave={onMouseleave}
-                onClick={(event: MouseEvent) => { tooltip.activate('click', { type: 'item', index: sector.index, dataKey: props.dataKey }); emit('click', sector, sector.index, event) }}
+                onClick={(event: MouseEvent) => { activateSector('click', sector.index); emit('click', sector, sector.index, event) }}
               />
             )
           })}

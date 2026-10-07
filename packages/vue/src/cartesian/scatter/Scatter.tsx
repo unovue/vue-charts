@@ -96,9 +96,6 @@ const ScatterView = defineComponent({
     const { shouldRender, points } = useScatter(trackedProps)
     const svgAttrs = attrs as SVGAttributes
     const tooltip = chart.tooltip
-    const activeIndex = computed(() => chart.tooltip.source.active.value ? chart.tooltip.target.value?.index ?? null : null)
-    const activeDataKey = computed(() => chart.tooltip.target.value?.entry?.value?.settings.dataKey)
-
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
     // the selected row supplies the tooltipPayload array for the active index,
@@ -121,6 +118,7 @@ const ScatterView = defineComponent({
       },
     }))
     tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
 
     provideErrorBarContext({
       data: points,
@@ -149,15 +147,14 @@ const ScatterView = defineComponent({
     }
 
     const dispatchScatterHover = (point: ScatterPointItem, index: number) => {
-      const payload = {
+      // No type: the chart's own event type decides, so Scatter works in a ComposedChart
+      // (axis) and in a ScatterChart (item); the configuration names this series.
+      tooltip.activate('hover', {
+        configuration: tooltipConfiguration.value,
         dataKey: props.dataKey,
         index,
         coordinate: point.tooltipPosition,
-      }
-      // Dispatch to both axis and item interaction so Scatter works in both
-      // ComposedChart (tooltipEventType='axis') and ScatterChart (tooltipEventType='item')
-      tooltip.activate('hover', { ...payload, type: 'axis' })
-      tooltip.activate('hover', { ...payload, type: 'item' })
+      })
     }
     const onMouseLeaveSymbol = () => {
       tooltip.clear('hover')
@@ -165,7 +162,7 @@ const ScatterView = defineComponent({
     let symbolData: ReadonlyArray<ScatterPointItem> = []
     const listeners = delegateItemEvents(index => symbolData[index], {
       click: (point, index, event) => {
-        tooltip.activate('click', { type: 'item', index, dataKey: props.dataKey, coordinate: point.tooltipPosition })
+        tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index, dataKey: props.dataKey, coordinate: point.tooltipPosition })
         emit('click', point, index, event)
       },
       mouseenter: (point, index, event) => {
@@ -190,16 +187,12 @@ const ScatterView = defineComponent({
     const renderSymbols = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
       symbolData = data
       const currentActiveIndex = activeIndex.value
-      const currentActiveDataKey = activeDataKey.value
 
       return data.map((point, i) => {
         if (point.cx == null || point.cy == null) {
           return null
         }
-        const keyboard = tooltip.keyboardInteraction.value
-        const isActive = keyboard.active
-          ? keyboard.configuration === tooltipConfiguration.value && keyboard.index === i
-          : currentActiveIndex === i && currentActiveDataKey === props.dataKey
+        const isActive = currentActiveIndex === i
         const symbolProps: SymbolsProps = {
           ...svgAttrs,
           ...(props.fill != null ? { fill: props.fill } : {}),

@@ -337,8 +337,10 @@ export function createTooltip(inputs: TooltipInputs) {
   function findTarget(type: TooltipEventType, input: TooltipTargetRequest) {
     if (type === 'axis')
       return positional(input.index, axisTargets.value)
+    // Series identity is the registered configuration; dataKey is not unique (two Scatters may
+    // both have none). Callers without one are standalone charts with a single entry.
     return [...itemTargets.value, ...pointerTargets.value].find(item => item.index === input.index
-      && (input.configuration ? item.entry?.value === input.configuration : item.entry?.value?.settings.dataKey === input.dataKey))
+      && (!input.configuration || item.entry?.value === input.configuration))
   }
 
   let lastSeriesRequest: { entry: Entry, index: TooltipActiveIndex, owner: TooltipActiveIndex | undefined, target: Target } | undefined
