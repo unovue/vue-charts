@@ -79,7 +79,7 @@ const AreaView = defineComponent({
   },
 })
 
-const _Area = defineComponent({
+export const Area = defineComponent({
   name: 'Area',
   emits: areaEvents.emits,
   props: AreaVueProps,
@@ -93,12 +93,3 @@ const _Area = defineComponent({
     return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
   },
 })
-
-/**
- * Type-safe Area component with slot types preserved in .d.ts output.
- * The `new () => { $slots }` pattern ensures Volar picks up slot types
- * even when consuming from compiled declarations.
- */
-export const Area = _Area as typeof _Area & {
-  new (): { $slots: AreaSlots }
-}

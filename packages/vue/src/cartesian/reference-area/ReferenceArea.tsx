@@ -1,4 +1,4 @@
-import type { ExtractPropTypes, PropType, SVGAttributes, VNodeChild } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -125,10 +125,15 @@ const ReferenceAreaView = defineComponent({
   },
 })
 
-const _ReferenceArea = defineComponent({
+export interface ReferenceAreaSlots {
+  shape?: (props: { x: number, y: number, width: number, height: number }) => VNodeChild
+}
+
+export const ReferenceArea = defineComponent({
   name: 'ReferenceArea',
   props: ReferenceAreaVueProps,
   inheritAttrs: false,
+  slots: Object as SlotsType<ReferenceAreaSlots>,
   setup(props, { attrs, slots }) {
     const { areas } = useChart().references
     const settings = computed(() => ({
@@ -147,6 +152,3 @@ const _ReferenceArea = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const ReferenceArea: typeof _ReferenceArea & { new (): { $slots: { shape?: (props: { x: number, y: number, width: number, height: number }) => VNodeChild } } } = _ReferenceArea

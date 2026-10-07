@@ -150,12 +150,10 @@ const PolarAngleAxisView = defineComponent({
   },
 })
 
-const _PolarAngleAxis = defineComponent({
+export const PolarAngleAxis = defineComponent({
   name: 'PolarAngleAxis',
   props: PolarAngleAxisViewProps,
-  slots: Object as SlotsType<{
-    tick?: (props: { x: number, y: number, value: unknown, index: number, textAnchor: string, payload: unknown, cx: number, cy: number }) => VNodeChild
-  }>,
+  slots: Object as SlotsType<PolarAngleAxisSlots>,
   setup(props, { attrs, slots }) {
     const { angleAxis } = useChart().axes
 
@@ -182,6 +180,3 @@ const _PolarAngleAxis = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const PolarAngleAxis: typeof _PolarAngleAxis & { new (): { $slots: PolarAngleAxisSlots } } = _PolarAngleAxis

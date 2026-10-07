@@ -249,7 +249,7 @@ function rounded({ x, y }: { x: number, y: number }) {
   return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 }
 }
 
-const _Pie = defineComponent({
+export const Pie = defineComponent({
   name: 'Pie',
   emits: pieEvents.emits,
   props: PieVueProps,
@@ -301,6 +301,3 @@ const _Pie = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data, pieSettings, cells }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Pie: typeof _Pie & { new (): { $slots: PieSlots } } = _Pie

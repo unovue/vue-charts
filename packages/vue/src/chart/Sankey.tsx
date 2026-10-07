@@ -397,7 +397,7 @@ function useSankey(
  *
  * Supports `<Tooltip>` as a child component for hover info on both nodes and links.
  */
-const _Sankey = defineComponent({
+export const Sankey = defineComponent({
   name: 'Sankey',
   props: { ...SankeyVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -426,7 +426,3 @@ const _Sankey = defineComponent({
     }
   },
 })
-
-export const Sankey = _Sankey as typeof _Sankey & {
-  new (): { $slots: SankeySlots }
-}

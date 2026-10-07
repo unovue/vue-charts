@@ -2,7 +2,7 @@ import { useChart } from '@/model/chart'
 import type { AxisSlots } from '@/types/tick'
 import { useCanMeasureText } from '@/model/runtime'
 import { useDeferredView } from '@/hooks/deferredView'
-import type { ComponentPublicInstance, PropType } from 'vue'
+import type { ComponentPublicInstance, PropType, SlotsType } from 'vue'
 import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } from 'vue'
 import type { YAxisSettings } from '@/types/axisSettings'
 import { implicitYAxis } from '@/core/axis/settings'
@@ -115,7 +115,7 @@ const YAxisImpl = defineComponent({
   },
 })
 
-const _YAxis = defineComponent({
+export const YAxis = defineComponent({
   name: 'YAxis',
   props: {
     ...AxisVueProps,
@@ -126,6 +126,7 @@ const _YAxis = defineComponent({
     type: { ...AxisVueProps.type, default: implicitYAxis.type },
   },
   inheritAttrs: false,
+  slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
     const measured = shallowRef<{ id: string | number, width: number, history: number[] }>()
 
@@ -153,6 +154,3 @@ const _YAxis = defineComponent({
     return () => <View {...props} {...attrs} onMeasure-width={updateWidth} v-slots={slots} />
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const YAxis: typeof _YAxis & { new (): { $slots: AxisSlots } } = _YAxis

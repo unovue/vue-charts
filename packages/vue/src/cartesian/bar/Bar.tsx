@@ -158,7 +158,7 @@ const BarView = defineComponent({
   },
 })
 
-const _Bar = defineComponent({
+export const Bar = defineComponent({
   name: 'Bar',
   emits: barEvents.emits,
   props: BarVueProps,
@@ -173,6 +173,3 @@ const _Bar = defineComponent({
     return () => h(BarView, { item: props, svgAttrs: attrs, data, settings }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Bar: typeof _Bar & { new (): { $slots: BarSlots } } = _Bar

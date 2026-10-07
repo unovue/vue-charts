@@ -430,7 +430,7 @@ function useTreemap(
  * </Treemap>
  * ```
  */
-const _Treemap = defineComponent({
+export const Treemap = defineComponent({
   name: 'Treemap',
   props: { ...TreemapVueProps, ...chartSizeProps },
   inheritAttrs: false,
@@ -459,6 +459,3 @@ const _Treemap = defineComponent({
     }
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Treemap: typeof _Treemap & { new (): { $slots: TreemapSlots } } = _Treemap

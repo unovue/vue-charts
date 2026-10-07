@@ -1,12 +1,12 @@
 import type { ChartDataKey } from '@/types/base'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h, provide } from 'vue'
-import type { ExtractPropTypes, PropType } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
+import type { AxisSlots, AxisTick } from '@/types/tick'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { RadiusAxisSettings } from '@/types/axisSettings'
 import { polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
-import type { AxisTick } from '@/types/tick'
 import type { LayoutType } from '@/types'
 import { isCategoricalAxis } from '@/utils'
 import { useChartLayout } from '@/context/chartLayoutContext'
@@ -125,9 +125,10 @@ const PolarRadiusAxisView = defineComponent({
   },
 })
 
-const _PolarRadiusAxis = defineComponent({
+export const PolarRadiusAxis = defineComponent({
   name: 'PolarRadiusAxis',
   props: PolarRadiusAxisViewProps,
+  slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
     const { radiusAxis } = useChart().axes
     const layout = useChartLayout()
@@ -157,6 +158,3 @@ const _PolarRadiusAxis = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const PolarRadiusAxis: typeof _PolarRadiusAxis & { new (): { $slots: import('@/types/tick').AxisSlots } } = _PolarRadiusAxis

@@ -285,7 +285,7 @@ const RadarView = defineComponent({
   },
 })
 
-const _Radar = defineComponent({
+export const Radar = defineComponent({
   slots: Object as SlotsType<RadarSlots>,
   name: 'Radar',
   emits: radarEvents.emits,
@@ -335,5 +335,3 @@ const _Radar = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-export const Radar: typeof _Radar & { new (): { $slots: RadarSlots } } = _Radar

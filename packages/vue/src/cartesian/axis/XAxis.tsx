@@ -4,7 +4,7 @@ import { useDeferredView } from '@/hooks/deferredView'
 /**
  * @fileOverview X Axis
  */
-import type { PropType } from 'vue'
+import type { PropType, SlotsType } from 'vue'
 import { computed, defineComponent } from 'vue'
 import type { XAxisSettings } from '@/types/axisSettings'
 import { implicitXAxis } from '@/core/axis/settings'
@@ -55,7 +55,7 @@ const XAxisImpl = defineComponent({
   },
 })
 
-const _XAxis = defineComponent({
+export const XAxis = defineComponent({
   name: 'XAxis',
   props: {
     ...AxisVueProps,
@@ -66,6 +66,7 @@ const _XAxis = defineComponent({
     type: { ...AxisVueProps.type, default: implicitXAxis.type },
   },
   inheritAttrs: false,
+  slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
     const settings = computed<XAxisSettings>(() => ({ ...props, id: props.xAxisId }))
     useChart().axes.xAxis.register(settings)
@@ -73,6 +74,3 @@ const _XAxis = defineComponent({
     return () => <View {...props} {...attrs} v-slots={slots} />
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const XAxis: typeof _XAxis & { new (): { $slots: AxisSlots } } = _XAxis

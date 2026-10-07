@@ -1,4 +1,4 @@
-import type { CSSProperties, PropType, VNode } from 'vue'
+import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
 import { useChart } from '@/model/chart'
 import { computed, defineComponent, h, nextTick, reactive, shallowRef, watch } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
@@ -242,11 +242,12 @@ const BrushView = defineComponent({
   },
 })
 
-const _Brush = defineComponent({
+export const Brush = defineComponent({
   name: 'Brush',
   emits: brushEmits,
   props: BrushVueProps,
   inheritAttrs: false,
+  slots: Object as SlotsType<{ default?: () => VNode[] }>,
   setup(props, { attrs, slots, emit }) {
     const chart = useChart()
     const View = useDeferredView(BrushView)
@@ -317,9 +318,6 @@ const _Brush = defineComponent({
     }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Brush: typeof _Brush & { new (): { $slots: { default?: () => VNode[] } } } = _Brush
 
 function sameRange(left: BrushStartEndIndex | null, right: BrushStartEndIndex | null) {
   return left === right || (left != null && right != null

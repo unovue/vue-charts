@@ -136,7 +136,7 @@ const ReferenceDotView = defineComponent({
   },
 })
 
-const _ReferenceDot = defineComponent({
+export const ReferenceDot = defineComponent({
   name: 'ReferenceDot',
   props: ReferenceDotVueProps,
   inheritAttrs: false,
@@ -158,7 +158,3 @@ const _ReferenceDot = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-export const ReferenceDot = _ReferenceDot as typeof _ReferenceDot & {
-  new (): { $slots: ReferenceDotSlots }
-}

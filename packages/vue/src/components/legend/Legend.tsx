@@ -180,7 +180,7 @@ const LegendView = defineComponent({
   },
 })
 
-const _Legend = defineComponent({
+const Legend = defineComponent({
   name: 'Legend',
   inheritAttrs: false,
   emits: legendEmits,
@@ -218,6 +218,4 @@ const _Legend = defineComponent({
   },
 })
 
-// Preserve template slot inference in published declarations.
-const Legend: typeof _Legend & { new (): { $slots: LegendSlots } } = _Legend
 export default Legend

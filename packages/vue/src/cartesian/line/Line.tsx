@@ -81,7 +81,7 @@ const LineView = defineComponent({
   },
 })
 
-const _Line = defineComponent({
+export const Line = defineComponent({
   name: 'Line',
   emits: lineEvents.emits,
   props: LineVueProps,
@@ -95,6 +95,3 @@ const _Line = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Line: typeof _Line & { new (): { $slots: LineSlots } } = _Line

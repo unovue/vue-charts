@@ -283,7 +283,7 @@ const CartesianGridView = defineComponent({
   },
 })
 
-const _CartesianGrid = defineComponent({
+export const CartesianGrid = defineComponent({
   slots: Object as SlotsType<CartesianGridSlots>,
   name: 'CartesianGrid',
   inheritAttrs: false,
@@ -293,5 +293,3 @@ const _CartesianGrid = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-export const CartesianGrid: typeof _CartesianGrid & { new (): { $slots: CartesianGridSlots } } = _CartesianGrid

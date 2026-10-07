@@ -288,7 +288,7 @@ const ScatterView = defineComponent({
   },
 })
 
-const _Scatter = defineComponent({
+export const Scatter = defineComponent({
   name: 'Scatter',
   emits: scatterEvents.emits,
   props: ScatterVueProps,
@@ -303,6 +303,3 @@ const _Scatter = defineComponent({
     return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Scatter: typeof _Scatter & { new (): { $slots: ScatterSlots } } = _Scatter

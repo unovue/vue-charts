@@ -337,7 +337,7 @@ const RadialBarView = defineComponent({
   },
 })
 
-const _RadialBar = defineComponent({
+export const RadialBar = defineComponent({
   slots: Object as SlotsType<RadialBarSlots>,
   name: 'RadialBar',
   emits: radialBarEvents.emits,
@@ -368,5 +368,3 @@ const _RadialBar = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs }, slots)
   },
 })
-
-export const RadialBar: typeof _RadialBar & { new (): { $slots: RadialBarSlots } } = _RadialBar

@@ -186,7 +186,7 @@ const FunnelView = defineComponent({
   },
 })
 
-const _Funnel = defineComponent({
+export const Funnel = defineComponent({
   name: 'Funnel',
   emits: funnelEvents.emits,
   props: FunnelVueProps,
@@ -254,6 +254,3 @@ const _Funnel = defineComponent({
     return () => h(View, { item: props, svgAttrs: attrs, data, trapezoids, cellPropsRef }, slots)
   },
 })
-
-// Preserve template slot inference in published declarations.
-export const Funnel: typeof _Funnel & { new (): { $slots: FunnelSlots } } = _Funnel
