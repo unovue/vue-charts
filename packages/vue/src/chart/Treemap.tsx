@@ -54,15 +54,33 @@ function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
   return val != null && val > 0 ? val : 0
 }
 
-/** Each node's total by its tooltip path (`children[0].children[1]`); parents sum their leaves. */
-function totalsByPath(items: readonly TreemapData[], dataKey: DataKey<TreemapData>, parent = '', totals: Record<string, number> = {}) {
-  items.forEach((item, i) => {
+interface TreeIndex {
+  /** Each node's total by its tooltip path (`children[0].children[1]`); parents sum their leaves. */
+  totals: Record<string, number>
+  /** The first path (in tree order) of each row, and of each name. */
+  pathByRow: Map<unknown, { path: string, order: number }>
+  pathByName: Map<unknown, { path: string, order: number }>
+}
+
+/** One walk over the tree builds the totals and the path lookups for the tooltip. */
+function indexTree(items: readonly TreemapData[], dataKey: DataKey<TreemapData>, nameKey: DataKey<TreemapData>): TreeIndex {
+  const index: TreeIndex = { totals: {}, pathByRow: new Map(), pathByName: new Map() }
+  let order = 0
+  const walk = (level: readonly TreemapData[], parent: string) => level.forEach((item, i) => {
     const path = `${parent}children[${i}]`
-    totals[path] = sumValues(item, dataKey)
+    const at = { path, order: order++ }
+    index.totals[path] = sumValues(item, dataKey)
+    const row = toRaw(item)
+    if (!index.pathByRow.has(row))
+      index.pathByRow.set(row, at)
+    const name = getValueByDataKey(item, nameKey)
+    if (!index.pathByName.has(name))
+      index.pathByName.set(name, at)
     if (item.children?.length)
-      totalsByPath(item.children, dataKey, `${path}.`, totals)
+      walk(item.children, `${path}.`)
   })
-  return totals
+  walk(items, '')
+  return index
 }
 
 const TreemapVueProps = {
@@ -169,24 +187,33 @@ function useTreemap(
   // Tooltip payloads are the caller's own nodes, addressed by path; totals come from layout.
   const tooltipTree = computed(() => {
     const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-    return { data: { children: data }, values: totalsByPath(data, props.dataKey) }
+    return { data: { children: data }, ...indexTree(data, props.dataKey, props.nameKey) }
   })
+
+  // The tooltip path of a layout node: the first row in tree order that is the node's payload
+  // or, in nest mode, has the node's name.
+  function tooltipPathOf(node: TreemapLayoutNode): string | undefined {
+    const { pathByRow, pathByName } = tooltipTree.value
+    const byRow = pathByRow.get(toRaw(node.payload))
+    const byName = isNestMode.value ? pathByName.get(node.name) : undefined
+    return (byName && (!byRow || byName.order < byRow.order) ? byName : byRow)?.path
+  }
 
   // Register tooltip entry settings (like Funnel/Scatter do)
   const tooltipConfiguration = computed(() => {
     const tooltipEntrySettings: TooltipPayloadConfiguration = {
       dataDefinedOnItem: tooltipTree.value.data,
-      values: tooltipTree.value.values,
+      values: tooltipTree.value.totals,
       positions: undefined,
-      keyboardItems: [...nodes.value].sort((a, b) =>
+      keyboardItems: [...nodes.value.entries()].sort(([, a], [, b]) =>
         a.y + a.height / 2 - b.y - b.height / 2
         || a.x + a.width / 2 - b.x - b.width / 2,
-      ).map(node => ({
+      ).map(([index, node]) => ({
         identity: node.payload,
-        index: nodes.value.indexOf(node),
-        payloadKey: getTooltipIndex(node) ?? undefined,
+        index,
+        payloadKey: tooltipPathOf(node),
         coordinate: { x: node.x + node.width / 2, y: node.y + node.height / 2 },
-        onClick: event => handleNodeClick(node, nodes.value.indexOf(node), event),
+        onClick: event => handleNodeClick(node, index, event),
       })),
       settings: {
         stroke: props.stroke,
@@ -204,27 +231,6 @@ function useTreemap(
     return tooltipEntrySettings
   })
   tooltip.entries.register(tooltipConfiguration)
-
-  // The tooltip path of a layout node in the current data.
-  function getTooltipIndex(node: TreemapLayoutNode): string | null {
-    const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
-    function findPath(items: TreemapData[], parent: string): string | null {
-      for (const [index, item] of items.entries()) {
-        const path = `${parent}children[${index}]`
-        if (toRaw(item) === toRaw(node.payload)
-          || (isNestMode.value && getValueByDataKey(item, props.nameKey) === node.name)) {
-          return path
-        }
-        if (Array.isArray(item.children)) {
-          const nested = findPath(item.children, `${path}.`)
-          if (nested)
-            return nested
-        }
-      }
-      return null
-    }
-    return findPath(data, '')
-  }
 
   function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
     const sourceData = nestCurrentData.value ?? []
