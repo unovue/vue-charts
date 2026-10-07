@@ -76,7 +76,7 @@ function getBarPositions(
   barCategoryGap: string | number,
   bandSize: number,
   sizeList: SizeList,
-  maxBarSize: number,
+  maxBarSize: number | undefined,
 ): ReadonlyArray<BarWithPosition> | null {
   const len = sizeList.length
   if (len < 1)
@@ -137,7 +137,7 @@ function getBarPositions(
     if (originalSize > 1) {
       originalSize >>= 0
     }
-    const size = maxBarSize === +maxBarSize ? Math.min(originalSize, maxBarSize) : originalSize
+    const size = maxBarSize != null && maxBarSize === +maxBarSize ? Math.min(originalSize, maxBarSize) : originalSize
     result = sizeList.reduce(
       (res: ReadonlyArray<BarWithPosition>, entry: BarCategory, i): ReadonlyArray<BarWithPosition> => [
         ...res,
@@ -176,14 +176,14 @@ export type BarWithPosition = {
 
 export function barPositions(
   sizeList: SizeList | undefined,
-  globalMaxBarSize: number,
+  globalMaxBarSize: number | undefined,
   barGap: string | number,
   barCategoryGap: string | number,
   barBandSize: number | undefined,
   bandSize: number | undefined,
   childMaxBarSize: number | undefined,
 ) {
-  const maxBarSize: number = isNullish(childMaxBarSize) ? globalMaxBarSize : childMaxBarSize!
+  const maxBarSize = childMaxBarSize ?? globalMaxBarSize
 
   let allBarPositions = getBarPositions(
     barGap,

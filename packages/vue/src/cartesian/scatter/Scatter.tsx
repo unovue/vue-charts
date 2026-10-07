@@ -301,7 +301,7 @@ const _Scatter = defineComponent({
     scatterEvents.provide(emit)
     const errorBarRegistry = createErrorBarRegistry()
     provideErrorBarRegistry(errorBarRegistry)
-    const data = useSetupGraphicalItem(props, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    const { data } = useSetupGraphicalItem(props, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
     return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
   },
 })

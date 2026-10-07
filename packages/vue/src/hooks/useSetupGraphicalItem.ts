@@ -7,7 +7,7 @@ import type { Ref, ShallowRef } from 'vue'
 import type { MinPointSize } from '@/shape'
 import type { AreaProps } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import type { CartesianGraphicalItemType, ErrorBarsSettings } from '@/types/graphical'
+import type { CartesianGraphicalItemSettings, CartesianGraphicalItemType, ErrorBarsSettings } from '@/types/graphical'
 import { getNormalizedStackId } from '@/core/coordinates'
 import { getTooltipNameProp } from '@/core/tooltip'
 import { computed } from 'vue'
@@ -50,7 +50,7 @@ export function useSetupGraphicalItem(
       },
     ]
   })
-  useChart().items.cartesian.register(computed(() => {
+  const settings = computed<CartesianGraphicalItemSettings>(() => {
     return {
       seriesId: getSeriesId(props),
       data: data.value,
@@ -65,12 +65,13 @@ export function useSetupGraphicalItem(
       type,
       errorBars: options?.errorBars?.value,
     }
-  }))
+  })
+  useChart().items.cartesian.register(settings)
 
   useChart().legend.entries.register(legendPayload)
   if (!options?.skipTooltip)
     useSetupTooltipEntry(props, type, data)
-  return data
+  return { data, settings }
 }
 
 export function useSetupTooltipEntry(

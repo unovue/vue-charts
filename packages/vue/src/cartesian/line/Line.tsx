@@ -90,7 +90,7 @@ const _Line = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps, ['stroke'])
     lineEvents.provide(emit)
-    const data = useSetupGraphicalItem(props, 'line')
+    const { data } = useSetupGraphicalItem(props, 'line')
     const View = useDeferredView(LineView)
     return () => h(View, { item: props, svgAttrs: attrs, data }, slots)
   },

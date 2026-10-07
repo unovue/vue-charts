@@ -88,7 +88,7 @@ const _Area = defineComponent({
   setup(inputProps, { attrs, slots, emit }) {
     const props = useSeriesProps(inputProps, ['fill', 'stroke'])
     areaEvents.provide(emit)
-    const data = useSetupGraphicalItem(props, 'area')
+    const { data } = useSetupGraphicalItem(props, 'area')
     const View = useDeferredView(AreaView)
     return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
   },

@@ -88,7 +88,7 @@ const RadialBarView = defineComponent({
     const sizeList = computed(() => barSizeList(visibleBars.value, chart.options.value.barSize))
     const positions = computed(() => barPositions(
       sizeList.value,
-      chart.options.value.maxBarSize!,
+      chart.options.value.maxBarSize,
       chart.options.value.barGap,
       chart.options.value.barCategoryGap,
       barBandSize.value,
