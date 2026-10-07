@@ -46,4 +46,3 @@ describe('nuxt auto-imported charts', async () => {
     dom.window.close()
   })
 })
-
