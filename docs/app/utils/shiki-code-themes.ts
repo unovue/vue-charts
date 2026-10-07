@@ -9,7 +9,7 @@ import type { ThemeRegistration } from 'shiki'
 // references pointing at component-defined custom properties: Chrome does
 // not re-run var() substitution in injected inline styles when an ancestor
 // class flip changes the custom property's value, leaving stale colors
-// (verified 2026-10-02, see tasks/lessons.md).
+// (verified 2026-10-02, see docs/adr/0008-chart-demo-cube-code-card.md).
 
 interface CodePalette {
   foreground: string
