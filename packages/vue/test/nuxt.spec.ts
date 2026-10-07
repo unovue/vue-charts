@@ -8,7 +8,6 @@ describe('nuxt auto-imported charts', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('./fixtures/nuxt-app', import.meta.url)),
     browser: false,
-    port: 4688,
     nuxtConfig: {
       build: { transpile: process.env.VCCS_TEST_TRANSPILE === '1' ? ['vccs'] : [] },
     },
@@ -47,3 +46,4 @@ describe('nuxt auto-imported charts', async () => {
     dom.window.close()
   })
 })
+
