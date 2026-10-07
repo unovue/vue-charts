@@ -15,7 +15,10 @@ const data = [
 </script>
 
 <template>
-  <BarChart :data="data" :height="300">
+  <BarChart
+    :data="data"
+    :height="300"
+  >
     <XAxis data-key="month" />
     <YAxis />
     <Tooltip :cursor="false" />
@@ -88,7 +91,10 @@ const Chart = defineChartComponents<Visit>()({ AreaChart, Area, XAxis, Tooltip }
 </script>
 
 <template>
-  <Chart.AreaChart :data="visits" :height="300">
+  <Chart.AreaChart
+    :data="visits"
+    :height="300"
+  >
     <Chart.XAxis data-key="date" />
     <Chart.Area data-key="desktop" />
     <Chart.Tooltip />
@@ -118,14 +124,24 @@ Standalone charts such as `Heatmap` and `BarList` infer the row type from `data`
 | `CohortChart` | Retention by cohort and period |
 | `JourneySankey` | Paths that users take, step by step |
 
-Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `ReferenceArea`,
-`ReferenceDot`, `ErrorBar`, `Brush`, `PolarGrid`, `PolarAngleAxis`, `PolarRadiusAxis`, `Tooltip`,
-`Legend`, `Label`, `LabelList`, `Cell`, and the shapes `Rectangle`, `Dot`,
-`Sector`, `Curve`, `Symbols`.
+Building blocks:
+
+- Series: `Area`, `Bar`, `Line`, `Scatter`, `Pie`, `Radar`, `RadialBar`, `Funnel`
+- Axes and grids: `XAxis`, `YAxis`, `ZAxis`, `CartesianAxis`, `CartesianGrid`, `PolarGrid`,
+  `PolarAngleAxis`, `PolarRadiusAxis`
+- Annotations: `ReferenceLine`, `ReferenceArea`, `ReferenceDot`, `ErrorBar`, `Brush`
+- Tooltip, legend and text: `Tooltip`, `Legend`, `Label`, `LabelList`, `Text`, `Cell`
+- Shapes: `Rectangle`, `Dot`, `Sector`, `Curve`, `Symbols`, `Cross`, `Polygon`, `Trapezoid`
+
+`ResponsiveContainer` and `Customized` still work but are deprecated and are removed in 2.0.
+Charts are responsive without a wrapper, and custom SVG goes in the chart's default slot (see
+the migration guide).
 
 ## What works the Vue way
 
-- **Models:** `v-model:active-index` on charts and series, `v-model:range` on `Brush`.
+- **Models:** `v-model:active-index` on `Tooltip`, `Bar`, `Pie` and the standalone charts
+  (`Sparkline`, `Tracker`, `Heatmap`, `CohortChart`, `CalendarHeatmap`); `v-model:range` on
+  `Brush`; `v-model:hidden` on `Legend`.
 - **Slots:** custom shapes, dots, ticks, labels and tooltip content are named slots.
 - **Events:** item events receive `(item, index, event)`.
 - **Server rendering:** charts render on the server and hydrate without layout jumps.
@@ -135,14 +151,14 @@ Building blocks: `XAxis`, `YAxis`, `ZAxis`, `CartesianGrid`, `ReferenceLine`, `R
 ## Upgrading from 0.x
 
 1.0 changes some props, events and exports. The
-[migration guide](https://github.com/rick-hup/vuecharts/blob/main/docs/content/1.getting-started/3.migration.md)
+[migration guide](https://github.com/unovue/vue-charts/blob/main/docs/content/1.getting-started/3.migration.md)
 lists every change with a before and after example.
 
 ## Links
 
-- [Documentation source](https://github.com/rick-hup/vuecharts/tree/main/docs/content)
-- [Changelog](https://github.com/rick-hup/vuecharts/blob/main/CHANGELOG.md)
-- [Issues](https://github.com/rick-hup/vuecharts/issues)
+- [Documentation](https://vue-charts.com) ([source](https://github.com/unovue/vue-charts/tree/main/docs/content))
+- [Changelog](https://github.com/unovue/vue-charts/blob/main/CHANGELOG.md)
+- [Issues](https://github.com/unovue/vue-charts/issues)
 
 ## Contribute
 

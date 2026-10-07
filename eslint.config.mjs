@@ -15,6 +15,8 @@ export default antfu(
       'packages/vue/test/fixtures/lab/**',
       '.evidence/**',
       'internals/release-1.0/**',
+      // Symlink to packages/vue/README.md; lint the file once, at its source.
+      'README.md',
     ],
   },
   {
