@@ -13,7 +13,7 @@ import { Sector } from '@/shape/Sector'
 import { getCursorPoints } from '@/components/utils'
 import { isPolarCoordinate } from '@/types/base'
 import type { RadialCursorPoints } from '@/components/types'
-import type { Point } from '@/shape'
+import type { Point } from '@/types/shape'
 
 import type { CursorSlotProps } from './types'
 

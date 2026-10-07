@@ -1,12 +1,13 @@
 import type { StoryObj } from '@storybook/vue3-vite'
 import { defineComponent } from 'vue'
 import { ComposedChart } from '@/chart/ComposedChart'
-import { Bar } from '@/cartesian/bar'
-import { Scatter } from '@/cartesian/scatter'
-import { ZAxis } from '@/cartesian/z-axis'
-import { ResponsiveContainer } from '@/container'
-import { XAxis, YAxis } from '@/cartesian/axis'
-import { CartesianGrid } from '@/cartesian/cartesian-grid'
+import { Bar } from '@/cartesian/bar/Bar'
+import { Scatter } from '@/cartesian/scatter/Scatter'
+import { ZAxis } from '@/cartesian/z-axis/ZAxis'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
+import { XAxis } from '@/cartesian/axis/XAxis'
+import { YAxis } from '@/cartesian/axis/YAxis'
+import { CartesianGrid } from '@/cartesian/cartesian-grid/CartesianGrid'
 
 export default {
   title: 'examples/ComposedChart',

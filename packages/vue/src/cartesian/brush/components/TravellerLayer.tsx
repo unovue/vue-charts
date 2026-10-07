@@ -2,14 +2,14 @@ import { getTextOfTick } from '../utils'
 import { computed, defineComponent } from 'vue'
 import { Layer } from '../../../container/Layer'
 import { Traveller } from './Traveller'
-import type { BrushProps, BrushStartEndIndex } from '../type'
+import type { BrushInput, BrushStartEndIndex } from '../type'
 
 export const TravellerLayer = defineComponent({
   name: 'TravellerLayer',
   props: {
     id: String,
     travellerX: Number,
-    otherProps: { type: Object as () => BrushProps & BrushStartEndIndex & { y: number }, required: true },
+    otherProps: { type: Object as () => BrushInput & BrushStartEndIndex & { y: number }, required: true },
   },
   emits: [
     'mouseenter',

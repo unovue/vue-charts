@@ -3,7 +3,7 @@
  */
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
-import type { VuePropsToType, WithSVGProps } from '@/types'
+import type { WithSVGProps } from '@/types'
 import type { RectRadius } from '@/types/bar'
 import { svgAttrs } from '@/utils/VueUtils'
 
@@ -15,8 +15,7 @@ const RectangleVueProps = {
   radius: { type: [Number, Array] as PropType<number | RectRadius>, default: undefined },
 }
 
-export type RectangleProps = VuePropsToType<typeof RectangleVueProps>
-export type RectanglePropsWithSVG = WithSVGProps<typeof RectangleVueProps>
+type RectangleInput = WithSVGProps<typeof RectangleVueProps>
 
 function getRectanglePath(x: number, y: number, width: number, height: number, radius: number | RectRadius | undefined): string {
   const maxRadius = Math.min(Math.abs(width) / 2, Math.abs(height) / 2)
@@ -73,7 +72,7 @@ export function rectanglePath(attrs: Record<string, unknown>, x: number, y: numb
   return <path {...attrs} x={x} y={y} width={width} height={height} d={getRectanglePath(x, y, width, height, radius)} />
 }
 
-export const Rectangle = defineComponent<RectanglePropsWithSVG>({
+export const Rectangle = defineComponent<RectangleInput>({
   name: 'Rectangle',
   props: RectangleVueProps,
   inheritAttrs: false,

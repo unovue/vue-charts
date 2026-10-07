@@ -16,6 +16,7 @@ const data = [{ name: 'A', value: 12 }, { name: 'B', value: 24 }]
       data-key="value"
       :is-animation-active="false"
     />
+    <CartesianGrid stroke-dasharray="3 3" />
     <XAxis data-key="name" />
     <YAxis />
     <Tooltip>

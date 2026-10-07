@@ -1,122 +1,126 @@
-export {
-  Area,
-  XAxis,
-  YAxis,
-  Bar,
-  Brush,
-  CartesianAxis,
-  CartesianGrid,
-  ErrorBar,
-  Line,
-  ReferenceArea,
-  ReferenceDot,
-  ReferenceLine,
-  Scatter,
-  ZAxis,
-  Funnel,
-} from './cartesian'
+// Every public name is imported from the file that defines it.
+
+// Cartesian components
+export { Area } from './cartesian/area/Area'
+export { XAxis } from './cartesian/axis/XAxis'
+export { YAxis } from './cartesian/axis/YAxis'
+export { Bar } from './cartesian/bar/Bar'
+export { Brush } from './cartesian/brush/Brush'
+export { CartesianAxis } from './cartesian/cartesian-axis/CartesianAxis'
+export { CartesianGrid } from './cartesian/cartesian-grid/CartesianGrid'
+export { ErrorBar } from './cartesian/error-bar/ErrorBar'
+export { Funnel } from './cartesian/funnel/Funnel'
+export { Line } from './cartesian/line/Line'
+export { ReferenceArea } from './cartesian/reference-area/ReferenceArea'
+export { ReferenceDot } from './cartesian/reference-dot/ReferenceDot'
+export { ReferenceLine } from './cartesian/reference-line/ReferenceLine'
+export { Scatter } from './cartesian/scatter/Scatter'
+export { ZAxis } from './cartesian/z-axis/ZAxis'
+export type { CartesianPosition } from './cartesian/getCartesianPosition'
+export type { AreaSlots } from './cartesian/area/Area'
+export type { AreaDotSlotProps } from './cartesian/area/type'
+export type { BarSlots } from './cartesian/bar/type'
+export type { Orientation, Unit } from './cartesian/cartesian-axis/CartesianAxis'
+export type { CartesianGridLineSlotProps, CartesianGridSlots } from './cartesian/cartesian-grid/type'
+export type { FunnelSlots } from './cartesian/funnel/Funnel'
+export type { LineSlots } from './cartesian/line/type'
+export type { ReferenceDotShapeProps, ReferenceDotSlots } from './cartesian/reference-dot/ReferenceDot'
+export type { FunnelTrapezoidItem } from './types/funnel'
+export type { LinePointItem } from './types/line'
+export type { TickFormatter } from './types/tick'
+
+// Chart containers and standalone charts
+export { AreaChart } from './chart/AreaChart'
+export { BarChart } from './chart/BarChart'
+export { BarList } from './chart/BarList'
+export { CalendarHeatmap } from './chart/CalendarHeatmap'
+export { CohortChart } from './chart/CohortChart'
+export { ComposedChart } from './chart/ComposedChart'
+export { FunnelChart } from './chart/FunnelChart'
+export { Heatmap } from './chart/Heatmap'
+export { JourneySankey } from './chart/JourneySankey'
+export { LineChart } from './chart/LineChart'
+export { PieChart } from './chart/PieChart'
+export { RadarChart } from './chart/RadarChart'
+export { RadialBarChart } from './chart/RadialBarChart'
+export { Sankey } from './chart/Sankey'
+export { ScatterChart } from './chart/ScatterChart'
+export { Sparkline } from './chart/Sparkline'
+export { SunburstChart } from './chart/SunburstChart'
+export { Tracker } from './chart/Tracker'
+export { Treemap } from './chart/Treemap'
+export type { BarListRow, BarListSlotProps, BarListSlots } from './chart/BarList'
+export type { CalendarDay, CalendarHeatmapSlots } from './chart/CalendarHeatmap'
+export type { CohortCell, CohortChartSlots } from './chart/CohortChart'
+export type { HeatmapCell, HeatmapKey, HeatmapSlots } from './chart/Heatmap'
+export type { JourneyHeaderSlotProps, JourneyLabelSlotProps, JourneySankeySlots } from './chart/journeyTypes'
+export type { SankeyLinkSlotProps, SankeyNodeSlotProps, SankeySlots } from './chart/Sankey'
+export type { SparklineSlots } from './chart/Sparkline'
+export type { SunburstContentSlotProps, SunburstSlots } from './chart/SunburstChart'
+export type { SunburstData } from './chart/sunburstUtils'
+export type { TrackerRow, TrackerSlots } from './chart/Tracker'
+export type { TreemapContentSlotProps, TreemapSlots } from './chart/Treemap'
+
+// Containers
+import ResponsiveContainerComponent from './container/ResponsiveContainer.vue'
+
+/**
+ * @deprecated Charts are responsive by default: remove the wrapper and set `width`, `height`
+ * or `aspect` on the chart. Removed in 2.0 (see internals/migrations.md).
+ */
+export const ResponsiveContainer = ResponsiveContainerComponent
+export type { ResponsiveContainerProps } from './container/ResponsiveContainer.vue'
+
+// General components
+export { Cell } from './components/Cell'
+export { Customized } from './components/Customized'
+export { Label } from './components/label/Label'
+export { LabelList } from './components/label/LabelList'
+export { default as Legend } from './components/legend/Legend'
+export { default as Text } from './components/Text.vue'
+export { Tooltip } from './components/tooltip/Tooltip'
+export type { CellProps } from './components/Cell'
+export type { CustomizedSlotProps, CustomizedSlots } from './components/Customized'
+export type { LegendContentProps } from './components/legend/type'
+export type { TooltipSlots } from './components/tooltip/Tooltip'
 export type {
-  CartesianPosition,
-  AreaProps,
-  AreaDotSlotProps,
-  AreaSlots,
-  BarSlots,
-  BrushProps,
-  Orientation,
-  Unit,
-  TickFormatter,
-  CartesianAxisProps,
-  LineProps,
-  LinePropsWithSVG,
-  LinePointItem,
-  LineSlots,
-  ReferenceDotShapeProps,
-  ReferenceDotSlots,
-  FunnelSlots,
-  FunnelTrapezoidItem,
-  FunnelProps,
-  FunnelPropsWithSVG,
-} from './cartesian'
-export {
-  AreaChart,
-  BarChart,
-  ComposedChart,
-  LineChart,
-  PieChart,
-  RadarChart,
-  ScatterChart,
-  RadialBarChart,
-  FunnelChart,
-  Treemap,
-  Sankey,
-  SunburstChart,
-  Tracker,
-  CalendarHeatmap,
-  Heatmap,
-  CohortChart,
-  Sparkline,
-  BarList,
-  JourneySankey,
-} from './chart'
-export type {
-  TreemapContentSlotProps,
-  TreemapSlots,
-  SankeyNodeSlotProps,
-  SankeyLinkSlotProps,
-  SankeySlots,
-  SunburstData,
-  SunburstContentSlotProps,
-  SunburstSlots,
-  TrackerRow,
-  CalendarDay,
-  HeatmapKey,
-  HeatmapCell,
-  BarListRow,
-  BarListSlotProps,
-  BarListSlots,
-  JourneyHeaderSlotProps,
-  JourneyLabelSlotProps,
-  JourneySankeySlots,
-} from './chart'
-export { ResponsiveContainer } from './container'
-export type { ResponsiveContainerProps } from './container'
-export { Text, Cell, Customized, Label, LabelList, Legend, Tooltip } from './components'
-export type {
-  CellProps,
-  CustomizedSlotProps,
-  CustomizedSlots,
-  LegendPropsWithSVG,
-  LegendProps,
-  LegendContentProps,
-  TooltipSlots,
-  TooltipContentProps,
-  CursorSlotProps,
   CrossCursorSlotProps,
+  CursorSlotProps,
+  CurveCursorSlotProps,
   RectangleCursorSlotProps,
   SectorCursorSlotProps,
-  CurveCursorSlotProps,
-} from './components'
-export { Pie, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, RadialBar } from './polar'
-export type { PieSlots, PieProps, PiePropsWithSVG, RadialBarPropsWithSVG } from './polar'
-export { Curve, Cross, Dot, Polygon, Rectangle, Symbols, Sector, Trapezoid } from './shape'
-export type {
-  CurveType,
-  CurveProps,
-  Point,
-  MinPointSize,
-  TrapezoidProps,
-  CrossProps,
-  DotProps,
-  PolygonPoint,
-  PolygonProps,
-  RectangleProps,
-  RectanglePropsWithSVG,
-  SymbolType,
-  SymbolsProps,
-  SectorProps,
-  SectorPropsWithSVG,
-  TrapezoidComponentProps,
-} from './shape'
+  TooltipContentProps,
+} from './components/tooltip/types'
+
+// Polar components
+export { Pie } from './polar/pie/Pie'
+export { PolarAngleAxis } from './polar/radar/PolarAngleAxis'
+export { PolarGrid } from './polar/radar/PolarGrid'
+export { PolarRadiusAxis } from './polar/radar/PolarRadiusAxis'
+export { Radar } from './polar/radar/Radar'
+export { RadialBar } from './polar/radial-bar/RadialBar'
+export type { PieSlots } from './polar/pie/Pie'
+export type { RadarShapeSlotProps, RadarSlots } from './polar/radar/Radar'
+export type { RadialBarShapeSlotProps, RadialBarSlots } from './polar/radial-bar/RadialBar'
+
+// Shapes
+export { Cross } from './shape/Cross'
+export { Curve } from './shape/Curve'
+export { Dot } from './shape/Dot'
+export { Polygon } from './shape/Polygon'
+export { Rectangle } from './shape/Rectangle'
+export { Sector } from './shape/Sector'
+export { Symbols } from './shape/Symbols'
+export { Trapezoid } from './shape/Trapezoid'
+export type { CrossProps } from './shape/Cross'
+export type { CurveType } from './shape/Curve'
+export type { PolygonPoint, PolygonProps } from './shape/Polygon'
+export type { SymbolsProps, SymbolType } from './shape/Symbols'
+export type { MinPointSize, Point, TrapezoidItem } from './types/shape'
+
+// Component props, derived from the components
+export type * from './publicProps'
+
 export {
   useIsTooltipActive,
   useActiveTooltipCoordinate,
@@ -167,63 +171,14 @@ export type { BrushIndex } from './cartesian/brush/type'
 export type { TooltipActiveIndex } from '@/types/tooltip'
 export type { LegendHidden } from './components/legend/type'
 export { defineChartComponents } from './typed'
+export type { RowDataKey } from './types/typed'
 export type {
-  RowDataKey,
   TypedComponents,
   TypedTooltipContentProps,
   TypedTooltipPayload,
   TypedLegendPayload,
 } from './typed'
 
-export type {
-  AreaChartProps,
-  BarProps,
-  BarChartProps,
-  BarListProps,
-  CalendarHeatmapProps,
-  CartesianGridProps,
-  CohortChartProps,
-  ComposedChartProps,
-  CustomizedProps,
-  ErrorBarProps,
-  FunnelChartProps,
-  HeatmapProps,
-  JourneySankeyProps,
-  LabelProps,
-  LabelListProps,
-  LineChartProps,
-  PieChartProps,
-  PolarAngleAxisProps,
-  PolarGridProps,
-  PolarRadiusAxisProps,
-  RadarProps,
-  RadarChartProps,
-  RadialBarProps,
-  RadialBarChartProps,
-  ReferenceAreaProps,
-  ReferenceDotProps,
-  ReferenceLineProps,
-  SankeyProps,
-  ScatterProps,
-  ScatterChartProps,
-  SparklineProps,
-  SunburstChartProps,
-  TextProps,
-  TooltipProps,
-  TrackerProps,
-  TreemapProps,
-  XAxisProps,
-  YAxisProps,
-  ZAxisProps,
-} from './publicProps'
 export type { TooltipPayloadEntry, TooltipPayload } from './types/tooltip'
 
 export type { AxisProps } from './cartesian/axis/AxisProps'
-
-export type { HeatmapSlots } from './chart/Heatmap'
-export type { CalendarHeatmapSlots } from './chart/CalendarHeatmap'
-export type { CohortCell, CohortChartSlots } from './chart/CohortChart'
-export type { TrackerSlots } from './chart/Tracker'
-export type { SparklineSlots } from './chart/Sparkline'
-export type { RadarSlots, RadarShapeSlotProps, RadialBarSlots, RadialBarShapeSlotProps } from './polar'
-export type { CartesianGridSlots, CartesianGridLineSlotProps } from './cartesian/cartesian-grid'

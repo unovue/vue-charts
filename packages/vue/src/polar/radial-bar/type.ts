@@ -1,7 +1,6 @@
 import type { ChartDataKey } from '@/types/base'
 import type { PropType } from 'vue'
 import type { ValueAnimationTransition } from 'motion-v'
-import type { WithSVGProps } from '@/types'
 import { classProp } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
@@ -36,5 +35,3 @@ export const RadialBarVueProps = {
   cornerIsExternal: { type: Boolean, default: false },
   class: classProp,
 }
-
-export type RadialBarPropsWithSVG = WithSVGProps<typeof RadialBarVueProps>

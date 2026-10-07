@@ -12,10 +12,10 @@ import type { LayoutType } from '@/types'
 import { getCartesianPosition, isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
-import type { LegendProps } from '../type'
+import type { LegendInput } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
-export function useLegend(props: LegendProps) {
+export function useLegend(props: LegendInput) {
   const chart = useChart()
   const canMeasureText = useCanMeasureText()
   const contextPayload = chart.legend.payload

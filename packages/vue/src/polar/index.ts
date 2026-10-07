@@ -1,7 +1,0 @@
-export { Pie } from './pie'
-export type { PieSlots, PieProps, PiePropsWithSVG } from './pie'
-export { Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from './radar'
-export { RadialBar } from './radial-bar'
-export type { RadialBarPropsWithSVG } from './radial-bar'
-export type { RadarSlots, RadarShapeSlotProps } from './radar'
-export type { RadialBarSlots, RadialBarShapeSlotProps } from './radial-bar'

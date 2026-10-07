@@ -1,11 +1,12 @@
 import type { StoryObj } from '@storybook/vue3-vite'
 import { scaleTime } from 'd3-scale'
 import { LineChart } from '@/chart/LineChart'
-import { Line } from '@/cartesian/line'
-import { XAxis, YAxis } from '@/cartesian/axis'
-import { CartesianGrid } from '@/cartesian/cartesian-grid'
+import { Line } from '@/cartesian/line/Line'
+import { XAxis } from '@/cartesian/axis/XAxis'
+import { YAxis } from '@/cartesian/axis/YAxis'
+import { CartesianGrid } from '@/cartesian/cartesian-grid/CartesianGrid'
 import { Tooltip } from '@/components/tooltip/Tooltip'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { ResponsiveContainer } from '@/index'
 
 export default {

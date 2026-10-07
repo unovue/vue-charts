@@ -4,8 +4,8 @@ import { provideTooltipEntry } from '@/model/tooltip'
 import type { Coordinate } from '@/types'
 import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { Ref, ShallowRef } from 'vue'
-import type { MinPointSize } from '@/shape'
-import type { AreaProps } from '@/cartesian/area/type'
+import type { MinPointSize } from '@/types/shape'
+import type { AreaInput } from '@/cartesian/area/type'
 import type { LegendPayload } from '@/components/DefaultLegendContent'
 import type { CartesianGraphicalItemSettings, CartesianGraphicalItemType, ErrorBarsSettings } from '@/types/graphical'
 import { getNormalizedStackId } from '@/core/coordinates'
@@ -15,7 +15,7 @@ import { mainColor } from '@/core/color'
 import { useTrackedData } from './useTrackedData'
 import type { AxisId } from '@/types/axisSettings'
 
-type GraphicalItemProps = Partial<Pick<AreaProps, 'dataKey' | 'stackId' | 'hide' | 'xAxisId' | 'yAxisId'
+type GraphicalItemProps = Partial<Pick<AreaInput, 'dataKey' | 'stackId' | 'hide' | 'xAxisId' | 'yAxisId'
   | 'stroke' | 'fill' | 'name' | 'legendType' | 'tooltipType' | 'unit'>> & {
     data?: readonly unknown[]
     strokeDasharray?: string | number

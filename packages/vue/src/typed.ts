@@ -7,37 +7,6 @@ import type { TrackerProps, TrackerSlots } from './chart/Tracker'
 import type { BarListProps, BarListSlots } from './chart/BarList'
 import type { SparklineProps, SparklineSlots } from './chart/Sparkline'
 import type { JourneySankeyProps, JourneySankeySlots } from './chart/JourneySankey'
-import type {
-  AreaChart,
-  BarChart,
-  ComposedChart,
-  FunnelChart,
-  LineChart,
-  PieChart,
-  RadarChart,
-  RadialBarChart,
-  Sankey,
-  ScatterChart,
-  SunburstChart,
-  Treemap,
-} from './chart'
-import type {
-  Area,
-  Bar,
-  Brush,
-  ErrorBar,
-  Funnel,
-  Line,
-  ReferenceArea,
-  ReferenceDot,
-  ReferenceLine,
-  Scatter,
-  XAxis,
-  YAxis,
-  ZAxis,
-} from './cartesian'
-import type { Pie, PolarAngleAxis, PolarRadiusAxis, Radar, RadialBar } from './polar'
-import type { Cell, LabelList, Legend, Tooltip } from './components'
 import type { TooltipContentProps } from './components/tooltip/Tooltip'
 import type { LegendContentProps } from './components/legend/type'
 import type { LegendPayload } from './components/DefaultLegendContent'
@@ -114,50 +83,15 @@ type TypedComponent<Component extends ComponentConstructor, Row, Slots = RowSlot
     }
   }
 
-// Keep component references in emitted declarations instead of expanding Vue internals.
-type RuntimeComponents = {
-  AreaChart: typeof AreaChart
-  BarChart: typeof BarChart
-  ComposedChart: typeof ComposedChart
-  FunnelChart: typeof FunnelChart
-  LineChart: typeof LineChart
-  PieChart: typeof PieChart
-  RadarChart: typeof RadarChart
-  RadialBarChart: typeof RadialBarChart
-  Sankey: typeof Sankey
-  ScatterChart: typeof ScatterChart
-  SunburstChart: typeof SunburstChart
-  Treemap: typeof Treemap
-  Area: typeof Area
-  Bar: typeof Bar
-  Funnel: typeof Funnel
-  ErrorBar: typeof ErrorBar
-  Line: typeof Line
-  Pie: typeof Pie
-  Radar: typeof Radar
-  RadialBar: typeof RadialBar
-  Scatter: typeof Scatter
-  XAxis: typeof XAxis
-  YAxis: typeof YAxis
-  ZAxis: typeof ZAxis
-  PolarAngleAxis: typeof PolarAngleAxis
-  PolarRadiusAxis: typeof PolarRadiusAxis
-  Tooltip: typeof Tooltip
-  Legend: typeof Legend
-  Brush: typeof Brush
-  ReferenceLine: typeof ReferenceLine
-  ReferenceArea: typeof ReferenceArea
-  ReferenceDot: typeof ReferenceDot
-  LabelList: typeof LabelList
-  Cell: typeof Cell
-}
-
-export type TypedComponents<Row, Components = RuntimeComponents & StandaloneComponents<Row>> = {
+/** The components passed to `defineChartComponents`, re-typed for one row type. */
+export type TypedComponents<Row, Components> = {
   [Key in keyof Components]: Key extends keyof StandaloneComponents<Row>
     ? StandaloneComponents<Row>[Key]
     : Components[Key] extends ComponentConstructor
+      // Tooltip and Legend content props hold a top-level `payload` array, which the generic
+      // row mapping would replace with a single row, so they get explicit slot types.
       ? Key extends 'Tooltip'
-        ? TypedComponent<Components[Key], Row, Omit<InstanceType<typeof Tooltip>['$slots'], 'content'> & {
+        ? TypedComponent<Components[Key], Row, Omit<InstanceType<Components[Key]>['$slots'], 'content'> & {
           content?: (props: TypedTooltipContentProps<Row>) => VNodeChild
         }>
         : Key extends 'Legend'

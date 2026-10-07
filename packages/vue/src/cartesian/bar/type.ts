@@ -9,7 +9,7 @@ import type {
 import type { ChartTransition } from '@/animation/motion'
 import type { AxisId } from '@/types/axis'
 import type { LegendType } from '@/types/legend'
-import type { MinPointSize } from '@/shape'
+import type { MinPointSize } from '@/types/shape'
 import { classProp } from '@/types'
 
 export const BarVueProps = {

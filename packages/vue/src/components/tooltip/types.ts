@@ -3,7 +3,7 @@ import type {
   ChartCoordinate,
   LayoutType,
 } from '@/types'
-import type { Point } from '@/shape'
+import type { Point } from '@/types/shape'
 
 export type TooltipContentProps = {
   label?: string | number

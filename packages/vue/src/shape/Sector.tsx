@@ -22,8 +22,9 @@ const SectorVueProps = {
   class: classProp,
 }
 
-export type SectorProps = VuePropsToType<typeof SectorVueProps>
-export type SectorPropsWithSVG = WithSVGProps<typeof SectorVueProps>
+/** Resolved sector geometry, also used for the RadialBar background. */
+export type SectorInput = VuePropsToType<typeof SectorVueProps>
+type SectorAttrs = WithSVGProps<typeof SectorVueProps>
 
 function getDeltaAngle(startAngle: number, endAngle: number) {
   const sign = mathSign(endAngle - startAngle)
@@ -200,7 +201,7 @@ function getSectorWithCorner(
   return path
 }
 
-export const Sector = defineComponent<SectorPropsWithSVG>({
+export const Sector = defineComponent<SectorAttrs>({
   name: 'Sector',
   props: SectorVueProps,
   inheritAttrs: false,

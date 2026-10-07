@@ -3,10 +3,10 @@ import { defineComponent } from 'vue'
 import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
 import { Sector } from '@/shape/Sector'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { Tooltip } from '@/components/tooltip/Tooltip'
 import type { PieSectorDataItem } from '@/core/pie'
-import { ResponsiveContainer } from '@/container'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 
 const meta = {
   title: 'Examples/Pie/PieColorSync',

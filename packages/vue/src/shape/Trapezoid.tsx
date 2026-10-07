@@ -12,7 +12,7 @@ const TrapezoidVueProps = {
   class: classProp,
 }
 
-export type TrapezoidComponentProps = WithSVGProps<typeof TrapezoidVueProps>
+type TrapezoidInput = WithSVGProps<typeof TrapezoidVueProps>
 
 function getTrapezoidPath(x: number, y: number, upperWidth: number, lowerWidth: number, height: number): string {
   const upperLeft = x
@@ -24,7 +24,7 @@ function getTrapezoidPath(x: number, y: number, upperWidth: number, lowerWidth: 
   return `M ${upperLeft},${y} L ${upperRight},${y} L ${lowerRight},${bottom} L ${lowerLeft},${bottom} Z`
 }
 
-export const Trapezoid = defineComponent<TrapezoidComponentProps>({
+export const Trapezoid = defineComponent<TrapezoidInput>({
   name: 'Trapezoid',
   props: TrapezoidVueProps,
   inheritAttrs: false,

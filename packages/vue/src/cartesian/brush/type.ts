@@ -68,7 +68,8 @@ export const BrushVueProps = {
     type: Function as PropType<(value: unknown, index: number) => string>,
   },
 }
-export type BrushProps = VuePropsToType<typeof BrushVueProps>
+/** Resolved Brush props inside the library; the public `BrushProps` is derived from the component. */
+export type BrushInput = VuePropsToType<typeof BrushVueProps>
 
 export type BrushTravellerId = 'startX' | 'endX'
 

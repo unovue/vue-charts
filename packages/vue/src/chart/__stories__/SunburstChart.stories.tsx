@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { SunburstChart } from '@/chart/SunburstChart'
-import { Tooltip } from '@/components'
-import { ResponsiveContainer } from '@/container'
+import { Tooltip } from '@/components/tooltip/Tooltip'
+import ResponsiveContainer from '@/container/ResponsiveContainer.vue'
 
 const meta = {
   title: 'Examples/SunburstChart',

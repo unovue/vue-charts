@@ -2,7 +2,7 @@ import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Pie, PieChart } from '@/index'
 import { Tooltip } from '@/components/tooltip/Tooltip'
-import { Legend } from '@/components/legend'
+import Legend from '@/components/legend/Legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 

@@ -1,5 +1,5 @@
 import { computed, shallowRef, watch } from 'vue'
-import type { Point } from '@/shape/Curve'
+import type { Point } from '@/types/shape'
 import type { ChartTransition, PhaseTiming } from './motion'
 import { useAnimationCallbacks } from './useAnimationCallbacks'
 import { useKeyedTransition } from './useKeyedTransition'

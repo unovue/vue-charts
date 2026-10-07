@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import type { BrushStartEndIndex } from '@/index'
 import { Bar, BarChart, Brush, LineChart } from '@/index'
-import { Line } from '@/cartesian/line'
+import { Line } from '@/cartesian/line/Line'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 describe('<Brush />', () => {

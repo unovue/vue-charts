@@ -65,7 +65,8 @@ export const AreaVueProps = {
   class: classProp,
 }
 
-export type AreaProps = VuePropsToType<typeof AreaVueProps>
+/** Resolved Area props inside the library; the public `AreaProps` is derived from the component. */
+export type AreaInput = VuePropsToType<typeof AreaVueProps>
 
 export interface AreaDotSlotProps {
   cx: number
