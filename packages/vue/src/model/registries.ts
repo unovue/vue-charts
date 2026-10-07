@@ -1,8 +1,6 @@
-import type { LegendPayload } from '@/components/DefaultLegendContent'
 import type { AngleAxisSettings, RadiusAxisSettings, XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '@/types/reference'
-import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ComputedRef } from 'vue'
 import { computed } from 'vue'
 import type { AxisId } from '@/types/axis'
@@ -44,8 +42,6 @@ export function createRegistries() {
       areas: createRegistry<ReferenceAreaSettings>(),
       lines: createRegistry<ReferenceLineSettings>(),
     },
-    legendEntries: createRegistry<readonly LegendPayload[]>(),
-    tooltipEntries: createRegistry<TooltipPayloadConfiguration>(),
   }
 }
 

@@ -71,7 +71,7 @@ export function createChart(inputs: ChartInputs): Chart {
   const registries = createRegistries()
   const brush = createChartBrush()
   const dataRange = createChartData(() => data.value, () => brush.range.value)
-  const legend = createChartLegend(registries.legendEntries)
+  const legend = createChartLegend()
   const geometry = createLayout({
     layout: () => layout.value,
     brush: () => brush.state.value,
@@ -96,7 +96,6 @@ export function createChart(inputs: ChartInputs): Chart {
   })
   const tooltip = createTooltip({
     axis,
-    entries: registries.tooltipEntries,
     dataRange,
     layout: inputs.layout,
     size: inputs.size,

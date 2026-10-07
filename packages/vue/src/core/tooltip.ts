@@ -83,7 +83,7 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
   }, init)
 }
 
-export function tooltipTicks(layout: LayoutType, axis: AxisWithTicksSettings, realScaleType: string | undefined, scale: RechartsScale | undefined, range: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: Exclude<AxisType, 'zAxis'>): ReadonlyArray<TickItem> | null {
+export function tooltipTicks(layout: LayoutType, axis: Pick<AxisWithTicksSettings, 'type'>, realScaleType: string | undefined, scale: RechartsScale | undefined, range: AxisRange | undefined, duplicateDomain: ReadonlyArray<unknown> | undefined, categoricalDomain: ReadonlyArray<unknown> | undefined, axisType: Exclude<AxisType, 'zAxis'>): ReadonlyArray<TickItem> | null {
   if (!axis) {
     return null
   }

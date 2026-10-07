@@ -5,8 +5,6 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { createTooltip, provideTooltipController } from '@/model/tooltip'
 import { provideChartPresentation } from '@/model/presentation'
 import { chartDefaults } from '@/model/defaults'
-import { createRegistry } from '@/model/registry'
-import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ChartOptions } from '@/model/options'
 import { provideRenderPhase } from '@/model/runtime'
 import { provideChartAnimation } from '@/model/animation'
@@ -49,7 +47,6 @@ export function useChartShell(
     height: offset.value.height,
   }))
   const tooltip = createTooltip({
-    entries: createRegistry<TooltipPayloadConfiguration>(),
     dataRange: createChartData(() => undefined),
     options: () => options,
     layout: () => 'horizontal',
