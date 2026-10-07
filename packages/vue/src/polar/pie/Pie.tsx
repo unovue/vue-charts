@@ -1,4 +1,4 @@
-import type { ComputedRef, PropType, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
+import type { ComputedRef, PropType, SVGAttributes, ShallowRef, SlotsType, VNode, VNodeChild } from 'vue'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { pieEvents } from '@/events/itemEvents'
 import { delegateItemEvents } from '@/events/delegateItemEvents'
@@ -37,7 +37,7 @@ const PieView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<PieProps>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     pieSettings: { type: Object as PropType<ComputedRef<ResolvedPieSettings>>, required: true },
     cells: { type: Object as PropType<ShallowRef<CellProps[]>>, required: true },

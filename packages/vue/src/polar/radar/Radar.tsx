@@ -4,7 +4,7 @@ import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
 import { radarEvents } from '@/events/itemEvents'
 import { useLayerTeleport } from '@/hooks/useLayerTeleport'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { ValueAnimationTransition } from 'motion-v'
 import { useChart } from '@/model/chart'
@@ -72,7 +72,7 @@ const RadarView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof RadarViewProps>>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
   },
   setup(view, { slots }) {
     const emit = radarEvents.use()

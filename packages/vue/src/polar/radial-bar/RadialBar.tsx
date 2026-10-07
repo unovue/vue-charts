@@ -4,7 +4,7 @@ import { getValueByDataKey } from '@/utils/chart'
 import { useSeriesProps } from '@/hooks/useSeriesProps'
 import { radialBarEvents } from '@/events/itemEvents'
 import { Fragment, computed, defineComponent, h } from 'vue'
-import type { ExtractPropTypes, PropType, SlotsType, VNodeChild } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import { useChart } from '@/model/chart'
 import { getBandSizeOfAxis } from '@/core/axis/scale'
@@ -49,7 +49,7 @@ const RadialBarView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof RadialBarVueProps>>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
   },
   setup(view, { slots }) {
     const emit = radialBarEvents.use()

@@ -27,7 +27,7 @@ const FunnelView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof FunnelVueProps>>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
     trapezoids: { type: Object as PropType<ComputedRef<readonly FunnelTrapezoidItem[]>>, required: true },
     cellPropsRef: { type: Object as PropType<ShallowRef<ReturnType<typeof extractCellProps>>>, required: true },

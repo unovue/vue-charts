@@ -58,7 +58,7 @@ const ScatterView = defineComponent({
   inheritAttrs: false,
   props: {
     item: { type: Object as PropType<ExtractPropTypes<typeof ScatterVueProps>>, required: true },
-    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
     data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
   },
   slots: Object as SlotsType<ScatterSlots>,
@@ -66,11 +66,10 @@ const ScatterView = defineComponent({
     const chart = useChart()
     const emit = scatterEvents.use()
     const props = view.item
-    const attrs = view.svgAttrs
+    const svgAttrs = view.svgAttrs
     const data = view.data
     const trackedProps = proxyRefs({ ...toRefs(props), data })
     const { shouldRender, points } = useScatter(trackedProps)
-    const svgAttrs = attrs as SVGAttributes
     const tooltip = chart.tooltip
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
@@ -208,7 +207,7 @@ const ScatterView = defineComponent({
 
       const lineProps = {
         fill: 'none',
-        stroke: (svgAttrs.stroke as string) ?? props.fill,
+        stroke: svgAttrs.stroke ?? props.fill,
         ...(typeof props.line === 'object' ? props.line : {}),
         points: linePoints,
       }
@@ -225,7 +224,6 @@ const ScatterView = defineComponent({
         return null
       }
 
-      const svgAttrs = attrs as SVGAttributes
       const data = display.items.value.map(item => item.value)
       const symbolsContent = (
         <>
