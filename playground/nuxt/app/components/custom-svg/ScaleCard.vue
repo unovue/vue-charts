@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Layers } from 'lucide-vue-next'
-import { Bar, BarChart, CartesianGrid, Customized, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'vccs'
+import AverageLine from './AverageLine.vue'
 import type { ChartConfig } from '~/components/ui/chart/types'
 import ChartTooltipContent from '~/components/ui/chart/ChartTooltipContent.vue'
 
@@ -12,6 +13,8 @@ const chartData = [
   { month: 'May', desktop: 209, mobile: 130 },
   { month: 'Jun', desktop: 354, mobile: 140 },
 ]
+
+const average = Math.round(chartData.reduce((sum, row) => sum + row.desktop, 0) / chartData.length)
 
 const chartConfig: ChartConfig = {
   desktop: {
@@ -28,9 +31,9 @@ const chartConfig: ChartConfig = {
 <template>
   <Card>
     <CardHeader>
-      <CardTitle>Customized - Graphical Items</CardTitle>
+      <CardTitle>Custom SVG - Axis scale</CardTitle>
       <CardDescription>
-        Read registered graphical items metadata
+        Draw a reference line with useYAxisScale()
       </CardDescription>
     </CardHeader>
     <CardContent>
@@ -40,7 +43,7 @@ const chartConfig: ChartConfig = {
       >
         <BarChart
           :data="chartData"
-          :margin="{ left: 12, right: 12, top: 20 }"
+          :margin="{ left: 12, right: 48, top: 20 }"
         >
           <CartesianGrid :vertical="false" />
           <XAxis
@@ -74,20 +77,10 @@ const chartConfig: ChartConfig = {
             :radius="4"
             :is-animation-active="false"
           />
-          <Customized>
-            <template #default="{ formattedGraphicalItems, offset }">
-              <text
-                v-for="(item, i) in formattedGraphicalItems"
-                :key="i"
-                :x="offset.left + 4"
-                :y="offset.top + 14 + i * 16"
-                fill="#888"
-                font-size="11"
-              >
-                {{ item.type }}[{{ item.dataKey }}]
-              </text>
-            </template>
-          </Customized>
+          <AverageLine
+            :value="average"
+            :label="`avg ${average}`"
+          />
         </BarChart>
       </ChartContainer>
     </CardContent>
@@ -95,7 +88,7 @@ const chartConfig: ChartConfig = {
       <div class="flex w-full items-start gap-2 text-sm">
         <div class="grid gap-2">
           <div class="flex items-center gap-2 font-medium leading-none">
-            2 graphical items detected
+            Average line from the y scale
             <Layers class="size-4" />
           </div>
           <div class="flex items-center gap-2 leading-none text-muted-foreground">

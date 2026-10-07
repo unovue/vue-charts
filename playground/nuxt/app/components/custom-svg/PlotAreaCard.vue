@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Pencil } from 'lucide-vue-next'
-import { CartesianGrid, Customized, Line, LineChart, Tooltip, XAxis, YAxis } from 'vccs'
+import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'vccs'
+import PlotAreaGuide from './PlotAreaGuide.vue'
 import type { ChartConfig } from '~/components/ui/chart/types'
 import ChartTooltipContent from '~/components/ui/chart/ChartTooltipContent.vue'
 
@@ -24,9 +25,9 @@ const chartConfig: ChartConfig = {
 <template>
   <Card>
     <CardHeader>
-      <CardTitle>Customized - Annotation</CardTitle>
+      <CardTitle>Custom SVG - Plot area</CardTitle>
       <CardDescription>
-        Draw custom SVG elements using chart offset
+        Draw an annotation with usePlotArea()
       </CardDescription>
     </CardHeader>
     <CardContent>
@@ -65,28 +66,7 @@ const chartConfig: ChartConfig = {
             :stroke-width="2"
             :dot="false"
           />
-          <Customized>
-            <template #default="{ offset }">
-              <line
-                :x1="offset.left"
-                :x2="offset.left + 1000"
-                :y1="offset.top"
-                :y2="offset.top"
-                stroke="var(--color-sales)"
-                stroke-dasharray="4 4"
-                stroke-width="1"
-                opacity="0.5"
-              />
-              <text
-                :x="offset.left + 4"
-                :y="offset.top - 6"
-                fill="var(--color-sales)"
-                font-size="11"
-              >
-                Plot area top
-              </text>
-            </template>
-          </Customized>
+          <PlotAreaGuide />
         </LineChart>
       </ChartContainer>
     </CardContent>
@@ -94,7 +74,7 @@ const chartConfig: ChartConfig = {
       <div class="flex w-full items-start gap-2 text-sm">
         <div class="grid gap-2">
           <div class="flex items-center gap-2 font-medium leading-none">
-            Custom annotation via offset
+            Annotation from the plot area
             <Pencil class="size-4" />
           </div>
           <div class="flex items-center gap-2 leading-none text-muted-foreground">
