@@ -4,21 +4,19 @@
   "version": "0.6.0",
   "private": true,
   "packageManager": "pnpm@9.15.0+sha1.8bfdb6d72b4d5fdf87d21d27f2bfbe2b21dd2629",
-  "description": "",
-  "author": "",
+  "description": "Workspace for vccs, its docs site and its playground",
   "license": "MIT",
-  "keywords": [],
-  "main": "index.js",
   "scripts": {
     "test": "pnpm --filter vccs test",
     "dev": "pnpm --filter vccs dev",
     "build": "pnpm --filter vccs build",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "pnpm --filter vccs typecheck",
     "test:coverage": "pnpm --filter vccs exec vitest run --coverage",
     "play": "pnpm --filter play dev",
     "prepare": "simple-git-hooks",
     "pub:release": "pnpm --filter vccs pub:release",
     "docs": "pnpm --filter docs dev",
-    "docs:dev": "pnpm --filter docs dev",
     "bumpp": "bumpp package.json packages/*/package.json docs/package.json",
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:motion": "node scripts/check-motion.mjs",
@@ -33,11 +31,6 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:code": "node scripts/check-code.mjs"
   },
-  "dependencies": {
-    "@vueuse/core": "^13.1.0",
-    "decimal.js-light": "^2.5.1",
-    "motion-v": "^2.0.0"
-  },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",
     "@arethetypeswrong/cli": "^0.18.5",
@@ -45,21 +38,17 @@
     "@commitlint/config-conventional": "^19.8.0",
     "@size-limit/preset-small-lib": "^11.2.0",
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/user-event": "^14.5.2",
     "@testing-library/vue": "^8.1.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^22.5.3",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitejs/plugin-vue-jsx": "^5.0.0",
-    "@vitest/browser": "^4.1.0",
     "@vitest/coverage-istanbul": "^4.1.0",
     "@vue/test-utils": "^2.4.4",
     "@vue/tsconfig": "^0.5.1",
     "axe-core": "^4.10.3",
     "bumpp": "^10.0.3",
-    "changelogen": "^0.6.2",
-    "d3": "^7.8.5",
     "esbuild": "^0.28.2",
     "eslint": "9.9.1",
     "eslint-plugin-import-x": "4.1.0",
@@ -94,6 +83,5 @@
     "*.{js,ts,vue}": [
       "eslint --fix"
     ]
-  },
-  "eslintConfig": {}
+  }
 }

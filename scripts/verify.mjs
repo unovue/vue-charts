@@ -14,8 +14,8 @@ const quick = process.argv.includes('--quick')
 const checks = [
   ['unit and regression tests', 'pnpm --filter vccs exec vitest run --maxWorkers=2'],
   ['tooling verdict regressions', 'node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs'],
-  ['lint', 'pnpm exec eslint .'],
-  ['typecheck', 'pnpm --filter vccs typecheck'],
+  ['lint', 'pnpm lint'],
+  ['typecheck', 'pnpm typecheck'],
   ['library build', 'pnpm --filter vccs build'],
   ['size budgets', 'pnpm --filter vccs size'],
   ['package exports and types', 'pnpm check:package'],

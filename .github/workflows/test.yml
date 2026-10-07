@@ -25,7 +25,7 @@ jobs:
 
       - run: pnpm --filter vccs build
 
-      - run: pnpm --filter vccs typecheck
+      - run: pnpm typecheck
 
       - run: pnpm --filter vccs exec vitest run --maxWorkers=2
 
@@ -34,7 +34,7 @@ jobs:
           node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs packages/vue/test/lab/report-metrics.test.mjs
           node scripts/update-motion-docs.mjs --check
 
-      - run: pnpm exec eslint .
+      - run: pnpm lint
 
       - run: pnpm check:code
 
