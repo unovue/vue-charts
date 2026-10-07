@@ -5,7 +5,7 @@ import { chartEmits, chartListeners } from '@/events/componentEvents'
 import { provideClipPathId, provideRenderPhase } from '@/model/runtime'
 import type { ExtractPropTypes, SetupContext } from 'vue'
 import { Fragment } from 'vue'
-import ChartSurface from '@/chart/ChartSurface.vue'
+import Surface from '@/container/Surface'
 import ClipPath from '@/container/ClipPath'
 import { ChartsWrapper } from './ChartsWrapper'
 import { FULL_WIDTH_AND_HEIGHT } from '@/chart/const'
@@ -97,10 +97,10 @@ function createChartSetup({
         }
         return (
           <Fragment>
-            <ChartSurface {...attrs} class={props.class} style={props.style} {...{ role: props.accessibilityLayer ? undefined : props.role ?? 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
+            <Surface layers {...attrs} class={props.class} style={props.style} {...{ role: props.accessibilityLayer ? undefined : props.role ?? 'img' }} width={effectiveWidth.value} height={effectiveHeight.value} title={title} desc={desc}>
               <ClipPath clipPathId={clipPathId} />
               {slots.default?.()}
-            </ChartSurface>
+            </Surface>
           </Fragment>
         )
       }
@@ -144,7 +144,8 @@ function createChartSetup({
             {...chartListeners(emit)}
           >
             {hasValidSize.value && (
-              <ChartSurface
+              <Surface
+                layers
                 {...{
                   ...svgAttributes,
                   'role': props.accessibilityLayer ? undefined : props.role ?? 'img',
@@ -160,7 +161,7 @@ function createChartSetup({
               >
                 <ClipPath clipPathId={clipPathId} />
                 {slots.default?.()}
-              </ChartSurface>
+              </Surface>
             )}
             {slots.tooltip?.()}
           </ChartsWrapper>
