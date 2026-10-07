@@ -142,7 +142,14 @@ async function run(base, route, width, tabs = false) {
   try {
     await page.goto(`${base}${route}`, { waitUntil: 'commit' })
     // Entrances begin before every external resource loads; wait for recorded charts.
-    await page.waitForFunction(() => window.seenRecording?.lastFrame?.charts.length > 0)
+    try {
+      await page.waitForFunction(() => window.seenRecording?.lastFrame?.charts.length > 0)
+    }
+    catch (error) {
+      if (error.name !== 'TimeoutError')
+        throw error
+      throw new Error(`No chart rows recorded for ${route}: ${error.message}`, { cause: error })
+    }
     await page.mouse.move(width - 1, 1)
     if (tabs) {
       await page.getByRole('tab', { name: 'Area', exact: true }).waitFor()
