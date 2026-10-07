@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import * as publicExports from '@/index'
-import { componentNames } from '../componentNames'
+import { componentNames, composableNames } from '../componentNames'
 
 describe('public component names', () => {
   it('includes all public Vue components and no helpers or prop definitions', () => {
@@ -13,5 +13,11 @@ describe('public component names', () => {
       })
       .map(([name]) => name)
     expect([...componentNames].sort()).toEqual(names.sort())
+  })
+
+  // A new public composable must also be auto-imported by the Nuxt module.
+  it('lists every public composable', () => {
+    const names = Object.keys(publicExports).filter(name => /^use[A-Z]/.test(name))
+    expect([...composableNames].sort()).toEqual(names.sort())
   })
 })

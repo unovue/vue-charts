@@ -57,3 +57,28 @@ export const componentNames = [
   'YAxis',
   'ZAxis',
 ] as const
+
+// Public composables the Nuxt module auto-imports.
+export const composableNames = [
+  'useActiveTooltipCoordinate',
+  'useActiveTooltipDataPoints',
+  'useActiveTooltipLabel',
+  'useCartesianScale',
+  'useChartHeight',
+  'useChartWidth',
+  'useIsTooltipActive',
+  'useMargin',
+  'usePlotArea',
+  'useXAxisDomain',
+  'useXAxisInverseDataSnapScale',
+  'useXAxisInverseScale',
+  'useXAxisInverseTickSnapScale',
+  'useXAxisScale',
+  'useXAxisTicks',
+  'useYAxisDomain',
+  'useYAxisInverseDataSnapScale',
+  'useYAxisInverseScale',
+  'useYAxisInverseTickSnapScale',
+  'useYAxisScale',
+  'useYAxisTicks',
+] as const

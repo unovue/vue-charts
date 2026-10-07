@@ -14,6 +14,7 @@ const rows: { name: string, value: number }[] = [{ name: 'A', value: 12 }, { nam
     />
     <XAxis data-key="name" />
     <YAxis />
+    <PlotAreaProbe />
     <Tooltip>
       <template #content="{ active, payload, label }">
         <div v-if="active">
