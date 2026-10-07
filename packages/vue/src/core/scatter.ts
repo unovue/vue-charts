@@ -7,12 +7,13 @@ type TooltipPayloadEntry = Payload<ValueType, NameType>
 import { getCateCoordinateOfLine } from '@/core/coordinates'
 import { getValueByDataKey } from '@/core/data'
 import { isNullish, toFiniteNumber } from '@/utils/validate'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export type ResolvedScatterSettings = {
   data: readonly unknown[] | undefined
   dataKey: DataKey<unknown> | undefined
   tooltipType: TooltipType | undefined
-  name: string | number
+  name: string | undefined
 }
 
 export function computeScatterPoints({
@@ -48,7 +49,7 @@ export function computeScatterPoints({
 
     const tooltipPayload: Array<TooltipPayloadEntry> = [
       {
-        name: isNullish(xAxis.dataKey) ? scatterSettings.name : xAxis.name || String(xAxis.dataKey),
+        name: isNullish(xAxis.dataKey) ? scatterSettings.name : xAxis.name || getTooltipNameProp(undefined, xAxis.dataKey),
         unit: xAxis.unit || '',
         value: x as ValueType,
         payload: entry,
@@ -56,7 +57,7 @@ export function computeScatterPoints({
         type: scatterSettings.tooltipType,
       },
       {
-        name: isNullish(yAxis.dataKey) ? scatterSettings.name : yAxis.name || String(yAxis.dataKey),
+        name: isNullish(yAxis.dataKey) ? scatterSettings.name : yAxis.name || getTooltipNameProp(undefined, yAxis.dataKey),
         unit: yAxis.unit || '',
         value: y as ValueType,
         payload: entry,
@@ -67,7 +68,7 @@ export function computeScatterPoints({
 
     if (z !== '-' && zAxis != null) {
       tooltipPayload.push({
-        name: zAxis.name || String(zAxis.dataKey),
+        name: zAxis.name || getTooltipNameProp(undefined, zAxis.dataKey),
         unit: zAxis.unit || '',
         value: z as ValueType,
         payload: entry,

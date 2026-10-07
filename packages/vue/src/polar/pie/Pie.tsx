@@ -21,6 +21,7 @@ import { polarToCartesian } from '@/utils/polar'
 import type { PieInput } from './type'
 import { PieVueProps } from './type'
 import { forwardsSvgAttributes } from '@/utils/attributes'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 const LABEL_OFFSET = 20
 /** Horizontal distance from the centre over which a label's anchor blends from start to end. */
@@ -95,7 +96,7 @@ const PieView = defineComponent({
       settings: {
         dataKey: props.dataKey,
         nameKey: props.nameKey,
-        name: String(props.dataKey ?? ''),
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
         color: props.fill,
@@ -264,6 +265,7 @@ export const Pie = forwardsSvgAttributes(defineComponent({
       data: data.value,
       dataKey: props.dataKey,
       nameKey: props.nameKey,
+      name: props.name,
       cx: props.cx,
       cy: props.cy,
       innerRadius: props.innerRadius,

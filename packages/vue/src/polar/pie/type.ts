@@ -10,6 +10,8 @@ export const PieVueProps = {
   data: { type: Array as PropType<Array<Record<string, unknown>>>, default: undefined },
   dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
   nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
+  /** Series name for the tooltip and the legend fallback; defaults to a string `dataKey`. */
+  name: { type: [String, Number], default: undefined },
   cx: { type: [Number, String], default: '50%' },
   cy: { type: [Number, String], default: '50%' },
   innerRadius: { type: [Number, String], default: 0 },

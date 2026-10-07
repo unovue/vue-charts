@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, expect, it } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { Bar, BarChart, Tooltip, XAxis, YAxis } from '@/index'
+import { Bar, BarChart, Funnel, FunnelChart, Legend, Pie, PieChart, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 beforeEach(() => mockGetBoundingClientRect({ width: 500, height: 300 }))
@@ -56,4 +56,48 @@ it('preserves duplicate tooltip entries and disposes only the removed series', a
   await nextTick()
   await nextTick()
   expect(entries()).toEqual([{ value: '10', color: 'blue' }, { value: '10', color: 'red' }])
+})
+
+// A function dataKey must never show its source text (`row => row.v`) as a series name.
+it.each([
+  {
+    name: 'Pie',
+    chart: () => (
+      <PieChart width={500} height={300}>
+        <Pie data={[{ v: 3 }, { v: 5 }]} dataKey={(row: { v: number }) => row.v} isAnimationActive={false} />
+        <Legend />
+        <Tooltip defaultIndex={0} isAnimationActive={false} />
+      </PieChart>
+    ),
+  },
+  {
+    name: 'Funnel',
+    chart: () => (
+      <FunnelChart width={500} height={300}>
+        <Funnel data={[{ v: 5 }, { v: 3 }]} dataKey={(row: { v: number }) => row.v} isAnimationActive={false} />
+        <Legend />
+        <Tooltip defaultIndex={0} isAnimationActive={false} />
+      </FunnelChart>
+    ),
+  },
+  {
+    name: 'Scatter',
+    chart: () => (
+      <ScatterChart width={500} height={300}>
+        <XAxis dataKey={(row: { x: number }) => row.x} type="number" />
+        <YAxis dataKey={(row: { v: number }) => row.v} type="number" />
+        <Scatter data={[{ x: 1, v: 3 }, { x: 2, v: 5 }]} dataKey={(row: { v: number }) => row.v} isAnimationActive={false} />
+        <Legend />
+        <Tooltip defaultIndex={0} isAnimationActive={false} />
+      </ScatterChart>
+    ),
+  },
+])('$name names a function dataKey series without its source text', async ({ chart }) => {
+  const { container } = render(chart)
+  await nextTick()
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toMatch(/\d/)
+  expect(container.querySelector('.v-charts-legend-wrapper')?.textContent ?? '').not.toContain('=>')
+  expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).not.toContain('=>')
 })

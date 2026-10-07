@@ -4,6 +4,7 @@ import { useChart } from '@/model/chart'
 import { computeScatterPoints } from '@/core/scatter'
 import type { ResolvedScatterSettings } from '@/core/scatter'
 import type { TooltipType } from '@/types'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export interface ScatterProps {
   xAxisId?: string | number
@@ -25,7 +26,7 @@ export function useScatter(props: ScatterProps) {
     data: props.data,
     dataKey: props.dataKey,
     tooltipType: props.tooltipType,
-    name: props.name ?? String(props.dataKey ?? ''),
+    name: getTooltipNameProp(props.name, props.dataKey),
   }))
 
   const xAxis = computed(() => chart.axis('xAxis', props.xAxisId ?? 0))

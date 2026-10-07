@@ -17,6 +17,7 @@ import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
 import type { FunnelTrapezoidItem } from './type'
 import { FunnelVueProps } from './type'
 import { forwardsSvgAttributes } from '@/utils/attributes'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export interface FunnelSlots {
   shape?: (props: FunnelTrapezoidItem) => VNodeChild
@@ -76,7 +77,7 @@ const FunnelView = defineComponent({
       settings: {
         dataKey: props.dataKey,
         nameKey: props.nameKey,
-        name: String(props.dataKey ?? ''),
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
         type: props.tooltipType,
         color: props.fill,

@@ -8,6 +8,7 @@ import { getPercentValue, mathSign } from '@/utils/data'
 import { getMaxRadius, polarToCartesian } from '@/utils/polar'
 import { getValueByDataKey } from '@/core/data'
 import { toFiniteNumber } from '@/utils/validate'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export type ResolvedPieSettings = {
   name?: string | number | undefined
@@ -182,7 +183,7 @@ export function pieLegend(
   return displayedData?.map((entry, index) => {
     const name = getValueByDataKey(entry, settings.nameKey, settings.name)
     return {
-      value: (name ?? String(settings.dataKey ?? index)) as string,
+      value: String(name ?? getTooltipNameProp(undefined, settings.dataKey) ?? index),
       color: entryColor({ cell: cells[index], row: entry, seriesFill: settings.fill, index }),
       payload: entry as Record<string, unknown>,
       type: settings.legendType,
