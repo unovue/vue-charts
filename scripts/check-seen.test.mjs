@@ -1,13 +1,58 @@
 import assert from 'node:assert/strict'
 import { constants } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
-import { mkdir, readFile, realpath, stat } from 'node:fs/promises'
+import { mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 // eslint-disable-next-line test/no-import-node-test
 import { test } from 'node:test'
 import { collectSeen } from './lib/seen-capture.mjs'
 import { installSeenRecorder } from './lib/seen-recorder.mjs'
+
+// A pending external asset must not stop a fully rendered chart from being checked.
+test('visitor CLI captures charts while an external resource is still loading', async () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const out = `${root}.evidence/release-1.0/seen-resource-control`
+  await mkdir(out, { recursive: true })
+  const preload = `${out}/preload.mjs`
+  await writeFile(preload, `
+import { realpath } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+const require = createRequire(await realpath('packages/vue/node_modules/@nuxt/test-utils/package.json'))
+const { chromium } = require('playwright-core')
+const launch = chromium.launch.bind(chromium)
+chromium.launch = async (options) => {
+  const browser = await launch(options)
+  const newContext = browser.newContext.bind(browser)
+  browser.newContext = async (options) => {
+    const context = await newContext(options)
+    await context.route('https://external.invalid/pending.svg', () => new Promise(() => {}))
+    await context.addInitScript(() => {
+      document.addEventListener('DOMContentLoaded', () => {
+        const image = new Image()
+        image.src = 'https://external.invalid/pending.svg'
+        image.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0'
+        document.body.append(image)
+      })
+    })
+    return context
+  }
+  return browser
+}
+`)
+  const result = spawnSync(process.execPath, [
+    '--import',
+    preload,
+    'scripts/check-seen.mjs',
+    '--fixture',
+    `--out=${out}`,
+  ], { cwd: root, encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+  const summary = JSON.parse(await readFile(`${out}/fixture-summary.json`, 'utf8'))
+  assert.equal(summary.fixturePassed, true)
+  assert.deepEqual(summary.errors, [])
+  assert.equal(summary.rows.length, 6)
+})
 
 // A navigation index has no entrance; empty chart coverage must still fail.
 test('visitor CLI checks chart routes without requiring charts in the navigation index', async () => {
