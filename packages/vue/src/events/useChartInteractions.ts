@@ -2,7 +2,7 @@ import { useChart } from '@/model/chart'
 import { activeProps as getActiveProps } from '@/core/interaction'
 import { useItemInteractions } from './useItemInteractions'
 import { getChartPointer } from '@/utils/pointer'
-import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
+import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 import type { ChartPointer } from '@/types'
 
 export function useChartInteractions() {
@@ -170,15 +170,15 @@ export function useChartInteractions() {
         return
       }
       const itemIndex = target.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
-      const dataKey = target.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
       const index = itemIndex === null ? null : Number(itemIndex)
-      // A touched element only carries its series dataKey, so the series is found by it here.
-      const configuration = tooltip.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
+      // A touched element carries only its item index, so the first series with a target at
+      // that index answers.
+      const touched = index === null ? undefined : tooltip.targets.value.find(candidate => candidate.index === index)
       tooltip.activate('hover', {
         type: 'item',
         index,
-        configuration,
-        coordinate: index === null ? undefined : configuration?.positions?.[index],
+        configuration: touched?.entry?.value,
+        coordinate: touched?.coordinate,
       })
     }
   }

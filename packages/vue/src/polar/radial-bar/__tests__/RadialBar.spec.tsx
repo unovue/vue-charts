@@ -51,6 +51,34 @@ describe('radialBar', () => {
       }
     })
 
+    // Wrong behaviour: a touched sector opens no item tooltip, because its series is looked up
+    // by a data-key attribute that no element carries.
+    it('opens the item tooltip of a touched sector', async () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip shared={false} isAnimationActive={false}>
+            {{ content: ({ payload }) => <div data-testid="radial-tooltip">{payload[0]?.value}</div> }}
+          </Tooltip>
+        </RadialBarChart>
+      ))
+      await nextTick()
+      const sector = container.querySelectorAll('.v-charts-radial-bar [data-v-charts-item-index]')[1]!
+      const elementFromPoint = document.elementFromPoint
+      document.elementFromPoint = () => sector
+      try {
+        const event = new TouchEvent('touchmove', { bubbles: true })
+        Object.defineProperty(event, 'touches', { value: [{ clientX: 250, clientY: 150, target: sector }] })
+        container.querySelector('.v-charts-wrapper')!.dispatchEvent(event)
+        await nextTick()
+        await nextTick()
+      }
+      finally {
+        document.elementFromPoint = elementFromPoint
+      }
+      expect(container.querySelector('[data-testid="radial-tooltip"]')?.textContent).toBe('26.69')
+    })
+
     it('shows axis tooltips on painted sectors at the polar viewport edge', async () => {
       const { container } = render(() => (
         <RadialBarChart width={500} height={300} innerRadius={30} outerRadius={110} data={data}>

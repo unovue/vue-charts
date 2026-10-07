@@ -1,5 +1,5 @@
 import { useTooltipController } from '@/model/tooltip'
-import { DATA_ITEM_DATAKEY_ATTRIBUTE_NAME, DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
+import { DATA_ITEM_INDEX_ATTRIBUTE_NAME } from '@/utils/const'
 
 export function useItemInteractions() {
   const tooltip = useTooltipController()
@@ -44,12 +44,13 @@ export function useItemInteractions() {
     const element = document.elementFromPoint(touch.clientX, touch.clientY)
     if (!element)
       return
-    const index = element?.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
-    const dataKey = element?.getAttribute(DATA_ITEM_DATAKEY_ATTRIBUTE_NAME)
-    const target = tooltip.targets.value.find(item => item.index === (index === null ? null : Number(index)) && item.entry?.value?.settings.dataKey === dataKey)
+    const attribute = element.getAttribute(DATA_ITEM_INDEX_ATTRIBUTE_NAME)
+    const index = attribute === null ? null : Number(attribute)
+    // The element carries only its item index; the first series with a target there answers.
+    const target = index === null ? undefined : tooltip.targets.value.find(item => item.index === index)
     tooltip.activate('hover', {
       type: 'item',
-      index: index === null ? null : Number(index),
+      index,
       coordinate: target?.coordinate,
       configuration: target?.entry?.value,
     })
