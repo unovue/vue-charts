@@ -1,4 +1,3 @@
-import type { ChartDataKey } from '@/types/base'
 import type { LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
 
 export interface CategoricalChartProps {
@@ -12,7 +11,6 @@ export interface CategoricalChartProps {
   cx?: number | string
   cy?: number | string
   data?: unknown[]
-  dataKey?: ChartDataKey
   desc?: string
   endAngle?: number
   height?: number

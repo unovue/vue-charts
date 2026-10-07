@@ -13,11 +13,11 @@ import { createChartLegend } from '@/model/legend'
 import type { ChartRegistries } from './registries'
 import { createRegistries } from './registries'
 import type { ComputedRef, InjectionKey } from 'vue'
-import { computed, getCurrentScope, inject, provide, shallowRef } from 'vue'
+import { computed, getCurrentScope, inject, provide } from 'vue'
 import type { LayoutType, Margin, Size } from '@/types'
 import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { ChartData } from '@/types/chartData'
-import type { ChartLayoutState } from '@/types/chartLayout'
+import type { ChartFrame } from '@/types/chartLayout'
 import type { ChartOptions } from '@/model/options'
 import type { PolarChartOptions } from '@/types/polarOptions'
 import type { UpdatableChartOptions } from '@/types/chartOptions'
@@ -42,13 +42,12 @@ export interface Chart extends ChartRegistries, ChartGeometry {
   readonly dataRange: ReturnType<typeof createChartData>
   readonly inputs: ChartInputs
   readonly data: ComputedRef<ChartData | undefined>
-  readonly layout: ComputedRef<ChartLayoutState>
+  readonly layout: ComputedRef<ChartFrame>
   readonly options: ComputedRef<UpdatableChartOptions>
   readonly polar: ComputedRef<PolarChartOptions | null>
   readonly tooltipOptions: ComputedRef<ChartOptions>
   readonly brush: ReturnType<typeof createChartBrush>
   readonly legend: ReturnType<typeof createChartLegend>
-  setScale: (scale: number) => void
 }
 
 const chartKey: InjectionKey<Chart> = Symbol('vccs-chart')
@@ -58,27 +57,21 @@ export function createChart(inputs: ChartInputs): Chart {
   if (!scope)
     throw new Error('vccs: createChart must run inside a chart scope.')
 
-  const scale = shallowRef(1)
   const eventEmitter = Symbol('vccs-chart-emitter')
   const data = useTrackedData(inputs.data)
   const layout = computed(() => ({
     layout: inputs.layout(),
     ...inputs.size(),
     margin: { ...inputs.margin() },
-    scale: scale.value,
   }))
   const options = computed(inputs.options)
   const polar = computed(inputs.polar)
   const tooltipOptions = computed(() => ({ ...inputs.tooltip(), eventEmitter }))
 
-  function setScale(value: number) {
-    scale.value = value
-  }
-
-  const dataRange = createChartData(() => data.value)
   const registries = createRegistries()
   const brush = createChartBrush()
-  const legend = createChartLegend(registries.legendEntries)
+  const dataRange = createChartData(() => data.value, () => brush.range.value)
+  const legend = createChartLegend()
   const geometry = createLayout({
     layout: () => layout.value,
     brush: () => brush.state.value,
@@ -99,10 +92,10 @@ export function createChart(inputs: ChartInputs): Chart {
     dataRange,
     layout: inputs.layout,
     stackOffset: () => options.value.stackOffset,
+    reverseStackOrder: () => options.value.reverseStackOrder,
   })
   const tooltip = createTooltip({
     axis,
-    entries: registries.tooltipEntries,
     dataRange,
     layout: inputs.layout,
     size: inputs.size,
@@ -129,7 +122,6 @@ export function createChart(inputs: ChartInputs): Chart {
     options,
     polar,
     tooltipOptions,
-    setScale,
     brush,
     legend,
     ...registries,

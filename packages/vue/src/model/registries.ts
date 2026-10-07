@@ -1,13 +1,12 @@
-import type { LegendPayload } from '@/components/DefaultLegendContent'
 import type { AngleAxisSettings, RadiusAxisSettings, XAxisSettings, YAxisSettings, ZAxisSettings } from '@/types/axisSettings'
 import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 import type { ReferenceAreaSettings, ReferenceDotSettings, ReferenceLineSettings } from '@/types/reference'
-import type { TooltipPayloadConfiguration } from '@/types/tooltip'
 import type { ComputedRef } from 'vue'
 import { computed } from 'vue'
 import type { AxisId } from '@/types/axis'
 import type { Registry } from './registry'
 import { createRegistry } from './registry'
+import { axisKey } from '@/core/axis/key'
 
 export interface AxisRegistry<T> extends Registry<T> {
   readonly byId: ComputedRef<ReadonlyMap<string, T>>
@@ -17,9 +16,9 @@ function createAxisRegistry<T extends { id?: AxisId }>(): AxisRegistry<T> {
   const registry = createRegistry<T>()
   const byId = computed(() => {
     const axes = new Map<string, T>()
-    // Numeric and string IDs are equivalent; the last registration wins.
+    // The last registration wins.
     for (const axis of registry.entries.value)
-      axes.set(String(axis.id), axis)
+      axes.set(axisKey(axis.id ?? 0), axis)
     return axes
   })
   return { ...registry, byId }
@@ -43,8 +42,6 @@ export function createRegistries() {
       areas: createRegistry<ReferenceAreaSettings>(),
       lines: createRegistry<ReferenceLineSettings>(),
     },
-    legendEntries: createRegistry<readonly LegendPayload[]>(),
-    tooltipEntries: createRegistry<TooltipPayloadConfiguration>(),
   }
 }
 

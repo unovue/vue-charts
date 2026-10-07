@@ -8,9 +8,7 @@ export type ChartOptions = {
   validateTooltipEventTypes?: ReadonlyArray<TooltipEventType>
   tooltipPayloadSearcher?: TooltipPayloadSearcher
   /**
-   * We use this to identify which chart is sending events when synchronising.
-   * Without it, we can't tell the difference between an action that arrived from another chart
-   * and an action that was dispatched by the chart itself.
+   * Identifies the sending chart when synchronising, so a chart ignores its own broadcasts.
    */
   eventEmitter: symbol | undefined
 }

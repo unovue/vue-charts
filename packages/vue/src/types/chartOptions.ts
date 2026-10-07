@@ -15,6 +15,8 @@ export type UpdatableChartOptions = {
    */
   class: VueClassValue | undefined
   maxBarSize: number | undefined
+  /** Reverse the item order inside each stack, so the last stacked item sits at the base. */
+  reverseStackOrder: boolean
   stackOffset: StackOffsetType
   /**
    * Charts that share the same syncId will have their Tooltip and Brush synchronised.

@@ -7,6 +7,7 @@ import type { CategoricalDomain } from '@/types/categorical'
 import type { ChartOffsetRequired, LayoutType } from '@/types/common'
 import type { TicksSettings } from '@/types/axisSettings'
 import { axisTicks } from '@/core/axis/ticks'
+import { tooltipTicks as getTooltipTicks } from '@/core/tooltip'
 import {
   axisDomainWithNiceTicks,
   getBandSizeOfAxis,
@@ -20,7 +21,7 @@ import {
   sortBy,
 } from '@/core/axis/scale'
 import { axisRangeWithReverse } from '@/core/axis/range'
-import { combineInverseScaleFunction, createCategoricalInverse } from '@/utils/createCategoricalInverse'
+import { createCategoricalInverse, inverseScaleFunction } from '@/utils/createCategoricalInverse'
 
 export interface AxisScaleSources {
   layout: () => LayoutType
@@ -58,14 +59,17 @@ export function createAxisScale<S extends BaseCartesianAxis & Partial<TicksSetti
   const graphicalTicks = computed(() => type === 'zAxis'
     ? null
     : graphicalItemTicks(sources.layout(), tickSettings.value, scale.value, range.value, duplicateDomain.value, categoricalDomain.value, type))
+  const tooltipTicks = computed(() => type === 'zAxis'
+    ? null
+    : getTooltipTicks(sources.layout(), settings.value, realScaleType.value, scale.value, range.value, duplicateDomain.value, categoricalDomain.value, type))
   const withScale = computed(() => scale.value ? { ...settings.value, scale: scale.value } : undefined)
   const bandSize = computed(() => getBandSizeOfAxis(withScale.value, graphicalTicks.value ?? undefined))
   const barBandSize = computed(() => getBandSizeOfAxis(withScale.value, graphicalTicks.value ?? undefined, true))
   const sortedValues = computed(() => appliedValues.value.map(item => item.value).sort(sortBy))
-  const inverseScale = computed(() => combineInverseScaleFunction(scale.value))
+  const inverseScale = computed(() => inverseScaleFunction(scale.value))
   const inverseDataScale = computed(() => createCategoricalInverse(scale.value, sortedValues.value))
   const inverseTickScale = computed(() => getInverseTickScale(ticks.value))
-  return { realScaleType, niceTicks, range, reversedRange, scale, duplicateDomain, categoricalDomain, ticks, graphicalTicks, withScale, bandSize, barBandSize, inverseScale, inverseDataScale, inverseTickScale }
+  return { realScaleType, niceTicks, range, reversedRange, scale, duplicateDomain, categoricalDomain, ticks, graphicalTicks, tooltipTicks, withScale, bandSize, barBandSize, inverseScale, inverseDataScale, inverseTickScale }
 }
 
 export type AxisScaleModel<S extends BaseCartesianAxis & Partial<TicksSettings> = BaseCartesianAxis> =

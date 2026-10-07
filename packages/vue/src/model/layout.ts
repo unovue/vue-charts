@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import type { ChartLayoutState } from '@/types/chartLayout'
+import type { ChartFrame } from '@/types/chartLayout'
 import type { BrushSettings } from '@/model/brush'
 import type { LegendSettings } from '@/model/legend'
 import type { Size } from '@/types/common'
@@ -7,7 +7,7 @@ import type { ChartRegistries } from './registries'
 import { chartOffset, chartViewBox, brushDimensions as getBrushDimensions, registeredAxes } from '@/core/layout'
 
 interface LayoutSources {
-  layout: () => ChartLayoutState
+  layout: () => ChartFrame
   brush: () => BrushSettings
   legendSettings: () => LegendSettings
   legendSize: () => Size

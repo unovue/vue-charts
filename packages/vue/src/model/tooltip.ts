@@ -2,17 +2,16 @@ import { sortBy } from 'es-toolkit/compat'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import { computed, inject, provide, shallowRef, toRaw, watch } from 'vue'
 import type { AxisLookup } from './axis'
-import type { Registry } from './registry'
 import { createRegistry } from './registry'
 import { warn } from '@/utils/log'
 import type { createChartData } from './dataRange'
-import { tooltipCoordinate, tooltipPayload, tooltipTicks } from '@/core/tooltip'
+import { tooltipCoordinate, tooltipPayload } from '@/core/tooltip'
 import { getValueByDataKey as readDataKey } from '@/core/data'
 import type { ChartOptions } from '@/model/options'
 import type { ChartOffsetRequired, Coordinate, DataKey, LayoutType, Size, TooltipEventType } from '@/types'
-import type { TooltipActiveIndex, TooltipIndex, TooltipInteractionState, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettingsState, TooltipTargetRequest } from '@/types/tooltip'
+import type { TooltipActiveIndex, TooltipIndex, TooltipInteraction, TooltipPayloadConfiguration, TooltipPayloadEntry, TooltipSettings, TooltipTargetRequest } from '@/types/tooltip'
 
-const noInteraction: TooltipInteractionState = Object.freeze({
+const noInteraction: TooltipInteraction = Object.freeze({
   active: false,
   index: null,
   dataKey: undefined,
@@ -28,13 +27,12 @@ export interface TooltipSource {
 }
 
 export interface TooltipBinding {
-  readonly settings: TooltipSettingsState
+  readonly settings: TooltipSettings
   readonly request: (index: TooltipActiveIndex) => void
 }
 
 interface TooltipInputs {
   axis?: AxisLookup
-  entries: Registry<TooltipPayloadConfiguration>
   dataRange: ReturnType<typeof createChartData>
   options: () => ChartOptions
   layout: () => LayoutType
@@ -101,6 +99,7 @@ export function useTooltipEntry() {
 }
 
 export function createTooltip(inputs: TooltipInputs) {
+  const entries = createRegistry<TooltipPayloadConfiguration>()
   const bindings = createRegistry<TooltipBinding>()
   const selection = shallowRef<Selection | null>()
   const announcement = shallowRef('')
@@ -108,14 +107,14 @@ export function createTooltip(inputs: TooltipInputs) {
     if (count === 0)
       announcement.value = ''
   })
-  const settings = computed<TooltipSettingsState>(() => bindings.entries.value[0]?.settings ?? {
+  const settings = computed<TooltipSettings>(() => bindings.entries.value[0]?.settings ?? {
     shared: undefined,
     trigger: 'hover',
     axisId: 0,
     active: undefined,
     defaultIndex: undefined,
   })
-  const rootModels = computed(() => inputs.entries.entries.value.flatMap(entry => entry.model?.root ? [entry.model] : []))
+  const rootModels = computed(() => entries.entries.value.flatMap(entry => entry.model?.root ? [entry.model] : []))
   const controlledBindings = computed(() => bindings.entries.value.filter(binding => binding.settings.activeIndex !== undefined))
   let warnedOwners = false
   watch(() => controlledBindings.value.length, (count) => {
@@ -139,21 +138,7 @@ export function createTooltip(inputs: TooltipInputs) {
     return layout === 'horizontal' ? 'xAxis' : layout === 'vertical' ? 'yAxis' : layout === 'centric' ? 'angleAxis' : 'radiusAxis'
   })
   const axis = computed(() => inputs.axis?.(axisType.value, settings.value.axisId))
-  const ticks = computed(() => {
-    const model = axis.value
-    if (!model)
-      return undefined
-    return tooltipTicks(
-      inputs.layout(),
-      model.settings.value,
-      model.realScaleType.value,
-      model.scale.value,
-      model.range.value,
-      model.duplicateDomain.value,
-      model.categoricalDomain.value,
-      axisType.value,
-    )
-  })
+  const ticks = computed(() => axis.value?.tooltipTicks.value)
   const orderedTicks = computed(() => sortBy(ticks.value ?? [], tick => tick.coordinate))
   const displayedData = computed(() => axis.value?.displayedData.value ?? [])
 
@@ -180,7 +165,7 @@ export function createTooltip(inputs: TooltipInputs) {
   }
 
   const axisTargets = computed<readonly Target[]>(() => {
-    if (!inputs.entries.entries.value.some(entry => !entry.settings.hide))
+    if (!entries.entries.value.some(entry => !entry.settings.hide))
       return []
     const identity = identities(displayedData.value, axis.value?.settings.value.dataKey)
     return (ticks.value ?? []).map((tick, index) => ({
@@ -189,7 +174,7 @@ export function createTooltip(inputs: TooltipInputs) {
       identity: identity[index],
     }))
   })
-  const itemTargets = computed<readonly Target[]>(() => inputs.entries.registrations.value.flatMap((entry) => {
+  const itemTargets = computed<readonly Target[]>(() => entries.registrations.value.flatMap((entry) => {
     const configuration = entry.value
     if (!configuration || configuration.settings.hide)
       return []
@@ -218,7 +203,7 @@ export function createTooltip(inputs: TooltipInputs) {
       coordinate: configuration.positions?.[localIndex],
     }))
   }))
-  const pointerTargets = computed<readonly Target[]>(() => inputs.entries.registrations.value.flatMap((entry) => {
+  const pointerTargets = computed<readonly Target[]>(() => entries.registrations.value.flatMap((entry) => {
     const configuration = entry.value
     if (!configuration || configuration.settings.hide)
       return []
@@ -298,11 +283,11 @@ export function createTooltip(inputs: TooltipInputs) {
     controlled.value !== undefined ? undefined : selection.value?.coordinate,
   ))
   const payload = computed(() => {
-    const entries = eventType.value === 'item'
+    const shown = eventType.value === 'item'
       ? target.value?.entry?.value ? [target.value.entry.value] : []
-      : inputs.entries.entries.value
+      : entries.entries.value
     return tooltipPayload(
-      entries.map(entry => ({
+      shown.map(entry => ({
         ...entry,
         dataDefinedOnItem: inputs.dataRange.tooltipData(entry.dataDefinedOnItem),
       })),
@@ -423,7 +408,7 @@ export function createTooltip(inputs: TooltipInputs) {
     emit(null)
   }
   watch(() => {
-    const owners = inputs.entries.registrations.value.map(entry => ({ entry, index: entry.value?.model?.index() }))
+    const owners = entries.registrations.value.map(entry => ({ entry, index: entry.value?.model?.index() }))
     return { index: controlled.value, targets: targets.value, owners }
   }, ({ index, targets, owners }) => {
     validate(bindings, index, targets, () => notify(null))
@@ -440,7 +425,7 @@ export function createTooltip(inputs: TooltipInputs) {
     }
   }, { flush: 'post' })
 
-  const interaction = computed<TooltipInteractionState>(() => ({
+  const interaction = computed<TooltipInteraction>(() => ({
     active: active.value,
     index: target.value?.index ?? null,
     configuration: target.value?.entry?.value,
@@ -456,7 +441,7 @@ export function createTooltip(inputs: TooltipInputs) {
   }))
 
   function coordinateAt(index: TooltipIndex, dataKey: DataKey<unknown>) {
-    const entry = inputs.entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
+    const entry = entries.entries.value.find(entry => entry.settings.dataKey === dataKey)
     return index === null ? undefined : entry?.positions?.[index]
   }
 
@@ -474,7 +459,7 @@ export function createTooltip(inputs: TooltipInputs) {
     target,
     controlled,
     requestedIndex,
-    entries: inputs.entries,
+    entries,
     announcement,
     keyboardInteraction,
     syncInteraction,

@@ -7,7 +7,7 @@ export interface BrushStartEndIndex {
 
 export type AppliedChartData = ReadonlyArray<{ value: unknown }>
 
-export type ChartDataState = {
+export type ChartDataWindow = {
   chartData: ChartData | undefined
   /**
    * Using Brush, users can choose where they want to zoom in.

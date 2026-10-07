@@ -10,7 +10,7 @@ import {
 import type { DataKey, StackOffsetType } from '@/types/common'
 import type { AxisType, NumberDomain } from '@/types/axis'
 import type { StackId } from '@/types/tick'
-import type { ChartData, ChartDataState } from '@/types/chartData'
+import type { ChartData, ChartDataWindow } from '@/types/chartData'
 import type { MaybeStackedGraphicalItem } from '@/types/graphical'
 import { getValueByDataKey } from '@/core/data'
 import { isNan, isNumber, toFiniteNumber } from '@/utils/validate'
@@ -145,6 +145,7 @@ export function stackGroups(
   displayedData: ChartData | undefined,
   items: ReadonlyArray<MaybeStackedGraphicalItem>,
   stackOffsetType: StackOffsetType,
+  reverseStackOrder = false,
 ): Record<StackId, StackGroup> {
   const initialItemsGroups: Record<StackId, Array<MaybeStackedGraphicalItem>> = Object.create(null)
   const itemsGroup: Record<StackId, ReadonlyArray<MaybeStackedGraphicalItem>> = items.reduce(
@@ -161,7 +162,9 @@ export function stackGroups(
     initialItemsGroups,
   )
   return Object.fromEntries(
-    Object.entries(itemsGroup).map(([stackId, graphicalItems]): [StackId, StackGroup] => {
+    Object.entries(itemsGroup).map(([stackId, groupItems]): [StackId, StackGroup] => {
+      // Recharts parity: reversing the items flips which series sits at the stack base.
+      const graphicalItems = reverseStackOrder ? [...groupItems].reverse() : groupItems
       const dataKeys = graphicalItems.flatMap(item => item.dataKey == null ? [] : [item.dataKey])
       return [
         stackId,
@@ -176,7 +179,7 @@ export function stackGroups(
 
 export function stackDomain(
   stackGroups: Record<StackId, StackGroup> | undefined,
-  { dataStartIndex, dataEndIndex }: ChartDataState,
+  { dataStartIndex, dataEndIndex }: ChartDataWindow,
   axisType: AxisType,
 ): NumberDomain | undefined {
   if (axisType === 'zAxis') {

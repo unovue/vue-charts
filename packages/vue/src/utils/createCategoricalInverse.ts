@@ -64,7 +64,7 @@ export function createCategoricalInverse(
  * Creates an inverse function: uses native `.invert` for numeric scales,
  * falls back to categorical bisect for ordinal/band/point scales.
  */
-export function combineInverseScaleFunction(
+export function inverseScaleFunction(
   scale: RechartsScale | undefined,
 ): InverseScaleFunction | undefined {
   if (scale == null) {

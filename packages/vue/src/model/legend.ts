@@ -1,5 +1,4 @@
 import { computed } from 'vue'
-import type { Registry } from './registry'
 import { createRegistry } from './registry'
 import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
@@ -13,7 +12,8 @@ export interface LegendSettings {
   offset?: number
 }
 
-export function createChartLegend(entries: Registry<readonly LegendPayload[]>) {
+export function createChartLegend() {
+  const entries = createRegistry<readonly LegendPayload[]>()
   const bindings = createRegistry<{
     settings: LegendSettings
     hidden: readonly string[] | undefined

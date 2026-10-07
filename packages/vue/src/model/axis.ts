@@ -32,6 +32,7 @@ import {
   linesDomain,
 } from '@/core/axis/references'
 import { stackDomain as getStackDomain, stackGroups as getStackGroups } from '@/core/axis/stacks'
+import { axisKey } from '@/core/axis/key'
 import { implicitXAxis, implicitYAxis, implicitZAxis } from '@/core/axis/settings'
 import type { AxisRegistry, ChartRegistries } from './registries'
 
@@ -52,6 +53,7 @@ interface AxisSources extends AxisScaleSources, Pick<ChartRegistries, 'items' | 
   dataRange: ReturnType<typeof createChartData>
   layout: () => LayoutType
   stackOffset: () => StackOffsetType
+  reverseStackOrder: () => boolean
 }
 
 export type AxisLookup = <T extends AxisType>(type: T, id: AxisId) => AxisModels[T]
@@ -64,7 +66,7 @@ function createAxis<S extends BaseCartesianAxis>(
   implicit: S,
   readRange: (settings: S, applied: AppliedChartData) => AxisRange,
 ): AxisModel<S> {
-  const settings = computed(() => registry.byId.value.get(String(id)) ?? implicit)
+  const settings = computed(() => registry.byId.value.get(axisKey(id)) ?? implicit)
   const items = computed(() => graphicalItemsSettings(
     sources.items.cartesian.entries.value,
     settings.value,
@@ -76,7 +78,7 @@ function createAxis<S extends BaseCartesianAxis>(
   const displayedData = computed(() => sources.dataRange.displayedData({ data: graphicalData.value }) ?? [])
   const appliedValues = computed(() => getAppliedValues(displayedData.value, settings.value, items.value))
   const domainDefinition = computed(() => getDomainDefinition(settings.value))
-  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))
+  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset(), sources.reverseStackOrder()))
   const stackDomain = computed(() => getStackDomain(stackGroups.value, dataWithIndexes.value, type))
   const numericalValues = computed(() => numericalValuesWithErrors(
     displayedData.value,
@@ -119,17 +121,17 @@ function createAxis<S extends BaseCartesianAxis>(
 }
 
 function keyed<V>(scope: EffectScope, build: (id: AxisId) => V) {
-  const cache = new Map<AxisId, V>()
+  const cache = new Map<string, V>()
   onScopeDispose(() => cache.clear())
   return (id: AxisId): V => {
-    const existing = cache.get(id)
+    const existing = cache.get(axisKey(id))
     if (existing !== undefined)
       return existing
     // A child may request the first model; the chart owns its lifetime.
     const model = scope.run(() => build(id))
     if (model === undefined)
       throw new Error('vccs: cannot read an axis after its chart is disposed.')
-    cache.set(id, model)
+    cache.set(axisKey(id), model)
     return model
   }
 }

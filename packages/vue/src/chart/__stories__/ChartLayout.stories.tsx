@@ -1,5 +1,4 @@
-import { useChart } from '@/model/chart'
-import { computed, defineComponent } from 'vue'
+import { defineComponent } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { BarChart } from '@/chart/BarChart'
 import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
@@ -66,36 +65,6 @@ const ChartSizeDimensions = defineComponent({
   },
 })
 
-/**
- * Shows the container scale value inside the chart.
- */
-const ShowScale = defineComponent({
-  setup() {
-    const chart = useChart()
-    const width = useChartWidth()
-    const height = useChartHeight()
-    const scale = computed(() => chart.layout.value.scale)
-
-    return () => {
-      if (width.value == null || height.value == null)
-        return null
-      return (
-        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
-          <text
-            x={width.value * 0.9}
-            y={height.value * 0.9}
-            text-anchor="end"
-            dominant-baseline="hanging"
-            stroke="black"
-          >
-            {`scale: ${scale.value}`}
-          </text>
-        </svg>
-      )
-    }
-  },
-})
-
 const meta: Meta = {
   title: 'examples/ChartLayout',
 }
@@ -130,7 +99,6 @@ export const WithAbsolutePositionAndFlexboxParents: Story = {
         >
           <BarChart {...args}>
             <ChartSizeDimensions />
-            <ShowScale />
           </BarChart>
         </div>
       </div>

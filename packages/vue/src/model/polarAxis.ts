@@ -4,6 +4,7 @@ import type { AngleAxisSettings } from '@/types/axisSettings'
 import type { StackOffsetType } from '@/types/common'
 import type { ChartRegistries } from './registries'
 import type { AxisScaleSources } from './axisScale'
+import { axisKey } from '@/core/axis/key'
 import { createAxisScale } from './axisScale'
 import type { createChartData } from './dataRange'
 import type { PolarLayout } from './polar'
@@ -17,13 +18,14 @@ export function createPolarAxis(
   sources: AxisScaleSources & Pick<ChartRegistries, 'items' | 'axes'> & {
     dataRange: ReturnType<typeof createChartData>
     stackOffset: () => StackOffsetType
+    reverseStackOrder: () => boolean
     polarLayout: PolarLayout
   },
   type: 'angleAxis' | 'radiusAxis',
   id: AxisId,
 ) {
   const settings = computed<AngleAxisSettings>(() => {
-    const axis = sources.axes[type].byId.value.get(String(id))
+    const axis = sources.axes[type].byId.value.get(axisKey(id))
     if (axis)
       return axis
     if (sources.layout() === 'radial')
@@ -50,7 +52,7 @@ export function createPolarAxis(
     }
     return data.map(row => ({ value: axis.dataKey == null ? row : getValueByDataKey(row, axis.dataKey), errorDomain: [] }))
   })
-  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset()))
+  const stackGroups = computed(() => getStackGroups(displayedData.value, items.value, sources.stackOffset(), sources.reverseStackOrder()))
   const stackDomain = computed(() => getStackDomain(stackGroups.value, sources.dataRange.state.value, type))
   const numericalDomain = computed(() => getNumericalDomain(settings.value, domainDefinition.value, stackDomain.value, numericalValues.value, undefined))
   const domain = computed(() => axisDomain(settings.value, sources.layout(), displayedData.value, appliedValues.value, sources.stackOffset(), type, numericalDomain.value))

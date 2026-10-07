@@ -205,7 +205,15 @@ is `number`.
 value is `{ startIndex, endIndex }`. `start-index`/`end-index` models are removed. `null` means
 no selected window (show all available rows); empty data always has effective range `null`.
 An uncontrolled Brush initially selects the full range when data exists and restores that
-default when empty data becomes populated. A controlled `null` remains null until the parent
+default when empty data becomes populated. When rows change it reconciles its window by index
+(user-approved 2026-10): (a) values change with the same row count → window unchanged; (b) rows
+added and the window ended at the last row → it shifts forward keeping its width, following the
+newest rows (a full window stays full); (c) rows added, window elsewhere → same positions; (d) rows
+removed → clamp to the new length, reset to full only when nothing remains. A controlled
+`v-model:range` bypasses all of this, and setting the range to `null` selects the full range.
+This differs from Recharts, which resets on a new data array; vccs has no row identity, so the
+rule is index-based. The Brush is the only owner of the range (it registers it into
+`chart.brush`); a chart without a Brush follows only a synchronised peer's range. A controlled `null` remains null until the parent
 changes it; repopulation must not overwrite that explicit choice.
 For nonempty data, floor finite indexes, clamp them to `[0, length - 1]`, then order start/end.
 Non-finite indexes normalize to `null`. Emit `update:range` once per distinct input/data state

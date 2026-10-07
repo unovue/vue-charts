@@ -6,6 +6,7 @@ import type {
 } from '@/types/reference'
 import type { AxisId, AxisType, NumberDomain } from '@/types/axis'
 import { onlyAllowNumbers } from './data'
+import { sameAxis } from './key'
 
 export function filterReferenceElements<T extends ReferenceElementSettings>(
   elements: ReadonlyArray<T>,
@@ -16,9 +17,9 @@ export function filterReferenceElements<T extends ReferenceElementSettings>(
     .filter(el => el.ifOverflow === 'extendDomain')
     .filter((el) => {
       if (axisType === 'xAxis') {
-        return el.xAxisId === axisId
+        return sameAxis(el.xAxisId, axisId)
       }
-      return el.yAxisId === axisId
+      return sameAxis(el.yAxisId, axisId)
     })
 }
 

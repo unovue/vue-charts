@@ -71,17 +71,6 @@ export const dataKey = {
 // - FunnelChart
 export const CategoricalChartProps: StorybookArgs = {
   ...ChartSizeProps,
-  dataKey: {
-    description: `Can be used to mirror dataKey used on children components, using it as this level will force
-the chart to animate between two states even though the data array stays the same. Useful to animate when
-toggling between multiple dataKey.`,
-    table: {
-      type: {
-        summary: 'string | number | function | undefined',
-      },
-      category: 'General',
-    },
-  },
   data,
   margin,
   accessibilityLayer: {
@@ -153,8 +142,8 @@ toggling between multiple dataKey.`,
   onMouseMove,
   onMouseUp,
   reverseStackOrder: {
-    description: `If \`false\`, stacked items will be rendered left to right. If \`true\`, stacked items
-      will be rendered right to left. (Render direction affects SVG layering, not x position.)`,
+    description: `If \`true\`, the item order inside each stack is reversed, so the last stacked item
+      sits at the base of the stack.`,
     table: {
       type: {
         summary: 'boolean',

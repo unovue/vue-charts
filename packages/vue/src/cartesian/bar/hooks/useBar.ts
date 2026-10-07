@@ -3,6 +3,7 @@ import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
 import { useChartId } from '@/hooks/useChartId'
 import { getNormalizedStackId } from '@/core/coordinates'
+import { sameAxis } from '@/core/axis/key'
 import { useChartLayout } from '@/context/chartLayoutContext'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 import { useChart } from '@/model/chart'
@@ -74,8 +75,8 @@ export function useBar(
   const numericAxis = computed(() => layout.value === 'horizontal' ? yAxis.value : xAxis.value)
   const visibleBars = computed(() => chart.items.cartesian.entries.value.filter(item =>
     item.type === 'bar' && !item.hide && (layout.value === 'horizontal'
-      ? item.xAxisId === props.xAxisId
-      : item.yAxisId === props.yAxisId),
+      ? sameAxis(item.xAxisId, props.xAxisId)
+      : sameAxis(item.yAxisId, props.yAxisId)),
   ))
   const sizeList = computed(() => barSizeList(
     visibleBars.value,

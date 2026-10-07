@@ -93,10 +93,7 @@ function useTooltipSyncEventsListener(chart: Chart) {
 
       let activeTick: TickItem | undefined
       if (typeof syncMethod.value === 'function') {
-        /*
-         * This is what the data shape in 2.x CategoricalChartState used to look like.
-         * In 3.x we store things differently but let's try to keep the old shape for compatibility.
-         */
+        // A custom syncMethod receives the Recharts-compatible mouse handler shape.
         const syncMethodParam: MouseHandlerDataParam = {
           activeTooltipIndex: message.index ?? undefined,
           isTooltipActive: message.active,
@@ -164,7 +161,7 @@ function useBrushSyncEventsListener(chart: Chart) {
         if (requestRange)
           requestRange(range)
         else
-          data.setRange(range)
+          data.receiveSyncedRange(range)
       }
     }
 

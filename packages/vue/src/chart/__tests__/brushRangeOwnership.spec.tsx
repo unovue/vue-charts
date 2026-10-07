@@ -1,5 +1,5 @@
-import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render } from '@testing-library/vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { Bar, BarChart, XAxis, YAxis } from '@/index'
 import { Brush } from '@/cartesian/brush'
@@ -139,4 +139,64 @@ it('reconciles the Brush range when root data changes', async () => {
   await nextTick()
   await nextTick()
   expect(getBarRects(container)).toHaveLength(0)
+})
+
+const rowsOf = (length: number, offset = 0) => Array.from({ length }, (_, index) => ({ name: `R${index}`, value: index + 1 + offset }))
+
+// D-16: an uncontrolled window survives live data by index; a controlled range is never rewritten.
+it.each([
+  { name: '(a) same row count, new values', start: 1, end: 1, next: [rowsOf(5, 10)], expected: [['1', '3']] },
+  { name: '(b) rows added, window at the end', start: 1, end: 0, next: [rowsOf(6)], expected: [['2', '5']] },
+  { name: '(c) rows added, window elsewhere', start: 1, end: 1, next: [rowsOf(6)], expected: [['1', '3']] },
+  { name: '(d) rows removed, clamp then reset', start: 1, end: 0, next: [rowsOf(3), [], rowsOf(5)], expected: [['1', '2'], [], ['0', '4']] },
+  { name: 'full window keeps following', start: 0, end: 0, next: [rowsOf(7)], expected: [['0', '6']] },
+])('reconciles an uncontrolled Brush window: $name', async ({ start, end, next, expected }) => {
+  const rows = ref(rowsOf(5))
+  const { container } = render(() => (
+    <BarChart width={500} height={300} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush />
+    </BarChart>
+  ))
+  await nextTick()
+  const sliders = () => [...container.querySelectorAll('[role="slider"]')]
+  for (let step = 0; step < start; step++) {
+    await fireEvent.focus(sliders()[0])
+    await fireEvent.keyDown(sliders()[0], { key: 'ArrowRight' })
+  }
+  for (let step = 0; step < end; step++) {
+    await fireEvent.focus(sliders()[1])
+    await fireEvent.keyDown(sliders()[1], { key: 'ArrowLeft' })
+  }
+  await nextTick()
+  for (const [index, value] of next.entries()) {
+    rows.value = value
+    await nextTick()
+    await nextTick()
+    const shown = sliders().map(slider => slider.getAttribute('aria-valuenow'))
+    expect(shown).toEqual(expected[index])
+    const bars = shown.length ? Number(shown[1]) - Number(shown[0]) + 1 : 0
+    expect(getBarRects(container)).toHaveLength(value.length ? bars : 0)
+  }
+})
+
+it.each([
+  { range: { startIndex: 1, endIndex: 3 }, sliders: ['1', '3'], bars: 3 },
+  { range: null, sliders: [], bars: 6 },
+])('leaves a controlled range $range alone when rows are added', async ({ range, sliders, bars }) => {
+  const rows = ref(rowsOf(5))
+  const update = vi.fn()
+  const { container } = render(() => (
+    <BarChart width={500} height={300} data={rows.value}>
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush range={range} {...{ 'onUpdate:range': update }} />
+    </BarChart>
+  ))
+  await nextTick()
+  rows.value = rowsOf(6)
+  await nextTick()
+  await nextTick()
+  expect([...container.querySelectorAll('[role="slider"]')].map(slider => slider.getAttribute('aria-valuenow'))).toEqual(sliders)
+  expect(getBarRects(container)).toHaveLength(bars)
+  expect(update).not.toHaveBeenCalled()
 })

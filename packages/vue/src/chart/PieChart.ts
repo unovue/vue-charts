@@ -1,12 +1,15 @@
-import { generatePolarChart } from '@/chart/generateCategoricalChart'
+import { defineComponent } from 'vue'
+import { chartRoot, polarProps } from '@/chart/generateCategoricalChart'
 
-export const PieChart = generatePolarChart({
-  chartName: 'PieChart',
-  defaultProps: {
+export const PieChart = defineComponent({
+  ...chartRoot({
+    chartName: 'PieChart',
+    defaultTooltipEventType: 'item',
+    validateTooltipEventTypes: ['item'],
+  }),
+  props: polarProps({
     layout: 'centric',
     startAngle: 0,
     endAngle: 360,
-  },
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
+  }),
 })

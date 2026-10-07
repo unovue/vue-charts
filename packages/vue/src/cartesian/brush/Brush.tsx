@@ -1,6 +1,6 @@
 import type { CSSProperties, PropType, VNode } from 'vue'
 import { useChart } from '@/model/chart'
-import { computed, defineComponent, h, nextTick, reactive, watch } from 'vue'
+import { computed, defineComponent, h, nextTick, reactive, shallowRef, watch } from 'vue'
 import { useDeferredView } from '@/hooks/deferredView'
 import type { BrushProps, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
@@ -12,7 +12,6 @@ import { TravellerLayer } from './components/TravellerLayer'
 import { BrushText } from './components/BrushText'
 import { useBrushState } from './hooks/useBrushState'
 import { useBrushHandlers } from './hooks/useBrushHandlers'
-import { useBrushSetting } from '@/cartesian/brush/hooks/useBrushSetting'
 import { useBrushChartSynchronisation } from '@/events/sync'
 import type { BrushStartEndIndex } from '@/types/chartData'
 import { isNumber } from '@/utils'
@@ -250,58 +249,61 @@ const _Brush = defineComponent({
   inheritAttrs: false,
   setup(props, { attrs, slots, emit }) {
     const chart = useChart()
-    useBrushSetting(props, updateRange)
-    useBrushChartSynchronisation(chart)
     const View = useDeferredView(BrushView)
     const controlled = () => props.range !== undefined
-    const range = computed(() => {
-      const { chartData, dataStartIndex, dataEndIndex } = chart.dataRange.state.value
-      return normalizeBrushRange(controlled()
-        ? props.range!
-        : {
-            startIndex: dataStartIndex,
-            endIndex: dataEndIndex,
-          }, chartData?.length ?? 0)
-    })
-    let requested: unknown[] | undefined
-    let previousRange: BrushStartEndIndex | null = null
-    let previousLength = 0
-    watch([
-      () => props.range,
-      () => props.range?.startIndex,
-      () => props.range?.endIndex,
-      () => chart.dataRange.state.value.chartData,
-      () => chart.dataRange.state.value.chartData?.length ?? 0,
-      range,
-    ], (state) => {
-      const length = state[4]
-      const effective = range.value
-      if (controlled()) {
-        chart.dataRange.setRange(effective ?? { startIndex: 0, endIndex: Math.max(0, length - 1) })
-        if (!sameRange(props.range!, effective)) {
-          const input = state.slice(0, 5)
-          if (!requested?.every((value, index) => Object.is(value, input[index]))) {
-            requested = input
-            emit('update:range', effective)
-          }
-        }
-        else {
-          requested = undefined
-        }
-      }
-      else if (length < previousLength && !sameRange(previousRange, normalizeBrushRange(previousRange, length))) {
-        emit('update:range', effective)
-      }
-      previousRange = effective
-      previousLength = length
-    }, { immediate: true })
+    const length = computed(() => chart.dataRange.state.value.chartData?.length ?? 0)
+    // Uncontrolled window; `null` selects all rows and keeps following new rows.
+    const local = shallowRef<BrushStartEndIndex | null>(null)
+    const fullRange = (rows: number) => ({ startIndex: 0, endIndex: rows - 1 })
+    /** What the Brush shows: `null` hides the travellers (controlled `null` or empty data). */
+    const range = computed(() => normalizeBrushRange(
+      controlled() ? props.range! : local.value ?? fullRange(length.value),
+      length.value,
+    ))
+
+    chart.brush.register(computed(() => ({
+      x: props.x,
+      y: props.y,
+      width: props.width,
+      height: props.height!,
+      padding: props.padding!,
+      range: controlled() ? props.range! : local.value,
+      onRangeChange: updateRange,
+    })))
+    useBrushChartSynchronisation(chart)
+
+    // D-16: reconcile the uncontrolled window by index when the row count changes.
+    watch(length, (rows, previous) => {
+      if (controlled())
+        return
+      const shown = normalizeBrushRange(local.value ?? fullRange(previous), previous)
+      const window = local.value
+      if (window && rows === 0)
+        local.value = null
+      else if (window && rows > previous && window.endIndex === previous - 1)
+        local.value = { startIndex: window.startIndex + rows - previous, endIndex: rows - 1 }
+      else if (window && rows < previous)
+        local.value = normalizeBrushRange(window, rows)
+      // A full window grows silently; a shifted or clamped one is announced.
+      if ((rows < previous || local.value !== window) && !sameRange(shown, range.value))
+        emit('update:range', range.value)
+    }, { flush: 'sync' })
+    // Ask the parent once per distinct (input, row count) to accept a normalized controlled range.
+    watch(
+      () => [props.range === null, props.range?.startIndex, props.range?.endIndex, length.value],
+      () => {
+        if (controlled() && !sameRange(props.range!, range.value))
+          emit('update:range', range.value)
+      },
+      { immediate: true },
+    )
 
     function updateRange(value: BrushStartEndIndex | null) {
-      const next = normalizeBrushRange(value, previousLength)
+      const next = normalizeBrushRange(value, length.value)
       if (sameRange(next, range.value))
         return
       if (!controlled())
-        chart.dataRange.setRange(next ?? { startIndex: 0, endIndex: previousLength - 1 })
+        local.value = next == null || sameRange(next, fullRange(length.value)) ? null : next
       emit('update:range', next)
     }
     return () => h(View, {
