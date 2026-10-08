@@ -1,4 +1,6 @@
-import { resolve } from 'node:path'
+import { existsSync } from 'node:fs'
+import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
@@ -19,6 +21,30 @@ export default defineConfig({
     vueJsx() as any,
     dts({
       tsconfigPath: resolve(__dirname, 'tsconfig.json'),
+      // Node ESM requires explicit file extensions, including inside declarations.
+      // Resolve against emitted declarations so directory barrels and Vue files
+      // use the same paths that consumers receive in the tarball.
+      async afterBuild() {
+        const dist = resolve(__dirname, 'dist')
+        const files = await readdir(dist, { recursive: true })
+        for (const file of files.filter(file => file.endsWith('.d.ts'))) {
+          const path = join(dist, file)
+          const content = await readFile(path, 'utf8')
+          const rewritten = content.replace(/((?:from\s*|import\s*\(\s*)['"])(\.[^'"]*)(['"])/g, (match, prefix, specifier, suffix) => {
+            if (/\.(?:js|mjs|json)$/.test(specifier))
+              return match
+            const clean = specifier.replace(/\.(?:vue|tsx?)$/, '')
+            const target = resolve(dirname(path), clean)
+            if (existsSync(`${target}.d.ts`))
+              return `${prefix}${clean}.js${suffix}`
+            if (existsSync(join(target, 'index.d.ts')))
+              return `${prefix}${clean}/index.js${suffix}`
+            throw new Error(`Unresolved declaration import ${specifier} in ${file}`)
+          })
+          if (rewritten !== content)
+            await writeFile(path, rewritten)
+        }
+      },
       cleanVueFileName: true,
       include: [
         'src/**/*.ts',
@@ -27,10 +53,9 @@ export default defineConfig({
       ],
       exclude: [
         'src/**/__tests__/**',
-        'src/test/*.ts',
-        'src/storybook/**/*',
-        'src/**/*.stories.*',
-        'src/**/*.story.*',
+        'src/**/*.spec.*',
+        'src/**/*.test.*',
+        'src/test/**',
       ],
     }),
   ],
@@ -44,6 +69,8 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
+        nuxt: resolve(__dirname, 'src/nuxt.ts'),
+        resolver: resolve(__dirname, 'src/resolver.ts'),
       },
       formats: ['es'],
     },

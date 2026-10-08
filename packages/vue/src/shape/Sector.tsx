@@ -7,6 +7,7 @@ import { classProp } from '@/types'
 import type { VuePropsToType, WithSVGProps } from '@/types'
 import { getPercentValue, mathSign } from '@/utils/data'
 import { RADIAN, polarToCartesian } from '@/utils/polar'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const SectorVueProps = {
   cx: { type: Number as PropType<number>, default: 0 },
@@ -21,8 +22,9 @@ const SectorVueProps = {
   class: classProp,
 }
 
-export type SectorProps = VuePropsToType<typeof SectorVueProps>
-export type SectorPropsWithSVG = WithSVGProps<typeof SectorVueProps>
+/** Resolved sector geometry, also used for the RadialBar background. */
+export type SectorInput = VuePropsToType<typeof SectorVueProps>
+type SectorAttrs = WithSVGProps<typeof SectorVueProps>
 
 function getDeltaAngle(startAngle: number, endAngle: number) {
   const sign = mathSign(endAngle - startAngle)
@@ -199,13 +201,16 @@ function getSectorWithCorner(
   return path
 }
 
-export const Sector = defineComponent<SectorPropsWithSVG>({
+export const Sector = defineComponent<SectorAttrs>({
   name: 'Sector',
   props: SectorVueProps,
+  inheritAttrs: false,
   setup(props, { attrs }) {
     return () => {
       const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, cornerRadius, forceCornerRadius, cornerIsExternal } = props
-      if (outerRadius <= 0 || outerRadius < innerRadius || startAngle === endAngle) {
+      if (cx == null || cy == null || innerRadius == null || outerRadius == null
+        || startAngle == null || endAngle == null || cornerRadius == null
+        || outerRadius <= 0 || outerRadius < innerRadius || startAngle === endAngle) {
         return null
       }
 
@@ -220,8 +225,8 @@ export const Sector = defineComponent<SectorPropsWithSVG>({
           innerRadius,
           outerRadius,
           Math.min(cr, deltaRadius / 2),
-          forceCornerRadius,
-          cornerIsExternal,
+          forceCornerRadius ?? false,
+          cornerIsExternal ?? false,
           startAngle,
           endAngle,
         )
@@ -232,7 +237,7 @@ export const Sector = defineComponent<SectorPropsWithSVG>({
 
       return (
         <path
-          {...attrs}
+          {...svgAttrs(attrs)}
           class={['v-charts-sector', props.class]}
           d={path}
         />

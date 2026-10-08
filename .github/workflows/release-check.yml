@@ -1,0 +1,72 @@
+name: Release checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install locked browsers and system dependencies
+        run: node scripts/lib/browser.mjs --install-browser --with-deps
+      - run: pnpm --filter vccs build
+      - run: pnpm check:motion
+      - run: pnpm check:a11y
+      - run: node --test packages/vue/test/lab/report-metrics.test.mjs
+      - run: node scripts/update-motion-docs.mjs --check
+      - run: node --test scripts/check-motion-report.test.mjs
+      - name: Motion geometry of every transition (fake clock, no timing, no video)
+        run: node packages/vue/test/lab/report.mjs --prod --check
+      - run: pnpm check:play
+      - run: node --test scripts/check-play.test.mjs
+      - run: pnpm --filter docs build
+      - run: pnpm check:docs
+      - run: node --test scripts/check-docs.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-browser-evidence
+          include-hidden-files: true
+          path: .evidence/
+          if-no-files-found: error
+
+  # Real-clock timings against the published vccs 0.6.0, on one runner, alternating sides each
+  # round. 0.6.0 has no cell charts and its bar update snaps, so only static Line and Bar cases
+  # compare. The CLI reports boundary-crossing spread as INCONCLUSIVE, never PASS.
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/lib/browser.mjs --install-browser --with-deps chromium-headless-shell
+      - name: Compare bundles, dependencies and lines with vccs 0.6.0
+        run: pnpm compare:upstream
+      - run: pnpm bench --compare=.evidence/upstream/install/node_modules/vccs/dist --charts=LineChart,BarChart --modes=static
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-benchmark-evidence
+          include-hidden-files: true
+          path: |
+            .evidence/bench/
+            .evidence/upstream/summary.json
+          if-no-files-found: error

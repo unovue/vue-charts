@@ -1,4 +1,4 @@
-import type { DataKey } from '@/types'
+import type { ChartDataKey } from '@/types/base'
 import type { RechartsScale } from '@/types/scale'
 
 export type RadiusAxisForRadar = { scale: RechartsScale }
@@ -6,7 +6,7 @@ export type RadiusAxisForRadar = { scale: RechartsScale }
 export type AngleAxisForRadar = {
   scale: RechartsScale
   type: 'number' | 'category'
-  dataKey: DataKey<any>
+  dataKey: ChartDataKey | undefined
   cx: number
   cy: number
 }
@@ -19,7 +19,7 @@ export interface RadarPoint {
   angle?: number
   radius?: number
   value?: number
-  payload?: any
+  payload?: unknown
   name?: string
 }
 export type RadarComposedData = {

@@ -1,34 +1,43 @@
-import type { Ref, ShallowRef } from 'vue'
-import { shallowRef } from 'vue'
-import { createContext } from 'motion-v'
-import { createContext as createNullableContext } from '@/utils/createContext'
+import type { ChartDataKey } from '@/types/base'
+import { inject, provide, shallowRef } from 'vue'
+import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { ErrorBarDirection } from '@/types/bar'
-import type { DataKey } from '@/types'
-import type { AxisId } from '@/state/cartesianAxisSlice'
-import type { ErrorBarsSettings } from '@/state/graphicalItemsSlice'
+import type { AxisId } from '@/types/axisSettings'
+import type { ErrorBarsSettings } from '@/types/graphical'
 
-export interface ErrorBarDataItem {
-  x: number | undefined
-  y: number | undefined
-  value: number
-  errorVal?: number[] | number
-}
+import type { ErrorBarDataItem } from '@/core/errorBar'
 
 export type ErrorBarDataPointFormatter<T> = (
   entry: T,
-  dataKey: DataKey<any>,
+  dataKey: ChartDataKey,
   direction: ErrorBarDirection,
 ) => ErrorBarDataItem
 
 export interface ErrorBarContextType {
-  data: Readonly<ShallowRef<readonly any[]>>
+  data: Readonly<ShallowRef<readonly unknown[] | undefined>>
   xAxisId: AxisId
   yAxisId: AxisId
-  dataPointFormatter: ErrorBarDataPointFormatter<any>
+  // This injection boundary accepts geometry from several independent series shapes.
+  dataPointFormatter: ErrorBarDataPointFormatter<unknown>
   errorBarOffset: Ref<number>
 }
 
-export const [useErrorBarContext, provideErrorBarContext] = createContext<ErrorBarContextType>('ErrorBarContext')
+const errorBarKey: InjectionKey<ErrorBarContextType> = Symbol('v-charts-error-bar-context')
+
+export function provideErrorBarContext(value: ErrorBarContextType) {
+  provide(errorBarKey, value)
+  return value
+}
+
+export function useErrorBarContext<T extends ErrorBarContextType | null | undefined = ErrorBarContextType>(
+  fallback?: T,
+): T extends null ? ErrorBarContextType | null : ErrorBarContextType
+export function useErrorBarContext(fallback?: ErrorBarContextType | null) {
+  const value = inject(errorBarKey, fallback)
+  if (value === undefined)
+    throw new Error('vccs: useErrorBarContext requires its provider.')
+  return value
+}
 
 export interface ErrorBarRegistryType {
   errorBars: ShallowRef<ReadonlyArray<ErrorBarsSettings>>
@@ -36,7 +45,22 @@ export interface ErrorBarRegistryType {
   unregister: (settings: ErrorBarsSettings) => void
 }
 
-export const [useErrorBarRegistry, provideErrorBarRegistry] = createNullableContext<ErrorBarRegistryType>('ErrorBarRegistry')
+const registryKey: InjectionKey<ErrorBarRegistryType> = Symbol('v-charts-error-bar-registry')
+
+export function provideErrorBarRegistry(value: ErrorBarRegistryType) {
+  provide(registryKey, value)
+  return value
+}
+
+export function useErrorBarRegistry<T extends ErrorBarRegistryType | null | undefined = ErrorBarRegistryType>(
+  fallback?: T,
+): T extends null ? ErrorBarRegistryType | null : ErrorBarRegistryType
+export function useErrorBarRegistry(fallback?: ErrorBarRegistryType | null) {
+  const value = inject(registryKey, fallback)
+  if (value === undefined)
+    throw new Error('vccs: ErrorBar requires its series registry.')
+  return value
+}
 
 export function createErrorBarRegistry(): ErrorBarRegistryType {
   const errorBars = shallowRef<ReadonlyArray<ErrorBarsSettings>>([])

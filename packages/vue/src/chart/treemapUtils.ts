@@ -1,3 +1,6 @@
+import type { DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
+import { toFiniteNumber } from '@/utils/validate'
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy'
 
 export interface TreemapLayoutNode {
@@ -8,43 +11,44 @@ export interface TreemapLayoutNode {
   depth: number
   name: string
   value: number
-  payload: Record<string, any>
+  payload: Record<string, unknown>
   color?: string
   root: number
+  entryIndex: number
 }
 
 export interface TreemapLayoutOptions {
-  data: Record<string, any>[]
+  data: Record<string, unknown>[]
   width: number
   height: number
-  dataKey: string
-  aspectRatio?: number
-  nameKey?: string
-  colorPanel?: string[]
+  dataKey: DataKey<Record<string, unknown>>
+  tileAspectRatio?: number
+  nameKey?: DataKey<Record<string, unknown>>
+  colors?: string[]
 }
 
 export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayoutNode[] {
-  const { data, width, height, dataKey, aspectRatio = 4 / 3, nameKey = 'name', colorPanel } = options
+  const { data, width, height, dataKey, tileAspectRatio = 4 / 3, nameKey = 'name', colors } = options
 
   if (!data || data.length === 0 || width <= 0 || height <= 0)
     return []
 
-  const root = hierarchy({ children: data } as any)
-    .sum((d: any) => {
-      if (d.children && d.children.length > 0)
+  const root = hierarchy<Record<string, unknown>>({ children: data })
+    .sum((d) => {
+      if (Array.isArray(d.children) && d.children.length > 0)
         return 0
-      const val = d[dataKey]
-      return typeof val === 'number' && val > 0 ? val : 0
+      const val = toFiniteNumber(getValueByDataKey(d, dataKey))
+      return val != null && val > 0 ? val : 0
     })
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 
-  treemap()
+  const layout = treemap<Record<string, unknown>>()
     .size([width, height])
-    .tile(treemapSquarify.ratio(aspectRatio))
+    .tile(treemapSquarify.ratio(tileAspectRatio))
     .round(true)(root)
 
-  return root.leaves().map((leaf) => {
-    const d = leaf.data as any
+  return layout.leaves().map((leaf) => {
+    const d = leaf.data
     let ancestor = leaf
     while (ancestor.depth > 1 && ancestor.parent) ancestor = ancestor.parent
     const rootIndex = ancestor.parent ? ancestor.parent.children!.indexOf(ancestor) : 0
@@ -55,11 +59,12 @@ export function computeTreemapLayout(options: TreemapLayoutOptions): TreemapLayo
       width: leaf.x1! - leaf.x0!,
       height: leaf.y1! - leaf.y0!,
       depth: leaf.depth,
-      name: d[nameKey] ?? '',
+      name: getValueByDataKey(d, nameKey, ''),
       value: leaf.value ?? 0,
       payload: d,
       root: rootIndex,
-      color: colorPanel ? colorPanel[rootIndex % colorPanel.length] : undefined,
+      entryIndex: data.indexOf(ancestor.data),
+      color: colors ? colors[rootIndex % colors.length] : undefined,
     }
   })
 }

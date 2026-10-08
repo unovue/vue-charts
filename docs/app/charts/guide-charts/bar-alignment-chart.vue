@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -13,36 +13,32 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    :bar-gap="10"
+    bar-category-gap="20%"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      :bar-gap="10"
-      bar-category-gap="20%"
-    >
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Legend />
-      <Bar
-        data-key="uv"
-        fill="#8884d8"
-      />
-      <Bar
-        data-key="pv"
-        fill="#82ca9d"
-      />
-    </BarChart>
-  </ResponsiveContainer>
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Legend />
+    <Bar
+      data-key="uv"
+      fill="#8884d8"
+    />
+    <Bar
+      data-key="pv"
+      fill="#82ca9d"
+    />
+  </BarChart>
 </template>

@@ -1,17 +1,18 @@
-import { computed, defineComponent, onUnmounted, provide, watchEffect } from 'vue'
-import type { PropType } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addRadiusAxis, removeRadiusAxis } from '@/state/polarAxisSlice'
-import { selectPolarAxisTicks } from '@/state/selectors/polarScaleSelectors'
-import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
+import type { ChartDataKey } from '@/types/base'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h, provide } from 'vue'
+import type { ExtractPropTypes, PropType, SlotsType } from 'vue'
+import type { AxisSlots, AxisTick } from '@/types/tick'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { RadiusAxisSettings } from '@/types/axisSettings'
 import { polarToCartesian } from '@/utils/polar'
 import type { AxisDomain } from '@/types/axis'
-import type { AxisTick } from '@/types/tick'
-import type { DataKey, LayoutType } from '@/types'
+import type { LayoutType } from '@/types'
 import { isCategoricalAxis } from '@/utils'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { POLAR_LABEL_VIEW_BOX_KEY } from '@/context/polarLabelViewBoxContext'
 import Text from '@/components/Text.vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 /**
  * Resolve 'auto' type based on chart layout, matching Recharts behavior.
@@ -24,62 +25,35 @@ function resolveAxisType(type: 'number' | 'category' | 'auto', layout: LayoutTyp
   return isCategoricalAxis(layout, axisType) ? 'category' : 'number'
 }
 
-export const PolarRadiusAxis = defineComponent({
-  name: 'PolarRadiusAxis',
+const PolarRadiusAxisViewProps = {
+  radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: undefined },
+  angle: { type: Number, default: 0 },
+  tick: { type: Boolean, default: true },
+  axisLine: { type: Boolean, default: true },
+  orientation: { type: String as PropType<'left' | 'right' | 'middle'>, default: 'right' },
+  tickFormatter: { type: Function as PropType<(value: unknown, index: number) => string>, default: undefined },
+  ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
+  tickCount: { type: Number, default: 5 },
+  domain: { type: Array as PropType<AxisDomain>, default: undefined },
+  type: { type: String as PropType<'number' | 'category' | 'auto'>, default: 'auto' },
+  stroke: { type: String, default: undefined },
+  allowDecimals: { type: Boolean, default: false },
+}
+
+const PolarRadiusAxisView = defineComponent({
+  name: 'PolarRadiusAxisView',
+  inheritAttrs: true,
   props: {
-    radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
-    angle: { type: Number, default: 0 },
-    tick: { type: Boolean, default: true },
-    axisLine: { type: Boolean, default: true },
-    orientation: { type: String as PropType<'left' | 'right' | 'middle'>, default: 'right' },
-    tickFormatter: { type: Function as PropType<(value: any, index: number) => string>, default: undefined },
-    ticks: { type: Array as PropType<ReadonlyArray<AxisTick>>, default: undefined },
-    tickCount: { type: Number, default: 5 },
-    domain: { type: Array as PropType<AxisDomain>, default: undefined },
-    type: { type: String as PropType<'number' | 'category' | 'auto'>, default: 'auto' },
-    stroke: { type: String, default: '#ccc' },
-    allowDecimals: { type: Boolean, default: false },
+    item: { type: Object as PropType<ExtractPropTypes<typeof PolarRadiusAxisViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  setup(props, { slots }) {
-    const dispatch = useAppDispatch()
-    const layout = useChartLayout()
-
-    let prevSettings: any = null
-    watchEffect(() => {
-      const resolvedType = resolveAxisType(props.type, layout.value, 'radiusAxis')
-      const settings = {
-        id: props.radiusAxisId,
-        type: resolvedType,
-        dataKey: props.dataKey,
-        scale: 'auto' as const,
-        allowDuplicatedCategory: true,
-        allowDataOverflow: props.domain != null,
-        reversed: false,
-        includeHidden: false,
-        // Recharts v2 defaults domain=[0,'auto'], which creates extra band entries
-        // via parseSpecifiedDomain, making bars thinner. Preserve that behavior.
-        domain: props.domain ?? [0, 'auto'],
-        unit: undefined,
-        name: undefined,
-        allowDecimals: props.allowDecimals,
-        tickCount: props.tickCount,
-        ticks: props.ticks,
-        tick: props.tick,
-      }
-      dispatch(addRadiusAxis(settings))
-      prevSettings = settings
-    })
-
-    onUnmounted(() => {
-      if (prevSettings) {
-        dispatch(removeRadiusAxis(prevSettings))
-        prevSettings = null
-      }
-    })
-
-    const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const ticks = useAppSelector(state => selectPolarAxisTicks(state, 'radiusAxis', props.radiusAxisId, false))
+  setup(view, { slots }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
+    const polarViewBox = computed(() => chart.polarLayout.viewBox.value)
+    const ticks = computed(() => chart.axis('radiusAxis', props.radiusAxisId).ticks.value)
 
     // Provide polar viewBox for child Label components
     provide(POLAR_LABEL_VIEW_BOX_KEY, computed(() => polarViewBox.value))
@@ -101,7 +75,7 @@ export const PolarRadiusAxis = defineComponent({
       const textAnchor = orientation === 'left' ? 'end' : orientation === 'right' ? 'start' : 'middle'
 
       return (
-        <g class="v-charts-polar-radius-axis">
+        <g data-slot="radius-axis" class="v-charts-polar-radius-axis">
           {axisLine && showTicks && (
             (() => {
               const coords = tickItems!.map(t => t.coordinate)
@@ -116,7 +90,7 @@ export const PolarRadiusAxis = defineComponent({
                   y1={p0.y}
                   x2={p1.x}
                   y2={p1.y}
-                  stroke={stroke}
+                  stroke={stroke ?? 'var(--v-charts-grid, #ccc)'}
                   fill="none"
                 />
               )
@@ -127,19 +101,21 @@ export const PolarRadiusAxis = defineComponent({
               {tickItems!.map((entry, i) => {
                 const coord = polarToCartesian(cx, cy, entry.coordinate, angle)
                 const value = tickFormatter ? tickFormatter(entry.value, i) : entry.value
-                return (
-                  <Text
-                    key={`tick-${entry.coordinate}`}
-                    class="v-charts-polar-radius-axis-tick-value"
-                    x={coord.x}
-                    y={coord.y}
-                    textAnchor={textAnchor}
-                    verticalAnchor="middle"
-                    fill={stroke}
-                    angle={90 - angle}
-                    value={String(value)}
-                  />
-                )
+                return slots.tick
+                  ? slots.tick({ x: coord.x, y: coord.y, value, index: i, payload: entry, textAnchor })
+                  : (
+                      <Text
+                        key={`tick-${entry.coordinate}`}
+                        class="v-charts-polar-radius-axis-tick-value"
+                        x={coord.x}
+                        y={coord.y}
+                        textAnchor={textAnchor}
+                        verticalAnchor="middle"
+                        fill={stroke ?? 'var(--v-charts-text, #ccc)'}
+                        angle={90 - angle}
+                        value={String(value)}
+                      />
+                    )
               })}
             </g>
           )}
@@ -149,3 +125,37 @@ export const PolarRadiusAxis = defineComponent({
     }
   },
 })
+
+export const PolarRadiusAxis = forwardsSvgAttributes(defineComponent({
+  name: 'PolarRadiusAxis',
+  props: PolarRadiusAxisViewProps,
+  slots: Object as SlotsType<AxisSlots>,
+  setup(props, { attrs, slots }) {
+    const { radiusAxis } = useChart().axes
+    const layout = useChartPresentation().layout
+
+    const settings = computed<RadiusAxisSettings>(() => ({
+      id: props.radiusAxisId,
+      type: resolveAxisType(props.type, layout.value, 'radiusAxis'),
+      dataKey: props.dataKey,
+      scale: 'auto' as const,
+      allowDuplicatedCategory: true,
+      allowDataOverflow: props.domain != null,
+      reversed: false,
+      includeHidden: false,
+      // Recharts v2 defaults domain=[0,'auto'], which creates extra band entries
+      // via parseSpecifiedDomain, making bars thinner. Preserve that behavior.
+      domain: props.domain ?? [0, 'auto'],
+      unit: undefined,
+      name: undefined,
+      allowDecimals: props.allowDecimals,
+      tickCount: props.tickCount,
+      ticks: props.ticks,
+      tick: props.tick,
+    }))
+    radiusAxis.register(settings)
+
+    const View = useDeferredView(PolarRadiusAxisView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

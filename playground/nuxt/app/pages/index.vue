@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, GitBranch, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon, Sun } from 'lucide-vue-next'
+import { AreaChart as AreaChartIcon, ArrowRight, BarChart3, CircleDot, Crosshair, Filter, GitBranch, LayoutGrid, LineChart as LineChartIcon, MessageSquare, PencilRuler, PieChart as PieChartIcon, Radar as RadarIcon, Sparkles, Sun } from 'lucide-vue-next'
 
 const routes = [
   {
@@ -59,9 +59,9 @@ const routes = [
     count: 3,
   },
   {
-    path: '/customized-charts',
-    name: 'Customized Charts',
-    description: 'Render custom SVG elements using chart internal state.',
+    path: '/custom-svg',
+    name: 'Custom SVG',
+    description: 'Annotations drawn with usePlotArea() and the axis scales.',
     icon: PencilRuler,
     count: 2,
   },
@@ -78,6 +78,34 @@ const routes = [
     description: 'Flow diagrams showing the magnitude of flow between nodes.',
     icon: GitBranch,
     count: 1,
+  },
+  {
+    path: '/journey-charts',
+    name: 'Journeys',
+    description: 'User journeys with path highlighting, drop-off and pinning.',
+    icon: GitBranch,
+    count: 1,
+  },
+  {
+    path: '/dashboard-charts',
+    name: 'Dashboard Charts',
+    description: 'Sparkline cards, bar list, donut, gauge and funnel.',
+    icon: BarChart3,
+    count: 7,
+  },
+  {
+    path: '/cell-charts',
+    name: 'Cell Charts',
+    description: 'Uptime tracker and contribution calendar.',
+    icon: LayoutGrid,
+    count: 4,
+  },
+  {
+    path: '/motion',
+    name: 'Motion',
+    description: 'Treemap entrance styles side by side, and every transition of the new charts.',
+    icon: Sparkles,
+    count: 17,
   },
   {
     path: '/sunburst-charts',

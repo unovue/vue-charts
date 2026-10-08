@@ -1,14 +1,20 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/optionsSlice'
+import { defineComponent } from 'vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
+import { chartRoot, polarProps } from '@/chart/chartRoot'
+import { radialChartProps } from '@/chart/chartProps'
 
-export const RadialBarChart = generateCategoricalChart({
+const root = chartRoot({
   chartName: 'RadialBarChart',
-  defaultProps: {
+  defaultTooltipEventType: 'axis',
+  validateTooltipEventTypes: ['axis', 'item'],
+})
+
+export const RadialBarChart = forwardsSvgAttributes(defineComponent({
+  ...root,
+  props: { ...radialChartProps, ...polarProps({
     layout: 'radial',
     startAngle: 0,
     endAngle: 360,
-  },
-  defaultTooltipEventType: 'axis',
-  validateTooltipEventTypes: ['axis', 'item'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
-})
+  }) },
+  setup: (props, context) => root.setup(props, context),
+}))

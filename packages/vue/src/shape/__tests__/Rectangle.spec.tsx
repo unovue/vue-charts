@@ -1,13 +1,13 @@
 import { render } from '@testing-library/vue'
-import { describe, expect, it, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { Rectangle } from '@/shape/Rectangle'
 import type { RectRadius } from '@/types/bar'
 
-describe('Rectangle', () => {
+describe('rectangle', () => {
   const rectangleRadiusCases: { radius: RectRadius }[] = [{ radius: [5, 10, 8, 15] }, { radius: 5 }]
 
-  test.each(rectangleRadiusCases)(
-    'Should render 1 rectangle path when radius is $radius',
+  it.each(rectangleRadiusCases)(
+    'should render 1 rectangle path when radius is $radius',
     ({ radius }) => {
       const { container } = render(() => (
         <svg width={400} height={400}>
@@ -22,7 +22,7 @@ describe('Rectangle', () => {
     },
   )
 
-  it('Should render 4 arcs when height < 0', () => {
+  it('should render 4 arcs when height < 0', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={50} y={200} width={80} height={-100} radius={5} fill="#ff7300" />
@@ -37,7 +37,7 @@ describe('Rectangle', () => {
     expect(d.split('A').length - 1).toBe(4)
   })
 
-  it("Shouldn't render anything when height === 0 || width === 0", () => {
+  it('shouldn\'t render anything when height === 0 || width === 0', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={50} y={200} width={80} height={0} radius={5} fill="#ff7300" />
@@ -48,7 +48,7 @@ describe('Rectangle', () => {
     expect(container.querySelectorAll('path')).toHaveLength(0)
   })
 
-  it("Shouldn't render any path when x, y, width or height is not a number", () => {
+  it('shouldn\'t render any path when x, y, width or height is not a number', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={'a' as any} y={50} width={80} height={100} fill="#ff7300" />
@@ -61,7 +61,7 @@ describe('Rectangle', () => {
     expect(container.querySelectorAll('path')).toHaveLength(0)
   })
 
-  it('Should render a simple path without arcs when no radius is provided', () => {
+  it('should render a simple path without arcs when no radius is provided', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={10} y={20} width={100} height={50} fill="#00ff00" />
@@ -77,7 +77,7 @@ describe('Rectangle', () => {
     expect(d).not.toContain('A')
   })
 
-  it('Should render with array radius and generate 4 arcs for different corner radii', () => {
+  it('should render with array radius and generate 4 arcs for different corner radii', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={50} y={50} width={80} height={100} radius={[5, 10, 8, 15]} fill="#ff7300" />
@@ -90,7 +90,7 @@ describe('Rectangle', () => {
     expect(d.split('A').length - 1).toBe(4)
   })
 
-  it('Should pass through SVG attributes via attrs', () => {
+  it('should pass through SVG attributes via attrs', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={10} y={10} width={50} height={50} fill="#333" stroke="#999" stroke-width="2" />
@@ -104,7 +104,7 @@ describe('Rectangle', () => {
     expect(path!.getAttribute('stroke-width')).toBe('2')
   })
 
-  it('Should set x, y, width, height attributes on the path element', () => {
+  it('should set x, y, width, height attributes on the path element', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={25} y={35} width={60} height={80} />
@@ -119,7 +119,7 @@ describe('Rectangle', () => {
     expect(path!.getAttribute('height')).toBe('80')
   })
 
-  it('Should clamp radius to maxRadius when radius exceeds half of width or height', () => {
+  it('should clamp radius to maxRadius when radius exceeds half of width or height', () => {
     const { container } = render(() => (
       <svg width={400} height={400}>
         <Rectangle x={0} y={0} width={20} height={40} radius={50} fill="#000" />

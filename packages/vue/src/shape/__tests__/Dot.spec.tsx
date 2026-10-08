@@ -2,7 +2,7 @@ import { render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { Dot } from '@/shape/Dot'
 
-describe('Dot', () => {
+describe('dot', () => {
   it('renders a circle element with cx, cy, r', () => {
     const { container } = render(() => <Dot cx={100} cy={100} r={5} fill="#ff7300" />)
 
@@ -38,14 +38,5 @@ describe('Dot', () => {
     expect(circle).not.toBeNull()
     expect(circle!.getAttribute('fill')).toBe('#ff7300')
     expect(circle!.getAttribute('stroke')).toBe('#333')
-  })
-
-  it('applies custom className', () => {
-    const { container } = render(() => <Dot cx={100} cy={200} r={5} class="my-custom-class" />)
-
-    const circle = container.querySelector('.v-charts-dot')
-    expect(circle).not.toBeNull()
-    expect(circle!.classList.contains('v-charts-dot')).toBe(true)
-    expect(circle!.classList.contains('my-custom-class')).toBe(true)
   })
 })

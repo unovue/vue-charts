@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/vue'
 import { nextTick } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { computeTreemapLayout } from '../treemapUtils'
-import { Treemap } from '../Treemap'
+import { Treemap } from '@/index'
 
 const flatData = [
   { name: 'A', value: 100 },
@@ -36,9 +36,10 @@ describe('computeTreemapLayout', () => {
     })
 
     expect(nodes).toHaveLength(3)
+    // Value sorting places C in the left half, then B and A in the right half.
+    expect(nodes.map(node => node.x)).toEqual([0, 300, 300])
+    expect(nodes.map(node => node.y)).toEqual([0, 0, 267])
     for (const node of nodes) {
-      expect(node.x).toBeGreaterThanOrEqual(0)
-      expect(node.y).toBeGreaterThanOrEqual(0)
       expect(node.width).toBeGreaterThan(0)
       expect(node.height).toBeGreaterThan(0)
       expect(node.x + node.width).toBeLessThanOrEqual(600)
@@ -100,7 +101,7 @@ describe('computeTreemapLayout', () => {
   })
 })
 
-describe('Treemap component', () => {
+describe('treemap component', () => {
   it('renders rect elements for each leaf node', () => {
     const { container } = render(() => (
       <Treemap data={flatData} dataKey="value" width={600} height={400} isAnimationActive={false} />
@@ -137,7 +138,7 @@ describe('Treemap component', () => {
         height={400}
         fill="#ff0000"
         stroke="#00ff00"
-        colorPanel={undefined as any}
+        colors={undefined as any}
         isAnimationActive={false}
       />
     ))
@@ -147,7 +148,7 @@ describe('Treemap component', () => {
     expect(rect!.getAttribute('stroke')).toBe('#00ff00')
   })
 
-  it('applies colorPanel to nodes by group', () => {
+  it('applies colors to nodes by group', () => {
     const colors = ['#aaa', '#bbb']
     const { container } = render(() => (
       <Treemap
@@ -155,7 +156,7 @@ describe('Treemap component', () => {
         dataKey="value"
         width={600}
         height={400}
-        colorPanel={colors}
+        colors={colors}
         isAnimationActive={false}
       />
     ))
@@ -191,7 +192,7 @@ describe('Treemap component', () => {
 
 describe('tooltip integration', () => {
   it('supports Tooltip as child component', async () => {
-    const { Tooltip } = await import('@/components/Tooltip')
+    const { Tooltip } = await import('@/components/tooltip/Tooltip')
 
     const { container } = render(() => (
       <Treemap data={flatData} dataKey="value" width={600} height={400} isAnimationActive={false}>
@@ -231,8 +232,14 @@ describe('nest mode', () => {
 
   it('renders top-level groups initially', () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     const rects = container.querySelectorAll('.v-charts-treemap-node')
     expect(rects.length).toBe(2) // 2 top-level groups
@@ -240,8 +247,14 @@ describe('nest mode', () => {
 
   it('drills down on click and shows breadcrumb', async () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     const firstGroup = container.querySelector('.v-charts-treemap-node')!
     await fireEvent.click(firstGroup)
@@ -256,8 +269,14 @@ describe('nest mode', () => {
 
   it('navigates back via breadcrumb click', async () => {
     const { container } = render(() => (
-      <Treemap width={600} height={400} data={nestData} dataKey="value"
-        type="nest" isAnimationActive={false} />
+      <Treemap
+        width={600}
+        height={400}
+        data={nestData}
+        dataKey="value"
+        type="nest"
+        isAnimationActive={false}
+      />
     ))
     // Drill down
     const firstGroup = container.querySelector('.v-charts-treemap-node')!
@@ -272,4 +291,24 @@ describe('nest mode', () => {
     const rects = container.querySelectorAll('.v-charts-treemap-node')
     expect(rects.length).toBe(2) // back to 2 groups
   })
+})
+
+// Catches treating a CSS variable fallback as the actual shape color.
+it('uses the explicit label foreground for a custom Treemap fill', async () => {
+  const { container } = render(() => (
+    <Treemap
+      width={400}
+      height={300}
+      data={[{ name: 'Custom', value: 10 }]}
+      dataKey="value"
+      colors={['var(--custom-fill, #ffffff)']}
+      isAnimationActive={false}
+      style={{ '--v-charts-label-foreground': '#ffffff' }}
+    />
+  ))
+  await nextTick()
+  expect(container.querySelector('.v-charts-treemap text')?.getAttribute('fill'))
+    .toBe('var(--v-charts-label-foreground, currentColor)')
+  expect(container.querySelector<HTMLElement>('.v-charts-wrapper')!.style
+    .getPropertyValue('--v-charts-label-foreground')).toBe('#ffffff')
 })

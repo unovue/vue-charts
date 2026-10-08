@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Motion detector positive controls</title>
+<style>body { margin: 0; width: 1500px } svg { display: block } #unsettled { animation: drift .3s infinite alternate linear } #fade-only { animation: fade .6s linear both } @keyframes fade { from { opacity: 0 } to { opacity: 1 } } @keyframes drift { to { transform: translateX(20px) } }</style>
+<div class="v-charts-wrapper">
+<svg class="v-charts-surface" width="400" height="300">
+  <rect id="teleport" x="10" y="10" width="20" height="20" />
+  <rect id="unsettled" x="10" y="50" width="20" height="20" />
+  <g class="v-charts-bar"><g class="v-charts-bar-rectangle"><path d="M100 100h50v50h-50z" /></g></g>
+  <g class="v-charts-bar"><g class="v-charts-bar-rectangle"><path d="M120 120h50v50h-50z" /></g></g>
+  <g class="v-charts-line" id="fade-only"><path class="v-charts-line-curve" d="M10 230L100 230" stroke="black" /></g>
+  <g class="v-charts-line"><path class="v-charts-line-curve" id="static" d="M10 200L100 200" stroke="black" /></g>
+<defs><clipPath id="instant-clip"><rect id="clip-width" width="0" height="280" /></clipPath></defs>
+  <g class="v-charts-line"><path class="v-charts-line-curve" clip-path="url(#instant-clip)" d="M10 260L100 260" stroke="black" /></g>
+</svg>
+<svg class="v-charts-surface" width="400" height="80" id="paint-controls" style="--clear: rgb(0 0 0 / 0)">
+  <g class="v-charts-bar"><rect data-control="opaque" width="20" height="20" fill="black" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke" x="30" width="20" height="20" fill="none" stroke="black" /></g>
+  <g class="v-charts-bar"><rect data-control="fill-opacity" x="60" width="20" height="20" fill-opacity="0" /></g>
+  <g class="v-charts-bar"><rect data-control="fill-alpha" x="90" width="20" height="20" fill="rgba(0,0,0,0)" /></g>
+  <g class="v-charts-bar"><rect data-control="css-alpha" x="120" width="20" height="20" style="fill: var(--clear)" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-opacity" x="150" width="20" height="20" fill="none" stroke="black" stroke-opacity="0" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-alpha" x="180" width="20" height="20" fill="none" stroke="rgb(0 0 0 / 0)" /></g>
+  <g class="v-charts-bar"><rect data-control="stroke-width" x="210" width="20" height="20" fill="none" stroke="black" stroke-width="0" /></g>
+  <g class="v-charts-bar" opacity="0"><rect data-control="ancestor" x="240" width="20" height="20" /></g>
+</svg>
+<svg class="v-charts-surface" width="400" height="80">
+  <g class="v-charts-tracker"><g class="v-charts-cell">
+    <rect class="v-charts-cell-rect" x="140" y="20" width="20" height="30" />
+    <rect class="cell-hit" x="138" y="18" width="24" height="34" fill="transparent" />
+  </g></g>
+</svg>
+<div class="v-charts-tooltip-wrapper" style="visibility: hidden">Deliberately missing tooltip</div>
+<button class="v-charts-legend-item" onclick="if (this.dataset.clicked) document.querySelector('#static').setAttribute('d', 'M20 200L110 200'); this.dataset.clicked = 'yes'">Broken legend</button>
+</div>
+<svg class="v-charts-surface" width="0" height="0"></svg>
+<div style="height: 900px"></div>
+<div class="v-charts-wrapper">
+<svg class="v-charts-surface" width="400" height="300" id="deferred-entrance">
+  <g class="v-charts-line"><path class="v-charts-line-curve" data-control="deferred-animated" d="M10 100L100 100" stroke="black" /></g>
+  <g class="v-charts-line"><path class="v-charts-line-curve" data-control="deferred-static" d="M10 200L100 200" stroke="black" /></g>
+</svg>
+</div>
+<script>
+const deferred = document.querySelector('#deferred-entrance')
+const observer = new IntersectionObserver((entries) => {
+  if (!entries.some(entry => entry.intersectionRatio >= 0.5))
+    return
+  observer.disconnect()
+  const path = deferred.querySelector('[data-control="deferred-animated"]')
+  const start = performance.now()
+  function animate(now) {
+    const progress = Math.min(1, (now - start) / 600)
+    path.setAttribute('d', `M10 100L${100 + progress * 200} 100`)
+    if (progress < 1) requestAnimationFrame(animate)
+  }
+  requestAnimationFrame(animate)
+}, { threshold: 0.5 })
+observer.observe(deferred)
+
+setTimeout(() => {
+  document.querySelectorAll('#paint-controls rect').forEach(rect => rect.setAttribute('y', '60'))
+}, 400)
+setTimeout(() => document.querySelector('#clip-width').setAttribute('width', '110'), 500)
+setTimeout(() => {
+  document.querySelector('#teleport').setAttribute('x', '250')
+  document.querySelector('svg').setAttribute('width', '450')
+  console.warn('Hydration deliberate fixture mismatch')
+  console.error('Deliberate fixture console error')
+  throw new Error('Deliberate fixture page error')
+}, 400)
+</script>
+</html>
+
+<script>
+// A sampler exception must remain a reported defect without killing later recordings.
+setTimeout(() => {
+  const rect = document.querySelector('#clip-width')
+  const original = rect.getBBox
+  rect.getBBox = function () {
+    rect.getBBox = original
+    throw new Error('Deliberate recorder sampling error')
+  }
+}, 450)
+</script>

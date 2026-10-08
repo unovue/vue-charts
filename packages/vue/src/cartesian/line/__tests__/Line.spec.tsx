@@ -1,10 +1,11 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
+import { nextTick, ref } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { Area, AreaChart, CartesianGrid, LabelList, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Line', () => {
+describe('line', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -337,8 +338,8 @@ describe('Line', () => {
 
       const curves = getLineCurves(container)
       expect(curves).toHaveLength(1)
-      expect(container.querySelector('.v-charts-xAxis')).toBeTruthy()
-      expect(container.querySelector('.v-charts-yAxis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-x-axis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-y-axis')).toBeTruthy()
     })
 
     it('renders with Tooltip', async () => {
@@ -382,4 +383,55 @@ describe('Line', () => {
       expect(curves[1].getAttribute('stroke')).toBe('#82ca9d')
     })
   })
+
+  it('withholds LabelList children until the line has settled, like its own labels', () => {
+    const { container } = render(() => (
+      <LineChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }]}>
+        <Line dataKey="value"><LabelList /></Line>
+      </LineChart>
+    ))
+    // JSDOM never advances motion, so the entrance is still running.
+    expect(container.querySelectorAll('.v-charts-label-list text')).toHaveLength(0)
+  })
+})
+
+// Changing dot options must update the clip choice as well as the visible radius.
+it('updates dot clipping and size after the dot options change', async () => {
+  const dot = ref({ clipDot: true, r: 3, strokeWidth: 2 })
+  const { container } = render(() => (
+    <LineChart width={400} height={300} data={[{ value: 10 }, { value: 20 }]}>
+      <YAxis domain={[0, 20]} allowDataOverflow />
+      <Line id="reactive-dot" dataKey="value" dot={dot.value} isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  expect(container.querySelector('.v-charts-line-dots')?.getAttribute('clip-path'))
+    .toBe('url(#clipPath-reactive-dot)')
+  dot.value = { clipDot: false, r: 8, strokeWidth: 4 }
+  await nextTick()
+  expect(container.querySelector('.v-charts-line-dots')?.getAttribute('clip-path'))
+    .toBe('url(#clipPath-dots-reactive-dot)')
+  // The referenced clip exists and grows by the dot size (2 * r + strokeWidth) around the plot.
+  const plot = container.querySelector('#clipPath-reactive-dot rect')!
+  const dots = container.querySelector('#clipPath-dots-reactive-dot rect')!
+  expect(Number(dots.getAttribute('height')) - Number(plot.getAttribute('height'))).toBe(20)
+  expect(container.querySelector('.v-charts-line-dot')?.getAttribute('r')).toBe('8')
+})
+
+// The clip flags are refs; testing the ref itself clipped both axes whenever one overflowed.
+it.each([
+  { name: 'Line', Chart: LineChart, Item: Line },
+  { name: 'Area', Chart: AreaChart, Item: Area },
+])('$name clips only the axis that allows data overflow', async ({ Chart, Item }) => {
+  const { container } = render(() => (
+    <Chart width={400} height={300} margin={{ top: 10, right: 10, bottom: 10, left: 10 }} data={[{ value: 10 }, { value: 30 }]}>
+      <YAxis domain={[0, 20]} allowDataOverflow width={40} />
+      <Item id="overflow" dataKey="value" isAnimationActive={false} />
+    </Chart>
+  ))
+  await nextTick()
+  const rect = container.querySelector('#clipPath-overflow rect')!
+  // Plot: x 50..390 (width 340); only Y is clipped, so X reaches half a plot past each side.
+  expect([rect.getAttribute('x'), rect.getAttribute('width')]).toEqual(['-120', '680'])
+  expect(container.querySelector('[clip-path="url(#clipPath-overflow)"]')).not.toBeNull()
 })

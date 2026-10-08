@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
-import { Tooltip } from '@/components/Tooltip'
+import { nextTick, shallowRef } from 'vue'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { Sankey } from '../Sankey'
 
@@ -23,6 +23,62 @@ const sampleData = {
 describe('<Sankey />', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 600, height: 400 })
+  })
+
+  it('attaches links to distinct indexed nodes with identical names', () => {
+    const { container } = render(() => (
+      <Sankey
+        width={600}
+        height={400}
+        isAnimationActive={false}
+        data={{ nodes: [{ name: 'A' }, { name: 'A' }, { name: 'sink' }], links: [{ source: 0, target: 2, value: 10 }, { source: 1, target: 2, value: 20 }] }}
+        v-slots={{ link: ({ payload }) => <path data-source={(payload.source as { index: number }).index} data-target={(payload.target as { index: number }).index} /> }}
+      />
+    ))
+    expect(Array.from(container.querySelectorAll('[data-source]'), node => node.getAttribute('data-source'))).toEqual(['0', '1'])
+    expect(Array.from(container.querySelectorAll('[data-target]'), node => node.getAttribute('data-target'))).toEqual(['2', '2'])
+    expect(container.querySelectorAll('.v-charts-sankey-node')).toHaveLength(3)
+  })
+
+  it('drops invalid graph links and recovers through good, invalid, and good updates', async () => {
+    const data = shallowRef(sampleData)
+    const errors: unknown[] = []
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    {
+      const { container } = render(() => (
+        <Sankey data={data.value} width={600} height={400} isAnimationActive={false} />
+      ), { global: { config: { errorHandler: error => errors.push(error) } } })
+      const paths = () => Array.from(container.querySelectorAll('.v-charts-sankey-link'), path => path.getAttribute('d'))
+      const goodPaths = paths()
+      expect(goodPaths).toHaveLength(4)
+
+      data.value = {
+        nodes: sampleData.nodes,
+        links: [
+          ...sampleData.links,
+          { source: 99, target: 1, value: 5 },
+          { source: 0, target: 99, value: 5 },
+          { source: 0, target: 1, value: 0 },
+          { source: 0, target: 1, value: -1 },
+          { source: 0, target: 1, value: Number.POSITIVE_INFINITY },
+          { source: 0, target: 1, value: Number.NEGATIVE_INFINITY },
+          { source: 0, target: 1, value: Number.NaN },
+          { source: 1, target: 1, value: 5 },
+          { source: 3, target: 0, value: 5 },
+        ],
+      }
+      await nextTick()
+      expect(errors).toEqual([])
+      expect(paths()).toEqual(goodPaths)
+      expect(container.innerHTML).not.toMatch(/NaN|Infinity/)
+      expect(warning).toHaveBeenCalledTimes(1)
+      expect(warning).toHaveBeenCalledWith('Sankey dropped 9 invalid or cyclic links.')
+
+      data.value = sampleData
+      await nextTick()
+      expect(errors).toEqual([])
+      expect(paths()).toEqual(goodPaths)
+    }
   })
 
   it('renders one rect per node', () => {
@@ -92,23 +148,27 @@ describe('<Sankey />', () => {
   it('fires onClick with type "node" when a node is clicked', async () => {
     const onClick = vi.fn()
     const { container } = render(() => (
-      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onNodeClick={onClick} />
     ))
     const node = container.querySelector('.v-charts-sankey-node')!
     await fireEvent.click(node)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][1]).toBe('node')
+    expect(onClick.mock.calls[0][0]).toMatchObject({ name: 'A' })
+    expect(onClick.mock.calls[0][1]).toBe(0)
+    expect(onClick.mock.calls[0][2]).toBeInstanceOf(MouseEvent)
   })
 
   it('fires onClick with type "link" when a link is clicked', async () => {
     const onClick = vi.fn()
     const { container } = render(() => (
-      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onClick={onClick} />
+      <Sankey data={sampleData} width={600} height={400} isAnimationActive={false} onLinkClick={onClick} />
     ))
     const link = container.querySelector('.v-charts-sankey-link')!
     await fireEvent.click(link)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][1]).toBe('link')
+    expect(onClick.mock.calls[0][0]).toMatchObject({ value: 10 })
+    expect(onClick.mock.calls[0][1]).toBe(0)
+    expect(onClick.mock.calls[0][2]).toBeInstanceOf(MouseEvent)
   })
 
   it('shows tooltip with node payload on node hover', async () => {

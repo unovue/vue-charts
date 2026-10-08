@@ -14,6 +14,8 @@ const props = defineProps<{
 }>()
 
 const activeTab = ref<'preview' | 'code'>('preview')
+// Several demos share a page, so each needs its own tab panel ids.
+const panelId = useId()
 const root = ref<HTMLElement>()
 const isVisible = ref(false)
 const isLoading = ref(true)
@@ -179,7 +181,7 @@ onBeforeUnmount(() => {
             <button
               role="tab"
               :aria-selected="activeTab === 'preview'"
-              aria-controls="panel-preview"
+              :aria-controls="`${panelId}-preview`"
               class="h-6.5 cursor-pointer touch-manipulation rounded-full px-2.5 text-[13px] font-medium transition-colors duration-(--ds-t-colour) ease-(--ds-ease) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ds-accent)"
               :class="activeTab === 'preview'
                 ? 'bg-(--ds-block) text-(--ds-text)'
@@ -191,7 +193,7 @@ onBeforeUnmount(() => {
             <button
               role="tab"
               :aria-selected="activeTab === 'code'"
-              aria-controls="panel-code"
+              :aria-controls="`${panelId}-code`"
               class="h-6.5 cursor-pointer touch-manipulation rounded-full px-2.5 text-[13px] font-medium transition-colors duration-(--ds-t-colour) ease-(--ds-ease) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ds-accent)"
               :class="activeTab === 'code'
                 ? 'bg-(--ds-block) text-(--ds-text)'
@@ -250,7 +252,7 @@ onBeforeUnmount(() => {
 
         <div
           v-show="activeTab === 'preview'"
-          id="panel-preview"
+          :id="`${panelId}-preview`"
           role="tabpanel"
           class="flex min-h-80 items-center justify-center p-5"
         >
@@ -264,7 +266,7 @@ onBeforeUnmount(() => {
 
         <div
           v-show="activeTab === 'code'"
-          id="panel-code"
+          :id="`${panelId}-code`"
           role="tabpanel"
         >
           <div

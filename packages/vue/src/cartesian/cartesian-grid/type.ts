@@ -1,12 +1,10 @@
-import type { CartesianAxisProps } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { ViewBox } from '@/cartesian/type'
-import type { ChartOffset, DataKey } from '@/types'
-import type { AxisDomain, AxisDomainType, AxisId, AxisInterval, XAxisOrientation, YAxisOrientation } from '@/types/axis'
-import type { RechartsScale, ScaleType } from '@/types/scale'
-import type { AxisPropsNeededForTicksGenerator, GetTicksInput } from '@/types/tick'
-import type { SVGAttributes, VNode } from 'vue'
+import type { AxisPropsNeededForTicksGenerator, CartesianTickItem, GetTicksInput } from '@/types/tick'
+import type { ViewBox } from '@/types/viewBox'
+import type { ChartOffset } from '@/types'
+import type { AxisId, AxisInterval, XAxisOrientation, YAxisOrientation } from '@/types/axis'
+import type { SVGAttributes, VNode, VNodeChild } from 'vue'
 
-export type AxisPropsForCartesianGridTicksGeneration = AxisPropsNeededForTicksGenerator &
+type AxisPropsForCartesianGridTicksGeneration = AxisPropsNeededForTicksGenerator &
   Omit<GetTicksInput, 'ticks' | 'viewBox'>
 export type HorizontalCoordinatesGenerator = (
   props: {
@@ -46,7 +44,7 @@ type LineItemProps = CartesianGridProps & {
   key: string
   index: number
 }
-export type GridLineTypeFunctionProps = Omit<LineItemProps, 'key'> & {
+type GridLineTypeFunctionProps = Omit<LineItemProps, 'key'> & {
   // React does not pass the key through when calling cloneElement - so it might be undefined when cloning
   key: LineItemProps['key'] | undefined
   // offset is not present in LineItemProps but it is read from context and then passed to the GridLineType function and element
@@ -60,7 +58,7 @@ type GridLineType =
   | boolean
 
 export interface CartesianGridProps extends InternalCartesianGridProps {
-  ticks?: CartesianAxisProps['ticks']
+  ticks?: ReadonlyArray<CartesianTickItem>
   orientation?: XAxisOrientation | YAxisOrientation
   viewBox?: ViewBox
   ry?: SVGAttributes['ry']
@@ -144,37 +142,17 @@ export interface CartesianGridProps extends InternalCartesianGridProps {
 
 }
 
-export const defaultProps: Partial<CartesianGridProps> = {
-  horizontal: true,
-  vertical: true,
-  // The ordinates of horizontal grid lines
-  horizontalPoints: [],
-  // The abscissas of vertical grid lines
-  verticalPoints: [],
-
-  stroke: '#ccc',
-  fill: 'none',
-  // The fill of colors of grid lines
-  verticalFill: [],
-  horizontalFill: [],
+export interface CartesianGridLineSlotProps extends Omit<SVGAttributes, 'offset'>, Record<string, unknown> {
+  x1?: number
+  y1?: number
+  x2?: number
+  y2?: number
+  index: number
+  key?: string
+  offset?: ChartOffset
 }
 
-export type BaseCartesianAxis = {
-  id: AxisId
-  scale: ScaleType | RechartsScale | undefined
-  type: AxisDomainType
-  /**
-   * The axis functionality is severely restricted without a dataKey
-   * - but there is still something left, and the prop is optional
-   * so this can also be undefined even in real charts.
-   * There are no defaults.
-   */
-  dataKey: DataKey<any> | undefined
-  unit: string | undefined
-  name: string | undefined
-  allowDuplicatedCategory: boolean
-  allowDataOverflow: boolean
-  reversed: boolean
-  includeHidden: boolean
-  domain: AxisDomain | undefined
+export interface CartesianGridSlots {
+  horizontal?: (props: CartesianGridLineSlotProps) => VNodeChild
+  vertical?: (props: CartesianGridLineSlotProps) => VNodeChild
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', value: 4000 },
@@ -11,33 +11,29 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    layout="vertical"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      layout="vertical"
-    >
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis type="number" />
-      <YAxis
-        data-key="name"
-        type="category"
-      />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Bar
-        data-key="value"
-        fill="#f97316"
-      />
-    </BarChart>
-  </ResponsiveContainer>
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis type="number" />
+    <YAxis
+      data-key="name"
+      type="category"
+    />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Bar
+      data-key="value"
+      fill="#f97316"
+    />
+  </BarChart>
 </template>

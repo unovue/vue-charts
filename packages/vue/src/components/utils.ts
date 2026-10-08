@@ -1,14 +1,12 @@
 import type { RadialCursorPoints } from '@/components/types'
-import type { ChartCoordinate, Coordinate, LayoutType } from '@/types'
+import type { ChartCoordinate, Coordinate, LayoutType, PolarChartCoordinate } from '@/types'
+import { isPolarCoordinate } from '@/types/base'
 import { polarToCartesian } from '@/utils/polar'
 import type { ChartOffsetInternal } from '@/utils/types'
 
-function getRadialCursorPoints(activeCoordinate: ChartCoordinate): RadialCursorPoints {
-  const { cx, cy, radius, startAngle, endAngle } = activeCoordinate
-  const startPoint = polarToCartesian(cx, cy, radius, startAngle)
-  const endPoint = polarToCartesian(cx, cy, radius, endAngle)
+function getRadialCursorPoints({ cx, cy, radius, startAngle, endAngle }: PolarChartCoordinate): RadialCursorPoints {
   return {
-    points: [startPoint, endPoint],
+    points: [polarToCartesian(cx, cy, radius, startAngle), polarToCartesian(cx, cy, radius, endAngle)],
     cx,
     cy,
     radius,
@@ -22,37 +20,19 @@ export function getCursorPoints(
   activeCoordinate: ChartCoordinate,
   offset: ChartOffsetInternal,
 ): [Coordinate, Coordinate] | RadialCursorPoints {
-  let x1, y1, x2, y2
-
   if (layout === 'horizontal') {
-    x1 = activeCoordinate.x
-    x2 = x1
-    y1 = offset.top
-    y2 = offset.top + offset.height
+    const { x } = activeCoordinate
+    return [{ x, y: offset.top }, { x, y: offset.top + offset.height }]
   }
-  else if (layout === 'vertical') {
-    y1 = activeCoordinate.y
-    y2 = y1
-    x1 = offset.left
-    x2 = offset.left + offset.width
+  if (layout === 'vertical') {
+    const { y } = activeCoordinate
+    return [{ x: offset.left, y }, { x: offset.left + offset.width, y }]
   }
-  else if (activeCoordinate.cx != null && activeCoordinate.cy != null) {
-    if (layout === 'centric') {
-      const { cx, cy, innerRadius, outerRadius, angle } = activeCoordinate
-      const innerPoint = polarToCartesian(cx!, cy!, innerRadius!, angle!)
-      const outerPoint = polarToCartesian(cx!, cy!, outerRadius!, angle!)
-      x1 = innerPoint.x
-      y1 = innerPoint.y
-      x2 = outerPoint.x
-      y2 = outerPoint.y
-    }
-    else {
-      return getRadialCursorPoints(activeCoordinate)
-    }
+  if (!isPolarCoordinate(activeCoordinate))
+    return [activeCoordinate, activeCoordinate]
+  if (layout === 'centric') {
+    const { cx, cy, innerRadius, outerRadius, angle } = activeCoordinate
+    return [polarToCartesian(cx, cy, innerRadius, angle), polarToCartesian(cx, cy, outerRadius, angle)]
   }
-
-  return [
-    { x: x1!, y: y1! },
-    { x: x2!, y: y2! },
-  ]
+  return getRadialCursorPoints(activeCoordinate)
 }

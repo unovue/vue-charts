@@ -7,11 +7,12 @@ import {
   symbolStar,
   symbolTriangle,
   symbolWye,
-} from 'victory-vendor/d3-shape'
-import type { SymbolType as D3SymbolType } from 'victory-vendor/d3-shape'
+} from 'd3-shape'
+import type { SymbolType as D3SymbolType } from 'd3-shape'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils/validate'
 import type { VueClassValue } from '@/types/common'
+import { svgAttrs } from '@/utils/VueUtils'
 
 export type SymbolType = 'circle' | 'cross' | 'diamond' | 'square' | 'star' | 'triangle' | 'wye'
 
@@ -33,12 +34,12 @@ const symbolFactories: SymbolFactory = {
 
 const RADIAN = Math.PI / 180
 
-const getSymbolFactory = (type: SymbolType): D3SymbolType => {
+function getSymbolFactory(type: SymbolType): D3SymbolType {
   const name = `symbol${upperFirst(type)}`
   return symbolFactories[name] || symbolCircle
 }
 
-const calculateAreaSize = (size: number, sizeType: SizeType, type: SymbolType): number => {
+function calculateAreaSize(size: number, sizeType: SizeType, type: SymbolType): number {
   if (sizeType === 'area') {
     return size
   }
@@ -72,8 +73,10 @@ export interface SymbolsProps {
   sizeType?: SizeType
   fill?: string
   stroke?: string
-  [key: string]: any
+  [key: string]: unknown
 }
+
+const pathCache = new Map<string, string | undefined>()
 
 export function Symbols(props: SymbolsProps) {
   const {
@@ -92,22 +95,26 @@ export function Symbols(props: SymbolsProps) {
   }
 
   const getPath = (): string | undefined => {
+    // A scatter series draws thousands of identical symbols; build each shape once.
+    const cacheKey = `${realType}|${sizeType}|${size}`
+    if (pathCache.has(cacheKey))
+      return pathCache.get(cacheKey)
     const symbolFactory = getSymbolFactory(realType)
     const sym = shapeSymbol()
       .type(symbolFactory)
       .size(calculateAreaSize(size, sizeType, realType))
 
-    const s = sym()
-    if (s === null) {
-      return undefined
-    }
+    const s = sym() ?? undefined
+    if (pathCache.size > 500)
+      pathCache.clear()
+    pathCache.set(cacheKey, s)
     return s
   }
 
   if (isNumber(cx) && isNumber(cy) && isNumber(size)) {
     return (
       <path
-        {...rest}
+        {...svgAttrs(rest)}
         class={['v-charts-symbols', className].filter(Boolean).join(' ')}
         transform={`translate(${cx}, ${cy})`}
         d={getPath()}

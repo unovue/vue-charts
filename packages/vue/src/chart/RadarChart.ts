@@ -1,14 +1,19 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/optionsSlice'
+import { defineComponent } from 'vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
+import { chartRoot, polarProps } from '@/chart/chartRoot'
 
-export const RadarChart = generateCategoricalChart({
+const root = chartRoot({
   chartName: 'RadarChart',
-  defaultProps: {
+  defaultTooltipEventType: 'axis',
+  validateTooltipEventTypes: ['axis'],
+})
+
+export const RadarChart = forwardsSvgAttributes(defineComponent({
+  ...root,
+  props: polarProps({
     layout: 'centric',
     startAngle: 90,
     endAngle: -270,
-  },
-  defaultTooltipEventType: 'axis',
-  validateTooltipEventTypes: ['axis'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
-})
+  }),
+  setup: (props, context) => root.setup(props, context),
+}))

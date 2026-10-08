@@ -1,18 +1,17 @@
+import { useChart } from '@/model/chart'
+import type { AxisSlots, AxisTick } from '@/types/tick'
+import { useDeferredView } from '@/hooks/deferredView'
 /**
  * @fileOverview X Axis
  */
-import type { PropType } from 'vue'
-import { defineComponent, onUnmounted, watchEffect } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import type { XAxisSettings } from '@/state/cartesianAxisSlice'
-import { addXAxis, removeXAxis } from '@/state/cartesianAxisSlice'
-import { implicitXAxis, selectAxisScale, selectTicksOfAxis, selectXAxisPosition, selectXAxisSize } from '@/state/selectors/axisSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
+import type { PropType, SlotsType } from 'vue'
+import { computed, defineComponent } from 'vue'
+import type { XAxisSettings } from '@/types/axisSettings'
+import { implicitXAxis } from '@/core/axis/settings'
 import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
-import type { DataKey } from '@/types'
-import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
-import type { AxisDomain, AxisInterval } from '@/types/axis'
-import type { AxisTick, TickFormatter } from '@/types/tick'
+import type { XAxisOrientation, XAxisPadding } from '@/types/axis'
+import { AxisVueProps } from './AxisProps'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const XAxisImpl = defineComponent({
   props: {
@@ -20,17 +19,17 @@ const XAxisImpl = defineComponent({
       type: [String, Number],
       default: 0,
     },
-    ticks: Array,
+    ticks: Array as PropType<ReadonlyArray<AxisTick>>,
   },
   inheritAttrs: false,
   setup(props, { attrs, slots }) {
-    const isPanorama = useIsPanorama()
+    const chart = useChart()
     const axisType = 'xAxis'
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.xAxisId, isPanorama))
-    const axisSize = useAppSelector(state => selectXAxisSize(state, props.xAxisId!))
-    const position = useAppSelector(state => selectXAxisPosition(state, props.xAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.xAxisId!, isPanorama))
-    const viewBox = useAppSelector(selectAxisViewBox)
+    const scale = computed(() => chart.axis(axisType, props.xAxisId).scale.value)
+    const axisSize = computed(() => chart.axis('xAxis', props.xAxisId!).size.value)
+    const position = computed(() => chart.axis('xAxis', props.xAxisId!).position.value)
+    const cartesianTickItems = computed(() => chart.axis(axisType, props.xAxisId!).ticks.value)
+    const viewBox = computed(() => chart.axisViewBox.value)
 
     return () => {
       const { ticks, ...allOtherProps } = props
@@ -48,188 +47,31 @@ const XAxisImpl = defineComponent({
           width={axisSize.value?.width}
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
-          class={['v-charts-xAxis xAxis']}
-        >
-          {slots.tick ? { tick: slots.tick } : undefined}
-        </CartesianAxis>
+          data-slot="x-axis"
+          class="v-charts-x-axis"
+          v-slots={slots.tick ? { tick: slots.tick } : undefined}
+        />
       )
     }
   },
 })
 
-const XAxisSettingsDispatcher = defineComponent({
-  props: {
-    interval: [String, Number],
-    xAxisId: [String, Number],
-    scale: [String, Function],
-    type: String,
-    padding: Object,
-    allowDataOverflow: Boolean,
-    domain: {
-      type: Array as PropType<AxisDomain>,
-    },
-    dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
-    },
-    allowDuplicatedCategory: Boolean,
-    allowDecimals: Boolean,
-    tickCount: Number,
-    includeHidden: Boolean,
-    reversed: Boolean,
-    ticks: Array,
-    height: Number,
-    orientation: String,
-    mirror: Boolean,
-    hide: Boolean,
-    unit: String,
-    name: String,
-    angle: Number,
-    minTickGap: Number,
-    tick: { type: [Boolean, Object], default: true },
-    tickFormatter: Function as PropType<TickFormatter>,
-  },
-  setup(props, { slots: dispatcherSlots }) {
-    const dispatch = useAppDispatch()
-    let registeredSettings: XAxisSettings | undefined
-    watchEffect(() => {
-      const settings = {
-        interval: props.interval ?? 'preserveEnd',
-        id: props.xAxisId,
-        scale: props.scale,
-        type: props.type,
-        padding: props.padding,
-        allowDataOverflow: props.allowDataOverflow,
-        domain: props.domain,
-        dataKey: props.dataKey,
-        allowDuplicatedCategory: props.allowDuplicatedCategory,
-        allowDecimals: props.allowDecimals,
-        tickCount: props.tickCount,
-        includeHidden: props.includeHidden ?? false,
-        reversed: props.reversed,
-        ticks: props.ticks,
-        height: props.height,
-        orientation: props.orientation,
-        mirror: props.mirror,
-        hide: props.hide,
-        unit: props.unit,
-        name: props.name,
-        angle: props.angle ?? 0,
-        minTickGap: props.minTickGap ?? 5,
-        tick: props.tick ?? true,
-        tickFormatter: props.tickFormatter,
-      } as XAxisSettings
-      if (registeredSettings && registeredSettings.id !== settings.id) {
-        dispatch(removeXAxis(registeredSettings))
-      }
-      dispatch(addXAxis(settings))
-      registeredSettings = settings
-    })
-    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
-    onUnmounted(() => {
-      if (registeredSettings) {
-        dispatch(removeXAxis(registeredSettings))
-        registeredSettings = undefined
-      }
-    })
-    return () => (
-      <XAxisImpl {...props}>
-        {dispatcherSlots.tick ? { tick: dispatcherSlots.tick } : undefined}
-      </XAxisImpl>
-    )
-  },
-})
-
-export const XAxis = defineComponent({
+export const XAxis = forwardsSvgAttributes(defineComponent({
   name: 'XAxis',
   props: {
-    allowDataOverflow: {
-      type: Boolean,
-      default: implicitXAxis.allowDataOverflow,
-    },
-    allowDecimals: {
-      type: Boolean,
-      default: implicitXAxis.allowDecimals,
-    },
-    allowDuplicatedCategory: {
-      type: Boolean,
-      default: implicitXAxis.allowDuplicatedCategory,
-    },
-    height: {
-      type: Number,
-      default: implicitXAxis.height,
-    },
-    hide: {
-      type: Boolean,
-      default: false,
-    },
-    mirror: {
-      type: Boolean,
-      default: implicitXAxis.mirror,
-    },
-    orientation: {
-      type: String,
-      default: implicitXAxis.orientation,
-    },
-    padding: {
-      type: Object,
-      default: implicitXAxis.padding,
-    },
-    reversed: {
-      type: Boolean,
-      default: implicitXAxis.reversed,
-    },
-    scale: {
-      type: [String, Function],
-      default: implicitXAxis.scale,
-    },
-    tickCount: {
-      type: Number,
-      default: implicitXAxis.tickCount,
-    },
-    type: {
-      type: String,
-      default: implicitXAxis.type,
-    },
-    xAxisId: {
-      type: [String, Number],
-      default: 0,
-    },
-    dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
-      default: undefined,
-    },
-    domain: {
-      type: Array as PropType<AxisDomain>,
-    },
-    axisLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    ticks: {
-      type: Array as PropType<AxisTick[]>,
-    },
-    interval: {
-      type: [String, Number] as PropType<AxisInterval>,
-    },
-    unit: {
-      type: String,
-    },
-    tickLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    tickMargin: Number,
-    minTickGap: {
-      type: Number,
-      default: 5,
-    },
-    tickFormatter: Function as PropType<TickFormatter>,
+    ...AxisVueProps,
+    xAxisId: { type: [String, Number], default: 0 },
+    height: { type: Number, default: implicitXAxis.height },
+    orientation: { type: String as PropType<XAxisOrientation>, default: implicitXAxis.orientation },
+    padding: { type: [String, Object] as PropType<XAxisPadding>, default: () => ({ left: 0, right: 0 }) },
+    type: { ...AxisVueProps.type, default: implicitXAxis.type },
   },
+  inheritAttrs: false,
+  slots: Object as SlotsType<AxisSlots>,
   setup(props, { attrs, slots }) {
-    return () => (
-      <XAxisSettingsDispatcher {...props} {...attrs}>
-        {slots.tick ? { tick: slots.tick } : undefined}
-      </XAxisSettingsDispatcher>
-    )
+    const settings = computed<XAxisSettings>(() => ({ ...props, id: props.xAxisId }))
+    useChart().axes.xAxis.register(settings)
+    const View = useDeferredView(XAxisImpl)
+    return () => <View {...props} {...attrs} v-slots={slots} />
   },
-})
+}))

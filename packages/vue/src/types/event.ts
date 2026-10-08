@@ -1,20 +1,6 @@
 import type { MouseHandlerDataParam } from './common'
 
-export type CategoricalChartFunc = (nextState: MouseHandlerDataParam, event: Event) => void
-
-export interface ExternalMouseEvents {
-  onClick: CategoricalChartFunc
-  onMouseLeave: CategoricalChartFunc
-  onMouseEnter: CategoricalChartFunc
-  onMouseMove: CategoricalChartFunc
-  onMouseDown: CategoricalChartFunc
-  onMouseUp: CategoricalChartFunc
-  onContextMenu: CategoricalChartFunc
-  onDoubleClick: CategoricalChartFunc
-  onTouchStart: CategoricalChartFunc
-  onTouchMove: CategoricalChartFunc
-  onTouchEnd: CategoricalChartFunc
-}
+export type CategoricalChartFunc = (nextState: MouseHandlerDataParam, event: MouseEvent | TouchEvent) => void
 
 export const EventKeys = [
   'dangerouslySetInnerHTML',

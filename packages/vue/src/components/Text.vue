@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import type { CSSProperties } from 'vue'
+
+import { useCanMeasureText } from '@/model/runtime'
+import { computed, useAttrs } from 'vue'
 import { getStringSize } from '@/utils/attrs'
+import { svgAttrs } from '@/utils/VueUtils'
 import { reduceCSSCalc } from '@/utils/ReduceCSSCalc'
+
+// Labels and ticks pass their whole entry along; only SVG attributes reach the element.
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   x: { type: [Number, String], default: 0 },
@@ -13,7 +20,7 @@ const props = defineProps({
   scaleToFit: { type: Boolean, default: false },
   textAnchor: { type: String, default: 'start' },
   verticalAnchor: { type: String, default: 'end' },
-  fill: { type: String, default: '#808080' },
+  fill: { type: String, default: 'var(--v-charts-text, #808080)' },
   angle: { type: Number, default: 0 },
   style: { type: Object, default: () => ({}) },
   breakAll: { type: Boolean, default: false },
@@ -22,22 +29,27 @@ const props = defineProps({
   value: { type: [String, Number], default: '' },
 })
 
+const attrs = useAttrs()
+const elementAttrs = computed(() => svgAttrs(attrs))
+
+const canMeasureText = useCanMeasureText()
+
 const BREAKING_SPACES = /[ \f\n\r\t\v\u2028\u2029]+/
 
-function calculateWordWidths(children: string | number, breakAll: boolean, style: any) {
+function calculateWordWidths(children: string | number, breakAll: boolean, style: CSSProperties) {
   let words: string[] = []
   if (children !== undefined && children !== null) {
     words = breakAll ? children.toString().split('') : children.toString().split(BREAKING_SPACES)
   }
-  const wordsWithComputedWidth = words.map(word => ({ word, width: getStringSize(word, style).width }))
-  const spaceWidth = breakAll ? 0 : getStringSize('\u00A0', style).width
+  const wordsWithComputedWidth = words.map(word => ({ word, width: getStringSize(word, style, canMeasureText.value).width }))
+  const spaceWidth = breakAll ? 0 : getStringSize('\u00A0', style, canMeasureText.value).width
   return { wordsWithComputedWidth, spaceWidth }
 }
 
 function calculateWordsByLines(
   maxLines: number | undefined,
   value: string | number,
-  style: any,
+  style: CSSProperties,
   breakAll: boolean,
   initialWordsWithComputedWidth: Array<{ word: string, width: number }>,
   spaceWidth: number,
@@ -47,7 +59,7 @@ function calculateWordsByLines(
   const shouldLimitLines = typeof maxLines === 'number'
   const text = value as string
   const calculate = (words: Array<{ word: string, width: number }> = []) => {
-    return words.reduce((result: any[], { word, width }) => {
+    return words.reduce((result: Array<{ words: string[], width: number }>, { word, width }) => {
       const currentLine = result[result.length - 1]
       if (
         currentLine
@@ -73,7 +85,7 @@ function calculateWordsByLines(
     return originalResult
   }
   const suffix = '…'
-  const checkOverflow = (index: number): [boolean, any[]] => {
+  const checkOverflow = (index: number): [boolean, Array<{ words: string[], width: number }>] => {
     const tempText = text.slice(0, index)
     const { wordsWithComputedWidth } = calculateWordWidths(tempText + suffix, breakAll, style)
     const result = calculate(wordsWithComputedWidth)
@@ -104,7 +116,12 @@ function calculateWordsByLines(
   return trimmedResult || originalResult
 }
 
-function getWordsByLines({ width, scaleToFit, value, style, breakAll, maxLines }: any) {
+function getWordsByLines(
+  { width, scaleToFit, value, style, breakAll, maxLines }: Pick<
+    typeof props,
+'width' | 'scaleToFit' | 'value' | 'style' | 'breakAll' | 'maxLines'
+  >,
+): Array<{ words: string[], width?: number }> {
   if ((width || scaleToFit)) {
     const wordWidths = calculateWordWidths(value, breakAll, style)
     const wordsWithComputedWidth = wordWidths.wordsWithComputedWidth
@@ -161,11 +178,12 @@ const transforms = computed(() => {
 
 <template>
   <text
+    v-bind="elementAttrs"
     :x="x"
     :y="y"
     :transform="transforms || undefined"
     :text-anchor="props.textAnchor"
-    :fill="props.fill && props.fill.includes('url') ? '#808080' : props.fill"
+    :fill="props.fill && props.fill.includes('url') ? 'var(--v-charts-text, #808080)' : props.fill"
     class="v-charts-text"
     :style="props.style"
   >

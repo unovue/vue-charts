@@ -1,20 +1,19 @@
-import type { PropType, SVGAttributes } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
 import { Rectangle } from '@/shape/Rectangle'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addArea, removeArea } from '@/state/referenceElementsSlice'
-import type { AxisId } from '@/state/cartesianAxisSlice'
-import { selectAxisScale } from '@/state/selectors/axisSelectors'
-import { useClipPathId } from '@/chart/provideClipPathId'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
+import type { AxisId } from '@/types/axisSettings'
+import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr } from '@/utils'
 import { rangeMax, rangeMin, scaleValue } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
-export const ReferenceAreaVueProps = {
+const ReferenceAreaVueProps = {
   x1: { type: [Number, String] as PropType<number | string>, default: undefined },
   x2: { type: [Number, String] as PropType<number | string>, default: undefined },
   y1: { type: [Number, String] as PropType<number | string>, default: undefined },
@@ -23,42 +22,30 @@ export const ReferenceAreaVueProps = {
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   stroke: { type: String, default: 'none' },
   strokeWidth: { type: [Number, String], default: 1 },
-  fill: { type: String, default: '#ccc' },
+  fill: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   fillOpacity: { type: Number, default: 0.5 },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
   radius: { type: [Number, Array] as PropType<number | [number, number, number, number]>, default: 0 },
   class: classProp,
 }
 
-export const ReferenceArea = defineComponent({
-  name: 'ReferenceArea',
-  props: ReferenceAreaVueProps,
+const ReferenceAreaView = defineComponent({
+  name: 'ReferenceAreaView',
   inheritAttrs: false,
-  setup(props, { attrs }) {
-    const dispatch = useAppDispatch()
-    const isPanorama = useIsPanorama()
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceAreaVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
+
     const clipPathId = useClipPathId()
 
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x1: props.x1,
-      x2: props.x2,
-      y1: props.y1,
-      y2: props.y2,
-    })
-
-    onMounted(() => {
-      dispatch(addArea(settings))
-    })
-    onUnmounted(() => {
-      dispatch(removeArea(settings))
-    })
-
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
+    const xAxisScale = computed(() => chart.axis('xAxis', props.xAxisId).scale.value)
+    const yAxisScale = computed(() => chart.axis('yAxis', props.yAxisId).scale.value)
 
     const rect = computed(() => {
       const xScale = xAxisScale.value
@@ -112,16 +99,20 @@ export const ReferenceArea = defineComponent({
 
       return (
         <Layer class={['v-charts-reference-area', props.class]}>
-          <Rectangle
-            {...svgAttrs}
-            clip-path={clipPath}
-            x={r.x}
-            y={r.y}
-            width={r.width}
-            height={r.height}
-            radius={props.radius}
-            class="v-charts-reference-area-rect"
-          />
+          {slots.shape
+            ? slots.shape(r)
+            : (
+                <Rectangle
+                  {...svgAttrs}
+                  clip-path={clipPath}
+                  x={r.x}
+                  y={r.y}
+                  width={r.width}
+                  height={r.height}
+                  radius={props.radius}
+                  class="v-charts-reference-area-rect"
+                />
+              )}
           {labelValue != null && labelValue !== false && (
             <Label
               viewBox={r}
@@ -134,3 +125,31 @@ export const ReferenceArea = defineComponent({
     }
   },
 })
+
+export interface ReferenceAreaSlots {
+  shape?: (props: { x: number, y: number, width: number, height: number }) => VNodeChild
+}
+
+export const ReferenceArea = forwardsSvgAttributes(defineComponent({
+  name: 'ReferenceArea',
+  props: ReferenceAreaVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ReferenceAreaSlots>,
+  setup(props, { attrs, slots }) {
+    const { areas } = useChart().references
+    const settings = computed(() => ({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x1: props.x1,
+      x2: props.x2,
+      y1: props.y1,
+      y2: props.y2,
+    }))
+
+    areas.register(settings)
+
+    const View = useDeferredView(ReferenceAreaView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

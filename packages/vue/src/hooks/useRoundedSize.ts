@@ -9,9 +9,6 @@ export interface RoundedSize {
  * Shared size-state core: a size ref plus a setter that rounds to
  * integers and ignores no-change updates.
  *
- * Adapters: `useResponsiveSize` (chart sizing) and `ResponsiveContainer`.
- * ResponsiveContainer is planned for removal (see ADR-0001); when it goes,
- * this module stays behind as the chart's size-state implementation.
  */
 export function useRoundedSize(initial: RoundedSize = { width: 0, height: 0 }) {
   const size = ref(initial)

@@ -1,9 +1,8 @@
 import { render } from '@testing-library/vue'
-import { describe, expect, it, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { RadarChart } from '@/chart/RadarChart'
 import { Radar } from '@/polar/radar/Radar'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
-import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const exampleRadarData = [
@@ -17,7 +16,7 @@ const exampleRadarData = [
   { name: 'iPhone 5se', value: 365, half: 183 },
 ]
 
-describe('PolarAngleAxis', () => {
+describe('polarAngleAxis', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })

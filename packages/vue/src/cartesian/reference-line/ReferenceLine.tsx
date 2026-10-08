@@ -1,61 +1,50 @@
-import type { PropType, SVGAttributes } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { classProp } from '@/types'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
 import { Layer } from '@/container/Layer'
 import { Label } from '@/components/label/Label'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addLine, removeLine } from '@/state/referenceElementsSlice'
-import type { AxisId } from '@/state/cartesianAxisSlice'
-import { selectAxisScale, selectXAxisSettings, selectYAxisSettings } from '@/state/selectors/axisSelectors'
-import { useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
+import type { AxisId } from '@/types/axisSettings'
+import { useChartPresentation } from '@/model/presentation'
+import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr, isWellBehavedNumber } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
-export const ReferenceLineVueProps = {
+const ReferenceLineVueProps = {
   x: { type: [Number, String] as PropType<number | string>, default: undefined },
   y: { type: [Number, String] as PropType<number | string>, default: undefined },
   xAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
-  stroke: { type: String, default: '#ccc' },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
   strokeWidth: { type: [Number, String], default: 1 },
   fill: { type: String, default: 'none' },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
   class: classProp,
 }
 
-export const ReferenceLine = defineComponent({
-  name: 'ReferenceLine',
-  props: ReferenceLineVueProps,
+const ReferenceLineView = defineComponent({
+  name: 'ReferenceLineView',
   inheritAttrs: false,
-  setup(props, { attrs }) {
-    const dispatch = useAppDispatch()
-    const isPanorama = useIsPanorama()
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceLineVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
+  setup(view, { slots }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
+
     const clipPathId = useClipPathId()
-    const viewBox = useViewBox()
+    const viewBox = useChartPresentation().viewBox
 
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x: props.x,
-      y: props.y,
-    })
-
-    onMounted(() => {
-      dispatch(addLine(settings))
-    })
-    onUnmounted(() => {
-      dispatch(removeLine(settings))
-    })
-
-    const xAxisSettings = useAppSelector(state => selectXAxisSettings(state, props.xAxisId))
-    const yAxisSettings = useAppSelector(state => selectYAxisSettings(state, props.yAxisId))
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
+    const xAxisSettings = computed(() => chart.axis('xAxis', props.xAxisId).settings.value)
+    const yAxisSettings = computed(() => chart.axis('yAxis', props.yAxisId).settings.value)
+    const xAxisScale = computed(() => chart.axis('xAxis', props.xAxisId).scale.value)
+    const yAxisScale = computed(() => chart.axis('yAxis', props.yAxisId).scale.value)
 
     const endPoints = computed(() => {
       const vb = viewBox.value
@@ -129,15 +118,19 @@ export const ReferenceLine = defineComponent({
 
       return (
         <Layer class={['v-charts-reference-line', props.class]}>
-          <line
-            {...svgAttrs}
-            clip-path={clipPath}
-            x1={p1.x}
-            y1={p1.y}
-            x2={p2.x}
-            y2={p2.y}
-            class="v-charts-reference-line-line"
-          />
+          {slots.shape
+            ? slots.shape({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y })
+            : (
+                <line
+                  {...svgAttrs}
+                  clip-path={clipPath}
+                  x1={p1.x}
+                  y1={p1.y}
+                  x2={p2.x}
+                  y2={p2.y}
+                  class="v-charts-reference-line-line"
+                />
+              )}
           {labelValue != null && labelValue !== false && (
             <Label
               viewBox={labelViewBox}
@@ -150,3 +143,29 @@ export const ReferenceLine = defineComponent({
     }
   },
 })
+
+export interface ReferenceLineSlots {
+  shape?: (props: { x1: number, y1: number, x2: number, y2: number }) => VNodeChild
+}
+
+export const ReferenceLine = forwardsSvgAttributes(defineComponent({
+  name: 'ReferenceLine',
+  props: ReferenceLineVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ReferenceLineSlots>,
+  setup(props, { attrs, slots }) {
+    const { lines } = useChart().references
+    const settings = computed(() => ({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x: props.x,
+      y: props.y,
+    }))
+
+    lines.register(settings)
+
+    const View = useDeferredView(ReferenceLineView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

@@ -1,5 +1,5 @@
 <script setup>
-import { RadialBar, RadialBarChart, ResponsiveContainer, Tooltip } from 'vccs'
+import { RadialBar, RadialBarChart, Tooltip } from 'vccs'
 
 const data = [
   { name: 'Chrome', visitors: 275, fill: '#f97316' },
@@ -10,28 +10,24 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <RadialBarChart
+    :data="data"
+    :inner-radius="30"
+    :outer-radius="120"
     :height="300"
   >
-    <RadialBarChart
-      :data="data"
-      :inner-radius="30"
-      :outer-radius="120"
-    >
-      <RadialBar
-        data-key="visitors"
-        :background="true"
-      />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-    </RadialBarChart>
-  </ResponsiveContainer>
+    <RadialBar
+      data-key="visitors"
+      :background="true"
+    />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+  </RadialBarChart>
 </template>

@@ -1,14 +1,20 @@
+import type { PropType, SlotsType } from 'vue'
+import type { CartesianGridSlots } from './type'
+import type { ChartOffset } from '@/types'
 import { defineComponent } from 'vue'
 import { renderLineItem } from '@/cartesian/cartesian-grid/utils'
 
 const HorizontalGridLines = defineComponent({
   name: 'HorizontalGridLines',
+  slots: Object as SlotsType<CartesianGridSlots>,
   inheritAttrs: false,
   props: {
     x: Number,
     width: Number,
     horizontal: [Boolean, Object],
-    horizontalPoints: Array,
+    horizontalPoints: Array as PropType<number[]>,
+    /** Per-line opacity while lines fade in or out with their ticks. */
+    pointOpacity: Array as PropType<number[]>,
     xAxisId: {
       type: [String, Number],
       default: 0,
@@ -17,7 +23,7 @@ const HorizontalGridLines = defineComponent({
       type: [String, Number],
       default: 0,
     },
-    offset: Object,
+    offset: Object as PropType<ChartOffset>,
     xAxis: Object,
     yAxis: Object,
   },
@@ -44,6 +50,7 @@ const HorizontalGridLines = defineComponent({
           y2: entry,
           key: `line-${i}`,
           index: i,
+          ...(props.pointOpacity?.[i] != null && props.pointOpacity[i] < 1 ? { opacity: props.pointOpacity[i] } : {}),
         }
         return renderLineItem(slots.horizontal, horizontal, lineItemProps)
       })

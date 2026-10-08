@@ -2,9 +2,10 @@
  * @fileOverview Surface component for SVG rendering
  */
 import type { PropType, SVGAttributes, StyleValue } from 'vue'
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { classProp } from '@/types'
 import type { VueClassValue } from '@/types'
+import { provideChartLayers } from '@/model/runtime'
 
 interface ViewBox {
   x?: number
@@ -13,6 +14,10 @@ interface ViewBox {
   height?: number
 }
 
+/**
+ * The SVG root of every chart and of legend icons. With `layers`, it also renders the cursor,
+ * graphical and label layers that chart parts teleport into, painted in that order.
+ */
 const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
   & {
     width: number
@@ -22,6 +27,8 @@ const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
     style?: StyleValue
     title?: string
     desc?: string
+    descriptionId?: string
+    layers?: boolean
   }>({
   name: 'Surface',
   props: {
@@ -50,24 +57,46 @@ const Surface = defineComponent<Omit<SVGAttributes, 'viewBox'>
       type: String,
       default: undefined,
     },
+    /** Id of the `<desc>` element, for `aria-describedby`. */
+    descriptionId: {
+      type: String,
+      default: undefined,
+    },
+    /** Adds the chart layers; fixed for the component's lifetime. */
+    layers: {
+      type: Boolean,
+      default: false,
+    },
   },
+  inheritAttrs: false,
   setup(props, { slots, attrs }) {
+    const cursor = ref<SVGGElement | null>(null)
+    const graphical = ref<SVGGElement | null>(null)
+    const label = ref<SVGGElement | null>(null)
+    if (props.layers)
+      provideChartLayers({ cursor, graphical, label })
+
     return () => {
-      const { width, height, viewBox, class: className, style, title, desc, ...rest } = props
+      const { width, height, viewBox, class: className, style, title, desc } = props
       const svgView = viewBox || { width, height, x: 0, y: 0 }
       return (
         <svg
-          class={['vcharts-surface', className]}
+          {...attrs}
+          {...(props.layers ? { 'data-slot': 'surface' } : {})}
+          class={['v-charts-surface', className]}
           width={width}
           height={height}
           style={style}
           viewBox={`${svgView.x} ${svgView.y} ${svgView.width} ${svgView.height}`}
-          {...rest}
-          {...attrs}
         >
           {title && <title>{title}</title>}
-          {desc && <desc>{desc}</desc>}
+          {desc && <desc id={props.descriptionId}>{desc}</desc>}
           {slots.default?.()}
+          {props.layers && [
+            <g ref={cursor} class="v-charts-cursor-layer" />,
+            <g ref={graphical} data-slot="plot" class="v-charts-graphical-layer" />,
+            <g ref={label} class="v-charts-label-layer" />,
+          ]}
         </svg>
       )
     }

@@ -53,7 +53,7 @@ const COLORS = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
     :data="data"
     data-key="value"
     type="nest"
-    :color-panel="COLORS"
+    :colors="COLORS"
     stroke="#fff"
   >
     <Tooltip :cursor="false" />

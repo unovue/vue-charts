@@ -1,16 +1,17 @@
+import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
 
 const VerticalStripes = defineComponent({
   name: 'VerticalStripes',
   inheritAttrs: false,
   props: {
-    verticalFill: Array,
+    verticalFill: Array as PropType<string[]>,
     fillOpacity: Number,
     x: Number,
     y: Number,
     width: Number,
     height: Number,
-    verticalPoints: Array,
+    verticalPoints: Array as PropType<number[]>,
     vertical: [Boolean, Object],
   },
   setup(props) {
@@ -20,7 +21,7 @@ const VerticalStripes = defineComponent({
         return null
       }
 
-      const roundedSortedVerticalPoints = verticalPoints?.map((e: any) => Math.round(e + x! - x!)).sort((a, b) => a - b)
+      const roundedSortedVerticalPoints = verticalPoints?.map(e => Math.round(e + x! - x!)).sort((a, b) => a - b)
       if (x !== roundedSortedVerticalPoints?.[0]) {
         roundedSortedVerticalPoints?.unshift(0)
       }

@@ -1,12 +1,12 @@
-import { render } from '@testing-library/vue'
-import { nextTick } from 'vue'
+import { fireEvent, render, waitFor } from '@testing-library/vue'
+import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, Legend, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { appendOffsetOfLegend } from '@/utils/legend'
+import { appendOffsetOfLegend } from '@/core/layout'
 import { isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
-import type { LegendSettings } from '@/state/legendSlice'
+import type { LegendSettings } from '@/model/legend'
 
 const data = [
   { name: 'Page A', uv: 400, pv: 2400, amt: 2400 },
@@ -98,7 +98,7 @@ describe('cartesianPositionToCSSTranslate', () => {
   })
 })
 
-describe('Legend position prop', () => {
+describe('legend position prop', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -177,3 +177,33 @@ describe('Legend position prop', () => {
     expect(list!.getAttribute('style')).toContain('text-align: center')
   })
 })
+
+// Catches reserved plot space surviving a legend portal change or unregister.
+it.each(['portal', 'unmount', 'inside'] as const)(
+  'releases the measured legend space on %s',
+  async (mode) => {
+    mockGetBoundingClientRect({ width: 100, height: 20 })
+    const changed = ref(false)
+    const portal = document.createElement('div')
+    const { container } = render(() => (
+      <BarChart width={500} height={300} data={[{ value: 20 }]}>
+        <Bar dataKey="value" isAnimationActive={false} />
+        {(mode !== 'unmount' || !changed.value) && (
+          <Legend
+            verticalAlign="bottom"
+            to={mode === 'portal' && changed.value ? portal : undefined}
+            position={mode === 'inside' && changed.value ? 'insideBottomRight' : undefined}
+          />
+        )}
+      </BarChart>
+    ))
+    await nextTick()
+    await nextTick()
+    await fireEvent(window, new Event('resize'))
+    await waitFor(() => expect(container.querySelector('.v-charts-bar-rectangle path')?.getAttribute('height')).toBe('270'))
+    changed.value = true
+    await nextTick()
+    await nextTick()
+    expect(container.querySelector('.v-charts-bar-rectangle path')?.getAttribute('height')).toBe('290')
+  },
+)

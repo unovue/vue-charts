@@ -1,40 +1,45 @@
-import { computed, defineComponent } from 'vue'
-import type { PropType } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import { selectPolarViewBox } from '@/state/selectors/polarAxisSelectors'
-import { selectPolarGridAngles, selectPolarGridRadii } from '@/state/selectors/polarGridSelectors'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { polarToCartesian } from '@/utils/polar'
+import { polygonPath } from '@/core/polygon'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 function getPolygonPath(radius: number, cx: number, cy: number, polarAngles: ReadonlyArray<number>): string {
-  let path = ''
-  polarAngles.forEach((angle, i) => {
-    const point = polarToCartesian(cx, cy, radius, angle)
-    path += i === 0 ? `M ${point.x},${point.y}` : `L ${point.x},${point.y}`
-  })
-  return `${path}Z`
+  return polygonPath(polarAngles.map(angle => polarToCartesian(cx, cy, radius, angle)))
 }
 
-export const PolarGrid = defineComponent({
-  name: 'PolarGrid',
+const PolarGridViewProps = {
+  angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  gridType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
+  radialLines: { type: Boolean, default: true },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
+  fill: { type: String, default: 'none' },
+  polarRadius: { type: Array as PropType<number[]>, default: undefined },
+  strokeWidth: { type: Number, default: undefined },
+}
+
+const PolarGridView = defineComponent({
+  name: 'PolarGridView',
+  inheritAttrs: true,
   props: {
-    angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    gridType: { type: String as PropType<'polygon' | 'circle'>, default: 'polygon' },
-    radialLines: { type: Boolean, default: true },
-    stroke: { type: String, default: '#ccc' },
-    fill: { type: String, default: 'none' },
-    polarRadius: { type: Array as PropType<number[]>, default: undefined },
-    strokeWidth: { type: Number, default: undefined },
+    item: { type: Object as PropType<ExtractPropTypes<typeof PolarGridViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
-  inheritAttrs: false,
-  setup(props, { attrs }) {
-    const polarViewBox = useAppSelector(state => selectPolarViewBox(state))
-    const polarAngles = useAppSelector(state => selectPolarGridAngles(state, props.angleAxisId))
-    const polarRadiiFromRedux = useAppSelector(state => selectPolarGridRadii(state, props.radiusAxisId))
+  setup(view, { slots }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
+    const polarViewBox = computed(() => chart.polarLayout.viewBox.value)
+    const polarAngles = computed(() => chart.axis('angleAxis', props.angleAxisId).ticks.value?.map(tick => tick.coordinate))
+    const selectedPolarRadii = computed(() => chart.axis('radiusAxis', props.radiusAxisId).ticks.value?.map(tick => tick.coordinate))
 
     const polarRadii = computed(() => {
-      if (Array.isArray(props.polarRadius)) return props.polarRadius
-      return polarRadiiFromRedux.value
+      if (Array.isArray(props.polarRadius))
+        return props.polarRadius
+      return selectedPolarRadii.value
     })
 
     return () => {
@@ -52,7 +57,7 @@ export const PolarGrid = defineComponent({
       const renderBackground = fill && fill !== 'none'
 
       return (
-        <g class="v-charts-polar-grid">
+        <g data-slot="grid" class="v-charts-polar-grid">
           {/* Concentric grid shapes */}
           <g class="v-charts-polar-grid-concentric">
             {/* Background fill — single shape at max radius, rendered first so rings draw on top */}
@@ -130,3 +135,13 @@ export const PolarGrid = defineComponent({
     }
   },
 })
+
+export const PolarGrid = forwardsSvgAttributes(defineComponent({
+  name: 'PolarGrid',
+  props: PolarGridViewProps,
+  inheritAttrs: false,
+  setup(props, { attrs, slots }) {
+    const View = useDeferredView(PolarGridView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

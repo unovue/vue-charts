@@ -1,8 +1,8 @@
 import { ref, watch } from 'vue'
-import { scalePoint } from 'victory-vendor/d3-scale'
+import { scalePoint } from 'd3-scale'
 import range from 'es-toolkit/compat/range'
 import type { BrushState } from '../type'
-import type { ChartData } from '@/state/chartDataSlice'
+import type { ChartData } from '@/types/chartData'
 
 export function useBrushState(
   getX: () => number | undefined,

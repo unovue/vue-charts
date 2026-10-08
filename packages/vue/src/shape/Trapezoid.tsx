@@ -1,6 +1,7 @@
 import { defineComponent } from 'vue'
 import { classProp } from '@/types'
 import type { WithSVGProps } from '@/types'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const TrapezoidVueProps = {
   x: { type: Number, default: 0 },
@@ -11,7 +12,7 @@ const TrapezoidVueProps = {
   class: classProp,
 }
 
-export type TrapezoidComponentProps = WithSVGProps<typeof TrapezoidVueProps>
+type TrapezoidInput = WithSVGProps<typeof TrapezoidVueProps>
 
 function getTrapezoidPath(x: number, y: number, upperWidth: number, lowerWidth: number, height: number): string {
   const upperLeft = x
@@ -23,9 +24,10 @@ function getTrapezoidPath(x: number, y: number, upperWidth: number, lowerWidth: 
   return `M ${upperLeft},${y} L ${upperRight},${y} L ${lowerRight},${bottom} L ${lowerLeft},${bottom} Z`
 }
 
-export const Trapezoid = defineComponent<TrapezoidComponentProps>({
+export const Trapezoid = defineComponent<TrapezoidInput>({
   name: 'Trapezoid',
   props: TrapezoidVueProps,
+  inheritAttrs: false,
   setup(props, { attrs }) {
     return () => {
       const { x, y, upperWidth, lowerWidth, height } = props
@@ -36,7 +38,7 @@ export const Trapezoid = defineComponent<TrapezoidComponentProps>({
 
       return (
         <path
-          {...attrs}
+          {...svgAttrs(attrs)}
           class={['v-charts-trapezoid', props.class]}
           d={getTrapezoidPath(x, y, upperWidth, lowerWidth, height)}
         />

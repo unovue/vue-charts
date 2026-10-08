@@ -79,14 +79,16 @@ const totalVisitors = chartData[0]?.desktop! + chartData[0]?.mobile!
             stack-id="a"
             fill="var(--color-desktop)"
             :corner-radius="5"
-            class="stroke-transparent stroke-2"
+            stroke="transparent"
+            :stroke-width="2"
           />
           <RadialBar
             data-key="mobile"
             stack-id="a"
             fill="var(--color-mobile)"
             :corner-radius="5"
-            class="stroke-transparent stroke-2"
+            stroke="transparent"
+            :stroke-width="2"
           />
         </RadialBarChart>
       </ChartContainer>

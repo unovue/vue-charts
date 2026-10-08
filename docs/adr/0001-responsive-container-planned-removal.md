@@ -1,11 +1,12 @@
 # ADR-0001: ResponsiveContainer is planned for removal; share only the size-state core
 
-- Status: Accepted
+- Status: Accepted. Superseded in part by D-21 in `internals/decisions.md`: 1.0 deprecates
+  `ResponsiveContainer` and removes it in 2.0. The shared size-state core below stays.
 - Date: 2026-08-24
 
 ## Context
 
-The `handleResize` logic (round + dedupe) in `generateCategoricalChart.tsx` and `setContainerSize` in `container/ResponsiveContainer.vue` were word-for-word identical. ResponsiveContainer is a legacy component and may be removed.
+The `handleResize` logic (round + dedupe) in `chart/generateCategoricalChart.tsx` and `setContainerSize` in `container/ResponsiveContainer.vue` were word-for-word identical. ResponsiveContainer is a legacy component and may be removed.
 
 An architecture review initially shelved the idea of extracting a shared core: with ResponsiveContainer deprecated, the seam would eventually have a single adapter, making it hypothetical. This was reconsidered — the seam has **two adapters today**, the extraction cost is a few lines, and the eventual removal of ResponsiveContainer costs nothing but deleting one import. Maintaining two verbatim copies of live logic is a drift risk for as long as the component lives.
 

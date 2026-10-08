@@ -1,0 +1,19 @@
+body {
+  margin: 20px;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+}
+#host { width: 560px; }
+/* Explicit D-20 foregrounds for the fixture's known theme-dependent fills. */
+#host[data-variant="default"] .v-charts-cell { --v-charts-label-foreground: #0a0a0a; }
+.dark #host[data-variant="default"] .v-charts-cell { --v-charts-label-foreground: #ffffff; }
+#host[data-variant="default"] .v-charts-cell:has(
+  rect[style^="fill:var(--v-charts-series"],
+  rect[style^="fill: var(--v-charts-series"]
+),
+#host[data-variant="default"] .v-charts-cell:has(
+  rect[style^="fill:#0a0a0a"], rect[style^="fill: #0a0a0a"]
+) { --v-charts-label-foreground: #ffffff; }
+#host[data-variant="default"] .v-charts-cell:has(
+  rect[style^="fill:#ffffff"], rect[style^="fill: #ffffff"]
+) { --v-charts-label-foreground: #0a0a0a; }

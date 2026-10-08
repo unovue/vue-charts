@@ -1,52 +1,29 @@
+import { useCanMeasureText } from '@/model/runtime'
 /**
  * @fileOverview Cartesian Axis
  */
-import type { CartesianViewBox } from '@/cartesian/type'
-import type { VueClassValue } from '@/types/common'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { AxisInterval } from '@/types/axis'
 import type { RechartsScale } from '@/types/scale'
-import type { CartesianTickItem } from '@/types/tick'
-import type { ComponentPublicInstance, PropType, SVGAttributes } from 'vue'
+import type { CartesianTickItem, TickFormatter } from '@/types/tick'
+import type { PropType, SVGAttributes } from 'vue'
 import { isNumber } from '@/utils'
 import { filterProps } from '@/utils/VueUtils'
-import { defineComponent, reactive, ref } from 'vue'
+import { computed, defineComponent, reactive } from 'vue'
+import { useTickMotion } from '@/animation/useTickMotion'
 import { get } from 'es-toolkit/compat'
 import Text from '@/components/Text.vue'
-import { Label } from '@/components/label'
+import { Label } from '@/components/label/Label'
 import { Layer } from '@/container/Layer'
 import { getTicks } from '@/cartesian/utils/get-ticks'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 /** The orientation of the axis in correspondence to the chart */
 export type Orientation = 'top' | 'bottom' | 'left' | 'right'
 /** A unit to be appended to a value */
 export type Unit = string | number
-/** The formatter function of tick */
-export type TickFormatter = (value: any, index: number) => string
 
-export interface CartesianAxisProps {
-  class?: VueClassValue
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  unit?: Unit
-  orientation?: Orientation
-  viewBox?: CartesianViewBox
-  mirror?: boolean
-  tickMargin?: number
-  hide?: boolean
-  label?: any
-  minTickGap?: number
-  ticks?: ReadonlyArray<CartesianTickItem>
-  tickSize?: number
-  tickFormatter?: TickFormatter
-  interval?: AxisInterval
-  angle?: number
-  scale: RechartsScale
-  axisLine?: boolean | SVGAttributes
-}
-
-export const CartesianAxis = defineComponent({
+export const CartesianAxis = forwardsSvgAttributes(defineComponent({
   name: 'CartesianAxis',
   props: {
     x: { type: Number, default: 0 },
@@ -54,9 +31,9 @@ export const CartesianAxis = defineComponent({
     width: { type: Number, default: 0 },
     height: { type: Number, default: 0 },
     unit: [String, Number],
-    orientation: { type: String, default: 'bottom' },
-    viewBox: { type: Object, default: () => ({ x: 0, y: 0, width: 0, height: 0 }) },
-    tick: { type: Boolean, default: true },
+    orientation: { type: String as PropType<Orientation>, default: 'bottom' },
+    viewBox: { type: Object as PropType<CartesianViewBoxRequired>, default: () => ({ x: 0, y: 0, width: 0, height: 0 }) },
+    tick: { type: [Boolean, Object] as PropType<boolean | SVGAttributes>, default: true },
     axisLine: { type: [Boolean, Object] as PropType<boolean | SVGAttributes>, default: () => true },
     tickLine: { type: [Boolean, Object], default: () => true },
     mirror: { type: Boolean, default: false },
@@ -66,15 +43,16 @@ export const CartesianAxis = defineComponent({
     minTickGap: { type: Number, default: 5 },
     ticks: { type: Array as PropType<ReadonlyArray<CartesianTickItem>>, default: () => [] },
     tickSize: { type: Number, default: 6 },
-    tickFormatter: Function,
-    interval: { type: [String, Number], default: 'preserveEnd' },
+    tickFormatter: Function as PropType<TickFormatter>,
+    interval: { type: [String, Number] as PropType<AxisInterval>, default: 'preserveEnd' },
     angle: Number,
     scale: { type: [Function] as PropType<RechartsScale> },
-    stroke: { type: String, default: '#666' },
+    stroke: { type: String, default: 'var(--v-charts-axis, #666)' },
     /** Additional props to spread to each tick Text element. */
     tickTextProps: { type: Object, default: undefined },
   },
   setup(props, { slots }) {
+    const canMeasureText = useCanMeasureText()
     const state = reactive({
       fontSize: '',
       letterSpacing: '',
@@ -192,7 +170,7 @@ export const CartesianAxis = defineComponent({
       return <line {...lineProps} class={['v-charts-cartesian-axis-line', get(axisLine, 'class')]} />
     }
 
-    function renderTickItem(props: CartesianAxisProps, value: any) {
+    function renderTickItem(props: Partial<InstanceType<typeof Text>['$props']>, value: string) {
       const className = ['v-charts-cartesian-axis-tick-value', props.class]
       return (
         <Text
@@ -204,9 +182,23 @@ export const CartesianAxis = defineComponent({
       )
     }
 
-    const renderTicks = (props: any, fontSize: string, letterSpacing: string) => {
+    const targetTicks = computed<readonly CartesianTickItem[]>(() => getTicks(
+      { ...props, angle: props.angle ?? 0 },
+      state.fontSize,
+      state.letterSpacing,
+      canMeasureText.value,
+    ))
+    const { items: movingTicks } = useTickMotion(
+      () => props.hide ? [] : targetTicks.value,
+      () => props.scale,
+      () => props.orientation === 'left' || props.orientation === 'right'
+        ? [props.y, props.y + props.height] as const
+        : [props.x, props.x + props.width] as const,
+    )
+
+    function renderTicks() {
       const { tickLine, stroke, tick, tickFormatter, unit } = props
-      const finalTicks = getTicks(props as any, fontSize, letterSpacing)
+      const finalTicks = movingTicks.value
       const textAnchor = getTickTextAnchor()
       const verticalAnchor = getTickVerticalAnchor()
       const axisProps = filterProps(props, false)
@@ -216,14 +208,14 @@ export const CartesianAxis = defineComponent({
         fill: 'none',
         ...filterProps(tickLine, false),
       }
-      const items = finalTicks.map((entry: CartesianTickItem, i: number) => {
+      const items = finalTicks.map(({ key, value: entry }, i: number) => {
         const { line: lineCoord, tick: tickCoord } = getTickLineCoord(entry)
         const tickProps = {
           textAnchor,
           verticalAnchor,
           ...axisProps,
           stroke: 'none',
-          fill: stroke,
+          fill: 'var(--v-charts-text, #666)',
           ...customTickProps,
           ...tickCoord,
           index: i,
@@ -235,7 +227,8 @@ export const CartesianAxis = defineComponent({
         return (
           <Layer
             class="v-charts-cartesian-axis-tick"
-            key={`tick-${entry.value}-${entry.coordinate}-${entry.tickCoord}`}
+            key={key}
+            opacity={entry.opacity < 1 ? entry.opacity : undefined}
           >
             {tickLine && (
               <line
@@ -248,7 +241,7 @@ export const CartesianAxis = defineComponent({
               slots.tick
                 ? slots.tick({ ...tickProps, value: entry.value })
                 : renderTickItem(
-                    tickProps as any,
+                    tickProps,
                     `${typeof tickFormatter === 'function' ? tickFormatter(entry.value, i) : entry.value}${unit || ''}`,
                   )
             )}
@@ -291,10 +284,12 @@ export const CartesianAxis = defineComponent({
       return (
         <Layer
           class={['v-charts-cartesian-axis']}
-          ref={(ref: ComponentPublicInstance) => {
-            const elm = ref?.$el as HTMLElement
-            if (elm) {
-              const tick: Element | undefined = elm?.getElementsByClassName('v-charts-cartesian-axis-tick-value')[0]
+          ref={(ref) => {
+            const elm: unknown = ref instanceof Element ? ref : ref?.$el
+            // Reading computed style forces a style recalculation; ticks re-render every frame
+            // while they move, so measure once.
+            if (elm instanceof Element && !state.fontSize) {
+              const tick: Element | undefined = elm.getElementsByClassName('v-charts-cartesian-axis-tick-value')[0]
               if (tick) {
                 const calculatedFontSize = window.getComputedStyle(tick).fontSize
                 const calculatedLetterSpacing = window.getComputedStyle(tick).letterSpacing
@@ -307,11 +302,11 @@ export const CartesianAxis = defineComponent({
           }}
         >
           {axisLine && renderAxisLine()}
-          {renderTicks(props, state.fontSize, state.letterSpacing)}
+          {renderTicks()}
           {renderLabel()}
         </Layer>
       )
     }
   },
 },
-)
+))

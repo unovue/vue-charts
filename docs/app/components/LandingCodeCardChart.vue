@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Chart body for LandingCodeCard — one of four chart types by prop.
-// Animation off: transitions between charts are the parent's clip-path wipe.
+// Each chart plays its own entrance when its tab opens; the card only fades the old one out.
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, PolarGrid, Radar, RadarChart, XAxis } from 'vccs'
 
 defineProps<{ type: string }>()
@@ -34,7 +34,6 @@ const radarData = [
   <AreaChart
     v-if="type === 'area'"
     :data="areaData"
-    responsive
     :style="{ width: '100%', height: '160px' }"
   >
     <defs>
@@ -75,7 +74,6 @@ const radarData = [
   <BarChart
     v-else-if="type === 'bar'"
     :data="areaData"
-    responsive
     :style="{ width: '100%', height: '160px' }"
   >
     <XAxis
@@ -93,7 +91,6 @@ const radarData = [
   <!-- Pie -->
   <PieChart
     v-else-if="type === 'pie'"
-    responsive
     :style="{ width: '100%', height: '160px' }"
   >
     <Pie
@@ -113,7 +110,6 @@ const radarData = [
   <RadarChart
     v-else
     :data="radarData"
-    responsive
     :style="{ width: '100%', height: '160px' }"
   >
     <PolarGrid />

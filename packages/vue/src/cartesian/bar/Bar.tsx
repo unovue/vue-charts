@@ -1,128 +1,175 @@
-import type { SVGAttributes, SlotsType } from 'vue'
-import { Teleport, computed, defineComponent } from 'vue'
-import type { BarProps, BarPropsWithSVG } from './type'
+import type { ComputedRef, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import type { CartesianGraphicalItemSettings } from '@/types/graphical'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
+import { barEvents } from '@/events/itemEvents'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { BarSlots, ResolvedBarProps } from './type'
 import { BarVueProps } from './type'
 import { useBar } from '@/cartesian/bar/hooks/useBar'
 import { Layer } from '@/container/Layer'
-import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
+import { useSetupGraphicalItem, useSetupTooltipEntry } from '@/hooks/useSetupGraphicalItem'
 import { GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
 import { BarBackground } from '@/cartesian/bar/components/BarBackground'
 import { BarRectangles } from '@/cartesian/bar/components/BarRectangles'
-import { useNeedsClip } from '@/cartesian/useNeedsClip'
-import { useChartLayout } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
-import { LabelList } from '@/components/label'
-import type { ErrorBarDataItem, ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
-import type { BarRectangleItem } from '@/types/bar'
+import { LabelList } from '@/components/label/LabelList'
+import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
+import type { ErrorBarDataItem } from '@/core/errorBar'
 import { getValueByDataKey } from '@/utils/chart'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { useChartLayer } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { extractCellProps, filterOutCells } from '@/utils/cell'
+import { assignCells, extractCellProps, filterOutCells } from '@/utils/cell'
+import { entryColor } from '@/core/color'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
-const errorBarDataPointFormatter: ErrorBarDataPointFormatter<BarRectangleItem> = (
+const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
   dataPoint,
   dataKey,
 ): ErrorBarDataItem => {
+  if (dataPoint == null || typeof dataPoint !== 'object'
+    || !('x' in dataPoint) || !('y' in dataPoint) || !('value' in dataPoint)
+    || (dataPoint.x != null && typeof dataPoint.x !== 'number')
+    || (dataPoint.y != null && typeof dataPoint.y !== 'number')) {
+    throw new Error('vccs: ErrorBar requires Bar geometry.')
+  }
+  // Keep the source scalar and its existing arithmetic coercion in errorBarLines.
   const value = Array.isArray(dataPoint.value) ? dataPoint.value[1] : dataPoint.value
   return {
     x: dataPoint.x,
     y: dataPoint.y,
     value: value as number,
-    errorVal: getValueByDataKey(dataPoint.payload ?? dataPoint, dataKey),
+    errorVal: getValueByDataKey('payload' in dataPoint ? dataPoint.payload ?? dataPoint : dataPoint, dataKey),
   }
 }
 
-export const Bar = defineComponent<BarPropsWithSVG>({
-  name: 'Bar',
-  props: BarVueProps,
+const BarView = defineComponent({
+  name: 'BarView',
   inheritAttrs: false,
-  slots: Object as SlotsType<{
-    default?: () => any
-    activeDot?: (props: any) => any
-    shape?: (props: any) => any
-    activeBar?: (props: any) => any
-  }>,
-  setup(props: BarProps, { attrs, slots }: { attrs: SVGAttributes, slots: any }) {
-    const errorBarRegistry = createErrorBarRegistry()
-    provideErrorBarRegistry(errorBarRegistry)
-    useSetupGraphicalItem(props, 'bar', { errorBars: errorBarRegistry.errorBars })
-    const { shouldRender, clipPathId, barData, isAnimating, cellProps: cellPropsRef } = useBar(props, slots.shape, slots.activeBar)
-    const { needClip } = useNeedsClip(props.xAxisId, props.yAxisId)
-    const layout = useChartLayout()
+  props: {
+    item: { type: Object as PropType<ResolvedBarProps>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    settings: { type: Object as PropType<ComputedRef<CartesianGraphicalItemSettings>>, required: true },
+  },
+  slots: Object as SlotsType<BarSlots>,
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const data = view.data
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, needClip, clipPathId, barData, cellProps: cellPropsRef, drawn } = useBar(trackedProps, view.settings, slots.shape, slots.activeBar)
+    const emit = barEvents.use()
+    useSetupTooltipEntry(props, 'bar', data, () => barData.value?.map(bar => bar.tooltipPosition), {
+      index: () => props.activeIndex,
+      request: index => emit('update:activeIndex', index),
+    })
+    const layout = useChartPresentation().layout
 
     const errorBarOffset = computed(() => {
       const first = barData.value?.[0]
-      if (first == null || first.height == null || first.width == null) return 0
+      if (first == null || first.height == null || first.width == null)
+        return 0
       return layout.value === 'vertical' ? first.height / 2 : first.width / 2
     })
 
     provideErrorBarContext({
       data: barData,
-      xAxisId: props.xAxisId ?? 'xAxis-0',
-      yAxisId: props.yAxisId ?? 'yAxis-0',
+      get xAxisId() { return props.xAxisId ?? 'xAxis-0' },
+      get yAxisId() { return props.yAxisId ?? 'yAxis-0' },
       dataPointFormatter: errorBarDataPointFormatter,
       errorBarOffset,
     })
 
-    const labelListData = computed(() => {
-      if (isAnimating.value || !barData.value) return undefined
-      return barData.value.map((entry, i) => {
-        const fill = cellPropsRef.value?.[i]?.fill ?? entry.payload?.fill ?? props.fill
-        return {
-          x: entry.x,
-          y: entry.y,
-          width: entry.width,
-          height: entry.height,
-          value: entry.value,
-          payload: entry.payload,
-          parentViewBox: entry.parentViewBox,
-          ...(fill != null ? { fill } : {}),
-        }
-      })
-    })
+    // Labels ride along with the bars as drawn on this frame and show the new value at once;
+    // labels of entering and leaving bars fade with them.
+    const labelListData = computed(() => drawn.value.map(({ bar: entry, index, opacity, key }) => {
+      const fill = entryColor({ cell: cellPropsRef.value[index], row: entry.payload, seriesFill: props.fill, index })
+      return {
+        x: entry.x,
+        y: entry.y,
+        width: entry.width,
+        height: entry.height,
+        value: entry.value,
+        payload: entry.payload,
+        parentViewBox: entry.parentViewBox,
+        key,
+        fill,
+        ...(opacity != null && opacity < 1 ? { opacity } : {}),
+      }
+    }))
     provideCartesianLabelListData(labelListData)
 
-    const graphicalLayerRef = useGraphicalLayerRef(null)
-
-    return () => {
+    const renderGeometry = () => {
       if (!shouldRender.value) {
         return null
       }
 
-      // Extract Cell props from default slot before rendering
-      const defaultContent = slots.default?.() ?? []
-      const cells = extractCellProps(defaultContent)
-      cellPropsRef.value = cells
-      const nonCellContent = cells.length > 0 ? filterOutCells(defaultContent) : defaultContent
-
-      const barContent = (
-        <Layer class={['v-charts-bar', attrs.class]}>
+      const clip = needClip.value
+      return (
+        <Fragment>
           {
-            needClip.value && (
+            clip && (
               <defs>
                 <GraphicalItemClipPath clipPathId={clipPathId} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />
               </defs>
             )
           }
-          <Layer class="v-charts-bar-rectangles" clip-path={needClip.value ? `url(#clipPath-${clipPathId})` : null}>
-            {props.background && <BarBackground />}
+          <Layer class="v-charts-bar-rectangles" clip-path={clip ? `url(#clipPath-${clipPathId})` : undefined}>
+            {props.background && !props.hide && <BarBackground />}
             <BarRectangles />
           </Layer>
-          {!isAnimating.value && props.label && (
+          {(props.label || slots.label) && (
             <LabelList
               {...(typeof props.label === 'object' ? props.label : {})}
-              data={barData.value}
+              data={labelListData.value}
+
+              v-slots={{ label: slots.label }}
             />
           )}
-          {nonCellContent}
-        </Layer>
+        </Fragment>
       )
+    }
 
-      // Teleport bars into graphical layer so they render above cursor but below labels
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{barContent}</Teleport>
-      }
-      return barContent
+    // Default children (notably ErrorBar) must register before any deferred geometry runs.
+    // Keep their context in this synchronous shell; defer only the geometry render.
+    const Geometry = useDeferredView(defineComponent({
+      name: 'BarGeometry',
+      setup: () => renderGeometry,
+    }))
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useChartLayer('graphical')
+    return () => {
+      if (!shouldRender.value)
+        return null
+      const children = slots.default?.() ?? []
+      const cells = extractCellProps(children)
+      assignCells(cellPropsRef, cells)
+      return teleport((
+        <Layer {...attrs} data-slot="series" class={['v-charts-bar', props.class]}>
+          {h(Geometry)}
+          {props.hide ? null : cells.length > 0 ? filterOutCells(children) : children}
+        </Layer>
+      ), graphicalLayerRef,
+      )
     }
   },
 })
+
+export const Bar = forwardsSvgAttributes(defineComponent({
+  name: 'Bar',
+  emits: barEvents.emits,
+  props: BarVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<BarSlots>,
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useSeriesProps(inputProps, ['fill'])
+    barEvents.provide(emit)
+    const errorBarRegistry = createErrorBarRegistry()
+    provideErrorBarRegistry(errorBarRegistry)
+    const { data, settings } = useSetupGraphicalItem(props, 'bar', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    return () => h(BarView, { item: props, svgAttrs: attrs, data, settings }, slots)
+  },
+}))

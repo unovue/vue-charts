@@ -1,5 +1,8 @@
 import type { SVGAttributes } from 'vue'
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 import { isNumber } from '@/utils'
+import { svgAttrs } from '@/utils/VueUtils'
+import { polygonPath } from '@/core/polygon'
 
 export interface PolygonPoint {
   x: number
@@ -10,13 +13,7 @@ export interface PolygonProps {
   points?: PolygonPoint[]
 }
 
-function getPolygonPath(points: PolygonPoint[]): string {
-  return points.reduce((path, point, i) => {
-    return `${path}${i === 0 ? 'M' : 'L'}${point.x},${point.y}`
-  }, '') + 'Z'
-}
-
-export function Polygon(props: PolygonProps & SVGAttributes) {
+export function Polygon(props: PolygonProps & Omit<SVGAttributes, keyof PolygonProps> & Omit<SvgTemplateAttributes, keyof PolygonProps>) {
   const { points = [], ...rest } = props
 
   if (!points || !points.length) {
@@ -30,9 +27,9 @@ export function Polygon(props: PolygonProps & SVGAttributes) {
 
   return (
     <path
-      {...rest}
+      {...svgAttrs(rest)}
       class="v-charts-polygon"
-      d={getPolygonPath(points)}
+      d={polygonPath(points)}
     />
   )
 }

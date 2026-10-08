@@ -1,12 +1,18 @@
+import type { DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
+import { toFiniteNumber } from '@/utils/validate'
+import type { HierarchyNode } from 'd3-hierarchy'
 import { hierarchy, partition } from 'd3-hierarchy'
 
 export interface SunburstData {
-  [key: string]: any
+  [key: string]: unknown
   name: string
-  value?: number
+  value?: number | string
   fill?: string
   children?: SunburstData[]
 }
+
+type IndexedSunburstNode = HierarchyNode<SunburstData> & { _originalIndex?: number }
 
 export interface SunburstLayoutNode {
   cx: number
@@ -21,6 +27,8 @@ export interface SunburstLayoutNode {
   fill?: string
   payload: SunburstData
   tooltipIndex: string
+  /** Names from the top ring down to this node: its identity across data changes. */
+  path: string
 }
 
 export interface SunburstLayoutOptions {
@@ -31,7 +39,8 @@ export interface SunburstLayoutOptions {
   outerRadius: number
   startAngle: number
   endAngle: number
-  dataKey: string
+  dataKey: DataKey<Record<string, unknown>>
+  nameKey?: DataKey<SunburstData>
   ringPadding?: number
   padding?: number
 }
@@ -40,9 +49,9 @@ export interface SunburstLayoutOptions {
  * Record each node's original child index before sorting mutates the order.
  * This ensures tooltipIndex paths point into the original data.children order.
  */
-function recordOriginalIndices(node: any): void {
+function recordOriginalIndices(node: IndexedSunburstNode): void {
   if (node.children) {
-    node.children.forEach((child: any, i: number) => {
+    node.children.forEach((child: IndexedSunburstNode, i: number) => {
       child._originalIndex = i
       recordOriginalIndices(child)
     })
@@ -54,7 +63,7 @@ function recordOriginalIndices(node: any): void {
  * Uses _originalIndex (pre-sort) so the path matches the original data structure.
  * E.g. 'children[0].children[1]'
  */
-function buildTooltipIndex(node: any): string {
+function buildTooltipIndex(node: IndexedSunburstNode): string {
   const parts: string[] = []
   let current = node
   while (current.parent) {
@@ -66,17 +75,17 @@ function buildTooltipIndex(node: any): string {
 }
 
 export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstLayoutNode[] {
-  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey, ringPadding = 0, padding = 0 } = options
+  const { data, cx, cy, innerRadius, outerRadius, startAngle, endAngle, dataKey, nameKey = 'name', ringPadding = 0, padding = 0 } = options
 
   if (!data.children || data.children.length === 0)
     return []
 
   const root = hierarchy(data)
-    .sum((d: any) => {
+    .sum((d) => {
       if (d.children && d.children.length > 0)
         return 0
-      const val = d[dataKey]
-      return typeof val === 'number' && val > 0 ? val : 0
+      const val = toFiniteNumber(getValueByDataKey(d, dataKey))
+      return val != null && val > 0 ? val : 0
     })
 
   // Record original child indices before sort mutates the order
@@ -85,21 +94,23 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
   root.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 
   // partition gives x0/x1 in [0, 1] (angular fraction) and y0/y1 in [0, 1] (depth fraction)
-  partition<SunburstData>().size([1, 1])(root)
+  const layout = partition<SunburstData>().size([1, 1])(root)
 
   const angleRange = endAngle - startAngle
   const radiusRange = outerRadius - innerRadius
 
   const nodes: SunburstLayoutNode[] = []
 
-  root.descendants().forEach((d: any) => {
+  layout.descendants().forEach((d) => {
     // Skip root node
     if (d.depth === 0)
       return
 
-    // Angular padding: shrink each sector by half padding on each side (in degrees)
-    const nodeStartAngle = startAngle + d.x0 * angleRange + padding / 2
-    const nodeEndAngle = startAngle + d.x1 * angleRange - padding / 2
+    // Keep at least half each positive sector's angle, even in dense charts.
+    const sectorAngle = (d.x1 - d.x0) * angleRange
+    const sectorPadding = Math.min(Math.max(padding, 0), Math.abs(sectorAngle) / 2)
+    const nodeStartAngle = startAngle + d.x0 * angleRange + sectorPadding / 2
+    const nodeEndAngle = startAngle + d.x1 * angleRange - sectorPadding / 2
 
     // Radial padding: add ringPadding to inner, subtract from outer
     const nodeInnerRadius = innerRadius + d.y0 * radiusRange + ringPadding / 2
@@ -117,11 +128,12 @@ export function computeSunburstLayout(options: SunburstLayoutOptions): SunburstL
       startAngle: nodeStartAngle,
       endAngle: nodeEndAngle,
       depth: d.depth,
-      name: d.data.name,
+      name: getValueByDataKey(d.data, nameKey, ''),
       value: d.value ?? 0,
       fill: d.data.fill,
       payload: d.data,
       tooltipIndex: buildTooltipIndex(d),
+      path: d.ancestors().reverse().slice(1).map(a => String(getValueByDataKey(a.data, nameKey, ''))).join('\u0000'),
     })
   })
 

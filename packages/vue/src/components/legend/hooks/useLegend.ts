@@ -1,35 +1,35 @@
+import { useChart } from '@/model/chart'
+import { toPx } from '@/utils/style'
+import { useCanMeasureText, useChartLayer } from '@/model/runtime'
 import { computed, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useElementBounding } from '@vueuse/core'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { setLegendSettings, setLegendSize } from '@/state/legendSlice'
-import { selectLegendPayload } from '@/state/selectors/legendSelectors'
-import { selectLegendArea } from '@/state/selectors/selectLegendArea'
-import { useChartHeight, useChartWidth, useMargin, useViewBox } from '@/context/chartLayoutContext'
-import { useLegendPortal } from '@/chart/LegendPortalContext'
+import { useChartPresentation } from '@/model/presentation'
 import { getUniqPayload } from '@/utils/payload/getUniqPayload'
 import { sortBy } from 'es-toolkit/compat'
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { LayoutType } from '@/types'
 import { getCartesianPosition, isOutsidePosition } from '@/cartesian/getCartesianPosition'
 import { cartesianPositionToCSSTranslate } from '@/cartesian/cartesianPositionToCSSTranslate'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
-import type { LegendProps } from '../type'
+import type { LegendPayload } from '@/types/legend'
+import type { LegendInput } from '../type'
 import { defaultUniqBy, getDefaultPosition, getLayoutForPosition, getOutsidePositionOffset, getWidthOrHeight } from '../utils'
 
-export function useLegend(props: LegendProps) {
-  const dispatch = useAppDispatch()
-  const contextPayload = useAppSelector(selectLegendPayload)
-  const legendPortalFromContext = useLegendPortal()
-  const margin = useMargin()
-  const chartWidth = useChartWidth()
-  const chartHeight = useChartHeight()
-  const viewBox = useViewBox()
-  const legendArea = useAppSelector(selectLegendArea)
+export function useLegend(props: LegendInput) {
+  const chart = useChart()
+  const canMeasureText = useCanMeasureText()
+  const contextPayload = chart.legend.payload
+  const legendPortalFromContext = useChartLayer('portal')
+  const margin = useChartPresentation().margin
+  const chartWidth = useChartPresentation().width
+  const chartHeight = useChartPresentation().height
+  const viewBox = useChartPresentation().viewBox
+  const legendArea = chart.legendArea
 
   // Element ref for bounding box calculation
   const legendRef = ref<HTMLElement>()
-  const { width: boundingWidth, height: boundingHeight } = useElementBounding(legendRef)
+  const measuredLegendRef = computed(() => canMeasureText.value ? legendRef.value : undefined)
+  const { width: boundingWidth, height: boundingHeight } = useElementBounding(measuredLegendRef)
 
   // When `auto` the layout is decided based on the `position` prop:
   // left|right positions are vertical, everything else horizontal
@@ -48,8 +48,8 @@ export function useLegend(props: LegendProps) {
 
   // Calculate bounding box
   const boundingBox = computed(() => ({
-    width: boundingWidth.value,
-    height: boundingHeight.value,
+    width: canMeasureText.value ? boundingWidth.value : 0,
+    height: canMeasureText.value ? boundingHeight.value : 0,
   }))
 
   // Inside positions use the plot area; outside positions use the margin-inset chart area.
@@ -59,11 +59,6 @@ export function useLegend(props: LegendProps) {
     }
     return isOutsidePosition(props.position) ? legendArea.value : viewBox.value
   })
-
-  // Inside/center positions are absolutely placed over the plot area
-  // and must not shrink it, so their size is not reported to the store.
-  const shouldReportDimensions = computed(() =>
-    props.portal == null && (props.position == null || isOutsidePosition(props.position)))
 
   // Process payload
   const processedPayload = computed(() => {
@@ -123,15 +118,15 @@ export function useLegend(props: LegendProps) {
     const userStyle = props.wrapperStyle ? { ...props.wrapperStyle } : {}
 
     // If user supplies their own portal, only use their defined wrapper styles
-    if (props.portal) {
+    if (props.to) {
       return userStyle
     }
 
-    // Vue's style binding appends px to numeric values automatically
+    // Vue's style binding requires explicit units for numeric CSS lengths.
     const baseStyle: CSSProperties = {
       position: 'absolute',
-      width: widthOrHeight.value?.width || props.width || 'auto',
-      height: widthOrHeight.value?.height || props.height || 'auto',
+      width: toPx(widthOrHeight.value?.width || props.width || 'auto'),
+      height: toPx(widthOrHeight.value?.height || props.height || 'auto'),
     }
 
     const calculatedPositionStyle = positionStyle.value ?? getDefaultPosition(
@@ -146,29 +141,7 @@ export function useLegend(props: LegendProps) {
   })
 
   // Determine portal target
-  const legendPortal = computed(() => props.portal ?? legendPortalFromContext?.value)
-
-  // Sync settings to store
-  const syncSettings = () => {
-    dispatch(setLegendSettings({
-      layout: resolvedLayout.value,
-      align: props.align!,
-      verticalAlign: props.verticalAlign!,
-      position: props.position,
-      offset: props.offset,
-    }))
-  }
-
-  // Sync size to store
-  const syncSize = () => {
-    if (!shouldReportDimensions.value) {
-      return
-    }
-    dispatch(setLegendSize({
-      width: boundingBox.value.width,
-      height: boundingBox.value.height,
-    }))
-  }
+  const legendPortal = computed(() => props.to ?? legendPortalFromContext?.value)
 
   return {
     legendRef,
@@ -179,7 +152,5 @@ export function useLegend(props: LegendProps) {
     legendPortal,
     resolvedLayout,
     positionViewBox,
-    syncSettings,
-    syncSize,
   }
 }

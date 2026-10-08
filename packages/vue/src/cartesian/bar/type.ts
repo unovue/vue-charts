@@ -1,47 +1,28 @@
-import type { ChartData } from '@/state/chartDataSlice'
+import type { BarRectangleItem } from '@/types/bar'
+import type { LabelListSlotProps } from '@/components/label/types'
+import type { ExtractPropTypes, PropType, VNode, VNodeChild } from 'vue'
+import type { ChartDataKey } from '@/types/base'
+import type { ChartData } from '@/types/chartData'
 import type {
-  Coordinate,
-  DataKey,
   TooltipType,
-  VuePropsToType,
-  WithSVGProps,
 } from '@/types'
-import type { AnimationOptions } from 'motion-v'
+import type { ChartTransition } from '@/animation/motion'
 import type { AxisId } from '@/types/axis'
-import type { PropType } from 'vue'
 import type { LegendType } from '@/types/legend'
-import type { MinPointSize } from '@/shape'
+import type { MinPointSize } from '@/types/shape'
 import { classProp } from '@/types'
-
-export type Rectangle = {
-  x: number | null
-  y: number | null
-  width: number
-  height: number
-}
-
-export type BarRectangleItem = {
-  value?: number | [number, number]
-  background?: Rectangle
-  tooltipPosition: Coordinate
-  readonly payload?: any
-  x: number | null
-  y: number | null
-  width: number
-  height: number
-}
 
 export const BarVueProps = {
   class: classProp,
   barSize: { type: [String, Number] as PropType<string | number> },
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
-    required: true,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
+    required: true as const,
   },
   fill: { type: String, default: undefined },
   stroke: { type: String, default: undefined },
-  strokeWidth: { type: Number, default: 0 },
+  strokeWidth: { type: Number, default: undefined },
   unit: {
     type: [String, Number] as PropType<string | number>,
     default: undefined,
@@ -53,66 +34,48 @@ export const BarVueProps = {
   maxBarSize: { type: Number },
   hide: { type: Boolean, default: false },
   background: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: false,
   },
   radius: {
     type: [Number, Array] as PropType<number | [number, number, number, number]>,
     default: undefined,
   },
-  onAnimationStart: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
-  onAnimationEnd: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
-  isAnimationActive: { type: Boolean, default: true },
-  activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, any> | boolean>, default: false },
-  activeIndex: { type: Number, default: undefined },
-  id: { type: String, default: undefined },
+  isAnimationActive: { type: Boolean, default: undefined },
+  activeBar: { type: [Object, Boolean, Function] as PropType<Record<string, unknown> | boolean>, default: false },
+  activeIndex: { type: Number as PropType<number | null>, default: undefined },
   stackId: {
     type: [String, Number] as PropType<string | number>,
     default: undefined,
   },
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
+  /** Overrides the default motion (see animation/motion.ts). */
   transition: {
-    type: Object as PropType<AnimationOptions>,
-    default: {
-      duration: 0.4,
-      ease: 'easeOut',
-    },
+    type: Object as PropType<ChartTransition>,
+    default: undefined,
   },
-  needClip: { type: Boolean, default: false },
   label: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: false,
   },
 }
 
-export type BarProps = VuePropsToType<typeof BarVueProps>
-export type BarPropsWithSVG = WithSVGProps<typeof BarVueProps>
+export type ResolvedBarProps = ExtractPropTypes<typeof BarVueProps>
 
-export type BarSettings = {
-  barSize?: string | number
-  data?: ChartData
-  dataKey: DataKey<any>
-  maxBarSize?: number
-  minPointSize: MinPointSize
-  stackId?: string | number
+type BarShapeSlotProps = Omit<BarRectangleItem, 'x' | 'y' | 'width' | 'height'> & {
+  x: number
+  y: number
+  width: number
+  height: number
+  fill?: string
+  index: number
+  isActive: boolean
 }
 
-export type BarMouseEvent = (
-  data: BarRectangleItem,
-  index: number,
-  event: MouseEvent,
-) => void
-
-export interface BarEvents {
-  onClick: BarMouseEvent
-  onMouseEnter: BarMouseEvent
-  onMouseLeave: BarMouseEvent
-  onMouseMove: BarMouseEvent
+export interface BarSlots {
+  label?: (props: LabelListSlotProps) => VNodeChild
+  default?: () => VNode[]
+  shape?: (props: BarShapeSlotProps) => VNodeChild
+  activeBar?: (props: BarShapeSlotProps) => VNodeChild
 }

@@ -1,36 +1,59 @@
+import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { delegateItemEvents } from '@/events/delegateItemEvents'
+import { lineEvents } from '@/events/itemEvents'
 import type { PropType } from 'vue'
-import { Fragment, defineComponent, onBeforeUnmount, ref, watch } from 'vue'
+import { Fragment, computed, defineComponent } from 'vue'
+import { useChartPresentation } from '@/model/presentation'
 import { Layer } from '@/container/Layer'
-import type { Point } from '@/shape/Curve'
 import { Curve } from '@/shape/Curve'
-import type { LinePointItem } from './type'
+import type { LinePointItem } from '@/types/line'
 import { useLineContext } from './hooks/useLine'
 import { Dot } from '@/shape/Dot'
-import { animate } from 'motion-v'
-import type { AnimationPlaybackControls } from 'motion-v'
-import { interpolate } from '@/utils'
-import { LabelList } from '@/components/label'
-
+import { LabelList } from '@/components/label/LabelList'
+import { usePointTransition } from '@/animation/usePointTransition'
+import { labelOpacity, lengthShares, polylineLength, sweptLabels } from '@/animation/ridingLabels'
+import { drawTiming } from '@/animation/motion'
+import { SweepClip } from '@/animation/SweepClip'
+import { useChart } from '@/model/chart'
+import { getValueByDataKey } from '@/utils/chart'
+import { shouldRenderDots } from '@/core/coordinates'
 // Dots component
-export const Dots = defineComponent({
+const Dots = defineComponent({
   name: 'LineDots',
   props: {
+    keys: { type: Array as PropType<PropertyKey[]>, default: () => [] },
+    indices: { type: Array as PropType<number[]>, default: () => [] },
+    exiting: { type: Array as PropType<boolean[]>, default: () => [] },
+    /** Below 1 while a dot appears behind the tip of a line drawing itself. */
+    opacities: { type: Array as PropType<(number | undefined)[]>, default: () => [] },
     points: {
-      type: Array as PropType<ReadonlyArray<Point>>,
+      type: Array as PropType<ReadonlyArray<LinePointItem>>,
       default: () => [],
     },
   },
   setup(_props) {
+    const emit = lineEvents.use()
     const { clipPathId, clipDot, props, attrs, needClip, dotSlot } = useLineContext()
+    const listeners = usePointEvents<LinePointItem>(emit)
+    const delegated = delegateItemEvents((position) => {
+      const point = _props.points[position]
+      if (!point || _props.exiting[position])
+        return undefined
+      return { point, index: _props.indices[position] ?? position }
+    }, {
+      click: ({ point, index }, _position, event) => listeners(point, index).onClick(event),
+      mouseenter: ({ point, index }, _position, event) => listeners(point, index).onMouseenter(event),
+      mouseleave: ({ point, index }, _position, event) => listeners(point, index).onMouseleave(event),
+    })
 
     return () => {
       const { points } = _props
-      if (!shouldRenderDots(points!, props.dot!)) {
+      if (!shouldRenderDots(points, props.dot)) {
         return null
       }
       const dotObjProps = typeof props.dot === 'object' && props.dot !== null ? props.dot : {}
       const dotsProps = {
-        'fill': '#fff',
+        'fill': 'var(--v-charts-background, #fff)',
         'stroke': props.stroke,
         'stroke-width': props.strokeWidth,
         ...dotObjProps,
@@ -38,15 +61,25 @@ export const Dots = defineComponent({
       return (
         <Layer
           class="v-charts-line-dots"
-          clip-path={needClip.value ? `url(#clipPath-${clipDot ? '' : 'dots-'}${clipPathId.value})` : undefined}
+          {...delegated}
+          clip-path={needClip.value ? `url(#clipPath-${clipDot.value ? '' : 'dots-'}${clipPathId.value})` : undefined}
         >
           {
-            points?.map((point, index) => {
-              const pointAsLine = point as LinePointItem
-              if (dotSlot) {
-                return dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: pointAsLine.value, payload: pointAsLine.payload })
-              }
-              return <Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot} />
+            points?.map((point, position) => {
+              const index = _props.indices[position] ?? position
+              const exiting = _props.exiting[position]
+              return (
+                <g
+                  key={_props.keys[position]}
+                  data-v-charts-item-index={exiting ? undefined : position}
+                  opacity={_props.opacities[position]}
+                  pointer-events={exiting ? 'none' : undefined}
+                >
+                  {dotSlot
+                    ? dotSlot({ ...dotsProps, ...attrs, cx: point.x, cy: point.y, index, value: point.value, payload: point.payload })
+                    : <Dot r={3} {...dotsProps} {...attrs} cx={point.x} cy={point.y} class="v-charts-line-dot" clipDot={clipDot.value} />}
+                </g>
+              )
             })
           }
         </Layer>
@@ -55,253 +88,99 @@ export const Dots = defineComponent({
   },
 })
 
-// StaticLine component with animation
 export const StaticLine = defineComponent({
   name: 'StaticLine',
   setup() {
-    const { points, clipPathId, layout, attrs, lineData, props, isAnimating, needClip, shapeSlot, labelSlot } = useLineContext()
-    const currentPoints = ref<ReadonlyArray<LinePointItem>>([])
-
-    // stroke-dashoffset ratio: 1 = fully hidden, 0 = fully revealed
-    const strokeDashRatio = ref(1)
-    let isFirstRender = true
-    let prevPoints: ReadonlyArray<LinePointItem> = []
-    // The target that the current animation is heading toward.
-    // Used by the duplicate guard so that mid-animation arrivals matching the
-    // animation START (prevPoints) are not incorrectly skipped.
-    let animationTarget: ReadonlyArray<LinePointItem> = []
-
-    // Manage animation lifecycle manually (not via onCleanup, which kills it on re-trigger)
-    let currentAnimation: AnimationPlaybackControls | null = null
-    let revealAnimationRunning = false
-
-    function stopCurrentAnimation() {
-      if (currentAnimation) {
-        currentAnimation.stop()
-        currentAnimation = null
-      }
-    }
-
-    onBeforeUnmount(() => {
-      stopCurrentAnimation()
+    const emit = lineEvents.use()
+    const { points, clipPathId, layout, attrs, props, needClip, shapeSlot, labelSlot, labelData } = useLineContext()
+    const seriesListeners = useSeriesPointEvents<LinePointItem>(emit, () => points.value ?? [])
+    const offset = useChartPresentation().offset
+    const chart = useChart()
+    const categoryAxis = computed(() => layout.value === 'vertical'
+      ? chart.axis('yAxis', props.yAxisId).settings.value
+      : chart.axis('xAxis', props.xAxisId).settings.value)
+    // A series hidden from the legend sweeps out instead of vanishing.
+    const display = usePointTransition(() => props.hide ? [] : points.value, {
+      key: (point, index) => {
+        const dataKey = categoryAxis.value?.dataKey
+        const category = dataKey == null ? undefined : getValueByDataKey(point.payload, dataKey)
+        return category == null ? index : String(category)
+      },
+      isActive: () => props.isAnimationActive !== false,
+      transition: () => props.transition,
+      // The line draws itself along its length, also after hydration (the server sends it
+      // undrawn), like Recharts.
+      entrance: () => drawTiming(polylineLength(points.value ?? [])),
+      entranceAfterHydration: true,
+      onStart: () => emit('animation-start'),
+      onEnd: () => emit('animation-end'),
     })
-
-    watch(points, (newPoints) => {
-      // Skip if points haven't actually changed (selector may return new reference with same values)
-      // Compare against the animation TARGET (not the start position) so that new points matching
-      // the start of an in-flight animation are correctly processed and interrupt the animation.
-      if (newPoints && animationTarget.length === newPoints.length
-        && newPoints.every((p, i) => p.x === animationTarget[i].x && p.y === animationTarget[i].y)) {
-        return
-      }
-
-      if (newPoints && newPoints.length > 0) {
-        if (!props.isAnimationActive) {
-          // Animation disabled — set points directly without animation
-          isFirstRender = false
-          stopCurrentAnimation()
-          revealAnimationRunning = false
-          isAnimating.value = false
-          currentPoints.value = newPoints
-          prevPoints = newPoints
-          animationTarget = newPoints
-          strokeDashRatio.value = 0
-          return
-        }
-
-        if (isFirstRender) {
-          // First render: use pathLength reveal animation (stroke-dashoffset 1→0)
-          isFirstRender = false
-          revealAnimationRunning = true
-          isAnimating.value = true
-          currentPoints.value = newPoints
-          animationTarget = newPoints
-          strokeDashRatio.value = 1
-
-          stopCurrentAnimation()
-          currentAnimation = animate(1 as number, 0, {
-            ...props.transition,
-            onUpdate(v) {
-              if (!revealAnimationRunning)
-                return
-              strokeDashRatio.value = v
-            },
-            onPlay() {
-              props.onAnimationStart?.()
-            },
-            onComplete() {
-              strokeDashRatio.value = 0
-              isAnimating.value = false
-              revealAnimationRunning = false
-              currentAnimation = null
-              prevPoints = currentPoints.value as ReadonlyArray<LinePointItem>
-              animationTarget = prevPoints
-              props.onAnimationEnd?.()
-            },
-          })
-        }
-        else if (revealAnimationRunning) {
-          // Reveal animation still in progress — just update the target points
-          // so the final shape is correct, but don't interrupt the reveal.
-          currentPoints.value = newPoints
-          animationTarget = newPoints
-        }
-        else {
-          // Subsequent updates: interpolate points
-          isAnimating.value = true
-          strokeDashRatio.value = 0
-
-          // Capture current visual position so next animation chases from where the line is now,
-          // not from where it was before the previous animation started (prevents flash on rapid changes)
-          if (currentPoints.value.length) {
-            prevPoints = currentPoints.value as ReadonlyArray<LinePointItem>
-          }
-          animationTarget = newPoints
-          stopCurrentAnimation()
-          currentAnimation = animate(0 as number, 1, {
-            ...props.transition,
-            onUpdate(t) {
-              if (prevPoints.length) {
-                const prevPointsDiffFactor = prevPoints.length / newPoints.length
-                const stepPoints = t === 1
-                  ? newPoints
-                  : newPoints.map((entry, index): LinePointItem => {
-                      const prevPointIndex = Math.floor(index * prevPointsDiffFactor)
-                      if (prevPoints[prevPointIndex]) {
-                        const prev: LinePointItem = prevPoints[prevPointIndex]
-                        return {
-                          ...entry,
-                          x: interpolate(prev.x, entry.x, t),
-                          y: interpolate(prev.y, entry.y, t),
-                        }
-                      }
-                      return entry
-                    })
-                currentPoints.value = stepPoints
-              }
-              else {
-                currentPoints.value = newPoints
-              }
-            },
-            onPlay() {
-              props.onAnimationStart?.()
-            },
-            onComplete() {
-              isAnimating.value = false
-              prevPoints = newPoints
-              animationTarget = newPoints
-              currentAnimation = null
-              props.onAnimationEnd?.()
-            },
-          })
-        }
-      }
-      else {
-        stopCurrentAnimation()
-        revealAnimationRunning = false
-        isAnimating.value = false
-        currentPoints.value = newPoints || []
-        prevPoints = currentPoints.value as ReadonlyArray<LinePointItem>
-        animationTarget = prevPoints
-        strokeDashRatio.value = 0
-      }
-    }, { immediate: true })
-
+    // Where the tip of the drawing line reaches each point, as a share of the line's length.
+    const reached = computed(() => lengthShares(display.points.value))
+    // Labels ride along with the points as drawn, appear as the tip reaches them and fade
+    // with points that enter or leave.
+    const drawnLabels = computed(() => sweptLabels(display.items.value.map((item) => {
+      const opacity = labelOpacity(item)
+      return { ...item.value.point, key: item.key, ...(opacity != null ? { opacity } : {}) }
+    }), display.reveal.value, (_, index) => reached.value[index]))
+    // Nested LabelList children and own labels share the same lazy frame data.
+    labelData.value = drawnLabels
+    /** Dots pop in just behind the tip while the line draws itself. */
+    const dotOpacities = computed(() => {
+      const reveal = display.reveal.value
+      if (reveal >= 1)
+        return []
+      return reached.value.map(at => at == null ? 0 : Math.min(1, Math.max(0, (reveal - at) / 0.04)))
+    })
     return () => {
-      const curveAttrs = {
+      const curveProps = {
         ...attrs,
         'fill': 'none',
         'stroke': props.stroke,
         'stroke-width': props.strokeWidth,
+        'points': display.points.value,
+        'connectNulls': props.connectNulls,
+        'type': props.type,
+        'layout': layout.value === 'vertical' ? 'vertical' as const : 'horizontal' as const,
+        'class': 'v-charts-line-curve',
       }
-
-      const dashRatio = strokeDashRatio.value
-
-      const showLabels = !isAnimating.value && (props.label || labelSlot)
+      const reveal = display.reveal.value
+      // A drawn line: the stroke grows along the normalised path length, so its tip travels the
+      // curve. A custom shape may not pass dash attributes on, so it keeps the sweep clip.
+      const drawing = reveal < 1 && !shapeSlot
+      const drawnCurveProps = drawing ? { ...curveProps, 'pathLength': 1, 'stroke-dasharray': `${reveal} 1` } : curveProps
+      const sweepId = `line-anim-${clipPathId.value}`
       const labelProps = typeof props.label === 'object' ? props.label : {}
-
-      // Build the curve/shape content
-      let curveContent: any = null
-      if (currentPoints.value && currentPoints.value.length > 1) {
-        if (shapeSlot) {
-          curveContent = shapeSlot({
-            ...curveAttrs,
-            points: currentPoints.value,
-            connectNulls: props.connectNulls,
-            type: props.type,
-            layout: layout.value,
-            class: 'v-charts-line-curve',
-          })
-        }
-        else {
-          // Apply pathLength-based stroke-dash animation only when user has no custom stroke-dasharray
-          const hasCustomDashArray = attrs['stroke-dasharray'] != null
-          const pathAttrs = !hasCustomDashArray && dashRatio > 0
-            ? { 'pathLength': 1, 'stroke-dasharray': 1, 'stroke-dashoffset': dashRatio }
-            : {}
-          curveContent = (
-            <Curve
-              {...curveAttrs}
-              {...pathAttrs}
-              points={currentPoints.value}
-              connectNulls={props.connectNulls}
-              type={props.type}
-              layout={layout.value as any}
-              class="v-charts-line-curve"
-            />
-          )
-        }
-      }
-
-      // Use clipRect reveal when pathLength animation can't be used:
-      // - shape slot (pathLength only works on single <path>)
-      // - custom stroke-dasharray (pathLength animation overrides it)
-      const hasCustomDashArray = attrs['stroke-dasharray'] != null
-      const needClipAnim = (shapeSlot || hasCustomDashArray) && dashRatio > 0 && curveContent
-
       return (
         <Fragment>
-          {curveContent && (
-            <Layer clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
-              {needClipAnim
-                ? (
-                    <g>
-                      <defs>
-                        <clipPath id={`line-anim-${clipPathId.value}`}>
-                          <rect x="0" y="0" width={`${(1 - dashRatio) * 100}%`} height="100%" />
-                        </clipPath>
-                      </defs>
-                      <g clip-path={`url(#line-anim-${clipPathId.value})`}>
-                        {curveContent}
-                      </g>
-                    </g>
-                  )
-                : curveContent}
+          <defs>
+            <SweepClip
+              id={sweepId}
+              progress={display.reveal.value}
+              vertical={layout.value === 'vertical'}
+              x={offset.value.left - 8}
+              y={offset.value.top - 8}
+              width={offset.value.width + 16}
+              height={offset.value.height + 16}
+            />
+          </defs>
+          <g clip-path={reveal < 1 && shapeSlot ? `url(#${sweepId})` : undefined}>
+            <Layer {...seriesListeners} clip-path={needClip.value ? `url(#clipPath-${clipPathId.value})` : undefined}>
+              {display.points.value.length > 1 && (shapeSlot ? shapeSlot(curveProps) : <Curve {...drawnCurveProps} />)}
             </Layer>
+            <Dots points={display.points.value} keys={display.items.value.map(item => item.key)} indices={display.items.value.map(item => item.value.index)} exiting={display.items.value.map(item => item.phase === 'exit')} opacities={dotOpacities.value} />
+          </g>
+          {(props.label || labelSlot) && (
+            <LabelList
+              {...labelProps}
+              data={drawnLabels.value}
+              dataKey={props.dataKey}
+
+              v-slots={labelSlot ? { label: labelSlot } : undefined}
+            />
           )}
-          <Dots points={currentPoints.value} />
-          {
-            showLabels && (
-              <LabelList
-                {...labelProps}
-                data={lineData.value ?? []}
-                dataKey={props.dataKey}
-                v-slots={labelSlot ? { label: labelSlot } : undefined}
-              />
-            )
-          }
         </Fragment>
       )
     }
   },
 })
-
-function shouldRenderDots(points: ReadonlyArray<LinePointItem>, dot: any): boolean {
-  if (points == null || !points.length) {
-    return false
-  }
-  if (dot) {
-    return true
-  }
-  return points.length === 1
-}

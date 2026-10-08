@@ -68,7 +68,6 @@ const morphExit = computed(() => reduced.value
         <AreaChart
           v-if="props.type === 'area'"
           :data="data"
-          responsive
           style="width: 100%; height: 100%"
         >
           <defs>
@@ -118,7 +117,6 @@ const morphExit = computed(() => reduced.value
         <BarChart
           v-else-if="props.type === 'bar'"
           :data="data"
-          responsive
           style="width: 100%; height: 100%"
         >
           <XAxis
@@ -145,7 +143,6 @@ const morphExit = computed(() => reduced.value
         <!-- Pie -->
         <PieChart
           v-else-if="props.type === 'pie'"
-          responsive
           style="width: 100%; height: 100%"
         >
           <Pie
@@ -168,7 +165,6 @@ const morphExit = computed(() => reduced.value
         <RadarChart
           v-else
           :data="radarData"
-          responsive
           style="width: 100%; height: 100%"
         >
           <PolarGrid

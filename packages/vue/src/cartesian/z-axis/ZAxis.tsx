@@ -1,12 +1,10 @@
+import type { ChartDataKey } from '@/types/base'
+import { useChart } from '@/model/chart'
 import type { PropType } from 'vue'
-import { defineComponent, watchEffect } from 'vue'
-import { useAppDispatch } from '@/state/hooks'
-import type { ZAxisSettings } from '@/state/cartesianAxisSlice'
-import { addZAxis, removeZAxis } from '@/state/cartesianAxisSlice'
-import { implicitZAxis } from '@/state/selectors/axisSelectors'
-import type { AxisRange } from '@/state/selectors/axisSelectors'
-import type { DataKey } from '@/types'
-import type { AxisDomain } from '@/types/axis'
+import { computed, defineComponent } from 'vue'
+import type { ZAxisSettings } from '@/types/axisSettings'
+import { implicitZAxis } from '@/core/axis/settings'
+import type { AxisDomain, AxisRange } from '@/types/axis'
 import type { ScaleType } from '@/types/scale'
 
 export const ZAxis = defineComponent({
@@ -17,7 +15,7 @@ export const ZAxis = defineComponent({
       default: 0,
     },
     dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
+      type: [String, Number, Function] as PropType<ChartDataKey>,
       default: undefined,
     },
     type: {
@@ -46,10 +44,10 @@ export const ZAxis = defineComponent({
     },
   },
   setup(props) {
-    const dispatch = useAppDispatch()
+    const { zAxis } = useChart().axes
 
-    watchEffect((onCleanup) => {
-      const settings: ZAxisSettings = {
+    const settings = computed<ZAxisSettings>(() => {
+      return {
         id: props.zAxisId,
         dataKey: props.dataKey,
         type: props.type,
@@ -63,12 +61,8 @@ export const ZAxis = defineComponent({
         reversed: implicitZAxis.reversed,
         includeHidden: implicitZAxis.includeHidden,
       }
-      dispatch(addZAxis(settings))
-
-      onCleanup(() => {
-        dispatch(removeZAxis(settings))
-      })
     })
+    zAxis.register(settings)
 
     return () => null
   },

@@ -1,17 +1,17 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick, ref } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
 import { BarChart } from '@/chart/BarChart'
 import { LineChart } from '@/chart/LineChart'
 import { Bar } from '@/cartesian/bar/Bar'
 import { Line } from '@/cartesian/line/Line'
 import { XAxis } from '@/cartesian/axis/XAxis'
 import { YAxis } from '@/cartesian/axis/YAxis'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { Customized } from '@/components/Customized'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
-import { useIsTooltipActive, useActiveTooltipCoordinate, useActiveTooltipLabel, usePlotArea, useXAxisDomain, useYAxisDomain, useXAxisTicks, useYAxisTicks, useXAxisScale, useYAxisScale, useXAxisInverseScale, useYAxisInverseScale, useXAxisInverseDataSnapScale, useYAxisInverseDataSnapScale, useXAxisInverseTickSnapScale, useYAxisInverseTickSnapScale, useCartesianScale } from '../publicHooks'
+import { useActiveTooltipCoordinate, useActiveTooltipLabel, useCartesianScale, useIsTooltipActive, usePlotArea, useXAxisDomain, useXAxisInverseDataSnapScale, useXAxisInverseScale, useXAxisInverseTickSnapScale, useXAxisScale, useXAxisTicks, useYAxisDomain, useYAxisScale, useYAxisTicks } from '../publicHooks'
 
 describe('publicHooks - tooltip hooks', () => {
   beforeEach(() => {
@@ -142,15 +142,12 @@ describe('publicHooks - tooltip hooks', () => {
       assertNotNull(spy)
       const x = spy.getAttribute('data-x')
       const y = spy.getAttribute('data-y')
-      expect(x).not.toBe('')
-      expect(y).not.toBe('')
-      expect(Number(x)).not.toBeNaN()
-      expect(Number(y)).not.toBeNaN()
+      expect([Number(x), Number(y)]).toEqual([194, 200])
     })
   })
 })
 
-describe('Layout public hooks', () => {
+describe('layout public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })
@@ -200,6 +197,8 @@ describe('Layout public hooks', () => {
       const width = Number(spy.getAttribute('data-width'))
       const height = Number(spy.getAttribute('data-height'))
 
+      expect([x, y, width, height]).toEqual([65, 5, 430, 260])
+
       // x > 0 because YAxis takes space on the left
       expect(x).toBeGreaterThan(0)
       // width should be positive but less than chart width
@@ -212,7 +211,7 @@ describe('Layout public hooks', () => {
   })
 })
 
-describe('Axis public hooks', () => {
+describe('axis public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })
@@ -353,14 +352,12 @@ describe('Axis public hooks', () => {
       await nextTick()
       await nextTick()
 
-      expect(ticks).toBeDefined()
-      expect(Array.isArray(ticks)).toBe(true)
-      expect(ticks.length).toBeGreaterThan(0)
+      expect(ticks.map((tick: { value: number }) => tick.value)).toEqual([0, 75, 150, 225, 300])
     })
   })
 })
 
-describe('Scale public hooks', () => {
+describe('scale public hooks', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 300 })
   })

@@ -10,6 +10,6 @@ export function mockHTMLElementProperty(name: keyof HTMLElement, value: number) 
 }
 
 export function restoreHTMLElementProperties() {
-  mocks.forEach(cleanup => cleanup())
+  mocks.reverse().forEach(cleanup => cleanup())
   mocks.length = 0
 }

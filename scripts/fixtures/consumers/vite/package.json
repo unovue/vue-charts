@@ -1,0 +1,19 @@
+{
+  "name": "vccs-vite-consumer",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@9.15.0+sha1.8bfdb6d72b4d5fdf87d21d27f2bfbe2b21dd2629",
+  "dependencies": {
+    "motion-v": "2.6.0",
+    "vccs": "file:../vccs.tgz",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@vitejs/plugin-vue": "6.0.9",
+    "typescript": "6.0.3",
+    "unplugin-vue-components": "30.0.0",
+    "vite": "8.3.2",
+    "vue-tsc": "3.3.12"
+  }
+}

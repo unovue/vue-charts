@@ -1,11 +1,9 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, test, vi } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
-import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, Tooltip, XAxis, YAxis } from '@/index'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
+import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, Tooltip, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { assertNotNull } from '@/test/helper'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
 
 describe('<ComposedChart />', () => {
   beforeEach(() => {
@@ -21,7 +19,66 @@ describe('<ComposedChart />', () => {
     { name: 'Page F', uv: 1400, pv: 680, amt: 1700 },
   ]
 
-  test('Render 1 line, 1 area, 1 bar in the ComposedChart', () => {
+  it('renders theme variables for default colors while preserving caller colors', async () => {
+    const { container } = render(() => (
+      <ComposedChart width={800} height={400} data={data}>
+        <CartesianGrid />
+        <XAxis dataKey="name" />
+        <YAxis stroke="#123456" />
+        <Bar dataKey="pv" background isAnimationActive={false} />
+        <Line dataKey="uv" dot isAnimationActive={false} />
+        <Tooltip defaultIndex={0} />
+        <Legend />
+        <ReferenceLine y={1000} />
+      </ComposedChart>
+    ))
+    await nextTick()
+    await nextTick()
+
+    const root = container.parentElement!
+    for (const selector of [
+      '.v-charts-cartesian-grid line',
+      '.v-charts-x-axis .v-charts-cartesian-axis-tick-value',
+      '.v-charts-y-axis .v-charts-cartesian-axis-tick-value',
+      'path[fill="var(--v-charts-muted, #eee)"]',
+      '.v-charts-line-dot',
+      '.v-charts-tooltip-content',
+      '.v-charts-tooltip-cursor',
+      '.v-charts-legend-item',
+      '.v-charts-reference-line-line',
+    ]) {
+      expect(root.querySelector(selector), selector).not.toBeNull()
+    }
+    expect(root.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('var(--v-charts-text, #666)')
+    expect(root.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-tick-value')?.getAttribute('fill')).toBe('var(--v-charts-text, #666)')
+
+    const colors: string[] = []
+    for (const element of root.querySelectorAll('*')) {
+      for (const attribute of ['fill', 'stroke']) {
+        const value = element.getAttribute(attribute)
+        if (value)
+          colors.push(value)
+      }
+      const style = (element as HTMLElement | SVGElement).style
+      for (const property of Array.from(style)) {
+        if (/color|background|border/.test(property))
+          colors.push(style.getPropertyValue(property))
+      }
+    }
+    expect(colors).toContain('var(--v-charts-muted, #eee)')
+    expect(colors).toContain('var(--v-charts-background, #fff)')
+    expect(colors).toContain('var(--v-charts-series-2, var(--v-charts-series, #f97316))')
+    expect(colors).toContain('var(--v-charts-tooltip-background, #fff)')
+    expect(colors).toContain('1px solid var(--v-charts-tooltip-border, #ccc)')
+    for (const color of colors) {
+      const withoutAllowedColors = color
+        .replace(/var\(--v-charts-[a-z-]+,\s*#[\da-f]{3,6}\)/gi, '')
+        .replace(/#123456|rgb\(18, 52, 86\)/g, '')
+      expect(withoutAllowedColors, color).not.toMatch(/#[\da-f]{3,6}|rgba?\(/i)
+    }
+  })
+
+  it('render 1 line, 1 area, 1 bar in the ComposedChart', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -38,7 +95,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-area .v-charts-area-area')).toHaveLength(1)
   })
 
-  test('Render 1 bar, 1 dot when data has only one element', () => {
+  it('render 1 bar, 1 dot when data has only one element', () => {
     const singleData = [data[0]]
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={singleData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -54,7 +111,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-bar .v-charts-bar-rectangle')).toHaveLength(1)
   })
 
-  test('Renders mixed chart with multiple Bar and Line components', () => {
+  it('renders mixed chart with multiple Bar and Line components', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -69,7 +126,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-line .v-charts-line-curve')).toHaveLength(1)
   })
 
-  test('Renders empty chart when data is empty', () => {
+  it('renders empty chart when data is empty', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={[]} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -83,7 +140,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-line .v-charts-line-curve')).toHaveLength(0)
   })
 
-  test('Renders CartesianGrid in ComposedChart', () => {
+  it('renders CartesianGrid in ComposedChart', () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data}>
         <XAxis dataKey="name" />
@@ -96,7 +153,7 @@ describe('<ComposedChart />', () => {
     expect(container.querySelectorAll('.v-charts-cartesian-grid')).toHaveLength(1)
   })
 
-  test('MouseEnter ComposedChart should show tooltip and cursor', async () => {
+  it('mouseEnter ComposedChart should show tooltip and cursor', async () => {
     const { container } = render(() => (
       <ComposedChart width={800} height={400} data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
         <XAxis dataKey="name" />
@@ -116,80 +173,5 @@ describe('<ComposedChart />', () => {
 
     // Tooltip cursor should be visible after mouse enter
     expect(container.querySelectorAll('.v-charts-tooltip-cursor')).toHaveLength(1)
-  })
-
-  describe('ComposedChart layout context', () => {
-    it('should provide viewBox', () => {
-      let viewBoxValue: any
-      const Comp = defineComponent({
-        setup() {
-          const vb = useViewBox()
-          viewBoxValue = vb
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(viewBoxValue.value).toEqual({ height: 40, width: 90, x: 5, y: 5 })
-    })
-
-    it('should provide clipPathId', () => {
-      let clipPathIdValue: any
-      const Comp = defineComponent({
-        setup() {
-          clipPathIdValue = useClipPathId()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(clipPathIdValue).toMatch(/v-charts\d+-clip/)
-    })
-
-    it('should provide width', () => {
-      let widthValue: any
-      const Comp = defineComponent({
-        setup() {
-          widthValue = useChartWidth()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(widthValue.value).toBe(100)
-    })
-
-    it('should provide height', () => {
-      let heightValue: any
-      const Comp = defineComponent({
-        setup() {
-          heightValue = useChartHeight()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <ComposedChart width={100} height={50} barSize={20}>
-          <Comp />
-        </ComposedChart>
-      ))
-
-      expect(heightValue.value).toBe(50)
-    })
   })
 })

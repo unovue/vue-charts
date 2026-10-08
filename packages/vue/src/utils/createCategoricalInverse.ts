@@ -5,7 +5,7 @@ export type InverseScaleFunction = (pixelValue: number) => unknown
 /**
  * Binary search for sorted arrays (ascending or descending).
  */
-export function bisect(haystack: ReadonlyArray<number>, needle: number): number {
+function bisect(haystack: ReadonlyArray<number>, needle: number): number {
   let lo = 0
   let hi = haystack.length
   const ascending = haystack[0]! < haystack[haystack.length - 1]!
@@ -64,14 +64,14 @@ export function createCategoricalInverse(
  * Creates an inverse function: uses native `.invert` for numeric scales,
  * falls back to categorical bisect for ordinal/band/point scales.
  */
-export function combineInverseScaleFunction(
+export function inverseScaleFunction(
   scale: RechartsScale | undefined,
 ): InverseScaleFunction | undefined {
   if (scale == null) {
     return undefined
   }
-  if ('invert' in scale && typeof (scale as any).invert === 'function') {
-    return (scale as any).invert.bind(scale)
+  if ('invert' in scale && typeof scale.invert === 'function') {
+    return scale.invert.bind(scale)
   }
   return createCategoricalInverse(scale, undefined)
 }

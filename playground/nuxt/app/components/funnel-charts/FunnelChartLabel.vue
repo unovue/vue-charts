@@ -5,13 +5,11 @@ import type { ChartConfig } from '~/components/ui/chart/types'
 import ChartTooltipContent from '~/components/ui/chart/ChartTooltipContent.vue'
 
 const chartData = [
-  { stage: 'Visit', value: 1000 },
-  { stage: 'Cart', value: 680 },
-  { stage: 'Checkout', value: 420 },
-  { stage: 'Purchase', value: 260 },
+  { stage: 'Visit', value: 1000, fill: 'var(--color-visit)' },
+  { stage: 'Cart', value: 680, fill: 'var(--color-cart)' },
+  { stage: 'Checkout', value: 420, fill: 'var(--color-checkout)' },
+  { stage: 'Purchase', value: 260, fill: 'var(--color-purchase)' },
 ]
-
-const COLORS = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
 
 const chartConfig: ChartConfig = {
   value: { label: 'Users' },
@@ -33,10 +31,7 @@ const chartConfig: ChartConfig = {
         :config="chartConfig"
         class="mx-auto aspect-square max-h-[300px]"
       >
-        <FunnelChart
-          :width="400"
-          :height="300"
-        >
+        <FunnelChart>
           <Tooltip :cursor="false">
             <template #content="{ active, payload, label }">
               <ChartTooltipContent
@@ -52,8 +47,9 @@ const chartConfig: ChartConfig = {
             name-key="stage"
           >
             <LabelList
-              position="right"
-              fill="#000"
+              position="center"
+              fill="#fff"
+              stroke="none"
               :font-size="12"
             />
           </Funnel>
@@ -66,7 +62,7 @@ const chartConfig: ChartConfig = {
         <TrendingDown class="size-4" />
       </div>
       <div class="leading-none text-muted-foreground">
-        Labels appear after entrance animation completes
+        Labels fade in with their segments
       </div>
     </CardFooter>
   </Card>

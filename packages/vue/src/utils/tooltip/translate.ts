@@ -1,15 +1,15 @@
 import type { CSSProperties } from 'vue'
 import { isNumber } from '@/utils/validate'
 import type { AllowInDimension, Coordinate } from '@/types'
-import type { CartesianViewBox } from '@/cartesian/type'
+import type { CartesianViewBox } from '@/types/viewBox'
 
-export type Dimension2D = 'x' | 'y'
+type Dimension2D = 'x' | 'y'
 
 const CSS_CLASS_PREFIX = 'v-charts-tooltip-wrapper'
 
 const TOOLTIP_HIDDEN: CSSProperties = { visibility: 'hidden' }
 
-export function getTooltipCSSClassName({
+function getTooltipCSSClassName({
   coordinate,
   translateX,
   translateY,
@@ -30,7 +30,7 @@ export function getTooltipCSSClassName({
   }]
 }
 
-export function getTooltipTranslateXY({
+function getTooltipTranslateXY({
   allowEscapeViewBox,
   coordinate,
   key,
@@ -87,7 +87,7 @@ export function getTooltipTranslateXY({
   return Math.max(positive, viewBoxKey)
 }
 
-export function getTransformStyle({
+function getTransformStyle({
   translateX,
   translateY,
   useTranslate3d,
@@ -121,7 +121,7 @@ export function getTooltipTranslate({
   tooltipBox: { width: number, height: number }
   useTranslate3d: boolean
   viewBox: CartesianViewBox
-}): { cssProperties: CSSProperties, cssClasses: any[], transform: CSSProperties | undefined } {
+}): { cssProperties: CSSProperties, cssClasses: ReturnType<typeof getTooltipCSSClassName>, transform: CSSProperties | undefined } {
   let cssProperties: CSSProperties, translateX: number | undefined, translateY: number | undefined
   if (tooltipBox.height > 0 && tooltipBox.width > 0 && coordinate) {
     translateX = getTooltipTranslateXY({

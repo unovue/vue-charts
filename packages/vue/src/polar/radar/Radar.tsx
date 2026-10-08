@@ -1,160 +1,160 @@
-import { Fragment, Teleport, computed, defineComponent } from 'vue'
-import type { PropType } from 'vue'
-import type { AnimationOptions } from 'motion-v'
-import { useAppSelector } from '@/state/hooks'
-import { SetPolarGraphicalItem } from '@/state/SetGraphicalItem'
-import { SetLegendPayload } from '@/state/SetLegendPayload'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
-import { selectRadarPoints } from '@/state/selectors/radarSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
+import type { ChartDataKey } from '@/types/base'
+import { getSeriesId, useSeriesProps } from '@/hooks/useSeriesProps'
+import { usePointEvents, useSeriesPointEvents } from '@/events/usePointEvents'
+import { radarEvents } from '@/events/itemEvents'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h } from 'vue'
+import { provideTooltipEntry } from '@/model/tooltip'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { ValueAnimationTransition } from 'motion-v'
+import { useChart } from '@/model/chart'
+import { computeRadarPoints, getRangePath, getSinglePolygonPath } from '@/core/radar'
+import { getBandSizeOfAxis } from '@/core/axis/scale'
+import { isCategoricalAxis } from '@/utils/validate'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { LabelList } from '@/components/label/LabelList'
-import { Animate } from '@/animation/Animate'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { interpolate } from '@/utils/data-utils'
-import { ActivePoints } from '@/cartesian/line/ActivePoints'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { ActivePoints } from '@/cartesian/ActivePoints'
+import { useChartLayer } from '@/model/runtime'
 import { provideCartesianLabelListData } from '@/context/cartesianLabelListContext'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
-import type { DataKey } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 import type { RadarComposedData, RadarPoint } from '@/types/radar'
+import type { LineSlots } from '@/cartesian/line/type'
+import { mainColor } from '@/core/color'
+import { getTooltipNameProp } from '@/core/tooltip'
+import { classProp } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
+import { useSetupPolarItem } from '@/hooks/useSetupGraphicalItem'
 
-function getLegendItemColor(stroke: string | undefined, fill: string | undefined): string | undefined {
-  return stroke && stroke !== 'none' ? stroke : fill
+export type RadarShapeSlotProps = RadarComposedData & {
+  fill?: string
+  stroke?: string
+  fillOpacity: number
+  strokeWidth?: number
+  strokeDasharray?: string
 }
 
-function getSinglePolygonPath(points: ReadonlyArray<{ x: number, y: number }>): string {
-  if (!points.length)
-    return ''
-  // Repeat first point at end (matching Recharts getParsedPoints behavior) to ensure
-  // explicit close segment for correct SVG fill when used in range paths
-  const pts = [...points, points[0]]
-  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join('')
-  return `${path}Z`
+export type RadarSlots = Pick<LineSlots, 'dot' | 'activeDot' | 'label'> & {
+  shape?: (props: RadarShapeSlotProps) => VNodeChild
 }
 
-function getRangePath(
-  points: ReadonlyArray<{ x: number, y: number }>,
-  baseLinePoints: ReadonlyArray<{ x: number, y: number }>,
-): string {
-  const outerPath = getSinglePolygonPath(points)
-  const inner = getSinglePolygonPath([...baseLinePoints].reverse())
-  // Join outer (without closing Z) with inner path
-  const outerWithoutZ = outerPath.endsWith('Z') ? outerPath.slice(0, -1) : outerPath
-  return `${outerWithoutZ}L${inner.slice(1)}`
+const RadarViewProps = {
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
+  name: { type: [String, Number] as PropType<string | number>, default: undefined },
+  angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
+  fill: { type: String, default: undefined },
+  stroke: { type: String, default: undefined },
+  fillOpacity: { type: Number, default: 0.6 },
+  strokeWidth: { type: Number, default: undefined },
+  strokeDasharray: { type: String, default: undefined },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  hide: { type: Boolean, default: false },
+  legendType: { type: String as PropType<LegendType>, default: 'rect' },
+  tooltipType: { type: String as PropType<TooltipType>, default: undefined },
+  connectNulls: { type: Boolean, default: false },
+  label: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  isAnimationActive: { type: Boolean, default: undefined },
+  transition: {
+    type: Object as PropType<ValueAnimationTransition<number>>,
+    default: undefined,
+  },
+  activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
+  class: classProp,
 }
 
-function interpolatePolarPoint(
-  prevPoints: RadarPoint[] | null,
-  prevPointsDiffFactor: number,
-  t: number,
-  entry: RadarPoint,
-  index: number,
-): RadarPoint {
-  const prev = prevPoints && prevPoints[Math.floor(index * prevPointsDiffFactor)]
-  if (prev) {
-    return { ...entry, x: interpolate(prev.x, entry.x, t), y: interpolate(prev.y, entry.y, t) }
-  }
-  // New point: animate from center
-  return { ...entry, x: interpolate(entry.cx ?? 0, entry.x, t), y: interpolate(entry.cy ?? 0, entry.y, t) }
-}
-
-export const Radar = defineComponent({
-  name: 'Radar',
+const RadarView = defineComponent({
+  name: 'RadarView',
+  slots: Object as SlotsType<RadarSlots>,
   inheritAttrs: false,
   props: {
-    dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true },
-    name: { type: String, default: undefined },
-    angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-    fill: { type: String, default: '#808080' },
-    stroke: { type: String, default: undefined },
-    fillOpacity: { type: Number, default: 0.6 },
-    strokeWidth: { type: Number, default: undefined },
-    strokeDasharray: { type: String, default: undefined },
-    dot: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-    hide: { type: Boolean, default: false },
-    legendType: { type: String as PropType<LegendType>, default: 'rect' },
-    tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-    connectNulls: { type: Boolean, default: false },
-    label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-    isAnimationActive: { type: Boolean, default: true },
-    transition: {
-      type: Object as PropType<AnimationOptions>,
-      default: () => ({ duration: 0.8, ease: 'easeOut' }),
-    },
-    activeDot: { type: [Object, Boolean] as PropType<object | boolean>, default: true },
+    item: { type: Object as PropType<ExtractPropTypes<typeof RadarViewProps>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
   },
-  setup(props) {
-    const isPanorama = useIsPanorama()
+  setup(view, { slots }) {
+    const emit = radarEvents.use()
+    const props = view.item
+    const listeners = usePointEvents<RadarPoint>(emit)
+    const attrs = view.svgAttrs
 
-    SetPolarGraphicalItem(computed(() => ({
-      type: 'radar' as const,
-      data: undefined,
-      dataKey: props.dataKey,
-      hide: props.hide,
-      angleAxisId: props.angleAxisId,
-      radiusAxisId: props.radiusAxisId,
-    })))
-
-    SetLegendPayload(computed(() => [{
-      dataKey: props.dataKey,
-      type: props.legendType,
-      color: getLegendItemColor(props.stroke, props.fill),
-      value: props.name ?? String(props.dataKey ?? ''),
-      payload: { ...props },
-      inactive: props.hide,
-    }]))
-
-    SetTooltipEntrySettings({
-      fn: v => v,
-      args: computed(() => ({
-        dataDefinedOnItem: undefined,
-        positions: undefined,
-        settings: {
-          dataKey: props.dataKey,
-          nameKey: undefined,
-          name: props.name ?? String(props.dataKey ?? ''),
-          hide: props.hide,
-          type: props.tooltipType,
-          color: getLegendItemColor(props.stroke, props.fill),
-          fill: props.fill,
-          stroke: props.stroke,
-          unit: '',
+    const chart = useChart()
+    const radiusAxis = computed(() => chart.axis('radiusAxis', props.radiusAxisId))
+    const angleAxis = computed(() => chart.axis('angleAxis', props.angleAxisId))
+    const bandSize = computed(() => {
+      const axis = isCategoricalAxis(chart.inputs.layout(), 'radiusAxis') ? radiusAxis.value : angleAxis.value
+      return getBandSizeOfAxis(axis.withScale.value, axis.ticks.value ?? undefined)
+    })
+    const radarPoints = computed(() => {
+      const radiusScale = radiusAxis.value.scale.value
+      const angleScale = angleAxis.value.scale.value
+      const viewport = chart.polarLayout.viewBox.value
+      const displayedData = chart.data.value
+      const band = bandSize.value
+      if (!radiusScale || !angleScale || !viewport || !displayedData || band == null || props.dataKey == null)
+        return undefined
+      const settings = angleAxis.value.settings.value
+      return computeRadarPoints({
+        radiusAxis: { scale: radiusScale },
+        angleAxis: {
+          scale: angleScale,
+          type: settings.type,
+          dataKey: settings.dataKey,
+          cx: viewport.cx,
+          cy: viewport.cy,
         },
-      })),
+        displayedData,
+        dataKey: props.dataKey,
+        bandSize: band,
+      })
     })
 
-    const radarPoints = useAppSelector(state =>
-      selectRadarPoints(state, props.radiusAxisId, props.angleAxisId, isPanorama, props.dataKey),
-    )
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useChartLayer('graphical')
 
-    const graphicalLayerRef = useGraphicalLayerRef()
+    const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
+    const mix = (from: RadarPoint, to: RadarPoint, t: number): RadarPoint => ({ ...to, x: interpolate(from.x, to.x, t), y: interpolate(from.y, to.y, t) })
+    const centre = (point: RadarPoint): RadarPoint => ({ ...point, x: point.cx ?? 0, y: point.cy ?? 0 })
+    const { items } = useKeyedTransition(() => radarPoints.value?.points.map((point, index) => ({ point, baseline: radarPoints.value?.baseLinePoints[index] })), {
+      key: ({ point }, index) => point.name ?? index,
+      interpolate: (from, to, t) => ({ point: mix(from.point, to.point, t), baseline: from.baseline && to.baseline ? mix(from.baseline, to.baseline, t) : to.baseline }),
+      enterFrom: to => ({ point: centre(to.point), baseline: to.baseline && centre(to.baseline) }),
+      exitTo: from => ({ point: centre(from.point), baseline: from.baseline && centre(from.baseline) }),
+      connected: true,
+      isActive: () => props.isAnimationActive !== false,
+      transition: () => props.transition,
+      onEnd: callbacks.onEnd,
+      onStart: callbacks.onStart,
 
-    const isAnimating = useIsAnimating(() => props.isAnimationActive)
+    })
 
+    // Labels ride along with the points as drawn, show the new values at once and fade with
+    // points that enter or leave.
     provideCartesianLabelListData(computed(() => {
-      if (props.isAnimationActive && isAnimating.value)
+      if (items.value.length === 0)
         return undefined
-      const data = radarPoints.value
-      if (!data)
-        return undefined
-      return data.points.map(point => ({
-        x: point.x,
-        y: point.y,
-        width: 0,
-        height: 0,
-        value: point.value ?? '',
-        payload: point.payload,
-      }))
+      return items.value.map((item) => {
+        const point = item.value.point
+        const opacity = labelOpacity(item)
+        return {
+          x: point.x,
+          y: point.y,
+          width: 0,
+          height: 0,
+          value: point.value ?? '',
+          payload: point.payload,
+          key: item.key,
+          ...(opacity != null ? { opacity } : {}),
+        }
+      })
     }))
 
-    let prevPoints: RadarPoint[] | null = null
-    let prevBaseLinePoints: RadarPoint[] | null = null
-    let animationId = 0
-    let lastData: RadarComposedData | undefined
+    const seriesListeners = useSeriesPointEvents<RadarPoint>(emit, () => radarPoints.value?.points ?? [])
 
     const renderPolygon = (
       points: RadarPoint[],
@@ -175,63 +175,70 @@ export const Radar = defineComponent({
       const isClosed = pathD.endsWith('Z')
 
       return (
-        <Layer class="v-charts-radar">
-          <g class="v-charts-radar-polygon">
-            {isRange && baseLinePoints.length > 0
-              ? (
-                  <g>
+        <Layer {...attrs} data-slot="series" class={['v-charts-radar', props.class]}>
+          <g class="v-charts-radar-polygon" {...seriesListeners}>
+            {slots.shape
+              ? slots.shape({
+                  points,
+                  baseLinePoints,
+                  isRange,
+                  fill: props.fill,
+                  stroke,
+                  fillOpacity: props.fillOpacity,
+                  strokeWidth: props.strokeWidth,
+                  strokeDasharray: props.strokeDasharray,
+                })
+              : isRange && baseLinePoints.length > 0
+                ? (
+                    <g>
+                      <path
+                        d={pathD}
+                        fill={isClosed ? props.fill : 'none'}
+                        fill-opacity={props.fillOpacity}
+                        stroke="none"
+                        stroke-dasharray={props.strokeDasharray}
+                      />
+                      {hasStroke && (
+                        <path
+                          d={getSinglePolygonPath(points)}
+                          fill="none"
+                          stroke={stroke}
+                          stroke-width={props.strokeWidth}
+                          stroke-dasharray={props.strokeDasharray}
+                        />
+                      )}
+                      {hasStroke && (
+                        <path
+                          d={getSinglePolygonPath(baseLinePoints)}
+                          fill="none"
+                          stroke={stroke}
+                          stroke-width={props.strokeWidth}
+                          stroke-dasharray={props.strokeDasharray}
+                        />
+                      )}
+                    </g>
+                  )
+                : (
                     <path
                       d={pathD}
                       fill={isClosed ? props.fill : 'none'}
                       fill-opacity={props.fillOpacity}
-                      stroke="none"
+                      stroke={stroke}
+                      stroke-width={props.strokeWidth}
                       stroke-dasharray={props.strokeDasharray}
                     />
-                    {hasStroke && (
-                      <path
-                        d={getSinglePolygonPath(points)}
-                        fill="none"
-                        stroke={stroke}
-                        stroke-width={props.strokeWidth}
-                        stroke-dasharray={props.strokeDasharray}
-                      />
-                    )}
-                    {hasStroke && (
-                      <path
-                        d={getSinglePolygonPath(baseLinePoints)}
-                        fill="none"
-                        stroke={stroke}
-                        stroke-width={props.strokeWidth}
-                        stroke-dasharray={props.strokeDasharray}
-                      />
-                    )}
-                  </g>
-                )
-              : (
-                  <path
-                    d={pathD}
-                    fill={isClosed ? props.fill : 'none'}
-                    fill-opacity={props.fillOpacity}
-                    stroke={stroke}
-                    stroke-width={props.strokeWidth}
-                    stroke-dasharray={props.strokeDasharray}
-                  />
-                )}
+                  )}
           </g>
-          {props.dot && (
+          {(props.dot || slots.dot) && (
             <g class="v-charts-radar-dots">
               {points.map((point, i) => {
                 const dotProps = typeof props.dot === 'object' ? props.dot : {}
                 return (
-                  <Dot
-                    key={`dot-${i}`}
-                    cx={point.x}
-                    cy={point.y}
-                    r={3}
-                    fill={props.fill}
-                    stroke={stroke}
-                    {...dotProps}
-                  />
+                  <g key={items.value[i].key} {...listeners(point, i)}>
+                    {slots.dot
+                      ? slots.dot({ cx: point.x, cy: point.y, index: i, value: point.value, payload: point.payload })
+                      : <Dot cx={point.x} cy={point.y} r={3} fill={props.fill} stroke={stroke} {...dotProps} />}
+                  </g>
                 )
               })}
             </g>
@@ -245,76 +252,34 @@ export const Radar = defineComponent({
         return null
 
       const data = radarPoints.value
-      if (data == null || data.points.length === 0)
+      if (items.value.length === 0)
         return null
 
-      const { points, baseLinePoints, isRange } = data
-
-      const mainColor = getLegendItemColor(props.stroke, props.fill) ?? props.fill
+      const points = data?.points ?? []
+      const isRange = data?.isRange ?? false
 
       const activePointsEl = (
-        <ActivePoints
-          points={points}
-          mainColor={mainColor}
-          itemDataKey={props.dataKey}
-          activeDot={props.activeDot}
-        />
+        <Layer {...seriesListeners}>
+          <ActivePoints
+            points={points}
+            mainColor={mainColor('radar', props)}
+            itemDataKey={props.dataKey}
+            activeDot={props.activeDot}
+            isAnimationActive={props.isAnimationActive}
+            v-slots={{ activeDot: slots.activeDot }}
+          />
+        </Layer>
       )
-      const activePoints = graphicalLayerRef?.value
-        ? <Teleport to={graphicalLayerRef.value}>{activePointsEl}</Teleport>
-        : activePointsEl
+      const activePoints = teleport(activePointsEl, graphicalLayerRef)
 
-      const labelEl = !isAnimating.value && props.label
-        ? <LabelList {...(typeof props.label === 'object' ? props.label : {})} />
-        : null
-
-      if (!props.isAnimationActive) {
-        prevPoints = points
-        prevBaseLinePoints = baseLinePoints
-        return (
-          <Fragment>
-            {renderPolygon(points, baseLinePoints, isRange)}
-            {labelEl}
-            {activePoints}
-          </Fragment>
-        )
-      }
-
-      const prevPts = prevPoints
-      const prevBasePts = prevBaseLinePoints
-      const prevPointsDiffFactor = prevPts ? prevPts.length / points.length : 1
-      const prevBaseDiffFactor = prevBasePts ? prevBasePts.length / baseLinePoints.length : 1
-      if (data !== lastData) {
-        animationId++
-        lastData = data
-      }
+      const labelProps = typeof props.label === 'object' ? props.label : {}
+      const labelEl = slots.label
+        ? <LabelList {...labelProps} v-slots={{ label: slots.label }} />
+        : props.label ? <LabelList {...labelProps} /> : null
 
       return (
         <Fragment>
-          <Animate
-            key={animationId}
-            isActive={true}
-            transition={props.transition}
-            onAnimationStart={() => { isAnimating.value = true }}
-            onAnimationEnd={() => { isAnimating.value = false }}
-          >
-            {(t: number) => {
-              const stepPoints: RadarPoint[] = t === 1
-                ? points
-                : points.map((entry, i) => interpolatePolarPoint(prevPts, prevPointsDiffFactor, t, entry, i))
-
-              const stepBaseLine: RadarPoint[] = t === 1
-                ? baseLinePoints
-                : baseLinePoints.map((entry, i) => interpolatePolarPoint(prevBasePts, prevBaseDiffFactor, t, entry, i))
-
-              if (t > 0) {
-                prevPoints = stepPoints
-                prevBaseLinePoints = stepBaseLine
-              }
-
-              return renderPolygon(stepPoints, stepBaseLine, isRange)
-            }}
-          </Animate>
+          {renderPolygon(items.value.map(item => item.value.point), items.value.flatMap(item => item.value.baseline ? [item.value.baseline] : []), isRange)}
           {labelEl}
           {activePoints}
         </Fragment>
@@ -322,3 +287,45 @@ export const Radar = defineComponent({
     }
   },
 })
+
+export const Radar = forwardsSvgAttributes(defineComponent({
+  slots: Object as SlotsType<RadarSlots>,
+  name: 'Radar',
+  emits: radarEvents.emits,
+  inheritAttrs: false,
+  props: RadarViewProps,
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useSeriesProps(inputProps, ['fill'])
+    radarEvents.provide(emit)
+    useSetupPolarItem(props, 'radar', {
+      settings: () => ({ seriesId: getSeriesId(props), angleAxisId: props.angleAxisId, radiusAxisId: props.radiusAxisId }),
+      legend: () => [{
+        type: props.legendType,
+        color: mainColor('radar', props),
+        value: getTooltipNameProp(props.name, props.dataKey) ?? '',
+        payload: { ...props },
+      }],
+    })
+
+    const tooltipEntry = computed(() => ({
+      dataDefinedOnItem: undefined,
+      positions: undefined,
+      settings: {
+        dataKey: props.dataKey,
+        nameKey: undefined,
+        name: getTooltipNameProp(props.name, props.dataKey),
+        hide: props.hide,
+        type: props.tooltipType,
+        color: mainColor('radar', props),
+        fill: props.fill,
+        stroke: props.stroke,
+        unit: '',
+      },
+    }))
+    useChart().tooltip.entries.register(tooltipEntry)
+    provideTooltipEntry(tooltipEntry)
+
+    const View = useDeferredView(RadarView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

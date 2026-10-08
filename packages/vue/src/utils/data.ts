@@ -1,5 +1,5 @@
 import { isNan, isNumber, isPercent } from '@/utils/validate'
-import { get } from 'lodash-es'
+import { get } from 'es-toolkit/compat'
 
 export function mathSign(value: number) {
   if (value === 0) {
@@ -79,13 +79,4 @@ export function findEntryInArray<T>(
     entry =>
       entry && (typeof specifiedKey === 'function' ? specifiedKey(entry) : get(entry, specifiedKey)) === specifiedValue,
   )
-}
-
-/* @todo this function returns a function that is called immediately in all use-cases, make it just return the number and skip the anonymous function step */
-export function interpolateNumber(numberA: number | undefined, numberB: number | undefined, t: number) {
-  if (isNumber(numberA) && isNumber(numberB)) {
-    return numberA + t * (numberB - numberA)
-  }
-
-  return numberB
 }

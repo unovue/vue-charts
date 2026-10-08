@@ -1,7 +1,6 @@
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
-import type { LegendType } from '@/types/legend'
-import type { LegendPayload } from '@/components/DefaultLegendContent'
+import type { LegendPayload, LegendType } from '@/types/legend'
 import { Symbols } from '@/shape/Symbols'
 
 export const SIZE = 32
@@ -72,7 +71,7 @@ export const LegendSymbol = defineComponent({
               cy={halfSize}
               size={SIZE}
               sizeType="diameter"
-              type={type as any}
+              type={type as import('@/shape/Symbols').SymbolType}
             />
           )
       }

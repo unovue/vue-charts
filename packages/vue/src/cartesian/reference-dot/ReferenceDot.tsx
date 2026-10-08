@@ -1,17 +1,16 @@
-import type { PropType, SVGAttributes, SlotsType } from 'vue'
-import { computed, defineComponent, onMounted, onUnmounted, reactive } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, SlotsType, VNodeChild } from 'vue'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { Layer } from '@/container/Layer'
 import { Dot } from '@/shape/Dot'
 import { Label } from '@/components/label/Label'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { addDot, removeDot } from '@/state/referenceElementsSlice'
-import type { AxisId } from '@/state/cartesianAxisSlice'
-import { selectAxisScale } from '@/state/selectors/axisSelectors'
-import { useClipPathId } from '@/chart/provideClipPathId'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
+import type { AxisId } from '@/types/axisSettings'
+import { useClipPathId } from '@/model/runtime'
 import { isNumOrStr } from '@/utils'
 import { isInRange, scaleCoord } from '@/utils/scale'
 import type { IfOverflow } from '@/types'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export interface ReferenceDotShapeProps extends SVGAttributes {
   cx: number
@@ -23,49 +22,38 @@ export interface ReferenceDotShapeProps extends SVGAttributes {
 }
 
 export interface ReferenceDotSlots {
-  shape?: (props: ReferenceDotShapeProps) => any
+  shape?: (props: ReferenceDotShapeProps) => VNodeChild
 }
 
-export const ReferenceDotVueProps = {
+const ReferenceDotVueProps = {
   x: { type: [Number, String] as PropType<number | string>, default: undefined },
   y: { type: [Number, String] as PropType<number | string>, default: undefined },
   r: { type: Number, default: 10 },
   xAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [Number, String] as PropType<AxisId>, default: 0 },
-  fill: { type: String, default: '#fff' },
-  stroke: { type: String, default: '#ccc' },
-  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, any>>, default: undefined },
+  fill: { type: String, default: 'var(--v-charts-background, #fff)' },
+  stroke: { type: String, default: 'var(--v-charts-grid, #ccc)' },
+  label: { type: [String, Number, Boolean, Object] as PropType<string | number | boolean | Record<string, unknown>>, default: undefined },
   ifOverflow: { type: String as PropType<IfOverflow>, default: 'discard' },
 }
 
-const _ReferenceDot = defineComponent({
-  name: 'ReferenceDot',
-  props: ReferenceDotVueProps,
+const ReferenceDotView = defineComponent({
+  name: 'ReferenceDotView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ReferenceDotVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+  },
   slots: Object as SlotsType<ReferenceDotSlots>,
-  setup(props, { attrs, slots }) {
-    const dispatch = useAppDispatch()
-    const isPanorama = useIsPanorama()
+  setup(view, { slots }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
+
     const clipPathId = useClipPathId()
 
-    const settings = reactive({
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
-      ifOverflow: props.ifOverflow,
-      x: props.x,
-      y: props.y,
-      r: props.r,
-    })
-
-    onMounted(() => {
-      dispatch(addDot(settings))
-    })
-    onUnmounted(() => {
-      dispatch(removeDot(settings))
-    })
-
-    const xAxisScale = useAppSelector(state => selectAxisScale(state, 'xAxis', props.xAxisId, isPanorama))
-    const yAxisScale = useAppSelector(state => selectAxisScale(state, 'yAxis', props.yAxisId, isPanorama))
+    const xAxisScale = computed(() => chart.axis('xAxis', props.xAxisId).scale.value)
+    const yAxisScale = computed(() => chart.axis('yAxis', props.yAxisId).scale.value)
 
     const dotCoord = computed(() => {
       const xScale = xAxisScale.value
@@ -149,6 +137,25 @@ const _ReferenceDot = defineComponent({
   },
 })
 
-export const ReferenceDot = _ReferenceDot as typeof _ReferenceDot & {
-  new (): { $slots: ReferenceDotSlots }
-}
+export const ReferenceDot = forwardsSvgAttributes(defineComponent({
+  name: 'ReferenceDot',
+  props: ReferenceDotVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ReferenceDotSlots>,
+  setup(props, { attrs, slots }) {
+    const { dots } = useChart().references
+    const settings = computed(() => ({
+      xAxisId: props.xAxisId,
+      yAxisId: props.yAxisId,
+      ifOverflow: props.ifOverflow,
+      x: props.x,
+      y: props.y,
+      r: props.r,
+    }))
+
+    dots.register(settings)
+
+    const View = useDeferredView(ReferenceDotView)
+    return () => h(View, { item: props, svgAttrs: attrs }, slots)
+  },
+}))

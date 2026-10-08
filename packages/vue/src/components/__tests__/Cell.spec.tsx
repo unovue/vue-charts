@@ -4,7 +4,7 @@ import { Bar, BarChart, Cell, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 import { getBarRectangles, getBarRects } from '@/test/helper'
 
-describe('Cell', () => {
+describe('cell', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })

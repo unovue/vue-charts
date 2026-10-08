@@ -1,16 +1,12 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Pie, PieChart } from '@/index'
-import { Tooltip } from '@/components/Tooltip'
-import { Legend } from '@/components/legend'
+import { Tooltip } from '@/components/tooltip/Tooltip'
+import Legend from '@/components/legend/Legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
-import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
 
-describe('PieChart', () => {
+describe('pieChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -226,6 +222,24 @@ describe('PieChart', () => {
       const sectors = container.querySelectorAll('.v-charts-sector')
       expect(sectors.length).toBe(6)
     })
+
+    // The donut recipe rounds slices with corner-radius; a declared prop must still reach every sector.
+    it('rounds the sector corners with cornerRadius', () => {
+      const paths = (cornerRadius?: number) => {
+        const { container, unmount } = render(() => (
+          <PieChart width={400} height={400}>
+            <Pie dataKey="value" isAnimationActive={false} data={data} innerRadius={40} outerRadius={80} paddingAngle={4} cornerRadius={cornerRadius} />
+          </PieChart>
+        ))
+        const result = Array.from(container.querySelectorAll('.v-charts-sector'), sector => sector.getAttribute('d'))
+        unmount()
+        return result
+      }
+      const rounded = paths(4)
+      expect(rounded).toHaveLength(6)
+      expect(rounded.every(d => d?.includes(' A4,4,'))).toBe(true)
+      expect(paths().some(d => d?.includes(' A4,4,'))).toBe(false)
+    })
   })
 
   describe('with Cell children', () => {
@@ -254,7 +268,7 @@ describe('PieChart', () => {
     })
   })
 
-  describe('Tooltip integration', () => {
+  describe('tooltip integration', () => {
     it('renders sectors alongside Tooltip without errors', () => {
       const { container } = render(() => (
         <PieChart width={800} height={400}>
@@ -295,96 +309,6 @@ describe('PieChart', () => {
 
       const sectors = container.querySelectorAll('.v-charts-sector')
       expect(sectors.length).toBe(6)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { PieChart, Comp },
-        template: `
-          <PieChart :width="100" :height="50">
-            <Comp />
-          </PieChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { PieChart, Comp },
-        template: `
-          <PieChart :width="100" :height="50">
-            <Comp />
-          </PieChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
-    })
-
-    it('provides width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { PieChart, Comp },
-        template: `
-          <PieChart :width="100" :height="50">
-            <Comp />
-          </PieChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { PieChart, Comp },
-        template: `
-          <PieChart :width="100" :height="50">
-            <Comp />
-          </PieChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 })

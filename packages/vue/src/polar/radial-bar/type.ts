@@ -1,13 +1,14 @@
+import type { ChartDataKey } from '@/types/base'
 import type { PropType } from 'vue'
-import type { AnimationOptions } from 'motion-v'
-import type { DataKey, VuePropsToType, WithSVGProps } from '@/types'
+import type { ValueAnimationTransition } from 'motion-v'
+import { classProp } from '@/types'
 import type { LegendType } from '@/types/legend'
 import type { TooltipType } from '@/types/tooltip'
 import type { StackId } from '@/types/tick'
 
 export const RadialBarVueProps = {
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true as const },
-  name: { type: String, default: undefined },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
+  name: { type: [String, Number] as PropType<string | number>, default: undefined },
   angleAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   radiusAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
   fill: { type: String, default: undefined },
@@ -18,12 +19,12 @@ export const RadialBarVueProps = {
   hide: { type: Boolean, default: false },
   legendType: { type: String as PropType<LegendType>, default: 'rect' },
   tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  background: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-  label: { type: [Boolean, Object] as PropType<boolean | Record<string, any>>, default: false },
-  isAnimationActive: { type: Boolean, default: true },
+  background: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  label: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  isAnimationActive: { type: Boolean, default: undefined },
   transition: {
-    type: Object as PropType<AnimationOptions>,
-    default: () => ({ duration: 0.4, ease: 'easeOut' }),
+    type: Object as PropType<ValueAnimationTransition<number>>,
+    default: undefined,
   },
   minPointSize: { type: Number, default: 0 },
   maxBarSize: { type: Number, default: undefined },
@@ -32,6 +33,5 @@ export const RadialBarVueProps = {
   cornerRadius: { type: [Number, String] as PropType<number | string>, default: 0 },
   forceCornerRadius: { type: Boolean, default: false },
   cornerIsExternal: { type: Boolean, default: false },
+  class: classProp,
 }
-
-export type RadialBarPropsWithSVG = WithSVGProps<VuePropsToType<typeof RadialBarVueProps>>

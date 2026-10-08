@@ -1,25 +1,31 @@
-import { computed, defineComponent, type PropType, ref, type SlotsType, watchEffect } from 'vue'
-import { get } from 'lodash-es'
-import type { AnimationOptions } from 'motion-v'
-import { provideStore } from '@reduxjs/vue-redux'
-import { Animate } from '@/animation/Animate'
+import type { ChartDataKey } from '@/types/base'
+import { seriesColor, seriesForeground } from '@/utils/theme'
+import { type EmitFn, type ExtractPropTypes, type PropType, type SlotsType, type VNode, type VNodeChild, computed, defineComponent, reactive, ref, toRaw, toRefs } from 'vue'
+import { useCanMeasureText } from '@/model/runtime'
+import { labelColor } from '@/utils/labelColor'
+import type { Coordinate, DataKey } from '@/types'
+import { getValueByDataKey } from '@/utils/chart'
+import { toFiniteNumber } from '@/utils/validate'
+import { chartEmits, chartListeners } from '@/events/componentEvents'
+import { useTooltipController } from '@/model/tooltip'
+import { chartSizeProps } from '@/hooks/useResponsiveSize'
+import { useTrackedData } from '@/hooks/useTrackedData'
+import type { ValueAnimationTransition } from 'motion-v'
+import { labelOpacity } from '@/animation/ridingLabels'
+import { cascadeReveal } from '@/animation/motion'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
 import { Layer } from '@/container/Layer'
-import Surface from '@/container/Surface'
 import { getStringSize } from '@/utils/attrs'
-import { ChartsWrapper } from './ChartsWrapper'
-import { createRechartsStore } from '@/state/store'
-import { useAppDispatch } from '@/state/hooks'
-import { setActiveMouseOverItemIndex, setActiveClickItemIndex, mouseLeaveItem, addTooltipEntrySettings, removeTooltipEntrySettings } from '@/state/tooltipSlice'
-import type { ChartOptions } from '@/state/optionsSlice'
-import type { TooltipPayloadSearcher } from '@/state/tooltipSlice'
-import type { TooltipIndex, TooltipPayloadConfiguration } from '@/state/tooltipSlice'
-import type { Coordinate } from '@/types'
-import { computeTreemapLayout, type TreemapLayoutNode } from './treemapUtils'
+import { ChartShell, useChartShell } from './ChartShell'
+import { standaloneChartOptions } from './shell'
+import type { TooltipPayloadConfiguration } from '@/types/tooltip'
+import { type TreemapLayoutNode, computeTreemapLayout } from './treemapUtils'
+import { forwardsHtmlAttributes } from '@/utils/attributes'
 
-const DEFAULT_COLORS = [
-  '#8889DD', '#9597E4', '#8DC77B', '#A5D297',
-  '#E2CF45', '#F8C12D', '#F89C24', '#F56E1A',
-]
+interface TreemapData extends Record<string, unknown> {
+  children?: TreemapData[]
+}
 
 export interface TreemapContentSlotProps extends TreemapLayoutNode {
   index: number
@@ -28,395 +34,397 @@ export interface TreemapContentSlotProps extends TreemapLayoutNode {
 }
 
 export interface TreemapSlots {
-  content?: (props: TreemapContentSlotProps) => any
-  default?: () => any
+  content?: (props: TreemapContentSlotProps) => VNodeChild
+  default?: () => VNode[]
 }
 
 interface BreadcrumbEntry {
   name: string
-  data: Record<string, any>[]
+  data: TreemapData[]
 }
 
 /**
  * Recursively sum all descendant values for a given dataKey.
  */
-function sumValues(item: Record<string, any>, dataKey: string): number {
+function sumValues(item: TreemapData, dataKey: DataKey<TreemapData>): number {
   if (item.children && item.children.length > 0) {
-    return item.children.reduce((sum: number, child: Record<string, any>) => sum + sumValues(child, dataKey), 0)
+    return item.children.reduce((sum: number, child: TreemapData) => sum + sumValues(child, dataKey), 0)
   }
-  const val = item[dataKey]
-  return typeof val === 'number' && val > 0 ? val : 0
+  const val = toFiniteNumber(getValueByDataKey(item, dataKey))
+  return val != null && val > 0 ? val : 0
 }
 
-/**
- * Tooltip payload searcher for Treemap — navigates nested node structure
- * using a path string like 'children[0].children[1]'.
- */
-export const treemapPayloadSearcher: TooltipPayloadSearcher = (
-  data: unknown,
-  activeIndex: TooltipIndex,
-) => {
-  if (!data || !activeIndex) return undefined
-  return get(data, activeIndex)
+interface TreeIndex {
+  /** Each node's total by its tooltip path (`children[0].children[1]`); parents sum their leaves. */
+  totals: Record<string, number>
+  /** The first path (in tree order) of each row, and of each name. */
+  pathByRow: Map<unknown, { path: string, order: number }>
+  pathByName: Map<unknown, { path: string, order: number }>
 }
 
-const treemapOptions: ChartOptions = {
-  chartName: 'Treemap',
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: treemapPayloadSearcher,
-  eventEmitter: undefined,
-}
-
-/**
- * Build a hierarchical node structure with tooltipIndex paths for tooltip lookup.
- */
-function buildNodeTree(
-  data: Record<string, any>[],
-  dataKey: string,
-  nameKey: string,
-  parentIndex: string = '',
-): Record<string, any> {
-  const children = data.map((item, i) => {
-    const tooltipIndex = `${parentIndex}children[${i}]`
-    if (item.children && item.children.length > 0) {
-      const childTree = buildNodeTree(item.children, dataKey, nameKey, `${tooltipIndex}.`)
-      return {
-        ...item,
-        tooltipIndex,
-        ...childTree,
-      }
-    }
-    return {
-      ...item,
-      tooltipIndex,
-      value: sumValues(item, dataKey),
-    }
+/** One walk over the tree builds the totals and the path lookups for the tooltip. */
+function indexTree(items: readonly TreemapData[], dataKey: DataKey<TreemapData>, nameKey: DataKey<TreemapData>): TreeIndex {
+  const index: TreeIndex = { totals: {}, pathByRow: new Map(), pathByName: new Map() }
+  let order = 0
+  const walk = (level: readonly TreemapData[], parent: string) => level.forEach((item, i) => {
+    const path = `${parent}children[${i}]`
+    const at = { path, order: order++ }
+    index.totals[path] = sumValues(item, dataKey)
+    const row = toRaw(item)
+    if (!index.pathByRow.has(row))
+      index.pathByRow.set(row, at)
+    const name = getValueByDataKey(item, nameKey)
+    if (!index.pathByName.has(name))
+      index.pathByName.set(name, at)
+    if (item.children?.length)
+      walk(item.children, `${path}.`)
   })
-  return { children, name: 'root', tooltipIndex: parentIndex }
+  walk(items, '')
+  return index
 }
 
-export const TreemapVueProps = {
-  data: { type: Array as PropType<Record<string, any>[]>, required: true as const },
-  dataKey: { type: String, default: 'value' },
-  nameKey: { type: String, default: 'name' },
-  width: { type: Number, required: true as const },
-  height: { type: Number, required: true as const },
-  aspectRatio: { type: Number, default: 4 / 3 },
-  fill: { type: String, default: '#808080' },
-  stroke: { type: String, default: '#fff' },
+const TreemapVueProps = {
+  title: { type: String, default: 'Treemap' },
+  desc: String,
+  data: { type: Array as PropType<TreemapData[]>, required: true as const },
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'value' },
+  nameKey: { type: [String, Number, Function] as PropType<ChartDataKey>, default: 'name' },
+  tileAspectRatio: { type: Number, default: 4 / 3 },
+  fill: { type: String, default: seriesColor(0) },
+  stroke: { type: String, default: 'var(--v-charts-background, #fff)' },
   type: { type: String as PropType<'flat' | 'nest'>, default: 'flat' },
-  colorPanel: { type: Array as PropType<string[]>, default: undefined },
+  colors: { type: Array as PropType<string[]>, default: undefined },
   isAnimationActive: { type: Boolean, default: true },
-  transition: { type: Object as PropType<AnimationOptions>, default: () => ({ duration: 0.8, ease: 'easeOut' as const }) },
-  onClick: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
-  onMouseEnter: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
-  onMouseLeave: { type: Function as PropType<(node: any, e: MouseEvent) => void>, default: undefined },
+  transition: { type: Object as PropType<ValueAnimationTransition<number>>, default: undefined },
 }
 
-/**
- * Inner component that has access to the Redux store (provided by Treemap wrapper).
- */
-const TreemapInner = defineComponent({
-  name: 'TreemapInner',
-  props: TreemapVueProps,
-  slots: Object as SlotsType<TreemapSlots>,
-  setup(props, { slots }) {
-    const dispatch = useAppDispatch()
-    const colors = computed(() => props.colorPanel ?? DEFAULT_COLORS)
+const treemapEmits = {
+  'node-click': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent | KeyboardEvent) => true,
+  'node-mouseenter': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
+  'node-mouseleave': (_node: TreemapLayoutNode, _index: number, _event: MouseEvent) => true,
+  'animation-start': () => true,
+  'animation-end': () => true,
+}
 
-    // Nest mode state
-    const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
-    const currentData = ref<Record<string, any>[] | null>(null)
-    // Increment to re-trigger entrance animation on nest navigation
-    const animationKey = ref(0)
+function useTreemap(
+  props: ExtractPropTypes<typeof TreemapVueProps> & { width: number, height: number },
+  slots: TreemapSlots,
+  emit: EmitFn<typeof treemapEmits>,
+) {
+  const tooltip = useTooltipController()
+  const canMeasureText = useCanMeasureText()
 
-    const isNestMode = computed(() => props.type === 'nest')
+  // Nest mode state
+  const breadcrumbTrail = ref<BreadcrumbEntry[]>([])
+  const currentData = ref<TreemapData[] | null>(null)
+  const trackedData = useTrackedData(() => props.type === 'nest' ? currentData.value ?? props.data : props.data)
 
-    const nestCurrentData = computed(() => {
-      if (!isNestMode.value) return null
-      return currentData.value ?? props.data
+  const isNestMode = computed(() => props.type === 'nest')
+
+  const nestCurrentData = computed(() => {
+    if (!isNestMode.value)
+      return null
+    return trackedData.value ?? []
+  })
+
+  function computeNestLevelData(data: TreemapData[]): TreemapData[] {
+    return data.map((item) => {
+      const aggregatedValue = sumValues(item, props.dataKey)
+      const { children: _, ...rest } = item
+      return { ...rest, value: aggregatedValue }
     })
+  }
 
-    function computeNestLevelData(data: Record<string, any>[]): Record<string, any>[] {
-      return data.map((item) => {
-        const aggregatedValue = sumValues(item, props.dataKey)
-        const { children: _, ...rest } = item
-        return { ...rest, [props.dataKey]: aggregatedValue }
+  const nodes = computed(() => {
+    const dataToLayout = isNestMode.value
+      ? computeNestLevelData(nestCurrentData.value ?? [])
+      : (trackedData.value ?? [])
+
+    return computeTreemapLayout({
+      data: dataToLayout,
+      width: props.width,
+      height: props.height,
+      dataKey: isNestMode.value ? 'value' : props.dataKey,
+      nameKey: props.nameKey,
+      tileAspectRatio: props.tileAspectRatio,
+      colors: props.colors,
+    })
+  })
+
+  const nodePaths = computed(() => {
+    const paths = new Map<object, string>()
+    const visit = (data: TreemapData[], parent: string) => {
+      data.forEach((item, index) => {
+        const path = `${parent}/${String(getValueByDataKey(item, props.nameKey) ?? index)}`
+        paths.set(toRaw(item), path)
+        if (Array.isArray(item.children))
+          visit(item.children, path)
       })
     }
+    visit(props.data, 'root')
+    return paths
+  })
+  const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
+  const { items } = useKeyedTransition(() => nodes.value.map(node => ({ ...node, path: nodePaths.value.get(toRaw(node.payload)) ?? nodePaths.value.get(toRaw((trackedData.value ?? []).find(item => getValueByDataKey(item, props.nameKey) === node.name) ?? {})) ?? node.name, opacity: 1 })), {
+    key: (node, index) => node.path || index,
+    interpolate: (from, to, t) => ({
+      ...to,
+      x: from.x + (to.x - from.x) * t,
+      y: from.y + (to.y - from.y) * t,
+      width: from.width + (to.width - from.width) * t,
+      height: from.height + (to.height - from.height) * t,
+      opacity: Math.min(1, Math.max(0, (from.opacity ?? 1) + ((to.opacity ?? 1) - (from.opacity ?? 1)) * t)),
+    }),
+    enterFrom: to => ({ ...to, x: to.x + to.width / 2, y: to.y + to.height / 2, width: 0, height: 0 }),
+    exitTo: from => ({ ...from, x: from.x + from.width / 2, y: from.y + from.height / 2, width: 0, height: 0 }),
+    reveal: () => cascadeReveal(nodes.value),
+    isActive: () => props.isAnimationActive,
+    transition: () => props.transition,
+    onEnd: callbacks.onEnd,
+    onStart: callbacks.onStart,
+  })
 
-    const nodes = computed(() => {
-      const dataToLayout = isNestMode.value
-        ? computeNestLevelData(nestCurrentData.value ?? props.data)
-        : props.data
+  // Tooltip payloads are the caller's own nodes, addressed by path; totals come from layout.
+  const tooltipTree = computed(() => {
+    const data = isNestMode.value ? (nestCurrentData.value ?? []) : (trackedData.value ?? [])
+    return { data: { children: data }, ...indexTree(data, props.dataKey, props.nameKey) }
+  })
 
-      return computeTreemapLayout({
-        data: dataToLayout,
-        width: props.width,
-        height: props.height,
+  // The tooltip path of a layout node: the first row in tree order that is the node's payload
+  // or, in nest mode, has the node's name.
+  function tooltipPathOf(node: TreemapLayoutNode): string | undefined {
+    const { pathByRow, pathByName } = tooltipTree.value
+    const byRow = pathByRow.get(toRaw(node.payload))
+    const byName = isNestMode.value ? pathByName.get(node.name) : undefined
+    return (byName && (!byRow || byName.order < byRow.order) ? byName : byRow)?.path
+  }
+
+  // Register tooltip entry settings (like Funnel/Scatter do)
+  const tooltipConfiguration = computed(() => {
+    const tooltipEntrySettings: TooltipPayloadConfiguration = {
+      dataDefinedOnItem: tooltipTree.value.data,
+      values: tooltipTree.value.totals,
+      positions: undefined,
+      keyboardItems: [...nodes.value.entries()].sort(([, a], [, b]) =>
+        a.y + a.height / 2 - b.y - b.height / 2
+        || a.x + a.width / 2 - b.x - b.width / 2,
+      ).map(([index, node]) => ({
+        identity: node.payload,
+        index,
+        payloadKey: tooltipPathOf(node),
+        coordinate: { x: node.x + node.width / 2, y: node.y + node.height / 2 },
+        onClick: event => handleNodeClick(node, index, event),
+      })),
+      settings: {
+        stroke: props.stroke,
+        strokeWidth: undefined,
+        fill: props.fill,
         dataKey: props.dataKey,
         nameKey: props.nameKey,
-        aspectRatio: props.aspectRatio,
-        colorPanel: colors.value,
-      })
+        name: undefined,
+        hide: false,
+        type: undefined,
+        color: props.fill,
+        unit: '',
+      },
+    }
+    return tooltipEntrySettings
+  })
+  tooltip.entries.register(tooltipConfiguration)
+
+  function handleNestClick(node: TreemapLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
+    const sourceData = nestCurrentData.value ?? []
+    const clickedItem = sourceData.find(item => getValueByDataKey(item, props.nameKey) === node.name)
+
+    if (clickedItem?.children && clickedItem.children.length > 0) {
+      breadcrumbTrail.value = [
+        ...breadcrumbTrail.value,
+        { name: getValueByDataKey(clickedItem, props.nameKey) ?? clickedItem.name, data: sourceData },
+      ]
+      currentData.value = clickedItem.children
+    }
+
+    emit('node-click', node, index, e)
+  }
+
+  function navigateToBreadcrumb(index: number) {
+    if (index < 0) {
+      currentData.value = null
+      breadcrumbTrail.value = []
+    }
+    else {
+      const entry = breadcrumbTrail.value[index]
+      currentData.value = entry.data
+      breadcrumbTrail.value = breadcrumbTrail.value.slice(0, index)
+    }
+  }
+
+  function getNodeFill(node: TreemapLayoutNode) {
+    return node.color ?? seriesColor(node.entryIndex)
+  }
+
+  function handleNodeMouseEnter(node: TreemapLayoutNode, index: number, e: MouseEvent) {
+    const coordinate: Coordinate = {
+      x: node.x + node.width / 2,
+      y: node.y + node.height / 2,
+    }
+    tooltip.activate('hover', {
+      type: 'item',
+      configuration: tooltipConfiguration.value,
+      index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
+      coordinate,
     })
+    emit('node-mouseenter', node, index, e)
+  }
 
-    // Build node tree for tooltip payload lookup
-    const nodeTree = computed(() => {
-      const data = isNestMode.value ? (nestCurrentData.value ?? props.data) : props.data
-      return buildNodeTree(data, props.dataKey, props.nameKey)
-    })
+  function handleNodeMouseLeave(node: TreemapLayoutNode, index: number, e: MouseEvent) {
+    tooltip.clear('hover')
+    emit('node-mouseleave', node, index, e)
+  }
 
-    // Register tooltip entry settings (like Funnel/Scatter do)
-    watchEffect((onCleanup) => {
-      const tooltipEntrySettings: TooltipPayloadConfiguration = {
-        dataDefinedOnItem: nodeTree.value,
-        positions: undefined,
-        settings: {
-          stroke: props.stroke,
-          strokeWidth: undefined,
-          fill: props.fill,
-          dataKey: props.dataKey,
-          nameKey: props.nameKey,
-          name: undefined,
-          hide: false,
-          type: undefined,
-          color: props.fill,
-          unit: '',
-        },
-      }
-      dispatch(addTooltipEntrySettings(tooltipEntrySettings))
-      onCleanup(() => {
-        dispatch(removeTooltipEntrySettings(tooltipEntrySettings))
-      })
-    })
-
-    // Map layout node name → tooltipIndex from nodeTree
-    function getTooltipIndex(node: TreemapLayoutNode): TooltipIndex {
-      const data = isNestMode.value ? (nestCurrentData.value ?? props.data) : props.data
-      const idx = data.findIndex(item => item[props.nameKey] === node.name)
-      if (idx >= 0) return `children[${idx}]`
-      // For flat mode with nested data, search leaves
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].children) {
-          const childIdx = data[i].children.findIndex((c: any) => c[props.nameKey] === node.name)
-          if (childIdx >= 0) return `children[${i}].children[${childIdx}]`
-        }
-      }
-      return `children[0]`
+  function handleNodeClick(node: TreemapLayoutNode, index: number, e: MouseEvent | KeyboardEvent) {
+    if (isNestMode.value) {
+      handleNestClick(node, index, e)
     }
-
-    function handleNestClick(node: TreemapLayoutNode, e: MouseEvent) {
-      const sourceData = nestCurrentData.value ?? props.data
-      const clickedItem = sourceData.find(item => item[props.nameKey] === node.name)
-
-      if (clickedItem?.children && clickedItem.children.length > 0) {
-        breadcrumbTrail.value = [
-          ...breadcrumbTrail.value,
-          { name: clickedItem[props.nameKey] ?? clickedItem.name, data: sourceData },
-        ]
-        currentData.value = clickedItem.children
-        animationKey.value++
-      }
-
-      props.onClick?.(node, e)
-    }
-
-    function navigateToBreadcrumb(index: number) {
-      if (index < 0) {
-        currentData.value = null
-        breadcrumbTrail.value = []
-      }
-      else {
-        const entry = breadcrumbTrail.value[index]
-        currentData.value = entry.data
-        breadcrumbTrail.value = breadcrumbTrail.value.slice(0, index)
-      }
-      animationKey.value++
-    }
-
-    function getNodeFill(node: TreemapLayoutNode) {
-      return node.color ?? props.fill
-    }
-
-    function handleNodeMouseEnter(node: TreemapLayoutNode, e: MouseEvent) {
-      const tooltipIndex = getTooltipIndex(node)
-      const activeCoordinate: Coordinate = {
+    else {
+      const coordinate: Coordinate = {
         x: node.x + node.width / 2,
         y: node.y + node.height / 2,
       }
-      dispatch(setActiveMouseOverItemIndex({
-        activeIndex: tooltipIndex,
-        activeDataKey: props.dataKey,
-        activeCoordinate,
-      }))
-      props.onMouseEnter?.(node, e)
+      tooltip.activate('click', {
+        type: 'item',
+        configuration: tooltipConfiguration.value,
+        index: nodes.value.findIndex(candidate => toRaw(candidate.payload) === toRaw(node.payload)),
+        coordinate,
+      })
+      emit('node-click', node, index, e)
+    }
+  }
+
+  // `opacity` is the entrance's fade, not part of the layout a custom content slot receives.
+  function renderNode({ opacity, ...node }: TreemapLayoutNode & { opacity?: number }, index: number, key: PropertyKey, labelFade?: number) {
+    const nodeFill = getNodeFill(node)
+    const labelFill = node.color == null ? seriesForeground(node.entryIndex) : labelColor(nodeFill)
+    const fade = opacity != null && opacity < 1 ? opacity : undefined
+
+    const nodeProps: TreemapContentSlotProps = {
+      ...node,
+      index,
+      fill: nodeFill,
+      stroke: props.stroke,
     }
 
-    function handleNodeMouseLeave(node: TreemapLayoutNode, e: MouseEvent) {
-      dispatch(mouseLeaveItem())
-      props.onMouseLeave?.(node, e)
-    }
-
-    function handleNodeClick(node: TreemapLayoutNode, e: MouseEvent) {
-      if (isNestMode.value) {
-        handleNestClick(node, e)
-      }
-      else {
-        const tooltipIndex = getTooltipIndex(node)
-        const activeCoordinate: Coordinate = {
-          x: node.x + node.width / 2,
-          y: node.y + node.height / 2,
-        }
-        dispatch(setActiveClickItemIndex({
-          activeIndex: tooltipIndex,
-          activeDataKey: props.dataKey,
-          activeCoordinate,
-        }))
-        props.onClick?.(node, e)
-      }
-    }
-
-    function renderNodeAtProgress(node: TreemapLayoutNode, index: number, progress: number) {
-      const nodeFill = getNodeFill(node)
-
-      // Slide-in from left (matching Recharts): translate from (-x - width, 0) to (0, 0)
-      const translateX = (-node.x - node.width) * (1 - progress)
-      const transform = progress < 1 ? `translate(${translateX}, 0)` : undefined
-
-      const nodeProps: TreemapContentSlotProps = {
-        ...node,
-        index,
-        fill: nodeFill,
-        stroke: props.stroke,
-      }
-
-      if (slots.content) {
-        return (
-          <g
-            key={`node-${index}`}
-            class="v-charts-treemap-node"
-            style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-            transform={transform}
-            onClick={(e: MouseEvent) => handleNodeClick(node, e)}
-            onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
-            onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
-          >
-            {slots.content(nodeProps)}
-          </g>
-        )
-      }
-
-      // Check if this node has children in the original source data (for nest mode arrow)
-      const hasChildren = isNestMode.value && (() => {
-        const sourceData = nestCurrentData.value ?? props.data
-        const item = sourceData.find(d => d[props.nameKey] === node.name)
-        return item?.children && item.children.length > 0
-      })()
-
-      // Arrow indicator for nest mode nodes with children
-      const arrow = hasChildren && node.width > 10 && node.height > 10
-        ? (
-            <polygon
-              points={`${node.x + 2},${node.y + node.height / 2} ${node.x + 6},${node.y + node.height / 2 + 3} ${node.x + 2},${node.y + node.height / 2 + 6}`}
-              fill="#fff"
-            />
-          )
-        : null
-
-      // Text label — only render if text fits within node bounds
-      const nameSize = node.width > 20 && node.height > 20
-        ? getStringSize(node.name, { fontSize: '14px' })
-        : { width: Infinity, height: Infinity }
-      const text = node.width > 20 && node.height > 20 && nameSize.width < node.width && nameSize.height < node.height
-        ? (
-            <text
-              x={node.x + 8}
-              y={node.y + node.height / 2 + 7}
-              fill="#fff"
-              font-size={14}
-            >
-              {node.name}
-            </text>
-          )
-        : null
-
+    if (slots.content) {
       return (
         <g
-          key={`node-${index}`}
+          key={key}
           class="v-charts-treemap-node"
           style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-          transform={transform}
-          onClick={(e: MouseEvent) => handleNodeClick(node, e)}
-          onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, e)}
-          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, e)}
+          opacity={fade}
+          onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
+          onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
+          onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
         >
-          <rect
-            x={node.x}
-            y={node.y}
-            width={node.width}
-            height={node.height}
-            fill={nodeFill}
-            stroke={props.stroke}
-          />
-          {arrow}
-          {text}
+          {slots.content(nodeProps)}
         </g>
       )
     }
 
-    function renderBreadcrumb() {
-      if (!isNestMode.value || breadcrumbTrail.value.length === 0) return null
+    // Check if this node has children in the original source data (for nest mode arrow)
+    const hasChildren = isNestMode.value && (() => {
+      const sourceData = nestCurrentData.value ?? []
+      const item = sourceData.find(d => getValueByDataKey(d, props.nameKey) === node.name)
+      return item?.children && item.children.length > 0
+    })()
 
-      return (
-        <div class="v-charts-treemap-breadcrumb">
-          <span
-            class="v-charts-treemap-breadcrumb-item"
-            style={{ cursor: 'pointer' }}
-            onClick={() => navigateToBreadcrumb(-1)}
+    // Arrow indicator for nest mode nodes with children
+    const arrow = hasChildren && node.width > 10 && node.height > 10
+      ? (
+          <polygon
+            points={`${node.x + 2},${node.y + node.height / 2} ${node.x + 6},${node.y + node.height / 2 + 3} ${node.x + 2},${node.y + node.height / 2 + 6}`}
+            fill={labelFill}
+          />
+        )
+      : null
+
+    // Text label — only render if text fits within node bounds
+    const nameSize = node.width > 20 && node.height > 20
+      ? getStringSize(node.name, { fontSize: '14px' }, canMeasureText.value)
+      : { width: Infinity, height: Infinity }
+    const text = node.width > 20 && node.height > 20 && nameSize.width < node.width && nameSize.height < node.height
+      ? (
+          <text
+            x={node.x + 8}
+            y={node.y + node.height / 2 + 7}
+            fill={labelFill}
+            font-size={14}
+            opacity={labelFade}
           >
-            Root
-          </span>
-          {breadcrumbTrail.value.map((entry, i) => (
-            <span key={i}>
-              <span style={{ margin: '0 4px' }}>/</span>
-              <span
-                class="v-charts-treemap-breadcrumb-item"
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigateToBreadcrumb(i)}
-              >
-                {entry.name}
-              </span>
-            </span>
-          ))}
-        </div>
-      )
-    }
+            {node.name}
+          </text>
+        )
+      : null
 
-    return () => (
-      <>
-        {renderBreadcrumb()}
-        <Surface width={props.width} height={props.height}>
-          <Layer class="v-charts-treemap">
-            <Animate
-              key={animationKey.value}
-              isActive={props.isAnimationActive}
-              from={0}
-              to={1}
-              transition={props.transition}
-            >
-              {(progress: number) =>
-                nodes.value.map((node, index) =>
-                  renderNodeAtProgress(node, index, progress),
-                )}
-            </Animate>
-          </Layer>
-        </Surface>
-      </>
+    return (
+      <g
+        key={key}
+        class="v-charts-treemap-node"
+        style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+        opacity={fade}
+        onClick={(e: MouseEvent) => handleNodeClick(node, index, e)}
+        onMouseenter={(e: MouseEvent) => handleNodeMouseEnter(node, index, e)}
+        onMouseleave={(e: MouseEvent) => handleNodeMouseLeave(node, index, e)}
+      >
+        <rect
+          x={node.x}
+          y={node.y}
+          width={node.width}
+          height={node.height}
+          fill={nodeFill}
+          stroke={props.stroke}
+        />
+        {arrow}
+        {text}
+      </g>
     )
-  },
-})
+  }
+
+  function renderBreadcrumb() {
+    if (!isNestMode.value || breadcrumbTrail.value.length === 0)
+      return null
+
+    return (
+      <div class="v-charts-treemap-breadcrumb" style={{ color: 'var(--v-charts-text, #666)' }}>
+        <span
+          class="v-charts-treemap-breadcrumb-item"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigateToBreadcrumb(-1)}
+        >
+          Root
+        </span>
+        {breadcrumbTrail.value.map((entry, i) => (
+          <span key={i}>
+            <span style={{ margin: '0 4px' }}>/</span>
+            <span
+              class="v-charts-treemap-breadcrumb-item"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigateToBreadcrumb(i)}
+            >
+              {entry.name}
+            </span>
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  const renderChart = () => (
+    <Layer data-slot="series" class="v-charts-treemap">
+      {items.value.map((item, index) => renderNode(item.value, index, item.key, labelOpacity(item)))}
+    </Layer>
+  )
+  return { renderChart, renderBreadcrumb }
+}
 
 /**
  * Treemap chart — hierarchical data visualization using nested rectangles.
@@ -430,28 +438,32 @@ const TreemapInner = defineComponent({
  * </Treemap>
  * ```
  */
-export const Treemap = defineComponent({
+export const Treemap = forwardsHtmlAttributes(defineComponent({
   name: 'Treemap',
-  props: TreemapVueProps,
+  props: { ...TreemapVueProps, ...chartSizeProps },
+  inheritAttrs: false,
+  emits: { ...chartEmits, ...treemapEmits },
   slots: Object as SlotsType<TreemapSlots>,
-  setup(props, { slots }) {
-    const store = createRechartsStore({ options: treemapOptions }, 'Treemap')
-    provideStore({ store })
+  setup(props, { slots, emit, attrs }) {
+    const size = useChartShell(props, standaloneChartOptions('Treemap'))
+    function setupContent() {
+      const { renderChart, renderBreadcrumb } = useTreemap(reactive({
+        ...toRefs(props),
+        width: size.effectiveWidth,
+        height: size.effectiveHeight,
+      }), slots, emit)
+      return { svg: renderChart, before: renderBreadcrumb }
+    }
 
     return () => {
-      if (!props.data || props.data.length === 0) return null
+      if (!props.data || props.data.length === 0)
+        return null
 
       return (
-        <ChartsWrapper
-          width={props.width}
-          height={props.height}
-        >
-          <TreemapInner {...props}>
-            {{ content: slots.content }}
-          </TreemapInner>
-          {slots.default?.()}
-        </ChartsWrapper>
+        <ChartShell {...attrs} {...chartListeners(emit)} size={size} root="wrapper" setupContent={setupContent} accessibilityLayer title={props.title} desc={props.desc}>
+          {{ default: slots.default }}
+        </ChartShell>
       )
     }
   },
-})
+}))

@@ -1,15 +1,17 @@
-import type { CSSProperties, PropType, VNode } from 'vue'
-import type { LayoutType, Margin } from '@/types'
+import type { CSSProperties, PropType, VNodeChild } from 'vue'
+import type { LayoutType } from '@/types'
 import type { CartesianPosition } from '@/cartesian/getCartesianPosition'
-import type { LegendType } from '@/types/legend'
-import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
-import type { VuePropsToType, WithSVGProps } from '@/types/common'
+import type { HorizontalAlignmentType, LegendPayload, LegendType, VerticalAlignmentType } from '@/types/legend'
+import type { VuePropsToType } from '@/types/common'
 
 export interface LegendSlots {
-  content: (params: LegendContentProps) => VNode
+  content?: (params: LegendContentProps) => VNodeChild
 }
 
+export type LegendHidden = string[]
+
 export const LegendVueProps = {
+  hidden: Array as PropType<LegendHidden>,
   layout: {
     type: String as PropType<LayoutType | 'auto'>,
     default: 'auto',
@@ -47,25 +49,19 @@ export const LegendVueProps = {
   wrapperStyle: Object as PropType<CSSProperties>,
   contentStyle: Object as PropType<CSSProperties>,
   itemStyle: Object as PropType<CSSProperties>,
-  formatter: Function as PropType<(value: string, entry: LegendPayload) => string>,
-  onClick: Function as PropType<(data: LegendPayload, index: number) => void>,
-  onMouseEnter: Function as PropType<(data: LegendPayload, index: number) => void>,
-  onMouseLeave: Function as PropType<(data: LegendPayload, index: number) => void>,
-  margin: Object as PropType<Margin>,
-  chartWidth: Number,
-  chartHeight: Number,
-  payloadUniqBy: [Boolean, Function] as PropType<boolean | ((item: LegendPayload) => any)>,
+  formatter: Function as PropType<(value: string | undefined, entry: LegendPayload) => string>,
+  payloadUniqBy: [Boolean, Function] as PropType<boolean | ((item: LegendPayload) => unknown)>,
+  /** Sort entries. By default they keep the order of the data (Pie) or of the series. */
   itemSorter: {
     type: [String, Function] as PropType<'value' | 'dataKey' | ((item: LegendPayload) => number | string)>,
-    default: 'value',
+    default: undefined,
   },
-  portal: Object as PropType<HTMLElement | null>,
-  onBBoxUpdate: Function as PropType<(box: { width: number, height: number } | null) => void>,
+  to: [String, Object] as PropType<string | HTMLElement>,
 } as const
 
-export type LegendProps = VuePropsToType<typeof LegendVueProps>
-export type LegendPropsWithSVG = WithSVGProps<typeof LegendVueProps>
+/** Resolved Legend props inside the library; the public `LegendProps` is derived from the component. */
+export type LegendInput = VuePropsToType<typeof LegendVueProps>
 
-export interface LegendContentProps extends LegendProps {
+export interface LegendContentProps extends LegendInput {
   payload: LegendPayload[]
 }

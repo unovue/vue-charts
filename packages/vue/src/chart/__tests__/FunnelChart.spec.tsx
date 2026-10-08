@@ -1,14 +1,11 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FunnelChart } from '@/chart/FunnelChart'
-import { Funnel } from '@/cartesian/funnel/Funnel'
-import { Tooltip } from '@/components/Tooltip'
-import { Legend } from '@/components/legend'
+import { Funnel, FunnelChart } from '@/index'
+import { Tooltip } from '@/components/tooltip/Tooltip'
+import Legend from '@/components/legend/Legend'
 import { Cell } from '@/components/Cell'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
 
 describe('funnelChart', () => {
   beforeEach(() => {
@@ -21,6 +18,34 @@ describe('funnelChart', () => {
     { value: 50, name: 'Checkout', fill: '#8dd1e1' },
     { value: 30, name: 'Purchase', fill: '#82ca9d' },
   ]
+
+  it('handles navigation keys without axis ticks or console errors', async () => {
+    const error = vi.spyOn(console, 'error')
+    const errors: unknown[] = []
+    function onError(event: ErrorEvent) {
+      errors.push(event.error)
+    }
+    window.addEventListener('error', onError)
+    try {
+      const { container } = render(() => (
+        <FunnelChart width={500} height={300}>
+          <Funnel dataKey="value" data={data} isAnimationActive={false} />
+          <Tooltip />
+        </FunnelChart>
+      ))
+      const root = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+      root.focus()
+      await nextTick()
+      expect(document.activeElement).toBe(root)
+      for (const key of ['ArrowRight', 'ArrowLeft', 'Home', 'End'])
+        await fireEvent.keyDown(root, { key })
+      expect(errors).toEqual([])
+      expect(error).not.toHaveBeenCalled()
+    }
+    finally {
+      window.removeEventListener('error', onError)
+    }
+  })
 
   describe('basic rendering', () => {
     it('renders 4 trapezoid elements', () => {
@@ -64,17 +89,33 @@ describe('funnelChart', () => {
     })
   })
 
+  it('keeps computed geometry when payload fields collide', () => {
+    const control = render(() => (
+      <FunnelChart width={500} height={300}>
+        <Funnel dataKey="value" data={data} isAnimationActive={false} />
+      </FunnelChart>
+    ))
+    const expected = [...control.container.querySelectorAll('.v-charts-trapezoid')].map(el => el.getAttribute('d'))
+    control.unmount()
+    const collided = data.map(entry => ({ ...entry, x: -999, y: Infinity, width: -99, height: -99, upperWidth: -99, lowerWidth: -99 }))
+    const shape = vi.fn((props: { x: number, y: number, upperWidth: number, height: number, payload: unknown }) => (
+      <rect x={props.x} y={props.y} width={props.upperWidth} height={props.height} />
+    ))
+    const view = render(() => (
+      <FunnelChart width={500} height={300}>
+        <Funnel dataKey="value" data={collided} isAnimationActive={false} />
+        <Funnel dataKey="value" data={collided} isAnimationActive={false}>{{ shape }}</Funnel>
+      </FunnelChart>
+    ))
+    expect([...view.container.querySelectorAll('.v-charts-trapezoid')].map(el => el.getAttribute('d'))).toEqual(expected)
+    expect(shape.mock.calls[0][0].payload).toMatchObject(collided[0])
+    expect(shape.mock.calls[0][0].y).toBe(5)
+  })
+
   describe('lastShapeType', () => {
     it('last trapezoid narrows to triangle by default', () => {
-      const { container } = render(() => (
-        <FunnelChart width={500} height={300}>
-          <Funnel dataKey="value" data={data} isAnimationActive={false} />
-        </FunnelChart>
-      ))
-      const trapezoids = container.querySelectorAll('.v-charts-trapezoid')
-      const lastPath = trapezoids[trapezoids.length - 1]?.getAttribute('d')
-      // Triangle: lowerWidth=0, bottom two points converge
-      expect(lastPath).toBeTruthy()
+      const { container } = render(() => <FunnelChart width={500} height={300}><Funnel dataKey="value" data={data} isAnimationActive={false} /></FunnelChart>)
+      expect([...container.querySelectorAll('.v-charts-trapezoid')].at(-1)?.getAttribute('d')).toBe('M 173,215 L 317,215 L 245,285 L 245,285 Z')
     })
 
     it('lastShapeType=rectangle makes last trapezoid a rectangle', () => {
@@ -139,6 +180,28 @@ describe('funnelChart', () => {
       const tooltipWrapper = container.querySelector('.v-charts-tooltip-wrapper')
       expect(tooltipWrapper).toBeTruthy()
     })
+
+    // The focus ring is for keyboard users; pointer hover keeps the separator, as in Recharts.
+    it('draws the focus ring for keyboard focus only, not for pointer hover', async () => {
+      const { container } = render(() => (
+        <FunnelChart width={500} height={300}>
+          <Funnel dataKey="value" data={data} isAnimationActive={false} />
+          <Tooltip />
+        </FunnelChart>
+      ))
+      const strokes = () => Array.from(container.querySelectorAll('.v-charts-trapezoid'), path => path.getAttribute('stroke'))
+      const focus = 'var(--v-charts-focus, Highlight)'
+      await fireEvent.mouseEnter(container.querySelectorAll('.v-charts-trapezoid')[2].closest('g')!)
+      await nextTick()
+      expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain(String(data[2].value))
+      expect(strokes()).not.toContain(focus)
+      await fireEvent.mouseLeave(container.querySelectorAll('.v-charts-trapezoid')[2].closest('g')!)
+      const root = container.querySelector<HTMLElement>('.v-charts-wrapper')!
+      root.focus()
+      await fireEvent.keyDown(root, { key: 'ArrowRight' })
+      await nextTick()
+      expect(strokes().filter(stroke => stroke === focus)).toHaveLength(1)
+    })
   })
 
   describe('legend', () => {
@@ -174,34 +237,6 @@ describe('funnelChart', () => {
       expect(shapeFn).toHaveBeenCalled()
       expect(shapeFn.mock.calls[0][0]).toHaveProperty('upperWidth')
       expect(shapeFn.mock.calls[0][0]).toHaveProperty('height')
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides layout context (useViewBox, useChartWidth, useChartHeight)', () => {
-      let viewBox: any
-      let chartWidth: any
-      let chartHeight: any
-
-      const Probe = defineComponent({
-        setup() {
-          viewBox = useViewBox()
-          chartWidth = useChartWidth()
-          chartHeight = useChartHeight()
-          return () => null
-        },
-      })
-
-      render(() => (
-        <FunnelChart width={500} height={300}>
-          <Funnel dataKey="value" data={data} isAnimationActive={false} />
-          <Probe />
-        </FunnelChart>
-      ))
-
-      expect(viewBox.value).toBeDefined()
-      expect(chartWidth.value).toBe(500)
-      expect(chartHeight.value).toBe(300)
     })
   })
 })
