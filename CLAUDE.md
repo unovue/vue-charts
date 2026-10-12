@@ -1,198 +1,157 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Workflow
-
-- Enter plan mode for non-trivial tasks (3+ steps or architectural decisions)
-- If something goes sideways, STOP and re-plan — don't keep pushing
-- Use subagents to keep main context clean; one task per subagent
-- After corrections: update `tasks/lessons.md` with the pattern
-- Never mark a task complete without proving it works (run tests, check logs)
-- Autonomous bug fixing: just fix it, don't ask for hand-holding
-
-## Task Management
-
-1. Write plan to `tasks/todo.md` with checkable items
-2. Check in before starting implementation
-3. Mark items complete as you go; capture lessons in `tasks/lessons.md`
-
-## Core Principles
-
-- **Simplicity First**: Make every change as simple as possible. Minimal code impact.
-- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
-- **Minimal Impact**: Only touch what's necessary. Avoid introducing bugs.
-
 ## Overview
 
-**Vue Charts (vccs)** — An unofficial Vue 3 port of [Recharts](https://recharts.org/). Composable charting components built with Vue 3 Composition API + JSX/TSX.
+**vccs** is a Vue 3 port of [Recharts](https://recharts.org/): composable chart components written
+with `defineComponent` and JSX. When you port behavior, compare with the Recharts source. pnpm
+workspace: `packages/vue` (the library, published as `vccs`), `docs` (Nuxt 4 + Docus),
+`playground/nuxt` (Nuxt 4 + shadcn-vue, installs the library through `vccs/nuxt`), and the Nuxt
+SSR fixture in `packages/vue/test/fixtures/nuxt-app`.
 
-- When porting, refer to React source for behavior parity
-- Monorepo: `vccs` (library) + `play` (Nuxt playground) + `docs` (Nuxt docs site), managed by pnpm workspaces
-
-## Build & Development Commands
+## Commands
 
 ```bash
-pnpm install              # Install dependencies
-pnpm dev                  # Watch mode
-pnpm build                # Build library (alias for --filter vccs build)
-pnpm test                 # Run tests
-pnpm test:coverage        # Tests with coverage
-pnpm storybook            # Storybook
-pnpm play                 # Playground
-pnpm docs                 # Docs site (Nuxt 3, port 3001)
-pnpm pub:release          # Publish
-
-# Run specific test
-pnpm test packages/vue/src/chart/__tests__/AreaChart.spec.tsx
+pnpm build                # build the library (most checks need dist/)
+pnpm dev                  # rebuild the library on change
+pnpm test                 # unit tests (vitest); pnpm test <file> runs one file
+pnpm test:coverage        # unit tests with coverage
+pnpm lint                 # ESLint, zero warnings
+pnpm typecheck            # vue-tsc for the library, including the type probes
+pnpm docs                 # docs site (Nuxt dev server)
+pnpm play                 # playground (Nuxt dev server)
+pnpm verify               # the gates and a verdict table (~10 min, see VERIFY.md); --quick skips browsers,
+                          # --release adds motion geometry and the playground sweep
+pnpm lab <command>        # motion instruments: film, timing, seen, dev (never a gate)
+pnpm compare:upstream     # bundle, dependency and line comparison with vccs 0.6.0
 ```
 
-**CI** (`.github/workflows/test.yml`): triggers on PRs to `main`; runs `pnpm install --frozen-lockfile` → `pnpm --filter vccs build` → `pnpm test` on Node 20 / ubuntu-latest.
+`VERIFY.md` lists every gate (what it proves, its tier and latest result) and every instrument.
+To debug an animation, see "Debug a motion bug" in `packages/vue/test/lab/README.md`. Browser checks use
+`scripts/lib/browser.mjs`; `VCCS_PORTS=4620-4629` moves all check servers into one port range.
+
+**CI** (`test.yml`, PRs to `main`, Node 22) runs the fast checks in five jobs: `test`, `consumers`,
+`motion`, `package` and `docs`. `release-check.yml` (manual) runs the slow browser gates (the `--release`
+tier) and the benchmark against vccs 0.6.0.
 
 ## Architecture
 
 ```
-packages/vue/src/           # Main library source (vccs)
-├── cartesian/              # Area, Bar, Line, Scatter, Axis, Brush, CartesianGrid, ZAxis; funnel/ subdirectory
+packages/vue/src/           # Library source (published as vccs)
+├── model/                  # One Vue model per chart: createChart/useChart, registries, axis, polar, tooltip, legend, brush
+├── core/                   # Pure math (layout, scales, series geometry, tooltip payloads); no Vue imports
+├── chart/                  # Chart roots (chartRoot.tsx is the shared root of the 9 categorical charts), ChartShell, standalone charts
+├── cartesian/              # Area, Bar, Line, Scatter, axes, Brush, CartesianGrid, ErrorBar, Reference*; funnel/
 ├── polar/                  # Pie, Radar, RadialBar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
-├── chart/                  # Chart containers (AreaChart, BarChart, LineChart, ComposedChart, FunnelChart, etc.)
-├── components/             # Legend, Tooltip, Text, Label, Cell
-├── container/              # ResponsiveContainer, Surface, Layer
-├── shape/                  # Rectangle, Symbols, Dot, Sector, Cross, Curve, Trapezoid
-├── state/                  # Redux store, slices, middleware, selectors
-├── animation/              # Animate component, motion-v utilities
-├── context/                # provide/inject context providers
-├── hooks/                  # Shared composition hooks
-├── storybook/              # Stories
-├── types/                  # Shared type definitions
-├── utils/                  # Utility functions
-└── index.ts                # Public API
+├── components/             # Legend, Tooltip, Text, Label, LabelList, Cell, Customized (deprecated)
+├── container/              # Surface, Layer, ResponsiveContainer (deprecated, D-21)
+├── shape/                  # Rectangle, Symbols, Dot, Sector, Cross, Curve, Polygon, Trapezoid
+├── animation/              # Keyed transitions, motion tokens, reduced motion, moving labels
+├── events/                 # Pointer, keyboard, touch and sync handlers
+├── context/ hooks/         # Shared provide/inject keys and composables (publicHooks.ts is public)
+├── types/ utils/ test/     # Shared types, helpers, test helpers and vue-tsc type probes (test/types)
+├── index.ts                # Public API: explicit export list
+├── publicProps.ts          # Public XxxProps types, derived from the components
+├── componentNames.ts       # Component list for vccs/nuxt, vccs/resolver and the docs coverage check
+├── nuxt.ts                 # Nuxt module (vccs/nuxt)
+└── resolver.ts             # unplugin-vue-components resolver (vccs/resolver)
 
-docs/                       # Documentation site (Nuxt 3, Docus framework)
-playground/nuxt/            # Nuxt 3 playground (Tailwind v4, shadcn-nuxt)
+scripts/                    # Release checks (see VERIFY.md) and their helpers in scripts/lib/
+internals/                  # decisions.md (library; docs-site design is in docs/adr/), open-items.md, migrations.md
 ```
 
-### Key Decisions
+### Key decisions (full list with reasons: `internals/decisions.md`)
 
-1. **Components**: `defineComponent` + JSX (not SFC)
-2. **State**: Redux Toolkit via `@reduxjs/vue-redux` — one store per chart (`createRechartsStore`)
-3. **Context**: `provide/inject` for parent-child communication
-4. **Chart Factory**: `generateCategoricalChart()` creates chart containers
-5. **Animation**: `motion-v` with `Animate` wrapper
-6. **Events**: Redux middleware — mouse events use `createListenerMiddleware`; external/keyboard/touch use plain synchronous `Middleware`
-7. **Build output**: ESM-only (`preserveModules: true`); `minify: false` — Rolldown's minifier renames variables colliding with Vue's `h`
+1. **Components**: `defineComponent` + JSX, not SFC (the only SFCs are `components/Text.vue` and the deprecated
+   `container/ResponsiveContainer.vue`).
+2. **State**: one chart model per chart, created once in the chart's `EffectScope` (`createChart`,
+   read with `useChart()`). Plain functions that return computeds and getters: no store, no
+   classes, no event bus, no props copied into state by watchers. One owner per concept.
+3. **Registration**: series, axes, tooltip entries and legend entries register through
+   `createRegistry()` and unregister when their scope ends.
+4. **Math**: `core/` holds pure functions with no Vue imports; the model calls them in computeds.
+5. **Chart roots**: cartesian and polar charts and `FunnelChart` are
+   `defineComponent({ ...chartRoot(options), props })`. The standalone charts (BarList, Sparkline,
+   Tracker, Heatmap, CalendarHeatmap, CohortChart, JourneySankey, Sankey, Treemap, SunburstChart)
+   do not use the cartesian engine; all but BarList (plain HTML) render through `ChartShell`.
+6. **Animation and events**: keyed `motion-v` transitions with shared tokens; typed Vue emits.
+7. **Build output**: ESM only (`preserveModules: true`); `minify: false` because Rolldown's
+   minifier renames variables that collide with Vue's `h`.
 
-## Code Conventions
+## Code conventions
 
-### Naming
-- Components: PascalCase; Directories: kebab-case; Hooks: `use` prefix; Types: `Props` suffix
-- Type files: `type.ts`; Tests: `__tests__/*.spec.tsx`; Stories: `__stories__/*.stories.tsx`
+Components PascalCase, directories kebab-case, composables `use…`, prop types `…Props`; props in
+`type.ts`, tests in `__tests__/*.spec.tsx`. `@/` is `packages/vue/src/`; use `import type`.
 
-### Component Pattern
 ```typescript
-export const Component = defineComponent<PropsWithSVG>({
-  name: 'Component',
-  props: ComponentVueProps,
+// type.ts: runtime props, typed with ChartDataKey; no `any`.
+export const LineVueProps = {
+  dataKey: { type: [String, Number, Function] as PropType<ChartDataKey>, required: true as const },
+}
+export type LineInput = VuePropsToType<typeof LineVueProps>
+
+// Line.tsx: export the component directly.
+export const Line = defineComponent({
+  name: 'Line',
+  emits: lineEvents.emits,
+  props: LineVueProps,
   inheritAttrs: false,
-  slots: Object as SlotsType<Slots>,
-  setup(props, { attrs, slots }) {
-    useSetupGraphicalItem(props, 'itemType')
-    const { ...data } = useComponentHook(props, attrs)
-    return () => (/* JSX */)
+  slots: Object as SlotsType<LineSlots>,
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useSeriesProps(inputProps, ['stroke'])
+    lineEvents.provide(emit)
+    const { data } = useSetupGraphicalItem(props, 'line')
+    return () => null // render the series here
   },
 })
 ```
 
-**Volar slot type preservation** (for compiled `.d.ts`):
-```typescript
-const _Component = defineComponent<PropsWithSVG>({ /* ... */ })
-export const Component = _Component as typeof _Component & {
-  new (): { $slots: ComponentSlots }
-}
-```
+`slots: Object as SlotsType<…>` types template slots in source and in the emitted `.d.ts`; do not
+add a constructor cast for `$slots`. A component that forwards undeclared attributes to its root
+SVG element is wrapped once: `export const Component = forwardsSvgAttributes(defineComponent({ ... }))`
+(`utils/attributes.ts`), so strict templates accept `stroke-dasharray`, `data-*` and `aria-*`.
+Public prop types are derived in `publicProps.ts` (`export type LineProps = DeclaredProps<typeof Line>`),
+never written by hand; they hold the declared props and events only.
 
-### Props Pattern
-```typescript
-export const ComponentVueProps = {
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, required: true },
-  fill: { type: String, default: undefined },
-}
-export type ComponentPropsWithSVG = WithSVGProps<VuePropsToType<typeof ComponentVueProps>>
-```
+## Key patterns
 
-### Imports
-- `@/` → `packages/vue/src/`
-- Prefer `import type` for type-only imports
+- **Porting**: React state and effects become `ref`/`computed`/`watch`; context becomes
+  `provide`/`inject`; JSX uses `class` and kebab-case SVG attributes.
+- **Slots, not VNode props**: customization uses named slots (`shape`, `activeBar`, `dot`,
+  `activeDot`, `label`, `content`, `cursor`, `tick`, `horizontal`, `vertical`).
+- **D3**: call `toRaw()` on rows before you pass them to D3 functions (Vue proxies break D3).
+- **SVG layers**: cursor → graphical → label tiers, provided by `container/Surface.tsx` (`layers`); series
+  teleport into their tier.
+- **Animation**: `useKeyedTransition` matches data keys, keeps exiting items until they finish, and
+  starts an interrupted transition from the displayed geometry. `animation/motion.ts` holds the
+  tokens; `transition` overrides them. No animation, reduced motion and SSR show the final geometry.
+- **Funnel**: `Funnel` registers in `useChart().items.polar` like Pie. Its `x` uses the `left`
+  offset and `y` the `top` offset; do not swap them (a ported bug fix).
+- **Tooltip**: custom content uses the `#content` slot with destructured props, not
+  `v-bind="tooltipProps"` (the ESLint auto-fix strips `v-bind` spreads). Active indexes are
+  `number | null` (`TooltipActiveIndex`), also in `v-model:active-index`.
 
-## Key Patterns
+## Testing
 
-### Porting from Recharts
-- React `useState`/`useEffect` → Vue `ref`/`watch`; Context → `provide`/`inject`
-- React `useMemo`/`useCallback` → Vue `computed` / plain functions
-- React JSX → Vue JSX (`class` not `className`, kebab-case SVG attrs)
+- Name the realistic wrong behavior a test catches before you write it. A bug fix gets one
+  regression test, proved with a temporary reverse patch (never `git stash`).
+- Render with `render(() => <Chart …/>)` and import from `@/index`. Use `isAnimationActive={false}`
+  for exact geometry and `mockGetBoundingClientRect` in `beforeEach`.
+- Tooltip hover: `fireEvent(wrapper, new MouseEvent('mousemove', …))` on `.v-charts-wrapper`,
+  then 2× `nextTick()`; a default active index needs 3× `nextTick()`.
+- Library classes use the `v-charts-` prefix (`.v-charts-line-curve`, `.v-charts-surface`); item
+  marks carry `data-v-charts-item-index`.
+- Type contracts: vue-tsc probes in `src/test/types/` (`@ts-expect-error` / `@vue-expect-error`
+  for what must fail). The packed consumer check reuses them.
 
-### Slots (not VNode props)
-Customization uses **named slots**: `shape`, `activeBar`, `dot`, `activeDot`, `label`, `content`, `cursor`, `tick`, `horizontal`, `vertical`.
+## Docs
 
-### Vue + D3
-- Always `toRaw(entry)` before passing to D3 scale functions (Vue Proxy breaks D3)
-
-### SVG Layers (Teleport)
-Three-tier z-ordering: cursor → graphical → label (via `Surface.vue`).
-
-### Animation
-- **Chase pattern** (Bar, Line, Scatter, Radar, RadialBar): `previousData` + incrementing `animationId` as `Animate` key
-- **Area**: uses `ClipRect` for initial entrance + direct `motion-v` `animate()` for data changes (NOT `Animate` wrapper)
-- `Animate` respects `prefers-reduced-motion` via `usePreferredReducedMotion()`
-- `useIsAnimating` hook: shared by Bar, Line, Radar, RadialBar, Area, Funnel — pass getter: `useIsAnimating(() => props.isAnimationActive)`
-
-### Funnel
-- Created via `generateCategoricalChart({ defaultTooltipEventType: 'item' })`
-- Registers via `SetPolarGraphicalItem` (NOT `useSetupGraphicalItem`)
-- **Coordinate calculation**: `x` uses `left` offset, `y` uses `top` offset — do NOT swap (was a ported bug fix)
-- Animation: motion-v `transition: AnimationOptions` — NOT legacy Recharts `animationBegin`/`animationDuration`/`animationEasing`
-
-### Tooltip
-- **`#content` slot**: `<Tooltip><template #content="{ active, payload, label }">...</template></Tooltip>`
-- Use destructured props, NOT `v-bind="tooltipProps"` — `@antfu/eslint-config` auto-fix strips `v-bind` spread
-- `TooltipIndex` type is `string | null` (NOT a number)
-
-### Testing
-- `isAnimationActive={false}` for deterministic rendering
-- `mockGetBoundingClientRect({ width, height })` in `beforeEach`
-- Tests as render functions: `render(() => <Component />)`
-- Public API imports from `@/index`; internal imports use direct paths
-- CSS class selectors: `.v-charts-{component}` pattern (e.g. `.v-charts-line-curve`, `.v-charts-bar-rectangle`, `.v-charts-funnel`, `.v-charts-trapezoid`)
-- **ResponsiveContainer** uses `vcharts-` prefix (not `v-charts-`): `.vcharts-responsive-container`
-- Tooltip hover: `fireEvent(chart, new MouseEvent('mousemove', {...}))` on `.v-charts-wrapper` + 2x `nextTick()`; `defaultIndex` requires 3x `nextTick()`
-- ResizeObserver: `MockResizeObserver` with `trigger(width, height)` method
-- Animation in JSDOM: `motion-v` uses RAF — value stays at `from` when `isActive=true`; snaps to `to` when `isActive=false`
-
-### Storybook
-- Story titles must match Recharts conventions
-- Clone array data in `render`: `data={[...data1]}` (Vue proxy errors)
-
-### Docs Demos
-- Color palette: `#f97316` orange, `#14b8a6` teal, `#f59e0b` amber, `#06b6d4` cyan
-- Always add `:cursor="false"` to `<Tooltip>` in docs demos
-- MDC syntax: `::chart-demo{src="..."}::` to embed live demos
-- Tailwind v4 syntax: `border-(--color-border)` (NOT v3 `border-[--color-border]`)
-
-### Docs Styling (fixed rule)
-- **Tailwind utilities wherever possible** — no scoped CSS unless the style truly can't be expressed as a utility (e.g. `@keyframes`, third-party `:deep` overrides)
-- Design tokens via v4 paren syntax: `bg-(--ds-surface)`, `duration-(--ds-t-colour)`, `ease-(--ds-ease)`
-- Buttons use the `DsButton` component (`variant="solid" | "ghost"`), never raw classes
+Demos use the palette `#f97316`, `#14b8a6`, `#f59e0b`, `#06b6d4`, add `:cursor="false"` to
+`<Tooltip>`, and embed with `::chart-demo{src="…"}::`. Style with Tailwind v4 utilities
+(`border-(--color-border)`); buttons use `DsButton`. Every public component needs a page title,
+heading or table entry (`node scripts/check-docs-coverage.mjs`).
 
 ## Dependencies
 
-| Library | Purpose |
-|---------|---------|
-| `@reduxjs/toolkit` + `@reduxjs/vue-redux` | Chart state management |
-| `motion-v` | SVG animations (external peer dep) |
-| `victory-vendor` | D3 math/scale utilities |
-| `lodash-es` / `es-toolkit` | Utility functions |
-| `@vueuse/core` | Vue composition utilities |
-
-## Custom Notes
-
-Add project-specific notes here. This section is never auto-modified.
+Peers: `vue` ^3.5, `motion-v` ^2.4 (animation) and `@nuxt/kit` ^4 (only for `vccs/nuxt`). Runtime:
+`d3-scale`, `d3-shape`, `d3-hierarchy`, `d3-sankey`, `d3-color` (scales, shapes,
+layouts), `es-toolkit`, `@vueuse/core` and `decimal.js-light` (exact tick arithmetic).

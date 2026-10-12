@@ -1,5 +1,5 @@
 <script setup>
-import { LabelList, RadialBar, RadialBarChart, ResponsiveContainer, Tooltip } from 'vccs'
+import { LabelList, RadialBar, RadialBarChart, Tooltip } from 'vccs'
 
 const data = [
   { name: 'Chrome', visitors: 275, fill: '#f97316' },
@@ -10,37 +10,33 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <RadialBarChart
+    :data="data"
+    :inner-radius="30"
+    :outer-radius="120"
+    :start-angle="-90"
+    :end-angle="380"
     :height="300"
   >
-    <RadialBarChart
-      :data="data"
-      :inner-radius="30"
-      :outer-radius="120"
-      :start-angle="-90"
-      :end-angle="380"
+    <RadialBar
+      data-key="visitors"
+      :background="true"
     >
-      <RadialBar
-        data-key="visitors"
-        :background="true"
-      >
-        <LabelList
-          position="insideStart"
-          data-key="name"
-          class="fill-white capitalize mix-blend-luminosity"
-          :font-size="11"
+      <LabelList
+        position="insideStart"
+        data-key="name"
+        class="fill-white capitalize mix-blend-luminosity"
+        :font-size="11"
+      />
+    </RadialBar>
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
         />
-      </RadialBar>
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-    </RadialBarChart>
-  </ResponsiveContainer>
+      </template>
+    </Tooltip>
+  </RadialBarChart>
 </template>

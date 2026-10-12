@@ -1,22 +1,18 @@
-import type { CSSProperties, Component } from 'vue'
+import type { CSSProperties, Component, VNodeChild } from 'vue'
 import type { LayoutType } from '@/types'
-import type { LegendType } from '@/types/legend'
-import type { HorizontalAlignmentType, LegendPayload, VerticalAlignmentType } from '@/components/DefaultLegendContent'
+import type { HorizontalAlignmentType, LegendPayload, LegendType, VerticalAlignmentType } from '@/types/legend'
 
 interface LegendContentProps {
-  layout?: LayoutType
+  layout?: LayoutType | 'auto'
   align?: HorizontalAlignmentType
   verticalAlign?: VerticalAlignmentType
   iconSize?: number
   iconType?: LegendType
   wrapperStyle?: CSSProperties
   contentStyle?: CSSProperties
-  formatter?: (value: string, entry: LegendPayload) => string
-  onClick?: (data: LegendPayload, index: number) => void
-  onMouseEnter?: (data: LegendPayload, index: number) => void
-  onMouseLeave?: (data: LegendPayload, index: number) => void
+  formatter?: (value: string | undefined, entry: LegendPayload) => string
   payload?: LegendPayload[]
-  content?: Component | ((props: any) => any)
+  content?: Component | ((props: LegendContentProps) => VNodeChild)
 }
 
 export function useLegendContent(props: LegendContentProps) {
@@ -64,18 +60,6 @@ export function useLegendContent(props: LegendContentProps) {
     return props.formatter ? props.formatter(entry.value, entry) : entry.value
   }
 
-  const handleClick = (entry: LegendPayload, index: number) => {
-    props.onClick?.(entry, index)
-  }
-
-  const handleMouseEnter = (entry: LegendPayload, index: number) => {
-    props.onMouseEnter?.(entry, index)
-  }
-
-  const handleMouseLeave = (entry: LegendPayload, index: number) => {
-    props.onMouseLeave?.(entry, index)
-  }
-
   return {
     getWrapperStyle,
     getContentStyle,
@@ -83,8 +67,5 @@ export function useLegendContent(props: LegendContentProps) {
     getViewBox,
     getSvgStyle,
     formatValue,
-    handleClick,
-    handleMouseEnter,
-    handleMouseLeave,
   }
 }

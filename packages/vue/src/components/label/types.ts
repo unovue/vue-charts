@@ -1,16 +1,26 @@
-import type { ViewBox } from '@/cartesian/type'
+import type { PropType, VNodeChild } from 'vue'
+import type { CartesianViewBox, PolarViewBox, ViewBox } from '@/types/viewBox'
 import { classProp } from '@/types'
 import type { DataKey, VuePropsToType } from '@/types'
 import { last } from 'es-toolkit/compat'
-import type { PropType, VNode } from 'vue'
 
 export type { ViewBox }
 
-export interface Data {
-  value?: number | string | Array<number | string>
-  payload?: any
+export interface Data extends
+  Omit<CartesianViewBox, 'x' | 'y'>,
+  Omit<PolarViewBox, 'innerRadius' | 'startAngle'> {
+  x?: number | null
+  y?: number | null
+  innerRadius?: number | null
+  startAngle?: number | null
+  value?: unknown
+  payload?: unknown
   parentViewBox?: ViewBox
   fill?: string
+  /** Set by a series while the shape behind the label fades in or out. */
+  opacity?: number
+  /** Identity of the shape behind the label across data changes; defaults to the index. */
+  key?: PropertyKey
 }
 
 export type LabelPosition =
@@ -56,13 +66,13 @@ export const LabelListVueProps = {
     type: Boolean,
   },
   dataKey: {
-    type: [String, Function] as PropType<DataKey<Record<string, any>>>,
+    type: [String, Function] as PropType<DataKey<Record<string, unknown>>>,
   },
   textBreakAll: {
     type: Boolean,
   },
   position: {
-    type: String as PropType<LabelPosition>,
+    type: [String, Object] as PropType<LabelPosition>,
   },
   offset: {
     type: Number,
@@ -70,9 +80,14 @@ export const LabelListVueProps = {
   angle: {
     type: Number,
   },
+  /** Writes the label text. Receives the raw value, which can be `null` or an object in messy data. */
+  formatter: {
+    type: Function as PropType<LabelListFormatter>,
+  },
 }
 
 export type LabelFormatter = (label: string | number | undefined) => string | number | undefined
+export type LabelListFormatter = (value: unknown) => string | number | undefined
 
 export const LabelVueProps = {
   id: {
@@ -80,9 +95,6 @@ export const LabelVueProps = {
   },
   class: { ...classProp, default: '' },
   viewBox: {
-    type: Object as PropType<ViewBox>,
-  },
-  parentViewBox: {
     type: Object as PropType<ViewBox>,
   },
   value: {
@@ -104,13 +116,30 @@ export const LabelVueProps = {
   angle: {
     type: Number,
   },
-  index: {
-    type: Number,
-  },
 }
+
+export const LabelViewVueProps = {
+  ...LabelVueProps,
+  parentViewBox: { type: Object as PropType<ViewBox> },
+  index: { type: Number },
+}
+
+export type LabelViewProps = VuePropsToType<typeof LabelViewVueProps>
 
 export type LabelProps = VuePropsToType<typeof LabelVueProps>
 
 export interface LabelSlots {
-  content: (props: LabelProps & { viewBox: ViewBox }) => VNode
+  content?: (props: LabelProps & { viewBox: ViewBox }) => VNodeChild
+}
+
+export type LabelListSlotProps = Omit<LabelProps, 'viewBox' | 'formatter'> & ViewBox & {
+  formatter?: LabelListFormatter
+  value?: string | number
+  index: number
+  key: string
+}
+
+export interface LabelListSlots {
+  content?: (props: LabelListSlotProps) => VNodeChild
+  label?: (props: LabelListSlotProps) => VNodeChild
 }

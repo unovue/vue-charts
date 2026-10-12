@@ -1,13 +1,13 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
+import { chartRoot } from '@/chart/chartRoot'
+import { cartesianChartProps } from '@/chart/chartProps'
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from '@/index'
 import { assertNotNull } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
 
-describe('LineChart', () => {
+describe('lineChart', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 100, height: 100 })
   })
@@ -229,8 +229,8 @@ describe('LineChart', () => {
 
       const curves = getLineCurves(container)
       expect(curves).toHaveLength(1)
-      expect(container.querySelector('.v-charts-xAxis')).toBeTruthy()
-      expect(container.querySelector('.v-charts-yAxis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-x-axis')).toBeTruthy()
+      expect(container.querySelector('.v-charts-y-axis')).toBeTruthy()
     })
 
     it('renders with Tooltip', async () => {
@@ -354,81 +354,47 @@ describe('LineChart', () => {
     })
   })
 
-  describe('layout context', () => {
-    it('provides viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
+  // Item mode highlights only the hovered series: the other Line must not draw an active dot.
+  it.each([
+    { shared: false, dots: 1 },
+    { shared: true, dots: 2 },
+  ])('draws $dots active dots for two Lines with shared=$shared', async ({ shared, dots }) => {
+    const rows = [{ name: 'A', uv: 4, pv: 2 }, { name: 'B', uv: 3, pv: 5 }]
+    const { container } = render(() => (
+      <LineChart width={400} height={300} data={rows}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip shared={shared} isAnimationActive={false} />
+        <Line dataKey="uv" isAnimationActive={false} />
+        <Line dataKey="pv" isAnimationActive={false} />
+      </LineChart>
+    ))
+    await nextTick()
+    if (shared)
+      container.querySelector('.v-charts-wrapper')!.dispatchEvent(new MouseEvent('mousemove', { clientX: 300, clientY: 150 }))
+    else
+      container.querySelectorAll('.v-charts-line-dots')[0]!.querySelectorAll('[data-v-charts-item-index]')[1]!.dispatchEvent(new MouseEvent('mouseenter'))
+    await nextTick()
+    await nextTick()
+    expect(container.querySelector('.v-charts-tooltip-wrapper')?.textContent).toContain('uv')
+    expect(container.querySelectorAll('.v-charts-active-dot')).toHaveLength(dots)
+  })
 
-      render(() => (
-        <LineChart width={100} height={50}>
-          <Comp />
-        </LineChart>
-      ))
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render(() => (
-        <LineChart width={100} height={50}>
-          <Comp />
-        </LineChart>
-      ))
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
-    })
-
-    it('provides width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render(() => (
-        <LineChart width={100} height={50}>
-          <Comp />
-        </LineChart>
-      ))
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render(() => (
-        <LineChart width={100} height={50}>
-          <Comp />
-        </LineChart>
-      ))
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
-    })
+  // Behaviour comes from declared capabilities, not the chart name: a renamed root keeps its
+  // lines and its point scale (the first point sits on the plot edge, not mid-band).
+  it('draws Lines on a point scale in a chart root with another name', async () => {
+    const root = chartRoot({ chartName: 'SalesChart', categoryScale: 'point', series: ['line'] })
+    const SalesChart = defineComponent({ ...root, props: cartesianChartProps, setup: (props, context) => root.setup(props, context) })
+    const rows = [{ name: 'A', uv: 4 }, { name: 'B', uv: 3 }]
+    const { container } = render(() => (
+      <SalesChart width={400} height={300} data={rows} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <XAxis dataKey="name" hide />
+        <YAxis hide />
+        <Line dataKey="uv" isAnimationActive={false} />
+      </SalesChart>
+    ))
+    await nextTick()
+    const curve = container.querySelector('.v-charts-line-curve')
+    expect(curve?.getAttribute('d')).toMatch(/^M0,/)
   })
 })

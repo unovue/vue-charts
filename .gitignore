@@ -1,7 +1,5 @@
 node_modules
 tsconfig.tsbuildinfo
-*storybook.log
-storybook-static
 .npmrc
 
 .DS_Store
@@ -9,6 +7,7 @@ storybook-static
 project_config.md
 
 dist
+coverage/
 
 .env
 
@@ -26,3 +25,9 @@ docs/test-results
 .playwright-mcp
 
 openspec
+
+# Local check recordings and reports
+.evidence/
+
+# Agent plans and scratch files
+docs/superpowers/

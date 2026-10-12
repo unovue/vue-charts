@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -17,28 +17,24 @@ function getPath(x, y, width, height) {
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    :margin="{ top: 5, right: 20, left: 10, bottom: 20 }"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      :margin="{ top: 5, right: 20, left: 10, bottom: 20 }"
+    <XAxis data-key="name" />
+    <YAxis />
+    <Bar
+      data-key="uv"
+      fill="#8884d8"
     >
-      <XAxis data-key="name" />
-      <YAxis />
-      <Bar
-        data-key="uv"
-        fill="#8884d8"
-      >
-        <template #shape="props">
-          <path
-            :d="getPath(props.x, props.y, props.width, props.height)"
-            stroke="none"
-            :fill="props.fill"
-          />
-        </template>
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
+      <template #shape="props">
+        <path
+          :d="getPath(props.x, props.y, props.width, props.height)"
+          stroke="none"
+          :fill="props.fill"
+        />
+      </template>
+    </Bar>
+  </BarChart>
 </template>

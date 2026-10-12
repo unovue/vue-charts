@@ -1,5 +1,5 @@
 <script setup>
-import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Area, Bar, CartesianGrid, ComposedChart, Line, Tooltip, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -12,38 +12,36 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <ComposedChart
+    :data="data"
     :height="300"
   >
-    <ComposedChart :data="data">
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis data-key="name" />
-      <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Area
-        data-key="amt"
-        fill="#f97316"
-        stroke="#f97316"
-        :fill-opacity="0.3"
-      />
-      <Bar
-        data-key="pv"
-        fill="#14b8a6"
-        :bar-size="20"
-      />
-      <Line
-        data-key="uv"
-        stroke="#f59e0b"
-      />
-    </ComposedChart>
-  </ResponsiveContainer>
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis data-key="name" />
+    <YAxis />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Area
+      data-key="amt"
+      fill="#f97316"
+      stroke="#f97316"
+      :fill-opacity="0.3"
+    />
+    <Bar
+      data-key="pv"
+      fill="#14b8a6"
+      :bar-size="20"
+    />
+    <Line
+      data-key="uv"
+      stroke="#f59e0b"
+    />
+  </ComposedChart>
 </template>

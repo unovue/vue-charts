@@ -20,11 +20,13 @@ import {
   curveStepBefore,
   area as shapeArea,
   line as shapeLine,
-} from 'victory-vendor/d3-shape'
+} from 'd3-shape'
 import { classProp } from '@/types'
-import type { LayoutType, VuePropsToType, WithSVGProps } from '@/types'
+import type { LayoutType, WithSVGProps } from '@/types'
+import type { Point } from '@/types/shape'
 import { upperFirst } from 'es-toolkit/compat'
 import { isNumber } from '@/utils'
+import { svgAttrs } from '@/utils/VueUtils'
 
 interface CurveFactories {
   [index: string]: CurveFactory
@@ -64,12 +66,6 @@ export type CurveType =
   | 'stepAfter'
   | CurveFactory
 
-export interface Point {
-  readonly x: number
-  readonly y: number
-  readonly payload?: any
-}
-
 const defined = (p: Point) => p.x === +p.x && p.y === +p.y
 const getX = (p: Point) => p.x
 const getY = (p: Point) => p.y
@@ -87,13 +83,13 @@ function getCurveFactory(type: CurveType, layout: LayoutType | undefined) {
   return CURVE_FACTORIES[name] || curveLinear
 }
 
-type GetPathProps = Pick<CurveProps, 'type' | 'points' | 'baseLine' | 'layout' | 'connectNulls'>
+type GetPathProps = Pick<CurveInput, 'type' | 'points' | 'baseLine' | 'layout' | 'connectNulls'>
 
 /**
  * Calculate the path of curve. Returns null if points is an empty array.
  * @return path or null
  */
-export function getPath({
+function getPath({
   type = 'linear',
   points = [],
   baseLine,
@@ -148,10 +144,9 @@ export const CurveVueProps = {
   class: classProp,
 }
 
-export type CurvePropsWithOutSVG = VuePropsToType<typeof CurveVueProps>
-
-export type CurveProps = WithSVGProps<typeof CurveVueProps>
-export const Curve = defineComponent<CurveProps>({
+/** Props as seen inside Curve; the public `CurveProps` is derived from the component in publicProps.ts. */
+export type CurveInput = WithSVGProps<typeof CurveVueProps>
+export const Curve = defineComponent<CurveInput>({
   name: 'Curve',
   props: CurveVueProps,
   inheritAttrs: false,
@@ -170,9 +165,9 @@ export const Curve = defineComponent<CurveProps>({
 
       return (
         <path
-          {...attrs}
+          {...svgAttrs(attrs)}
           class={['v-charts-curve', props.class]}
-          d={realPath.value}
+          d={realPath.value ?? undefined}
         />
       )
     }

@@ -1,18 +1,45 @@
 import type { LayoutType } from '@/types'
 import type { AxisType } from '@/types/axis'
 
-export function isNan(value: any): boolean {
+export function isNan(value: unknown): boolean {
   // eslint-disable-next-line eqeqeq
   return typeof value == 'number' && value != +value
 }
 
 export function isNumber(value: unknown): value is number {
-  return (typeof value === 'number' || value instanceof Number) && !isNan(value)
+  return (typeof value === 'number' || value instanceof Number) && Number.isFinite(Number(value))
+}
+
+/** Coerce finite numeric data while keeping missing and malformed values missing. */
+export function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    return undefined
+  }
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined
+  }
+  const number = Number(value)
+  if (!Number.isFinite(number))
+    return undefined
+  return flushTiny(number)
+}
+
+/** Below this magnitude a value counts as zero; see flushTiny. */
+const TINY = 1e-300
+
+/**
+ * A value smaller than 1e-300 as zero. No chart can show such a value apart from zero, and a
+ * domain that narrow overflows tick and pixel arithmetic (Infinity, division by zero).
+ */
+export function flushTiny(value: number): number {
+  return Math.abs(value) < TINY ? 0 : value
 }
 
 /**
  * validate the width and height props of a chart element
  * @param  {object} el A chart element
+ * @param {number} el.width Chart width
+ * @param {number} el.height Chart height
  * @return {boolean}   true If the props width and height are number, and greater than 0
  */
 export function validateWidthHeight({ width, height }: { width?: number, height?: number }): boolean {
@@ -58,7 +85,6 @@ export function isVisible(
 
 /**
  * Checks if the value is null or undefined
- * @param {any} value The value to check
  * @returns {boolean} true if the value is null or undefined
  */
 export function isNullish(value: unknown): boolean {

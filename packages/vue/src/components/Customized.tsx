@@ -1,15 +1,14 @@
-import type { SlotsType } from 'vue'
+import type { ChartDataKey } from '@/types/base'
+import type { SlotsType, VNodeChild } from 'vue'
+import { useChart } from '@/model/chart'
+import { warnOnce } from '@/utils/log'
 import { computed, defineComponent } from 'vue'
-import { useAppSelector } from '@/state/hooks'
-import { selectUnfilteredCartesianItems } from '@/state/selectors/axisSelectors'
-import { selectChartOffset } from '@/state/selectors/selectChartOffset'
-import { useChartHeight, useChartWidth } from '@/context/chartLayoutContext'
-import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/state/graphicalItemsSlice'
-import type { DataKey } from '@/types'
+import { useChartPresentation } from '@/model/presentation'
+import type { CartesianGraphicalItemSettings, PolarGraphicalItemSettings } from '@/types/graphical'
 
-export interface FormattedGraphicalItem {
+interface FormattedGraphicalItem {
   type: string
-  dataKey: DataKey<any> | undefined
+  dataKey: ChartDataKey | undefined
   props: CartesianGraphicalItemSettings | PolarGraphicalItemSettings
 }
 
@@ -21,19 +20,25 @@ export interface CustomizedSlotProps {
 }
 
 export interface CustomizedSlots {
-  default?: (props: CustomizedSlotProps) => any
+  default?: (props: CustomizedSlotProps) => VNodeChild
 }
 
+/**
+ * @deprecated Use the chart's default slot with `usePlotArea()` and the other chart composables.
+ * Removed in 2.0 (see internals/migrations.md).
+ */
 export const Customized = defineComponent({
   name: 'Customized',
   inheritAttrs: false,
   slots: Object as SlotsType<CustomizedSlots>,
   setup(_props, { slots }) {
-    const chartWidth = useChartWidth()
-    const chartHeight = useChartHeight()
-    const offset = useAppSelector(selectChartOffset)
-    const cartesianItems = useAppSelector(selectUnfilteredCartesianItems)
-    const polarItems = useAppSelector(state => state.graphicalItems.polarItems)
+    warnOnce('[vccs] Customized is deprecated and will be removed in 2.0. Use the chart\'s default slot with usePlotArea() and the other chart composables.')
+    const chart = useChart()
+    const chartWidth = useChartPresentation().width
+    const chartHeight = useChartPresentation().height
+    const offset = chart.offset
+    const cartesianItems = chart.items.cartesian.entries
+    const polarItems = chart.items.polar.entries
 
     const formattedGraphicalItems = computed<FormattedGraphicalItem[]>(() => {
       const items: FormattedGraphicalItem[] = []
@@ -55,7 +60,8 @@ export const Customized = defineComponent({
     })
 
     return () => {
-      if (!slots.default) return null
+      if (!slots.default)
+        return null
 
       return slots.default({
         formattedGraphicalItems: formattedGraphicalItems.value,

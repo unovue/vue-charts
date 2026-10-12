@@ -25,8 +25,9 @@ function labelPos(cx: number, cy: number, outerRadius: number, midAngle: number)
   const RADIAN = Math.PI / 180
   const radius = outerRadius * 0.65
   return {
-    x: cx + radius * Math.cos(-midAngle * RADIAN),
-    y: cy + radius * Math.sin(-midAngle * RADIAN),
+    // Rounded: server and browser can differ in the last digit of cos/sin, which breaks hydration.
+    x: Math.round((cx + radius * Math.cos(-midAngle * RADIAN)) * 100) / 100,
+    y: Math.round((cy + radius * Math.sin(-midAngle * RADIAN)) * 100) / 100,
   }
 }
 </script>

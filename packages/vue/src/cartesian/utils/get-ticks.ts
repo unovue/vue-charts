@@ -1,14 +1,15 @@
-import type { CartesianViewBoxRequired } from '@/cartesian/type'
+import { isServer } from '@/utils/env'
+import type { CartesianViewBoxRequired } from '@/types/viewBox'
 import type { Size } from '@/types'
 import type { CartesianAxisSettings, XAxisOrientation, YAxisOrientation } from '@/types/axis'
 import type { CartesianTickItem } from '@/types/tick'
-import { Global, isNumber, isVisible } from '@/utils'
+import { isNumber, isVisible } from '@/utils'
 import { getStringSize } from '@/utils/attrs'
 import { getEquidistantTicks } from '@/utils/cartesian'
 import { mathSign } from '@/utils/data'
 import { getAngledTickWidth, getNumberIntervalTicks, getTickBoundaries } from '@/utils/tick'
 
-export type Sign = 0 | 1 | -1
+type Sign = 0 | 1 | -1
 
 function getTicksEnd(
   sign: Sign,
@@ -130,7 +131,7 @@ export type GetTicksInput = {
   tick: CartesianAxisSettings['tick']
   tickFormatter: CartesianAxisSettings['tickFormatter']
   ticks: ReadonlyArray<CartesianTickItem>
-  unit: CartesianAxisSettings['unit']
+  unit: string | number | undefined
   viewBox: CartesianViewBoxRequired
 }
 
@@ -138,13 +139,14 @@ export function getTicks(
   props: GetTicksInput,
   fontSize?: string,
   letterSpacing?: string,
+  canMeasure = !isServer(),
 ): ReadonlyArray<CartesianTickItem> {
   const { tick, ticks, viewBox, minTickGap, orientation, interval, tickFormatter, unit, angle } = props
   if (!ticks || !ticks.length || !tick) {
     return []
   }
 
-  if (isNumber(interval) || Global.isSsr) {
+  if (isNumber(interval) || !canMeasure) {
     return getNumberIntervalTicks(ticks, isNumber(interval) ? interval : 0) ?? []
   }
 
@@ -152,14 +154,14 @@ export function getTicks(
 
   const sizeKey = orientation === 'top' || orientation === 'bottom' ? 'width' : 'height'
   const unitSize: Size
-    = unit && sizeKey === 'width' ? getStringSize(unit, { fontSize, letterSpacing }) : { width: 0, height: 0 }
+    = unit && sizeKey === 'width' ? getStringSize(unit, { fontSize, letterSpacing }, canMeasure) : { width: 0, height: 0 }
 
   const getTickSize = (content: CartesianTickItem, index: number) => {
     const value = typeof tickFormatter === 'function' ? tickFormatter(content.value, index) : content.value
     // Recharts only supports angles when sizeKey === 'width'
     return sizeKey === 'width'
-      ? getAngledTickWidth(getStringSize(value, { fontSize, letterSpacing }), unitSize, angle)
-      : getStringSize(value, { fontSize, letterSpacing })[sizeKey]
+      ? getAngledTickWidth(getStringSize(value, { fontSize, letterSpacing }, canMeasure), unitSize, angle)
+      : getStringSize(value, { fontSize, letterSpacing }, canMeasure)[sizeKey]
   }
 
   const sign = ticks.length >= 2 ? mathSign(ticks[1].coordinate - ticks[0].coordinate) : 1

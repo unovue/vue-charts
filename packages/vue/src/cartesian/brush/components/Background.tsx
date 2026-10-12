@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent } from 'vue'
 
 export const Background = defineComponent({
   name: 'Background',
@@ -8,7 +8,7 @@ export const Background = defineComponent({
     width: Number,
     height: Number,
     fill: String,
-    stroke: String
+    stroke: String,
   },
 
   setup(props) {
@@ -21,6 +21,6 @@ export const Background = defineComponent({
         width={props.width}
         height={props.height}
       />
-    );
-  }
-});
+    )
+  },
+})

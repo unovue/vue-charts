@@ -24,7 +24,6 @@ const charts = [
     code: `<template>
   <AreaChart
     :data="data"
-    responsive
   >
     <Area
       type="monotone"
@@ -42,7 +41,6 @@ const charts = [
     code: `<template>
   <BarChart
     :data="data"
-    responsive
   >
     <Bar
       data-key="value"
@@ -57,7 +55,7 @@ const charts = [
     label: 'Pie',
     desc: '',
     code: `<template>
-  <PieChart responsive>
+  <PieChart>
     <Pie
       :data="data"
       data-key="value"
@@ -79,7 +77,6 @@ const charts = [
     code: `<template>
   <RadarChart
     :data="data"
-    responsive
   >
     <Radar
       data-key="value"
@@ -108,7 +105,8 @@ onMounted(async () => {
   })
 })
 
-// Entrance transition; frozen under reduced motion.
+// Entrance: the card rises into place without fading, so its chart's own entrance is visible
+// from the first frame; frozen under reduced motion.
 // No motion `layout` here on purpose: height changes are eliminated at the
 // source (fixed chart heights) and the code pane's height is animated by
 // shiki-magic-move's own container animation — FLIP scaleY would squash text.
@@ -119,10 +117,8 @@ const enterTransition = computed(() => reduced.value
 
 const tabBase = 'relative inline-flex h-7 cursor-pointer touch-manipulation items-center rounded-full px-3 font-mono text-[13px] font-medium transition-colors duration-(--ds-t-colour) ease-(--ds-ease) [-webkit-tap-highlight-color:transparent] [corner-shape:squircle] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ds-accent)'
 
-// Chart morph via AnimatePresence — exit is half the enter
-const chartEnter = computed(() => reduced.value
-  ? { duration: 0 }
-  : { duration: 0.32, ease: [0.2, 0, 0, 1] as const })
+// The old chart fades out; the new one appears at once and plays its own entrance, which a
+// fade on top would hide.
 const chartExit = computed(() => reduced.value
   ? { duration: 0 }
   : { duration: 0.16, ease: [0.2, 0, 0, 1] as const })
@@ -132,7 +128,7 @@ const lineTransition = computed(() => reduced.value
   ? { duration: 0 }
   : { duration: 0.3, ease: [0.2, 0, 0, 1] as const })
 
-// Auto-rotate through chart types; pauses on hover, off under reduced motion
+// Auto-rotate through chart types; pauses on hover, stops once a tab is picked, off under reduced motion
 const keys = charts.map(c => c.key)
 const paused = ref(false)
 let rotateTimer: ReturnType<typeof setInterval> | undefined
@@ -147,13 +143,19 @@ onMounted(() => {
   }, 3200)
 })
 onBeforeUnmount(() => clearInterval(rotateTimer))
+
+// A tab the visitor picks stays: rotating on would replace it mid-entrance.
+function pick(key: string) {
+  clearInterval(rotateTimer)
+  active.value = key
+}
 </script>
 
 <template>
   <motion.figure
     class="m-0 rounded-(--ds-radius-card) bg-(--ds-surface) p-(--ds-card-pad) shadow-(--ds-shadow-card)"
-    :initial="reduced ? false : { opacity: 0, y: 12 }"
-    :animate="{ opacity: 1, y: 0 }"
+    :initial="reduced ? false : { y: 12 }"
+    :animate="{ y: 0 }"
     :transition="enterTransition"
     @mouseenter="paused = true"
     @mouseleave="paused = false"
@@ -169,7 +171,7 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
         :class="[tabBase, active === c.key ? 'text-(--ds-text)' : 'text-(--ds-muted) hover:text-(--ds-text)']"
         role="tab"
         :aria-selected="active === c.key"
-        @click="active = c.key"
+        @click="pick(c.key)"
       >
         <motion.span
           v-if="active === c.key"
@@ -188,10 +190,9 @@ onBeforeUnmount(() => clearInterval(rotateTimer))
           <motion.div
             :key="active"
             class="w-full"
-            :initial="reduced ? false : { opacity: 0, filter: 'blur(4px)' }"
+            :initial="false"
             :animate="{ opacity: 1, filter: 'blur(0px)' }"
             :exit="{ opacity: 0, filter: 'blur(4px)', transition: chartExit }"
-            :transition="chartEnter"
           >
             <LandingCodeCardChart
               :type="active"

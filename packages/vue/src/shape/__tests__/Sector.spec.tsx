@@ -2,13 +2,16 @@ import { render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { Sector } from '@/shape/Sector'
 
-describe('Sector', () => {
+describe('sector', () => {
   it('renders a path element', () => {
     const { container } = render(Sector, {
       props: {
-        cx: 100, cy: 100,
-        innerRadius: 0, outerRadius: 80,
-        startAngle: 0, endAngle: 90,
+        cx: 100,
+        cy: 100,
+        innerRadius: 0,
+        outerRadius: 80,
+        startAngle: 0,
+        endAngle: 90,
         fill: '#8884d8',
       },
     })
@@ -21,9 +24,12 @@ describe('Sector', () => {
   it('returns null for invalid geometry', () => {
     const { container } = render(Sector, {
       props: {
-        cx: 100, cy: 100,
-        innerRadius: 0, outerRadius: 0,
-        startAngle: 0, endAngle: 90,
+        cx: 100,
+        cy: 100,
+        innerRadius: 0,
+        outerRadius: 0,
+        startAngle: 0,
+        endAngle: 90,
       },
     })
     expect(container.querySelector('path')).toBeNull()
@@ -32,9 +38,12 @@ describe('Sector', () => {
   it('renders donut sector (innerRadius > 0)', () => {
     const { container } = render(Sector, {
       props: {
-        cx: 100, cy: 100,
-        innerRadius: 40, outerRadius: 80,
-        startAngle: 0, endAngle: 180,
+        cx: 100,
+        cy: 100,
+        innerRadius: 40,
+        outerRadius: 80,
+        startAngle: 0,
+        endAngle: 180,
         fill: '#82ca9d',
       },
     })
@@ -54,9 +63,12 @@ describe('Sector', () => {
   it('applies CSS class v-charts-sector', () => {
     const { container } = render(Sector, {
       props: {
-        cx: 100, cy: 100,
-        innerRadius: 0, outerRadius: 80,
-        startAngle: 0, endAngle: 90,
+        cx: 100,
+        cy: 100,
+        innerRadius: 0,
+        outerRadius: 80,
+        startAngle: 0,
+        endAngle: 90,
       },
     })
     expect(container.querySelector('.v-charts-sector')).not.toBeNull()

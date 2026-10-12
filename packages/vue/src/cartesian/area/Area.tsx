@@ -1,94 +1,96 @@
-import type { SVGAttributes, SlotsType } from 'vue'
-import { Fragment, Teleport, defineComponent } from 'vue'
-import type { AreaDotSlotProps, AreaProps, AreaPropsWithSVG } from './type'
+import type { PropType, SVGAttributes, ShallowRef, SlotsType, VNodeChild } from 'vue'
+import type { LabelListSlotProps } from '@/components/label/types'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
+import { useSeriesPointEvents } from '@/events/usePointEvents'
+import { areaEvents } from '@/events/itemEvents'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { AreaDotSlotProps, ResolvedAreaProps } from './type'
 import { AreaVueProps } from './type'
 import { useArea } from '@/cartesian/area/hooks/useArea'
 import { Layer } from '@/container/Layer'
 import { StaticArea } from '@/cartesian/area/RenderArea'
-import { ClipRect } from './ClipRect'
-import { ActivePoints } from '@/cartesian/area/ActivePoints'
-import type { ActivePointsSlots } from './ActivePoints'
+import { ActivePoints } from '@/cartesian/ActivePoints'
+import type { ActivePointsSlots } from '@/cartesian/ActivePoints'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
+import { useChartLayer } from '@/model/runtime'
+import { mainColor } from '@/core/color'
+import { DotsClipPath, GraphicalItemClipPath } from '@/cartesian/GraphicalItemClipPath'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 export type AreaSlots = ActivePointsSlots & {
-  dot?: (props: AreaDotSlotProps) => any
+  label?: (props: LabelListSlotProps) => VNodeChild
+  dot?: (props: AreaDotSlotProps) => VNodeChild
 }
 
-const _Area = defineComponent<AreaPropsWithSVG>({
-  name: 'Area',
-  props: AreaVueProps,
+// Geometry and rendering, deferred so every sibling has registered first (see useDeferredView).
+const AreaView = defineComponent({
+  name: 'AreaView',
   inheritAttrs: false,
+  props: {
+    item: { type: Object as PropType<ResolvedAreaProps>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+  },
   slots: Object as SlotsType<AreaSlots>,
-  setup(props: AreaProps, { attrs, slots }: { attrs: SVGAttributes, slots: AreaSlots }) {
-    useSetupGraphicalItem(props, 'area')
-    const { shouldRender, areaData, points, clipPathId, shouldShowAnimation } = useArea(props, attrs, slots.dot)
-    const graphicalLayerRef = useGraphicalLayerRef(null)
+  setup(view, { slots }) {
+    const props = view.item
+    const attrs = view.svgAttrs
+    const trackedProps = proxyRefs({ ...toRefs(props), data: view.data })
+    const { shouldRender, areaData, needClip, clipPathId } = useArea(trackedProps, attrs, slots.dot)
+    const activeListeners = useSeriesPointEvents(areaEvents.use(), () => areaData.value?.points ?? [])
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useChartLayer('graphical')
 
     return () => {
       if (!shouldRender.value) {
         return null
       }
-      let activeDot
-      if (slots.activeDot) {
-        activeDot = {
-          activeDot: slots.activeDot,
-        }
-      }
-
-      const renderAreaContent = () => {
-        if (shouldShowAnimation.value) {
-          return (
-            <Layer key="area-with-animation">
-              <defs>
-                <clipPath id={`animationClipPath-${clipPathId.value}`}>
-                  <ClipRect />
-                </clipPath>
-              </defs>
-              <Layer clip-path={`url(#animationClipPath-${clipPathId.value})`}>
-                <StaticArea />
-              </Layer>
-            </Layer>
-          )
-        }
-
-        return <StaticArea key="static-area" />
-      }
 
       const areaContent = (
         <Fragment>
-          <Layer class={['v-charts-area', attrs.class]}>
-            {renderAreaContent()}
+          <Layer data-slot="series" class={['v-charts-area', props.class]}>
+            {needClip.value && (
+              <defs>
+                <GraphicalItemClipPath clipPathId={clipPathId.value} xAxisId={props.xAxisId} yAxisId={props.yAxisId} />
+                <DotsClipPath clipPathId={clipPathId.value} dot={props.dot} />
+              </defs>
+            )}
+            <StaticArea v-slots={{ label: slots.label }} />
           </Layer>
-          <ActivePoints
-            points={areaData.value?.points ?? []}
-            mainColor={getLegendItemColor(attrs.stroke, props.fill!)}
-            itemDataKey={props.dataKey}
-            activeDot={props.activeDot}
-          >
-            {activeDot}
-          </ActivePoints>
+          <Layer {...activeListeners}>
+            {!props.hide && (
+              <ActivePoints
+                points={areaData.value?.points ?? []}
+                mainColor={mainColor('area', props)}
+                itemDataKey={props.dataKey}
+                activeDot={props.activeDot}
+                isAnimationActive={props.isAnimationActive}
+                v-slots={{ activeDot: slots.activeDot }}
+              />
+            )}
+          </Layer>
         </Fragment>
       )
 
       // Teleport into graphical layer so areas render above cursor
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{areaContent}</Teleport>
-      }
-      return areaContent
+      return teleport(areaContent, graphicalLayerRef)
     }
   },
 })
 
-/**
- * Type-safe Area component with slot types preserved in .d.ts output.
- * The `new () => { $slots }` pattern ensures Volar picks up slot types
- * even when consuming from compiled declarations.
- */
-export const Area = _Area as typeof _Area & {
-  new (): { $slots: AreaSlots }
-}
-
-function getLegendItemColor(stroke: string | undefined, fill: string): string {
-  return stroke && stroke !== 'none' ? stroke : fill
-}
+export const Area = forwardsSvgAttributes(defineComponent({
+  name: 'Area',
+  emits: areaEvents.emits,
+  props: AreaVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<AreaSlots>,
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useSeriesProps(inputProps, ['fill', 'stroke'])
+    areaEvents.provide(emit)
+    const { data } = useSetupGraphicalItem(props, 'area')
+    const View = useDeferredView(AreaView)
+    return () => h(View, { item: props, data, svgAttrs: attrs }, slots)
+  },
+}))

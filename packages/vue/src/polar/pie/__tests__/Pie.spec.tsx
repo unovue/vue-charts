@@ -1,13 +1,11 @@
 import { render } from '@testing-library/vue'
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { PieChart } from '@/chart/PieChart'
 import { Pie } from '@/polar/pie/Pie'
 import { Cell } from '@/components/Cell'
-import { Animate } from '@/animation/Animate'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Pie', () => {
+describe('pie', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -48,7 +46,7 @@ describe('Pie', () => {
     expect(paths[1].getAttribute('fill')).toBe('#a683ed')
   })
 
-  it('Cell fill overrides data item and Pie fill', () => {
+  it('cell fill overrides data item and Pie fill', () => {
     const cellColors = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
     const { container } = render({
       components: { PieChart, Pie, Cell },
@@ -66,18 +64,6 @@ describe('Pie', () => {
     cellColors.forEach((c, i) => {
       expect(paths[i].getAttribute('fill')).toBe(c)
     })
-  })
-
-  it('passes transition prop through to Animate', () => {
-    const customTransition = { duration: 0.5, ease: 'linear' as const }
-    const wrapper = mount(() => (
-      <PieChart width={500} height={500}>
-        <Pie dataKey="value" data={data} outerRadius={200} transition={customTransition} />
-      </PieChart>
-    ))
-    const animate = wrapper.findComponent(Animate)
-    expect(animate.exists()).toBe(true)
-    expect(animate.props('transition')).toEqual(customTransition)
   })
 
   it('accepts custom transition prop', () => {
@@ -104,5 +90,22 @@ describe('Pie', () => {
       `,
     })
     expect(container.querySelectorAll('.v-charts-sector').length).toBe(0)
+  })
+
+  it.each([
+    // A label's anchor slides by a share of its width near the vertical instead of jumping.
+    { endAngle: 182, anchor: 'start', transform: 'translateX(-74%)' },
+    { endAngle: 180, anchor: 'middle', transform: '' },
+    { endAngle: 60, anchor: 'start', transform: '' },
+    { endAngle: 300, anchor: 'end', transform: '' },
+  ])('anchors a label ending at $endAngle° as $anchor $transform', ({ endAngle, anchor, transform }) => {
+    const { container } = render(() => (
+      <PieChart width={500} height={500}>
+        <Pie dataKey="value" data={[{ value: 1 }]} startAngle={0} endAngle={endAngle} outerRadius={200} label isAnimationActive={false} />
+      </PieChart>
+    ))
+    const text = container.querySelector('.v-charts-pie text') as SVGTextElement
+    expect(text.getAttribute('text-anchor')).toBe(anchor)
+    expect(text.style.transform).toBe(transform)
   })
 })

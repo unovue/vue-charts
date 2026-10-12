@@ -3,19 +3,19 @@
  */
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
-import type { VuePropsToType, WithSVGProps } from '@/types'
+import type { WithSVGProps } from '@/types'
 import type { RectRadius } from '@/types/bar'
+import { svgAttrs } from '@/utils/VueUtils'
 
 const RectangleVueProps = {
-  x: { type: Number as PropType<number>, default: 0 },
-  y: { type: Number as PropType<number>, default: 0 },
+  x: { type: Number as PropType<number | null>, default: 0 },
+  y: { type: Number as PropType<number | null>, default: 0 },
   width: { type: Number as PropType<number>, default: 0 },
   height: { type: Number as PropType<number>, default: 0 },
   radius: { type: [Number, Array] as PropType<number | RectRadius>, default: undefined },
 }
 
-export type RectangleProps = VuePropsToType<typeof RectangleVueProps>
-export type RectanglePropsWithSVG = WithSVGProps<typeof RectangleVueProps>
+type RectangleInput = WithSVGProps<typeof RectangleVueProps>
 
 function getRectanglePath(x: number, y: number, width: number, height: number, radius: number | RectRadius | undefined): string {
   const maxRadius = Math.min(Math.abs(width) / 2, Math.abs(height) / 2)
@@ -65,27 +65,23 @@ function getRectanglePath(x: number, y: number, width: number, height: number, r
   return `M ${x},${y} h ${width} v ${height} h ${-width} Z`
 }
 
-export const Rectangle = defineComponent<RectanglePropsWithSVG>({
+/** The rectangle as a plain element; `attrs` must already be SVG attributes (see svgAttrs). */
+export function rectanglePath(attrs: Record<string, unknown>, x: number, y: number, width: number, height: number, radius?: number | RectRadius) {
+  if (x !== +x || y !== +y || width !== +width || height !== +height || width === 0 || height === 0)
+    return null
+  return <path {...attrs} x={x} y={y} width={width} height={height} d={getRectanglePath(x, y, width, height, radius)} />
+}
+
+export const Rectangle = defineComponent<RectangleInput>({
   name: 'Rectangle',
   props: RectangleVueProps,
+  inheritAttrs: false,
   setup(props, { attrs }) {
     return () => {
-      const { x, y, width, height, radius } = props
-
-      if (x !== +x! || y !== +y! || width !== +width! || height !== +height! || width === 0 || height === 0) {
+      const { x, y, width, height } = props
+      if (x == null || y == null || width == null || height == null)
         return null
-      }
-
-      return (
-        <path
-          {...attrs}
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          d={getRectanglePath(x, y, width, height, radius)}
-        />
-      )
+      return rectanglePath(svgAttrs(attrs), x, y, width, height, props.radius)
     }
   },
 })

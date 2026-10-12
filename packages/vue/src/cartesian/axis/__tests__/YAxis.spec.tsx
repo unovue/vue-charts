@@ -3,9 +3,10 @@ import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { getBarRects } from '@/test/helper'
 
 function getYAxisTicks(container: Element): NodeListOf<Element> {
-  return container.querySelectorAll('.v-charts-yAxis .v-charts-cartesian-axis-tick')
+  return container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick')
 }
 
 function getYAxisTickTexts(container: Element): string[] {
@@ -90,7 +91,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxisElements = container.querySelectorAll('.v-charts-yAxis')
+      const yAxisElements = container.querySelectorAll('.v-charts-y-axis')
       expect(yAxisElements.length).toBe(0)
     })
 
@@ -103,7 +104,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxisElements = container.querySelectorAll('.v-charts-yAxis')
+      const yAxisElements = container.querySelectorAll('.v-charts-y-axis')
       expect(yAxisElements.length).toBe(1)
     })
   })
@@ -118,7 +119,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
       // The yAxis g element transform should position it on the left side
       const transform = yAxis?.getAttribute('transform')
@@ -141,7 +142,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
       // The yAxis g element transform should position it on the right side
       const transform = yAxis?.getAttribute('transform')
@@ -168,7 +169,7 @@ describe('yAxis', () => {
       await nextTick()
       await nextTick()
 
-      const tickLines = container.querySelectorAll('.v-charts-yAxis .v-charts-cartesian-axis-tick-line')
+      const tickLines = container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick-line')
       expect(tickLines.length).toBeGreaterThan(0)
     })
 
@@ -183,7 +184,7 @@ describe('yAxis', () => {
       await nextTick()
       await nextTick()
 
-      const tickLines = container.querySelectorAll('.v-charts-yAxis .v-charts-cartesian-axis-tick-line')
+      const tickLines = container.querySelectorAll('.v-charts-y-axis .v-charts-cartesian-axis-tick-line')
       expect(tickLines.length).toBe(0)
     })
 
@@ -196,7 +197,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const axisLine = container.querySelector('.v-charts-yAxis .v-charts-cartesian-axis-line')
+      const axisLine = container.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-line')
       expect(axisLine).toBeTruthy()
     })
 
@@ -209,7 +210,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const axisLine = container.querySelector('.v-charts-yAxis .v-charts-cartesian-axis-line')
+      const axisLine = container.querySelector('.v-charts-y-axis .v-charts-cartesian-axis-line')
       expect(axisLine).toBeFalsy()
     })
   })
@@ -224,7 +225,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
     })
 
@@ -245,10 +246,27 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis1 = container1.querySelector('.v-charts-yAxis')
-      const yAxis2 = container2.querySelector('.v-charts-yAxis')
+      const yAxis1 = container1.querySelector('.v-charts-y-axis')
+      const yAxis2 = container2.querySelector('.v-charts-y-axis')
       expect(yAxis1).toBeTruthy()
       expect(yAxis2).toBeTruthy()
+
+      const axisLine1 = yAxis1!.querySelector('.v-charts-cartesian-axis-line')
+      const axisLine2 = yAxis2!.querySelector('.v-charts-cartesian-axis-line')
+      expect(axisLine1!.getAttribute('width')).toBe('30')
+      expect(axisLine1!.getAttribute('x1')).toBe('35')
+      expect(axisLine2!.getAttribute('width')).toBe('100')
+      expect(axisLine2!.getAttribute('x1')).toBe('105')
+
+      // The wider YAxis must shrink the plot area and make each bar narrower.
+      const rect1 = getBarRects(container1)[0]
+      const rect2 = getBarRects(container2)[0]
+      const width1 = Number.parseFloat(rect1!.getAttribute('width') ?? '')
+      const width2 = Number.parseFloat(rect2!.getAttribute('width') ?? '')
+
+      expect(Number.isFinite(width1)).toBe(true)
+      expect(Number.isFinite(width2)).toBe(true)
+      expect(width2).toBeLessThan(width1)
     })
 
     it('should render the y-axis with given width in the prop', () => {
@@ -259,7 +277,7 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
       const yAxisLine = yAxis!.querySelector('line')
       expect(yAxisLine!.getAttribute('width')).toBe('40')
@@ -278,7 +296,7 @@ describe('yAxis', () => {
       await nextTick()
       await nextTick()
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
       const yAxisLine = yAxis!.querySelector('line')
       // 80 max tick width + 6 tick size + 2 tick margin
@@ -306,7 +324,7 @@ describe('yAxis', () => {
       await nextTick()
       await nextTick()
 
-      const yAxis = container.querySelector('.v-charts-yAxis')
+      const yAxis = container.querySelector('.v-charts-y-axis')
       expect(yAxis).toBeTruthy()
       const yAxisLine = yAxis!.querySelector('line')
       // 80 max tick width + 6 tick size + 2 tick margin
@@ -325,26 +343,8 @@ describe('yAxis', () => {
         </AreaChart>
       ))
 
-      const yAxisElements = container.querySelectorAll('.v-charts-yAxis')
+      const yAxisElements = container.querySelectorAll('.v-charts-y-axis')
       expect(yAxisElements.length).toBe(2)
-    })
-  })
-
-  describe('class prop', () => {
-    it('applies custom class to yAxis element exactly once', () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" />
-          <YAxis class="my-custom-yaxis" />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      const yAxis = container.querySelector('.v-charts-yAxis')
-      expect(yAxis).toBeTruthy()
-      const classStr = yAxis!.getAttribute('class') ?? ''
-      const count = classStr.split(' ').filter(c => c === 'my-custom-yaxis').length
-      expect(count).toBe(1)
     })
   })
 
@@ -358,9 +358,23 @@ describe('yAxis', () => {
         </BarChart>
       ))
 
-      const yAxis = container.querySelector('.v-charts-yAxis') as HTMLElement | null
+      const yAxis = container.querySelector('.v-charts-y-axis') as HTMLElement | null
       expect(yAxis).toBeTruthy()
       expect(yAxis!.style.opacity).toBe('0.5')
     })
   })
+})
+
+it('auto-width YAxis with no room to draw renders without errors', async () => {
+  mockGetBoundingClientRect({ width: 100, height: 20 })
+  const { container } = render(() => (
+    <LineChart width={300} height={20} margin={{ top: 15, bottom: 15 }} data={[{ x: 'a', y: 1 }, { x: 'b', y: 2 }]}>
+      <XAxis dataKey="x" />
+      <YAxis width="auto" />
+      <Line dataKey="y" isAnimationActive={false} />
+    </LineChart>
+  ))
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector('.v-charts-surface')).not.toBeNull()
 })

@@ -1,16 +1,17 @@
 import { type SankeyGraph, type SankeyLink, type SankeyNode, sankey, sankeyLinkHorizontal } from 'd3-sankey'
 import { toRaw } from 'vue'
+import { warn } from '@/utils/log'
 
 export interface SankeyInputNode {
   name?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface SankeyInputLink {
   source: number | string
   target: number | string
   value: number
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export type SankeyLayoutNode = SankeyNode<SankeyInputNode, SankeyInputLink>
@@ -31,6 +32,51 @@ export interface ComputeSankeyLayoutResult {
   links: SankeyLayoutLink[]
 }
 
+function validLinks(data: ComputeSankeyLayoutArgs['data']): SankeyInputLink[] {
+  const isNodeIndex = (index: number | string): index is number =>
+    typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < data.nodes.length
+  const links = data.links.flatMap((link) => {
+    const { source, target, value } = link
+    if (!isNodeIndex(source) || !isNodeIndex(target) || !Number.isFinite(value) || value <= 0)
+      return []
+    return [{ ...toRaw(link), source, target }]
+  })
+  const outgoing: number[][] = Array.from({ length: data.nodes.length }, () => [])
+  links.forEach((link, index) => outgoing[link.source].push(index))
+  const state = new Uint8Array(data.nodes.length)
+  const backEdges = new Set<number>()
+
+  // Visit nodes and outgoing edges in input order. An explicit DFS stack also
+  // avoids overflowing the JavaScript call stack on a long valid chain.
+  for (let node = 0; node < data.nodes.length; node++) {
+    if (state[node])
+      continue
+    state[node] = 1
+    const stack = [{ node, next: 0 }]
+    while (stack.length) {
+      const frame = stack[stack.length - 1]
+      const edge = outgoing[frame.node][frame.next++]
+      if (edge === undefined) {
+        state[frame.node] = 2
+        stack.pop()
+        continue
+      }
+      const target = links[edge].target
+      if (state[target] === 1) {
+        backEdges.add(edge)
+      }
+      else if (state[target] === 0) {
+        state[target] = 1
+        stack.push({ node: target, next: 0 })
+      }
+    }
+  }
+  const kept = links.filter((_, index) => !backEdges.has(index))
+  const dropped = data.links.length - kept.length
+  warn(dropped === 0, 'Sankey dropped %s invalid or cyclic links.', dropped)
+  return kept
+}
+
 export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSankeyLayoutResult {
   const { data, width, height, nodePadding, nodeWidth, iterations, margin } = args
 
@@ -38,8 +84,12 @@ export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSanke
   // toRaw() strips Vue Proxies (project rule: D3 + Vue Proxy is broken).
   const cloned: SankeyGraph<SankeyInputNode, SankeyInputLink> = {
     nodes: data.nodes.map(n => ({ ...toRaw(n) })),
-    links: data.links.map(l => ({ ...toRaw(l) })),
+    links: validLinks(data),
   }
+
+  // Without any flow d3-sankey scales node heights by 0/0 and returns NaN coordinates.
+  if (!cloned.links.length)
+    return { nodes: [], links: [] }
 
   const layout = sankey<SankeyInputNode, SankeyInputLink>()
     .nodeWidth(nodeWidth)
@@ -74,4 +124,4 @@ export function computeSankeyLayout(args: ComputeSankeyLayoutArgs): ComputeSanke
 }
 
 export const linkPathGenerator: (link: SankeyLayoutLink) => string | null
-  = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>() as any
+  = sankeyLinkHorizontal<SankeyInputNode, SankeyInputLink>()

@@ -1,12 +1,10 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from '@/index'
-import { Tooltip } from '@/components/Tooltip'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 import { getBarRectangles, getBarRects } from '@/test/helper'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
-import { useChartHeight, useChartWidth, useViewBox } from '@/context/chartLayoutContext'
-import { useClipPathId } from '@/chart/provideClipPathId'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 
 describe('barChart', () => {
   beforeEach(() => {
@@ -116,7 +114,7 @@ describe('barChart', () => {
         </BarChart>
       ))
 
-      const backgroundBars = container.querySelectorAll('path[fill="#eee"]')
+      const backgroundBars = container.querySelectorAll('path[fill="var(--v-charts-muted, #eee)"]')
       expect(backgroundBars.length).toBe(6)
     })
 
@@ -173,6 +171,38 @@ describe('barChart', () => {
   })
 
   describe('stacked bars', () => {
+    it.each(['constructor', '__proto__', 'toString', 'a'])(
+      'stacks stackId "%s" without prototype collisions',
+      (stackId) => {
+        const { container } = render(() => (
+          <BarChart width={500} height={340} data={[{ name: 'A', a: 10, b: 20 }]}>
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 30]} />
+            <Bar dataKey="a" stackId={stackId} isAnimationActive={false} />
+            <Bar dataKey="b" stackId={stackId} isAnimationActive={false} />
+          </BarChart>
+        ))
+        expect(getBarRects(container).map(rect => rect.getAttribute('height'))).toEqual(['100', '200'])
+      },
+    )
+
+    // The first stacked item sits at the base unless reverseStackOrder flips the order.
+    it.each([
+      { reverse: false, y: ['205,100', '5,200'] },
+      { reverse: true, y: ['5,100', '105,200'] },
+    ])('stacks in item order with reverseStackOrder=$reverse', async ({ reverse, y }) => {
+      const { container } = render(() => (
+        <BarChart width={500} height={340} data={[{ name: 'A', a: 10, b: 20 }]} reverseStackOrder={reverse}>
+          <XAxis dataKey="name" />
+          <YAxis domain={[0, 30]} />
+          <Bar dataKey="a" stackId="s" isAnimationActive={false} />
+          <Bar dataKey="b" stackId="s" isAnimationActive={false} />
+        </BarChart>
+      ))
+      await nextTick()
+      expect(getBarRects(container).map(rect => [rect.getAttribute('y'), rect.getAttribute('height')].join())).toEqual(y)
+    })
+
     it('renders stacked bars with stackId', () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
@@ -215,96 +245,6 @@ describe('barChart', () => {
 
       const bars = getBarRectangles(container)
       expect(bars.length).toBe(6)
-    })
-  })
-
-  describe('layout context', () => {
-    it('provides correct viewBox', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useViewBox().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenLastCalledWith({ x: 5, y: 5, width: 90, height: 40 })
-    })
-
-    it('provides correct clipPathId', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useClipPathId())
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(expect.stringMatching(/v-charts\d+-clip/))
-    })
-
-    it('provides correct width', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartWidth().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(100)
-    })
-
-    it('provides correct height', () => {
-      const spy = vi.fn()
-      const Comp = defineComponent({
-        setup() {
-          spy(useChartHeight().value)
-          return () => null
-        },
-      })
-
-      render({
-        components: { BarChart, Comp },
-        template: `
-          <BarChart :width="100" :height="50">
-            <Comp />
-          </BarChart>
-        `,
-      })
-
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(50)
     })
   })
 

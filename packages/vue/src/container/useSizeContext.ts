@@ -1,13 +1,19 @@
-import { createContext } from '../utils/createContext'
-import type { Ref } from 'vue'
+import { inject, provide } from 'vue'
+import type { InjectionKey, Ref } from 'vue'
+import type { RoundedSize } from '@/hooks/useRoundedSize'
 
-export interface SizeContextValue {
-  sizes: Ref<{ width: number, height: number }>
-  calculatedWidth: Ref<number>
-  calculatedHeight: Ref<number>
-  // Future properties can be added here
+const initialDimensionKey: InjectionKey<Ref<RoundedSize | undefined>> = Symbol('v-charts-initial-dimension')
+
+export function provideInitialDimension(value: Ref<RoundedSize | undefined>) {
+  provide(initialDimensionKey, value)
+  return value
 }
 
-const [useSizeContext, provideSizeContext] = createContext<SizeContextValue>('SizeContext')
-
-export { provideSizeContext, useSizeContext }
+export function useInitialDimension(fallback?: Ref<RoundedSize | undefined>): Ref<RoundedSize | undefined>
+export function useInitialDimension(fallback: Ref<RoundedSize | undefined> | null): Ref<RoundedSize | undefined> | null
+export function useInitialDimension(fallback?: Ref<RoundedSize | undefined> | null) {
+  const value = inject(initialDimensionKey, fallback)
+  if (value === undefined)
+    throw new Error('vccs: useInitialDimension requires its provider.')
+  return value
+}

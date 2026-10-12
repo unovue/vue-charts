@@ -1,10 +1,9 @@
 import { render } from '@testing-library/vue'
-import { describe, expect, it, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { RadarChart } from '@/chart/RadarChart'
 import { Radar } from '@/polar/radar/Radar'
 import { PolarGrid } from '@/polar/radar/PolarGrid'
 import { PolarAngleAxis } from '@/polar/radar/PolarAngleAxis'
-import { PolarRadiusAxis } from '@/polar/radar/PolarRadiusAxis'
 import { RadialBarChart } from '@/chart/RadialBarChart'
 import { RadialBar } from '@/polar/radial-bar/RadialBar'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -20,7 +19,7 @@ const exampleRadarData = [
   { name: 'iPhone 5se', value: 365, half: 183 },
 ]
 
-describe('PolarGrid', () => {
+describe('polarGrid', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })

@@ -31,10 +31,7 @@ const chartConfig: ChartConfig = {
         :config="chartConfig"
         class="mx-auto aspect-square max-h-[300px]"
       >
-        <FunnelChart
-          :width="400"
-          :height="300"
-        >
+        <FunnelChart>
           <Tooltip :cursor="false">
             <template #content="{ active, payload, label }">
               <ChartTooltipContent

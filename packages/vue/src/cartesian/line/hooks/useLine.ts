@@ -1,44 +1,36 @@
-import { useChartLayout } from '@/context/chartLayoutContext'
-import { useChartName } from '@/state/selectors/selectors'
-import type { LinePointItem, LinePropsInternal } from '../type'
+import type { LineInput, LineSlots } from '../type'
+import type { LinePointItem } from '@/types/line'
+import { useChartId } from '@/hooks/useChartId'
+import { useChartPresentation } from '@/model/presentation'
 import type { ComputedRef, InjectionKey, Ref, SVGAttributes, ShallowRef } from 'vue'
-import { computed, inject, provide } from 'vue'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
-import { useAppSelector } from '@/state/hooks'
-import { selectLinePoints } from '@/state/selectors/lineSelectors'
-import { uniqueId } from '@/utils'
-import { useIsAnimating } from '@/hooks/useIsAnimating'
-import { isClipDot } from '@/utils/chart'
-import { filterProps } from '@/utils/VueUtils'
+import { computed, inject, provide, shallowRef } from 'vue'
+import { useChart } from '@/model/chart'
+import { computeLinePoints } from '@/core/line'
+import { isClipDot } from '@/core/coordinates'
 import { useNeedsClip } from '@/cartesian/useNeedsClip'
 
-// Line Context 类型定义
 export interface LineContext {
   clipPathId: Ref<string>
   layout: Readonly<Ref<string>>
   points: Ref<ReadonlyArray<LinePointItem> | undefined>
-  props: LinePropsInternal
+  props: LineInput
   attrs: SVGAttributes
   lineData: Readonly<ShallowRef<ReadonlyArray<LinePointItem> | undefined>>
-  isAnimating: Ref<boolean>
   needClip: ComputedRef<boolean>
-  dot: any
-  clipDot: boolean
-  dotSize: number
-  shapeSlot?: (props: any) => any
-  dotSlot?: (props: any) => any
-  labelSlot?: (props: any) => any
+  clipDot: ComputedRef<boolean>
+  shapeSlot?: LineSlots['shape']
+  dotSlot?: LineSlots['dot']
+  labelSlot?: LineSlots['label']
+  /** The labels as drawn on this frame; LabelList children read them. */
+  labelData: ShallowRef<ComputedRef<readonly import('@/components/label/types').Data[]> | undefined>
 }
 
-// Injection Key
-export const LineContextKey: InjectionKey<LineContext> = Symbol('LineContext')
+const LineContextKey: InjectionKey<LineContext> = Symbol('LineContext')
 
-// 提供 Line Context
-export function provideLineContext(context: LineContext) {
+function provideLineContext(context: LineContext) {
   provide(LineContextKey, context)
 }
 
-// 使用 Line Context
 export function useLineContext() {
   const context = inject(LineContextKey)
   if (!context) {
@@ -47,40 +39,50 @@ export function useLineContext() {
   return context
 }
 
-export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, shapeSlot?: (props: any) => any, dotSlot?: (props: any) => any, labelSlot?: (props: any) => any) {
-  const layout = useChartLayout()
-  const chartName = useChartName()
-  const localId = uniqueId('v-charts-line-')
+export function useLine(
+  props: LineInput,
+  attrs: SVGAttributes = {},
+  shapeSlot?: LineSlots['shape'],
+  dotSlot?: LineSlots['dot'],
+  labelSlot?: LineSlots['label'],
+) {
+  const chart = useChart()
+  const layout = useChartPresentation().layout
+  const capabilities = useChartPresentation().capabilities
+  const localId = useChartId('v-charts-line')
   const clipPathId = computed(() => props.id || localId)
-  const isPanorama = useIsPanorama()
 
-  const isAnimating = useIsAnimating(() => props.isAnimationActive)
-  const { needClip } = useNeedsClip(props.xAxisId!, props.yAxisId!)
+  const { needClip } = useNeedsClip(() => props.xAxisId, () => props.yAxisId)
 
   const shouldRender = computed(() =>
     (layout.value === 'horizontal' || layout.value === 'vertical')
-    && (chartName.value === 'LineChart' || chartName.value === 'ComposedChart')
-    && !props.hide,
+    && capabilities.value.series.includes('line'),
   )
 
-  const lineSettings = computed(
-    () => ({
-      data: props.data,
-      dataKey: props.dataKey!,
-    }),
-  )
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId))
+  const lineData = computed(() => {
+    const x = xAxis.value.withScale.value
+    const y = yAxis.value.withScale.value
+    const xTicks = xAxis.value.graphicalTicks.value
+    const yTicks = yAxis.value.graphicalTicks.value
+    const displayedData = chart.dataRange.displayedData(props)
+    if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData)
+      return undefined
+    return computeLinePoints({
+      layout: layout.value,
+      xAxis: x,
+      yAxis: y,
+      xAxisTicks: xTicks,
+      yAxisTicks: yTicks,
+      dataKey: props.dataKey,
+      bandSize: (layout.value === 'horizontal' ? xAxis.value : yAxis.value).bandSize.value!,
+      displayedData,
+    })
+  })
 
-  const lineData = useAppSelector(state =>
-    selectLinePoints(state, props.xAxisId!, props.yAxisId!, isPanorama, lineSettings.value),
-  )
+  const clipDot = computed(() => isClipDot(props.dot))
 
-  // Dot related logic
-  const dot = props.dot
-  const clipDot = isClipDot(dot)
-  const { r = 3, strokeWidth = 2 } = filterProps(dot, false) ?? { r: 3, strokeWidth: 2 }
-  const dotSize = r * 2 + strokeWidth
-
-  // Create Line Context - 保持响应式
   const lineContext: LineContext = {
     clipPathId,
     layout,
@@ -88,17 +90,14 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
     props,
     attrs,
     lineData,
-    isAnimating,
     needClip,
-    dot,
     clipDot,
-    dotSize,
     shapeSlot,
     dotSlot,
     labelSlot,
+    labelData: shallowRef(undefined),
   }
 
-  // Provide context
   provideLineContext(lineContext)
 
   return {
@@ -107,5 +106,6 @@ export function useLine(props: LinePropsInternal, attrs: SVGAttributes = {}, sha
     lineData,
     points: lineContext.points,
     clipPathId,
+    labelData: computed(() => lineContext.labelData.value?.value),
   }
 }

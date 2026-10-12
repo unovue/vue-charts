@@ -51,12 +51,13 @@ const data = {
       </p>
     </div>
 
-    <SunburstChart
-      :data="data"
-      :width="500"
-      :height="500"
-    >
-      <Tooltip :cursor="false" />
-    </SunburstChart>
+    <div class="max-w-[500px]">
+      <SunburstChart
+        :data="data"
+        :aspect="1"
+      >
+        <Tooltip :cursor="false" />
+      </SunburstChart>
+    </div>
   </div>
 </template>

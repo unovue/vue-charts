@@ -1,14 +1,15 @@
+import { getTextOfTick } from '../utils'
 import { computed, defineComponent } from 'vue'
 import { Layer } from '../../../container/Layer'
 import { Traveller } from './Traveller'
-import type { BrushProps } from '../type'
+import type { BrushInput, BrushStartEndIndex } from '../type'
 
 export const TravellerLayer = defineComponent({
   name: 'TravellerLayer',
   props: {
     id: String,
     travellerX: Number,
-    otherProps: Object as () => BrushProps & { y: number },
+    otherProps: { type: Object as () => BrushInput & BrushStartEndIndex & { y: number, data: unknown[] }, required: true },
   },
   emits: [
     'mouseenter',
@@ -30,10 +31,15 @@ export const TravellerLayer = defineComponent({
       stroke: props.otherProps.stroke,
     }))
 
-    const ariaLabelBrush = computed(() => {
-      const { ariaLabel, data, startIndex, endIndex } = props.otherProps
-      return ariaLabel || `Min value: ${data![startIndex!]?.name}, Max value: ${data![endIndex!]?.name}`
-    })
+    const index = computed(() => props.id === 'startX'
+      ? props.otherProps.startIndex
+      : props.otherProps.endIndex)
+    const category = computed(() => getTextOfTick({
+      index: index.value!,
+      data: props.otherProps.data,
+      dataKey: props.otherProps.dataKey,
+      tickFormatter: props.otherProps.tickFormatter,
+    }))
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -48,9 +54,12 @@ export const TravellerLayer = defineComponent({
       <Layer
         tabindex={0}
         role="slider"
-        aria-label={ariaLabelBrush.value}
-        aria-valuenow={props.travellerX}
-        class="recharts-brush-traveller"
+        aria-label={props.id === 'startX' ? 'Range start' : 'Range end'}
+        aria-valuemin={0}
+        aria-valuemax={Math.max(0, props.otherProps.data.length - 1)}
+        aria-valuenow={index.value}
+        aria-valuetext={String(category.value ?? '')}
+        class="v-charts-brush-traveller"
         onMouseenter={e => emit('mouseenter', e)}
         onMouseleave={e => emit('mouseleave', e)}
         onMousedown={e => emit('mousedown', e)}

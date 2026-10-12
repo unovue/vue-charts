@@ -44,10 +44,11 @@ describe('computeSunburstLayout', () => {
 
     // Root is excluded; only A, B, C rendered
     expect(nodes).toHaveLength(3)
+    // Sorted C, B, A span 180, 120, and 60 degrees respectively.
+    expect(nodes.map(node => node.startAngle)).toEqual([0, 180, 300])
     for (const node of nodes) {
       expect(node.innerRadius).toBeGreaterThanOrEqual(50)
       expect(node.outerRadius).toBeLessThanOrEqual(200)
-      expect(node.startAngle).toBeGreaterThanOrEqual(0)
       expect(node.endAngle).toBeLessThanOrEqual(360)
       expect(node.depth).toBe(1)
     }
@@ -105,8 +106,8 @@ describe('computeSunburstLayout', () => {
       dataKey: 'value',
     })
 
+    expect(nodes.map(node => node.startAngle)).toEqual([0, 90, 150])
     for (const node of nodes) {
-      expect(node.startAngle).toBeGreaterThanOrEqual(0)
       expect(node.endAngle).toBeLessThanOrEqual(180)
     }
   })

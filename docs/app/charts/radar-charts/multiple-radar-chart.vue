@@ -1,5 +1,5 @@
 <script setup>
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'vccs'
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart, Tooltip } from 'vccs'
 
 const data = [
   { subject: 'Math', A: 120, B: 110 },
@@ -12,39 +12,35 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <RadarChart
+    :data="data"
+    cx="50%"
+    cy="50%"
+    :outer-radius="100"
     :height="300"
   >
-    <RadarChart
-      :data="data"
-      cx="50%"
-      cy="50%"
-      :outer-radius="100"
-    >
-      <PolarGrid />
-      <PolarAngleAxis data-key="subject" />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Radar
-        data-key="A"
-        stroke="#f97316"
-        fill="#f97316"
-        :fill-opacity="0.6"
-      />
-      <Radar
-        data-key="B"
-        stroke="#14b8a6"
-        fill="#14b8a6"
-        :fill-opacity="0.6"
-      />
-    </RadarChart>
-  </ResponsiveContainer>
+    <PolarGrid />
+    <PolarAngleAxis data-key="subject" />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Radar
+      data-key="A"
+      stroke="#f97316"
+      fill="#f97316"
+      :fill-opacity="0.6"
+    />
+    <Radar
+      data-key="B"
+      stroke="#14b8a6"
+      fill="#14b8a6"
+      :fill-opacity="0.6"
+    />
+  </RadarChart>
 </template>

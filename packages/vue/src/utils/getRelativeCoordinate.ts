@@ -3,7 +3,7 @@ export type RelativePointer = { relativeX: number, relativeY: number }
 type MousePointer = { clientX: number, clientY: number, currentTarget: Element | HTMLElement }
 
 function isSvgPointer(pointer: MousePointer): pointer is MousePointer & { currentTarget: SVGGraphicsElement } {
-  return 'getBBox' in pointer.currentTarget && typeof (pointer.currentTarget as any).getBBox === 'function'
+  return 'getBBox' in pointer.currentTarget && typeof pointer.currentTarget.getBBox === 'function'
 }
 
 /**

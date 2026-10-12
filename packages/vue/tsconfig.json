@@ -1,4 +1,7 @@
 {
+  "vueCompilerOptions": {
+    "strictTemplates": true
+  },
   "compilerOptions": {
     "incremental": true,
     "composite": true,
@@ -9,30 +12,38 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "baseUrl": "./src",
     "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "allowImportingTsExtensions": true,
     "allowJs": true,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "outDir": "./dist/es",
     "esModuleInterop": true,
     "isolatedModules": true,
     "skipLibCheck": true
   },
+  "files": [
+    "./src/test/events-contract.ts"
+  ],
   "include": [
     "./src/**/*.vue",
     "./src/**/*.ts",
     "./src/**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/**/__tests__/**",
+    "src/test/*.ts"
   ]
 }

@@ -116,8 +116,14 @@ const containerRef = useTemplateRef<HTMLDivElement>('containerRef')
 let cleanup: (() => void) | null = null
 let program: Program | null = null
 
+function hasWebGL() {
+  const canvas = document.createElement('canvas')
+  return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+}
+
 function setup() {
-  if (!containerRef.value)
+  // The radar is decoration: without WebGL the page simply shows no background.
+  if (!containerRef.value || !hasWebGL())
     return
   const container = containerRef.value
   const { color, bg, brightness } = themeColors()

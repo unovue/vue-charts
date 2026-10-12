@@ -1,29 +1,10 @@
-import type { TooltipPayload, TooltipPayloadSearcher } from '@/state/tooltipSlice'
-import type { TooltipEventType, TooltipIndex } from './tooltip'
+import type { ChartDataKey } from '@/types/base'
+import type { ChartOffset, Coordinate, TickItem, VueClassValue } from './base'
+
+export type { DataKey, Coordinate, ChartCoordinate, PolarChartCoordinate, ChartOffset, TickItem, VueClassValue } from './base'
+import type { TooltipPayload } from '@/types/tooltip'
 import type { PropType, SVGAttributes } from 'vue'
-
-export type DataKey<T> = string | number | ((obj: T) => any)
-
-export interface Coordinate {
-  x: number
-  y: number
-}
-
-export interface ChartCoordinate extends Coordinate {
-  xAxis?: any
-  yAxis?: any
-  width?: any
-  height?: any
-  offset?: ChartOffset
-  angle?: number
-  radius?: number
-  cx?: number
-  cy?: number
-  startAngle?: number
-  endAngle?: number
-  innerRadius?: number
-  outerRadius?: number
-}
+import type { SvgTemplateAttributes } from '@/utils/attributes'
 
 export type LayoutType = 'horizontal' | 'vertical' | 'centric' | 'radial'
 
@@ -36,14 +17,6 @@ export interface Margin {
 
 export type StackOffsetType = 'sign' | 'expand' | 'none' | 'wiggle' | 'silhouette' | 'positive'
 
-export interface TickItem {
-  value?: any
-  coordinate: number
-  index?: number
-  offset?: number
-
-}
-
 export type SyncMethod = 'index' | 'value' | ((ticks: ReadonlyArray<TickItem>, data: MouseHandlerDataParam) => number)
 
 export type MouseHandlerDataParam = {
@@ -51,16 +24,16 @@ export type MouseHandlerDataParam = {
    * Index of the active tick in the current chart. Only works with number-indexed one-dimensional data charts,
    * like Line, Area, Bar, Pie, etc.
    *
-   * Doesn't work with two-dimensional data charts like Treemap, Sankey. But one day it will which is why the TooltipIndex type is here.
+   * Callbacks retain legacy string indexes; hierarchy targets use their payload path.
    */
-  activeTooltipIndex: number | TooltipIndex | undefined
+  activeTooltipIndex: number | string | null | undefined
   isTooltipActive: boolean
   /**
    * Exactly the same as activeTooltipIndex - this was also duplicated in recharts@2 so let's keep both properties for better backwards compatibility.
    */
-  activeIndex: number | TooltipIndex | undefined
+  activeIndex: number | string | null | undefined
   activeLabel: string | number | undefined
-  activeDataKey: DataKey<any> | undefined
+  activeDataKey: ChartDataKey | undefined
   activeCoordinate: Coordinate | undefined
 }
 
@@ -69,16 +42,6 @@ export interface Padding {
   bottom?: number
   left?: number
   right?: number
-}
-
-export interface ChartOffset {
-  top: number
-  bottom: number
-  left: number
-  right: number
-  height: number
-  width: number
-  brushBottom: number
 }
 
 export type ChartOffsetRequired = Required<ChartOffset>
@@ -114,17 +77,9 @@ export interface ScatterPointItem {
   width: number
   height: number
   node: ScatterPointNode
-  payload?: any
+  payload?: unknown
   tooltipPayload?: TooltipPayload
-  tooltipPosition: Coordinate
-}
-
-export interface CategoricalChartOptions {
-  chartName: string
-  defaultTooltipEventType?: TooltipEventType
-  validateTooltipEventTypes?: ReadonlyArray<TooltipEventType>
-  defaultProps?: any
-  tooltipPayloadSearcher: TooltipPayloadSearcher
+  tooltipPosition: Coordinate | undefined
 }
 
 type UnwrapPropType<T> =
@@ -140,15 +95,16 @@ export type VuePropsToType<Props> = {
   [K in keyof Props as Props[K] extends { required: boolean } ? never : K]?: VuePropField<Props[K]>
 }
 
-export type WithSVGProps<T> = VuePropsToType<T> & Omit<SVGAttributes, keyof T>
+/**
+ * Declared props plus SVG attributes, in both spellings: kebab-case as in `SVGAttributes` and
+ * camelized as strict templates check them (see `SvgTemplateAttributes`).
+ */
+export type WithSVGProps<T> = VuePropsToType<T> & Omit<SVGAttributes, keyof T> & Omit<SvgTemplateAttributes, keyof T>
 
 export type AllowInDimension = {
   x?: boolean
   y?: boolean
 }
-
-/** Vue class binding type: string, string[], or { [className]: boolean } */
-export type VueClassValue = string | string[] | Record<string, boolean>
 
 /** Shared Vue prop definition for `class` — use in VueProps objects to avoid repetition */
 export const classProp = {

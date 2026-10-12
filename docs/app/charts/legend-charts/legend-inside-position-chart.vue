@@ -14,7 +14,6 @@ const data = [
 <template>
   <LineChart
     :style="{ width: '100%', height: '300px' }"
-    responsive
     :data="data"
   >
     <CartesianGrid stroke-dasharray="3 3" />

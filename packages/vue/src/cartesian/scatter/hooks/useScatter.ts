@@ -1,44 +1,55 @@
+import type { ChartDataKey } from '@/types/base'
 import { computed } from 'vue'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
-import { useAppSelector } from '@/state/hooks'
-import { selectScatterPoints } from '@/state/selectors/scatterSelectors'
-import type { ResolvedScatterSettings } from '@/state/selectors/scatterSelectors'
-import type { DataKey } from '@/types'
+import { useChart } from '@/model/chart'
+import { computeScatterPoints } from '@/core/scatter'
+import type { ResolvedScatterSettings } from '@/core/scatter'
+import type { TooltipType } from '@/types'
+import { getTooltipNameProp } from '@/core/tooltip'
 
 export interface ScatterProps {
   xAxisId?: string | number
   yAxisId?: string | number
   zAxisId?: string | number
-  dataKey?: DataKey<any>
-  data?: ReadonlyArray<Record<string, any>>
+  dataKey?: ChartDataKey
+  data?: ReadonlyArray<unknown>
   name?: string | number
   hide?: boolean
   fill?: string
   stroke?: string
   isAnimationActive?: boolean
-  tooltipType?: string
+  tooltipType?: TooltipType
 }
 
 export function useScatter(props: ScatterProps) {
-  const isPanorama = useIsPanorama()
-
+  const chart = useChart()
   const scatterSettings = computed<ResolvedScatterSettings>(() => ({
-    data: props.data as any,
+    data: props.data,
     dataKey: props.dataKey,
-    tooltipType: props.tooltipType as any,
-    name: props.name ?? String(props.dataKey ?? ''),
+    tooltipType: props.tooltipType,
+    name: getTooltipNameProp(props.name, props.dataKey),
   }))
 
-  const points = useAppSelector(state =>
-    selectScatterPoints(
-      state,
-      props.xAxisId ?? 0,
-      props.yAxisId ?? 0,
-      props.zAxisId ?? 0,
-      scatterSettings.value,
-      isPanorama,
-    ),
-  )
+  const xAxis = computed(() => chart.axis('xAxis', props.xAxisId ?? 0))
+  const yAxis = computed(() => chart.axis('yAxis', props.yAxisId ?? 0))
+  const zAxis = computed(() => chart.axis('zAxis', props.zAxisId ?? 0))
+  const points = computed(() => {
+    const x = xAxis.value.withScale.value
+    const y = yAxis.value.withScale.value
+    const xTicks = xAxis.value.graphicalTicks.value
+    const yTicks = yAxis.value.graphicalTicks.value
+    const displayedData = chart.dataRange.displayedData(props)
+    if (!x || !y || !xTicks?.length || !yTicks?.length || !displayedData)
+      return undefined
+    return computeScatterPoints({
+      displayedData,
+      xAxis: x,
+      yAxis: y,
+      zAxis: zAxis.value.withScale.value,
+      scatterSettings: scatterSettings.value,
+      xAxisTicks: xTicks,
+      yAxisTicks: yTicks,
+    })
+  })
 
   const shouldRender = computed(() => {
     return !props.hide && points.value != null && points.value.length > 0

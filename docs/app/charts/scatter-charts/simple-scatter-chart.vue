@@ -1,5 +1,5 @@
 <script setup>
-import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'vccs'
+import { CartesianGrid, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'vccs'
 
 const data01 = [
   { x: 100, y: 200, z: 200 },
@@ -21,43 +21,38 @@ const data02 = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
-    :height="300"
-  >
-    <ScatterChart>
-      <CartesianGrid stroke-dasharray="3 3" />
-      <XAxis
-        data-key="x"
-        type="number"
-      />
-      <YAxis
-        data-key="y"
-        type="number"
-      />
-      <ZAxis
-        data-key="z"
-        :range="[60, 400]"
-      />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-      <Scatter
-        name="Series A"
-        :data="data01"
-        fill="#f97316"
-      />
-      <Scatter
-        name="Series B"
-        :data="data02"
-        fill="#14b8a6"
-      />
-    </ScatterChart>
-  </ResponsiveContainer>
+  <ScatterChart :height="300">
+    <CartesianGrid stroke-dasharray="3 3" />
+    <XAxis
+      data-key="x"
+      type="number"
+    />
+    <YAxis
+      data-key="y"
+      type="number"
+    />
+    <ZAxis
+      data-key="z"
+      :range="[60, 400]"
+    />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+    <Scatter
+      name="Series A"
+      :data="data01"
+      fill="#f97316"
+    />
+    <Scatter
+      name="Series B"
+      :data="data02"
+      fill="#14b8a6"
+    />
+  </ScatterChart>
 </template>

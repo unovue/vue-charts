@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, XAxis, YAxis } from 'vccs'
 
 const data = [
   { name: 'Page A', uv: 590, pv: 800, amt: 1400 },
@@ -13,36 +13,32 @@ const data = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="data"
+    :margin="{ top: 20, right: 20, left: 10, bottom: 20 }"
     :height="300"
   >
-    <BarChart
-      :data="data"
-      :margin="{ top: 20, right: 20, left: 10, bottom: 20 }"
-    >
-      <XAxis data-key="name">
-        <template #tick="{ x, y, payload }">
-          <g :transform="`translate(${x},${y})`">
-            <text
-              :x="0"
-              :y="0"
-              dy="16"
-              text-anchor="end"
-              fill="#666"
-              transform="rotate(-35)"
-            >
-              {{ payload.value }}
-            </text>
-          </g>
-        </template>
-      </XAxis>
-      <YAxis />
-      <Bar
-        data-key="uv"
-        :bar-size="30"
-        fill="#8884d8"
-      />
-    </BarChart>
-  </ResponsiveContainer>
+    <XAxis data-key="name">
+      <template #tick="{ x, y, payload }">
+        <g :transform="`translate(${x},${y})`">
+          <text
+            :x="0"
+            :y="0"
+            dy="16"
+            text-anchor="end"
+            fill="#666"
+            transform="rotate(-35)"
+          >
+            {{ payload.value }}
+          </text>
+        </g>
+      </template>
+    </XAxis>
+    <YAxis />
+    <Bar
+      data-key="uv"
+      :bar-size="30"
+      fill="#8884d8"
+    />
+  </BarChart>
 </template>

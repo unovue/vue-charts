@@ -36,7 +36,7 @@ const COLORS = ['#f97316', '#14b8a6', '#f59e0b']
     :height="300"
     :data="data"
     data-key="value"
-    :color-panel="COLORS"
+    :colors="COLORS"
     :is-animation-active="false"
   >
     <template #content="props">

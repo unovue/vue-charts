@@ -28,7 +28,6 @@ export function getMockDomRect(partial: Partial<DOMRect> = {}): DOMRect {
  *
  * @param rect overrides getBoundingClientRect return value in the mock. jsdom by design returns all zeroes
  * @param mockClientHeightWidth overrides offsetWidth/offsetHeight with the same values as rect
- * @returns void
  */
 export function mockGetBoundingClientRect(rect: Partial<DOMRect>, mockClientHeightWidth = true): void {
   const mockDomRect = getMockDomRect(rect)

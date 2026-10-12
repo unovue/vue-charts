@@ -1,8 +1,9 @@
 import { fireEvent, render } from '@testing-library/vue'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { SunburstChart } from '../SunburstChart'
-import { Tooltip } from '@/components'
+import { computeSunburstLayout } from '../sunburstUtils'
+import { Tooltip } from '@/components/tooltip/Tooltip'
 
 const simpleData = {
   name: 'root',
@@ -32,7 +33,34 @@ const nestedData = {
   ],
 }
 
-describe('SunburstChart', () => {
+describe('sunburstChart', () => {
+  it('keeps all 10,000 positive sectors with default padding and at least half their angle', () => {
+    const data = {
+      name: 'root',
+      children: Array.from({ length: 10_000 }, (_, index) => ({ name: `N${index}`, value: 1 })),
+    }
+    const nodes = computeSunburstLayout({ data, cx: 250, cy: 250, innerRadius: 50, outerRadius: 250, startAngle: 0, endAngle: 360, dataKey: 'value', padding: 2 })
+    expect(nodes).toHaveLength(10_000)
+    for (const node of nodes)
+      expect(node.endAngle - node.startAngle).toBeCloseTo(0.018, 10)
+
+    const rendered = { ...data, children: data.children.slice(0, 1000) }
+    const { container } = render(() => <SunburstChart data={rendered} width={500} height={500} isAnimationActive={false} />)
+    expect(container.querySelectorAll('.v-charts-sunburst-sector')).toHaveLength(1000)
+    expect(container.innerHTML).not.toMatch(/NaN|Infinity/)
+  }, 120_000)
+
+  it('keeps each sector element by name when the value order changes', async () => {
+    const data = ref(simpleData)
+    const { container } = render(() => <SunburstChart data={data.value} width={500} height={500} isAnimationActive={false} />)
+    const sectors = () => [...container.querySelectorAll('.v-charts-sunburst-sector')]
+    // Sorted by value: C, B, A.
+    const [c, b, a] = sectors()
+    data.value = { name: 'root', children: [{ name: 'A', value: 600 }, { name: 'B', value: 200 }, { name: 'C', value: 100 }] }
+    await nextTick()
+    expect(sectors()).toEqual([a, b, c])
+  })
+
   it('renders sectors for simple data', () => {
     const { container } = render(() => (
       <SunburstChart data={simpleData} width={500} height={500} />
@@ -70,7 +98,8 @@ describe('SunburstChart', () => {
     const sector = container.querySelector('.v-charts-sunburst-sector')!
     await fireEvent.click(sector)
     expect(onClick).toHaveBeenCalledTimes(1)
-    expect(onClick.mock.calls[0][0]).toHaveProperty('name')
+    expect(onClick.mock.calls[0][0]).toHaveProperty('activeIndex')
+    expect(onClick.mock.calls[0][1]).toBeInstanceOf(MouseEvent)
   })
 
   it('fires onMouseEnter and onMouseLeave', async () => {
@@ -81,16 +110,16 @@ describe('SunburstChart', () => {
         data={simpleData}
         width={500}
         height={500}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        onMouseenter={onMouseEnter}
+        onMouseleave={onMouseLeave}
       />
     ))
 
     const sector = container.querySelector('.v-charts-sunburst-sector')!
-    await fireEvent.mouseEnter(sector)
+    await fireEvent.mouseEnter(container.querySelector('.v-charts-wrapper')!)
     expect(onMouseEnter).toHaveBeenCalledTimes(1)
 
-    await fireEvent.mouseLeave(sector)
+    await fireEvent.mouseLeave(container.querySelector('.v-charts-wrapper')!)
     expect(onMouseLeave).toHaveBeenCalledTimes(1)
   })
 

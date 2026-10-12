@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import Text from '@/components/Text.vue'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Text', () => {
+describe('text', () => {
   const mockRect = {
     width: 25,
     height: 17,
@@ -185,7 +185,7 @@ describe('Text', () => {
       expect(text!.getAttribute('fill')).toBe('#ff0000')
     })
 
-    it('defaults to #808080 fill', () => {
+    it('defaults to the text token with #808080 fallback', () => {
       const { container } = render(() => (
         <svg width={300} height={300}>
           <Text value="default" />
@@ -194,7 +194,7 @@ describe('Text', () => {
 
       const text = container.querySelector('text')
       expect(text).toBeTruthy()
-      expect(text!.getAttribute('fill')).toBe('#808080')
+      expect(text!.getAttribute('fill')).toBe('var(--v-charts-text, #808080)')
     })
 
     it('falls back to default fill when fill contains url', () => {
@@ -206,7 +206,7 @@ describe('Text', () => {
 
       const text = container.querySelector('text')
       expect(text).toBeTruthy()
-      expect(text!.getAttribute('fill')).toBe('#808080')
+      expect(text!.getAttribute('fill')).toBe('var(--v-charts-text, #808080)')
     })
   })
 

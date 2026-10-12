@@ -1,7 +1,5 @@
 import { defineComponent } from 'vue'
 import type { BarRectangleItem } from '@/types/bar'
-import { useAppSelector } from '@/state/hooks'
-import { selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
 import { Layer } from '@/container/Layer'
 import { Rectangle } from '@/shape/Rectangle'
 import { useBarContext } from '../hooks/useBar'
@@ -34,7 +32,7 @@ export const BarBackground = defineComponent({
             const barRectangleProps = {
               option: backgroundFromProps,
               ...rest,
-              fill: '#eee',
+              fill: 'var(--v-charts-muted, #eee)',
               ...backgroundFromDataEntry,
               ...backgroundObjectProps,
             }

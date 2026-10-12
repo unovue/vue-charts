@@ -1,5 +1,15 @@
 export default defineNuxtConfig({
   extends: ['docus'],
+  vite: {
+    // Docus' robots and og-image runtimes import nuxt/app without declaring nuxt, so they get
+    // whichever copy pnpm hoists; another workspace package's newer nuxt breaks the build.
+    resolve: { dedupe: ['nuxt'] },
+  },
+  nitro: {
+    // Keep OG image's overridden Unhead with its renderer. Externalizing multiple
+    // workspace versions into one server snapshot can select the hoisted copy.
+    externals: { inline: ['@unhead/vue', 'unhead'] },
+  },
   css: ['~/assets/main.css'],
   app: {
     head: {

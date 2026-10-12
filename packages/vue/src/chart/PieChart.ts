@@ -1,14 +1,19 @@
-import { generateCategoricalChart } from '@/chart/generateCategoricalChart'
-import { arrayTooltipSearcher } from '@/state/optionsSlice'
+import { defineComponent } from 'vue'
+import { forwardsSvgAttributes } from '@/utils/attributes'
+import { chartRoot, polarProps } from '@/chart/chartRoot'
 
-export const PieChart = generateCategoricalChart({
+const root = chartRoot({
   chartName: 'PieChart',
-  defaultProps: {
+  defaultTooltipEventType: 'item',
+  validateTooltipEventTypes: ['item'],
+})
+
+export const PieChart = forwardsSvgAttributes(defineComponent({
+  ...root,
+  props: polarProps({
     layout: 'centric',
     startAngle: 0,
     endAngle: 360,
-  },
-  defaultTooltipEventType: 'item',
-  validateTooltipEventTypes: ['item'],
-  tooltipPayloadSearcher: arrayTooltipSearcher,
-})
+  }),
+  setup: (props, context) => root.setup(props, context),
+}))

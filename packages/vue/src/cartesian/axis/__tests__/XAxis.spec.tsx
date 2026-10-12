@@ -5,7 +5,7 @@ import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 function getXAxisTicks(container: Element): NodeListOf<Element> {
-  return container.querySelectorAll('.v-charts-xAxis .v-charts-cartesian-axis-tick')
+  return container.querySelectorAll('.v-charts-x-axis .v-charts-cartesian-axis-tick')
 }
 
 function getXAxisTickTexts(container: Element): string[] {
@@ -88,7 +88,7 @@ describe('xAxis', () => {
         </LineChart>
       ))
 
-      const xAxisElements = container.querySelectorAll('.v-charts-xAxis')
+      const xAxisElements = container.querySelectorAll('.v-charts-x-axis')
       expect(xAxisElements.length).toBe(0)
     })
 
@@ -100,7 +100,7 @@ describe('xAxis', () => {
         </LineChart>
       ))
 
-      const xAxisElements = container.querySelectorAll('.v-charts-xAxis')
+      const xAxisElements = container.querySelectorAll('.v-charts-x-axis')
       expect(xAxisElements.length).toBe(1)
     })
   })
@@ -133,7 +133,7 @@ describe('xAxis', () => {
 
       await nextTick()
       await nextTick()
-      const tickLines = container.querySelectorAll('.v-charts-xAxis .v-charts-cartesian-axis-tick-line')
+      const tickLines = container.querySelectorAll('.v-charts-x-axis .v-charts-cartesian-axis-tick-line')
       expect(tickLines.length).toBeGreaterThan(0)
     })
 
@@ -145,7 +145,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const tickLines = container.querySelectorAll('.v-charts-xAxis .v-charts-cartesian-axis-tick-line')
+      const tickLines = container.querySelectorAll('.v-charts-x-axis .v-charts-cartesian-axis-tick-line')
       expect(tickLines.length).toBe(0)
     })
 
@@ -157,7 +157,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const axisLine = container.querySelector('.v-charts-xAxis .v-charts-cartesian-axis-line')
+      const axisLine = container.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-line')
       expect(axisLine).toBeTruthy()
     })
 
@@ -169,7 +169,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const axisLine = container.querySelector('.v-charts-xAxis .v-charts-cartesian-axis-line')
+      const axisLine = container.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-line')
       expect(axisLine).toBeFalsy()
     })
 
@@ -181,7 +181,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const axisLine = container.querySelector('.v-charts-xAxis .v-charts-cartesian-axis-line')
+      const axisLine = container.querySelector('.v-charts-x-axis .v-charts-cartesian-axis-line')
       expect(axisLine).toBeTruthy()
       expect(axisLine?.getAttribute('stroke')).toBe('blue')
       expect(axisLine?.getAttribute('stroke-width')).toBe('3')
@@ -198,7 +198,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const xAxis = container.querySelector('.v-charts-xAxis')
+      const xAxis = container.querySelector('.v-charts-x-axis')
       expect(xAxis).toBeTruthy()
       const transform = xAxis?.getAttribute('transform')
       if (transform) {
@@ -219,7 +219,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const xAxis = container.querySelector('.v-charts-xAxis')
+      const xAxis = container.querySelector('.v-charts-x-axis')
       expect(xAxis).toBeTruthy()
       const transform = xAxis?.getAttribute('transform')
       if (transform) {
@@ -249,23 +249,6 @@ describe('xAxis', () => {
     })
   })
 
-  describe('class prop', () => {
-    it('applies custom class to xAxis element exactly once', () => {
-      const { container } = render(() => (
-        <BarChart width={500} height={300} data={data}>
-          <XAxis dataKey="name" class="my-custom-xaxis" />
-          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
-        </BarChart>
-      ))
-
-      const xAxis = container.querySelector('.v-charts-xAxis')
-      expect(xAxis).toBeTruthy()
-      const classStr = xAxis!.getAttribute('class') ?? ''
-      const count = classStr.split(' ').filter(c => c === 'my-custom-xaxis').length
-      expect(count).toBe(1)
-    })
-  })
-
   describe('style prop', () => {
     it('applies custom style to xAxis element', () => {
       const { container } = render(() => (
@@ -275,7 +258,7 @@ describe('xAxis', () => {
         </BarChart>
       ))
 
-      const xAxis = container.querySelector('.v-charts-xAxis') as HTMLElement | null
+      const xAxis = container.querySelector('.v-charts-x-axis') as HTMLElement | null
       expect(xAxis).toBeTruthy()
       expect(xAxis!.style.opacity).toBe('0.5')
     })

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'vue'
 import { isNumber } from './validate'
 
 /**
@@ -16,7 +17,7 @@ export function toPx(value: string | number | undefined): string | undefined {
  * @param style The style object to convert
  * @returns A new style object with converted values
  */
-export function normalizeStyle(style: Record<string, any> = {}): Record<string, any> {
+export function normalizeStyle(style: CSSProperties = {}): CSSProperties {
   const { height, width, minHeight, maxHeight, minWidth, maxWidth, ...rest } = style
   return {
     height: toPx(height),

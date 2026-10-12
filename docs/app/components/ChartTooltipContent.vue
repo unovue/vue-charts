@@ -181,7 +181,7 @@ const nestLabel = computed(() => {
 
 <style>
 /* Unscoped on purpose: scoped `:global(.dark) .x` compiles to a bare `.dark`
-   selector and never matches (see ADR-0008 / tasks/lessons.md). */
+   selector and never matches (see docs/adr/0008-chart-demo-cube-code-card.md). */
 .dark .chart-tooltip {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
 }

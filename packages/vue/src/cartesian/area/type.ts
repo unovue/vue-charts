@@ -1,22 +1,21 @@
-import type { ChartData } from '@/state/chartDataSlice'
+import type { ChartDataKey } from '@/types/base'
+import type { ChartData } from '@/types/chartData'
 import type {
-  DataKey,
   TooltipType,
   VueClassValue,
   VuePropsToType,
-  WithSVGProps,
 } from '@/types'
-import type { AnimationOptions } from 'motion-v'
+import type { ValueAnimationTransition } from 'motion-v'
 import type { BaseValue } from '@/types/area'
 import type { AxisId } from '@/types/axis'
 import type { LegendType } from '@/types/legend'
-import type { PropType } from 'vue'
+import type { ExtractPropTypes, PropType } from 'vue'
 import { CurveVueProps } from '@/shape/Curve'
 import { classProp } from '@/types'
 
 export const AreaVueProps = {
-  ...CurveVueProps,
-  activeDot: { type: Boolean, default: true },
+  type: CurveVueProps.type,
+  activeDot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: true },
   baseValue: {
     type: [Number, String] as PropType<BaseValue>,
     default: undefined,
@@ -24,16 +23,16 @@ export const AreaVueProps = {
   connectNulls: { type: Boolean, default: false },
   data: { type: Array as PropType<ChartData>, default: undefined },
   dataKey: {
-    type: [String, Number, Function] as PropType<DataKey<any>>,
-    required: true,
+    type: [String, Number, Function] as PropType<ChartDataKey>,
+    required: true as const,
   },
-  dot: { type: Boolean, default: false },
-  fill: { type: String, default: '#3182bd' },
+  dot: { type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>, default: false },
+  fill: { type: String, default: undefined },
   fillOpacity: { type: Number, default: 0.6 },
   strokeWidth: { type: Number },
-  stroke: { type: String, default: '#3182bd' },
+  stroke: { type: String, default: undefined },
   hide: { type: Boolean, default: false },
-  isAnimationActive: { type: Boolean, default: true },
+  isAnimationActive: { type: Boolean, default: undefined },
   /**
    * Label for each data point.
    * - boolean: true for default label rendering
@@ -42,26 +41,14 @@ export const AreaVueProps = {
    * - VNode: custom Vue element
    */
   label: {
-    type: [Boolean, Object] as PropType<boolean | Record<string, any>>,
+    type: [Boolean, Object] as PropType<boolean | Record<string, unknown>>,
     default: undefined,
   },
   legendType: { type: String as PropType<LegendType>, default: 'line' },
-  onAnimationEnd: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
-  onAnimationStart: {
-    type: Function as PropType<() => void>,
-    default: undefined,
-  },
   transition: {
-    type: Object as PropType<AnimationOptions>,
-    default: {
-      duration: 0.8,
-      ease: 'easeOut',
-    },
+    type: Object as PropType<ValueAnimationTransition<number>>,
+    default: undefined,
   },
-  needClip: { type: Boolean, default: false },
   stackId: {
     type: [String, Number] as PropType<string | number>,
     default: undefined,
@@ -73,21 +60,13 @@ export const AreaVueProps = {
   },
   xAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
   yAxisId: { type: [String, Number] as PropType<AxisId>, default: 0 },
-  activeIndex: { type: Number, default: undefined },
-  activePoint: { type: Object as PropType<any>, default: undefined },
   id: { type: String, default: undefined },
-  left: { type: Number, default: 0 },
-  top: { type: Number, default: 0 },
-  width: { type: Number, default: 0 },
-  height: { type: Number, default: 0 },
   name: { type: [String, Number] as PropType<string | number> },
   class: classProp,
 }
 
-export type AreaProps = VuePropsToType<typeof AreaVueProps>
-export type AreaPropsWithSVG = WithSVGProps<
-  typeof AreaVueProps
->
+/** Resolved Area props inside the library; the public `AreaProps` is derived from the component. */
+export type AreaInput = VuePropsToType<typeof AreaVueProps>
 
 export interface AreaDotSlotProps {
   cx: number
@@ -100,3 +79,5 @@ export interface AreaDotSlotProps {
   clipDot?: boolean
   class?: VueClassValue
 }
+
+export type ResolvedAreaProps = ExtractPropTypes<typeof AreaVueProps>

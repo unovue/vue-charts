@@ -1,18 +1,16 @@
-import type { DataKey, LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
-import type { ExternalMouseEvents } from './event'
+import type { LayoutType, Margin, StackOffsetType, SyncMethod, VueClassValue } from './common'
 
-export interface CategoricalChartProps extends Partial<ExternalMouseEvents> {
+export interface CategoricalChartProps {
   accessibilityLayer?: boolean
   barCategoryGap?: number | string
   barGap?: number | string
   barSize?: number | string
-  children?: any
+  children?: unknown
   class?: VueClassValue
   compact?: boolean
   cx?: number | string
   cy?: number | string
-  data?: any[]
-  dataKey?: DataKey<any>
+  data?: unknown[]
   desc?: string
   endAngle?: number
   height?: number
@@ -26,7 +24,7 @@ export interface CategoricalChartProps extends Partial<ExternalMouseEvents> {
   role?: string
   stackOffset?: StackOffsetType
   startAngle?: number
-  style?: any
+  style?: unknown
   syncId?: number | string
   syncMethod?: SyncMethod
   tabIndex?: number

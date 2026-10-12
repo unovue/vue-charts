@@ -145,7 +145,7 @@ function evaluateExpression(expression: string): string {
   return newExpr
 }
 
-export function safeEvaluateExpression(expression: string): string {
+function safeEvaluateExpression(expression: string): string {
   try {
     return evaluateExpression(expression)
   }

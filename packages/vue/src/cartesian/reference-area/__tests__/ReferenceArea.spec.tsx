@@ -1,5 +1,5 @@
 import { render } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Bar, BarChart, ReferenceArea, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
@@ -22,7 +22,7 @@ describe('<ReferenceArea />', () => {
     { name: '201112', uv: 4.3, pv: 0 },
   ]
 
-  test('Render 2 rects in ReferenceArea with x1/x2 and y1/y2', () => {
+  it('render 2 rects in ReferenceArea with x1/x2 and y1/y2', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -43,7 +43,7 @@ describe('<ReferenceArea />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(2)
   })
 
-  test("Don't render any rect in ReferenceArea when no x1, x2, y1 or y2 is set", () => {
+  it('don\'t render any rect in ReferenceArea when no x1, x2, y1 or y2 is set', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -63,7 +63,7 @@ describe('<ReferenceArea />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(0)
   })
 
-  test('Render a rect in ReferenceArea when only x1 is set', () => {
+  it('render a rect in ReferenceArea when only x1 is set', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -83,7 +83,7 @@ describe('<ReferenceArea />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(1)
   })
 
-  test("Don't render rect when x reference area has unknown category values", () => {
+  it('don\'t render rect when x reference area has unknown category values', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -103,7 +103,7 @@ describe('<ReferenceArea />', () => {
     expect(container.querySelectorAll('.v-charts-label')).toHaveLength(0)
   })
 
-  test('Render rect when ifOverflow is "extendDomain"', () => {
+  it('render rect when ifOverflow is "extendDomain"', () => {
     const { container } = render(() => (
       <BarChart
         width={1100}
@@ -188,7 +188,7 @@ describe('<ReferenceArea />', () => {
       expect(getByText('Object label text')).toBeTruthy()
     })
 
-    test('should not render label when label=false', () => {
+    it('should not render label when label=false', () => {
       const { container } = render(() => (
         <BarChart
           width={1100}

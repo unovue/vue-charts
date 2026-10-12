@@ -1,5 +1,5 @@
 <script setup>
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'vccs'
+import { Bar, BarChart, Tooltip, XAxis, YAxis } from 'vccs'
 
 const solarSystem = [
   { name: 'Sun', orbitalDistanceKm: 0, radiusKm: 696340, massKg: 1.989e30, fill: '#ffa700' },
@@ -16,30 +16,28 @@ const solarSystem = [
 </script>
 
 <template>
-  <ResponsiveContainer
-    width="100%"
+  <BarChart
+    :data="solarSystem"
     :height="400"
   >
-    <BarChart :data="solarSystem">
-      <XAxis data-key="name" />
-      <YAxis
-        :domain="[1e23, 2e27]"
-        :allow-data-overflow="true"
-        :width="100"
-      />
-      <Bar
-        data-key="massKg"
-        unit="kg"
-      />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
-    </BarChart>
-  </ResponsiveContainer>
+    <XAxis data-key="name" />
+    <YAxis
+      :domain="[1e23, 2e27]"
+      :allow-data-overflow="true"
+      :width="100"
+    />
+    <Bar
+      data-key="massKg"
+      unit="kg"
+    />
+    <Tooltip :cursor="false">
+      <template #content="{ active, payload, label }">
+        <ChartTooltipContent
+          :active="active"
+          :payload="payload"
+          :label="label"
+        />
+      </template>
+    </Tooltip>
+  </BarChart>
 </template>

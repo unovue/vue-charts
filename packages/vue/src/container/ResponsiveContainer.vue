@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import type { CSSProperties, VNode } from 'vue'
-import { Fragment, cloneVNode, computed, onMounted, onUnmounted, ref, toRef } from 'vue'
-import { useThrottleFn } from '@vueuse/core'
-import { isPercent } from '../utils/validate'
+import type { CSSProperties } from 'vue'
+import { computed, ref, toRef } from 'vue'
+import { useMounted, useResizeObserver, useThrottleFn } from '@vueuse/core'
 import { normalizeStyle } from '@/utils/style'
-import { provideSizeContext } from '@/container/useSizeContext'
-import { useRoundedSize } from '@/hooks/useRoundedSize'
+import { provideInitialDimension } from '@/container/useSizeContext'
+import { warnOnce } from '@/utils/log'
 
 defineOptions({
   name: 'ResponsiveContainer',
   inheritAttrs: false,
 })
+
 const props = withDefaults(defineProps<ResponsiveContainerProps>(), {
-  initialDimension: () => ({ width: -1, height: -1 }),
   width: '100%',
   height: '100%',
   minWidth: 0,
   debounce: 0,
 })
-const slots = defineSlots<{
-  default: () => VNode[]
-}>()
+
+const emit = defineEmits<{ resize: [width: number, height: number] }>()
+
+warnOnce('[vccs] ResponsiveContainer is deprecated and will be removed in 2.0. Charts are responsive by default: remove the wrapper and set width, height or aspect on the chart.')
 
 export interface ResponsiveContainerProps {
   aspect?: number
@@ -37,61 +37,14 @@ export interface ResponsiveContainerProps {
   id?: string | number
   class?: string | number
   style?: Omit<CSSProperties, keyof ResponsiveContainerProps>
-  onResize?: (width: number, height: number) => void
 }
 const debounce = toRef(props, 'debounce')
-const { size: sizes, setSize: setContainerSize } = useRoundedSize({
-  width: props.initialDimension.width,
-  height: props.initialDimension.height,
-})
-
-// Computed calculated dimensions to prevent recalculation
-const calculatedWidth = computed(() => {
-  return isPercent(props.width) ? sizes.value.width : (props.width as number)
-})
-
-const calculatedHeight = computed(() => {
-  let height = isPercent(props.height) ? sizes.value.height : (props.height as number)
-
-  if (props.aspect && props.aspect > 0) {
-    // Preserve the desired aspect ratio
-    if (props.width && (props.height == null || props.height === 'auto')) {
-      height = calculatedWidth.value / props.aspect
-    }
-    else if (props.height && (props.width == null || props.width === 'auto')) {
-      // calculatedWidth will be computed based on height and aspect
-    }
-  }
-
-  return height
-})
-
-// Update calculatedWidth when aspect ratio affects it
-const finalCalculatedWidth = computed(() => {
-  let width = calculatedWidth.value
-
-  if (props.aspect && props.aspect > 0) {
-    if (props.height && (props.width == null || props.width === 'auto')) {
-      width = calculatedHeight.value * props.aspect
-    }
-  }
-
-  return width
-})
-
-// Provide context with all values
-provideSizeContext({
-  sizes,
-  calculatedWidth: finalCalculatedWidth,
-  calculatedHeight,
-})
+provideInitialDimension(toRef(props, 'initialDimension'))
 
 const handleResize = useThrottleFn(
-  (entries: ResizeObserverEntry[]) => {
-    const { width: containerWidth, height: containerHeight } = entries[0].contentRect
-
-    setContainerSize(containerWidth, containerHeight)
-    props.onResize?.(containerWidth, containerHeight)
+  (entries: readonly ResizeObserverEntry[]) => {
+    const { width, height } = entries[0].contentRect
+    emit('resize', width, height)
   },
   debounce,
   true,
@@ -99,83 +52,15 @@ const handleResize = useThrottleFn(
 )
 
 const containerRef = ref<HTMLDivElement>()
-let observer: ResizeObserver | null = null
-onMounted(() => {
-  observer = new ResizeObserver(handleResize)
-  const { width: containerWidth, height: containerHeight }
-    = containerRef.value!.getBoundingClientRect() ?? { width: 0, height: 0 }
-  setContainerSize(containerWidth, containerHeight)
-  observer.observe(containerRef.value!)
-})
-onUnmounted(() => {
-  observer?.disconnect()
-})
-
-const isReady = computed(() => {
-  const { width: containerWidth, height: containerHeight } = sizes.value
-  return containerWidth >= 0 && containerHeight >= 0
-})
-
-function flattenSlotChildren(vnodes: VNode[]): VNode[] {
-  const result: VNode[] = []
-  for (const vnode of vnodes) {
-    if (vnode.type === Fragment && Array.isArray(vnode.children)) {
-      result.push(...flattenSlotChildren(vnode.children as VNode[]))
-    }
-    else {
-      result.push(vnode)
-    }
-  }
-  return result
-}
-
-function renderChildren() {
-  if (!isReady.value) {
-    return undefined
-  }
-
-  const calculatedWidthValue = finalCalculatedWidth.value
-  const calculatedHeightValue = calculatedHeight.value
-  const rawChildren = slots.default?.()
-  if (!rawChildren)
-    return undefined
-
-  const children = flattenSlotChildren(rawChildren)
-
-  return children.map((child, index) => {
-    return cloneVNode(child, {
-      width: calculatedWidthValue,
-      height: calculatedHeightValue,
-      key: child.key || `responsive-child-${index}`,
-      style: {
-        ...normalizeStyle({
-          maxHeight: sizes.value.height,
-          maxWidth: sizes.value.width,
-        }),
-        height: '100%',
-        width: '100%',
-        ...child.props?.style,
-      },
-    })
-  })
-}
-
-/**
- * Rendering the children through `<component :is="() => renderChildren()" />` would
- * create a new component type on every render, so Vue unmounts and remounts the whole
- * chart subtree each time. Charts that dispatch on `mouseenter` (radial bar, radar) then
- * loop forever: the remount recreates the element under the cursor, which fires
- * `mouseenter` again. This renderer keeps a stable type, so the subtree is patched.
- */
-const ChildrenRenderer = (rendererProps: { nodes: VNode[] }) => rendererProps.nodes
-ChildrenRenderer.props = { nodes: { type: Array, required: true } }
-ChildrenRenderer.inheritAttrs = false
+const mounted = useMounted()
+useResizeObserver(() => mounted.value ? containerRef.value : undefined, handleResize)
 
 const containerStyle = computed(() => ({
   ...props.style,
+  aspectRatio: props.aspect,
   ...normalizeStyle({
     width: props.width,
-    height: props.height,
+    height: props.aspect ? 'auto' : props.height,
     minWidth: props.minWidth,
     minHeight: props.minHeight,
     maxHeight: props.maxHeight,
@@ -187,10 +72,10 @@ const containerStyle = computed(() => ({
   <div
     :id="id ? `${id}` : undefined"
     ref="containerRef"
-    class="vcharts-responsive-container"
+    class="v-charts-responsive-container"
     :class="[props.class]"
     :style="containerStyle"
   >
-    <ChildrenRenderer :nodes="renderChildren() ?? []" />
+    <slot />
   </div>
 </template>

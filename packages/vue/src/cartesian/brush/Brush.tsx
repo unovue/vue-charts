@@ -1,6 +1,8 @@
-import type { CSSProperties } from 'vue'
-import { computed, defineComponent, reactive } from 'vue'
-import type { BrushPropsWithSVG, BrushTravellerId } from './type'
+import type { CSSProperties, PropType, SlotsType, VNode } from 'vue'
+import { useChart } from '@/model/chart'
+import { computed, defineComponent, h, nextTick, reactive, shallowRef, watch } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { BrushInput, BrushTravellerId } from './type'
 import { BrushVueProps } from './type'
 import { Layer } from '../../container/Layer'
 import { Background } from './components/Background'
@@ -10,41 +12,51 @@ import { TravellerLayer } from './components/TravellerLayer'
 import { BrushText } from './components/BrushText'
 import { useBrushState } from './hooks/useBrushState'
 import { useBrushHandlers } from './hooks/useBrushHandlers'
-import { useBrushSetting } from '@/cartesian/brush/hooks/useBrushSetting'
-import { useBrushChartSynchronisation } from '@/synchronisation/useChartSynchronisation'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { selectBrushDimensions } from '@/state/selectors/brushSelectors'
-import { setDataStartEndIndexes } from '@/state/chartDataSlice'
-import type { BrushStartEndIndex } from '@/state/chartDataSlice'
+import { useBrushChartSynchronisation } from '@/events/sync'
+import type { BrushStartEndIndex } from '@/types/chartData'
 import { isNumber } from '@/utils'
+import { useChartGesture } from '@/model/runtime'
+import { normalizeBrushRange } from '@/model/dataRange'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
-export const Brush = defineComponent<BrushPropsWithSVG>({
-  name: 'Brush',
-  props: BrushVueProps,
+const brushEmits = {
+  'update:range': (_range: BrushStartEndIndex | null) => true,
+  'change': (_indexes: BrushStartEndIndex) => true,
+  'drag-end': (_indexes: BrushStartEndIndex) => true,
+}
+
+const BrushView = defineComponent({
+  name: 'BrushView',
+  emits: brushEmits,
   inheritAttrs: false,
-  setup(props, { attrs, slots }) {
-    // --- Redux integration ---
-    useBrushSetting(props)
-    useBrushChartSynchronisation()
+  props: {
+    item: { type: Object as PropType<BrushInput>, required: true },
+    svgAttrs: { type: Object as PropType<Record<string, unknown>>, required: true },
+    range: { type: Object as PropType<BrushStartEndIndex | null>, default: null },
+    controlled: { type: Function as PropType<() => boolean>, required: true },
+  },
+  setup(view, { slots, emit }) {
+    const chart = useChart()
+    const props = view.item
+    const attrs = view.svgAttrs
 
-    const dispatch = useAppDispatch()
-    const chartData = useAppSelector(state => state.chartData.chartData)
-    const dataStartIndex = useAppSelector(state => state.chartData.dataStartIndex)
-    const dataEndIndex = useAppSelector(state => state.chartData.dataEndIndex)
-    const brushDimensions = useAppSelector(selectBrushDimensions)
+    const chartData = computed(() => chart.dataRange.state.value.chartData)
+    const brushDimensions = computed(() => chart.brushDimensions.value)
 
     // --- Computed properties ---
     const x = computed(() => props.x ?? brushDimensions.value?.x)
     const y = computed(() => props.y ?? brushDimensions.value?.y)
     const width = computed(() => props.width ?? brushDimensions.value?.width)
-    const startIndex = computed(() => props.startIndex ?? dataStartIndex.value ?? 0)
-    const endIndex = computed(() => props.endIndex ?? dataEndIndex.value ?? 0)
+    const startIndex = computed(() => view.range?.startIndex ?? 0)
+    const endIndex = computed(() => view.range?.endIndex ?? Math.max(0, (chartData.value?.length ?? 0) - 1))
     const calculatedY = computed(() => (y.value ?? 0) + (props.dy ?? 0))
 
-    // --- onChange handler ---
-    const onChange = (nextState: BrushStartEndIndex) => {
-      props.onChange?.(nextState)
-      dispatch(setDataStartEndIndexes(nextState))
+    function onChange(nextState: BrushStartEndIndex) {
+      if (sameRange(nextState, view.range))
+        return
+      emit('update:range', nextState)
+      emit('change', nextState)
+      nextTick(restoreControlledPositions)
     }
 
     // --- Hook wiring ---
@@ -57,6 +69,21 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
       () => endIndex.value,
     )
 
+    // While a traveller or the slide is dragged, the chart follows the brush directly.
+    const gesture = useChartGesture()
+    watch(() => brushState.value.isSlideMoving || brushState.value.isTravellerMoving, (moving) => {
+      gesture.value = moving
+    })
+
+    // Wait for the parent to accept the proposal before restoring controlled travellers.
+    function restoreControlledPositions() {
+      if (!view.controlled())
+        return
+      brushState.value.startX = brushState.value.scale?.(startIndex.value)
+      brushState.value.endX = brushState.value.scale?.(endIndex.value)
+    }
+    watch(() => view.range, restoreControlledPositions)
+
     // Reactive props object for useBrushHandlers — getters ensure values are current when accessed during event handlers
     const handlerProps = reactive({
       get x() { return x.value! },
@@ -66,9 +93,10 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
       get startIndex() { return startIndex.value },
       get endIndex() { return endIndex.value },
       get leaveTimeOut() { return props.leaveTimeOut! },
-      get onChange() { return props.onChange },
-      get onDragEnd() { return props.onDragEnd },
-      get data() { return props.data },
+      onDragEnd: (indexes: BrushStartEndIndex) => {
+        emit('drag-end', indexes)
+        nextTick(restoreControlledPositions)
+      },
     })
 
     const handlers = useBrushHandlers(
@@ -77,6 +105,11 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
       onChange,
       () => chartData.value ?? [],
     )
+
+    const moveKeyboard = (direction: 1 | -1, id: BrushTravellerId) => {
+      handlers.handleTravellerMoveKeyboard(direction, id)
+      nextTick(restoreControlledPositions)
+    }
 
     // --- Bound traveller drag start handlers ---
     const startXDragStart = (e: MouseEvent | TouchEvent) => handlers.handleTravellerDragStart('startX', e)
@@ -112,13 +145,15 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
         x: xVal,
         y: yVal,
         width: wVal,
-        data: data as any[],
+        data: data as unknown[],
         startIndex: startIndex.value,
         endIndex: endIndex.value,
       }
 
       return (
         <Layer
+          {...attrs}
+          data-slot="brush"
           class={['v-charts-brush', props.class]}
           style={{ userSelect: 'none', ...attrs.style as CSSProperties }}
           onMouseleave={handlers.handleLeaveWrapper}
@@ -138,68 +173,167 @@ export const Brush = defineComponent<BrushPropsWithSVG>({
             y={yVal}
             width={wVal}
             height={hVal}
-            data={data as any[]}
+            data={data as unknown[]}
             padding={props.padding}
           >
-            {slots.default?.()}
+            {{ default: slots.default }}
           </Panorama>
 
-          <Slide
-            y={yVal}
-            height={hVal}
-            stroke={props.stroke}
-            travellerWidth={props.travellerWidth}
-            startX={startX}
-            endX={endX}
-            onMouseenter={handlers.handleEnterSlideOrTraveller}
-            onMouseleave={handlers.handleLeaveSlideOrTraveller}
-            onMousedown={handlers.handleSlideDragStart}
-            onTouchstart={handlers.handleSlideDragStart}
-          />
+          {view.range != null && (
+            <>
+              <Slide
+                y={yVal}
+                height={hVal}
+                stroke={props.stroke}
+                travellerWidth={props.travellerWidth}
+                startX={startX}
+                endX={endX}
+                onMouseenter={handlers.handleEnterSlideOrTraveller}
+                onMouseleave={handlers.handleLeaveSlideOrTraveller}
+                onMousedown={handlers.handleSlideDragStart}
+                onTouchstart={handlers.handleSlideDragStart}
+              />
 
-          <TravellerLayer
-            travellerX={startX}
-            id="startX"
-            otherProps={travellerOtherProps}
-            onMouseenter={handlers.handleEnterSlideOrTraveller}
-            onMouseleave={handlers.handleLeaveSlideOrTraveller}
-            onMousedown={startXDragStart}
-            onTouchstart={startXDragStart}
-            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => handlers.handleTravellerMoveKeyboard(direction, id) }}
-            onFocus={() => { brushState.value.isTravellerFocused = true }}
-            onBlur={() => { brushState.value.isTravellerFocused = false }}
-          />
+              <TravellerLayer
+                travellerX={startX}
+                id="startX"
+                otherProps={travellerOtherProps}
+                onMouseenter={handlers.handleEnterSlideOrTraveller}
+                onMouseleave={handlers.handleLeaveSlideOrTraveller}
+                onMousedown={startXDragStart}
+                onTouchstart={startXDragStart}
+                {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => moveKeyboard(direction, id) }}
+                onFocus={() => { brushState.value.isTravellerFocused = true }}
+                onBlur={() => { brushState.value.isTravellerFocused = false }}
+              />
 
-          <TravellerLayer
-            travellerX={endX}
-            id="endX"
-            otherProps={travellerOtherProps}
-            onMouseenter={handlers.handleEnterSlideOrTraveller}
-            onMouseleave={handlers.handleLeaveSlideOrTraveller}
-            onMousedown={endXDragStart}
-            onTouchstart={endXDragStart}
-            {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => handlers.handleTravellerMoveKeyboard(direction, id) }}
-            onFocus={() => { brushState.value.isTravellerFocused = true }}
-            onBlur={() => { brushState.value.isTravellerFocused = false }}
-          />
+              <TravellerLayer
+                travellerX={endX}
+                id="endX"
+                otherProps={travellerOtherProps}
+                onMouseenter={handlers.handleEnterSlideOrTraveller}
+                onMouseleave={handlers.handleLeaveSlideOrTraveller}
+                onMousedown={endXDragStart}
+                onTouchstart={endXDragStart}
+                {...{ 'onTraveller-move-keyboard': (direction: 1 | -1, id: BrushTravellerId) => moveKeyboard(direction, id) }}
+                onFocus={() => { brushState.value.isTravellerFocused = true }}
+                onBlur={() => { brushState.value.isTravellerFocused = false }}
+              />
 
-          {showText && (
-            <BrushText
-              startIndex={startIndex.value}
-              endIndex={endIndex.value}
-              y={yVal}
-              height={hVal}
-              travellerWidth={props.travellerWidth}
-              stroke={props.stroke}
-              tickFormatter={props.tickFormatter}
-              dataKey={props.dataKey}
-              data={data as any[]}
-              startX={startX}
-              endX={endX}
-            />
+              {showText && (
+                <BrushText
+                  startIndex={startIndex.value}
+                  endIndex={endIndex.value}
+                  y={yVal}
+                  height={hVal}
+                  travellerWidth={props.travellerWidth}
+                  stroke={props.stroke}
+                  tickFormatter={props.tickFormatter}
+                  dataKey={props.dataKey}
+                  data={data as unknown[]}
+                  startX={startX}
+                  endX={endX}
+                />
+              )}
+            </>
           )}
         </Layer>
       )
     }
   },
 })
+
+export const Brush = forwardsSvgAttributes(defineComponent({
+  name: 'Brush',
+  emits: brushEmits,
+  props: BrushVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<{ default?: () => VNode[] }>,
+  setup(props, { attrs, slots, emit }) {
+    const chart = useChart()
+    const View = useDeferredView(BrushView)
+    const controlled = () => props.range !== undefined
+    const length = computed(() => chart.dataRange.state.value.chartData?.length ?? 0)
+    // Uncontrolled window; `null` selects all rows and keeps following new rows.
+    const local = shallowRef<BrushStartEndIndex | null>(null)
+    const fullRange = (rows: number) => ({ startIndex: 0, endIndex: rows - 1 })
+    /** What the Brush shows: `null` hides the travellers (controlled `null` or empty data). */
+    const range = computed(() => normalizeBrushRange(
+      controlled() ? props.range! : local.value ?? fullRange(length.value),
+      length.value,
+    ))
+
+    chart.brush.register(computed(() => ({
+      x: props.x,
+      y: props.y,
+      width: props.width,
+      height: props.height!,
+      padding: props.padding!,
+      range: controlled() ? props.range! : local.value,
+      onRangeChange: updateRange,
+    })))
+    useBrushChartSynchronisation(chart)
+
+    // Empty data emits `null`. Whoever accepted that null gets the full range back when rows
+    // return, so a filter that briefly finds nothing does not leave the Brush without handles.
+    let emptied = false
+    function announce(value: BrushStartEndIndex | null) {
+      emptied = value === null && length.value === 0
+      emit('update:range', value)
+    }
+
+    // D-16: reconcile the uncontrolled window by index when the row count changes.
+    watch(length, (rows, previous) => {
+      if (emptied && previous === 0 && rows > 0) {
+        emptied = false
+        if (!controlled() || props.range === null)
+          return emit('update:range', fullRange(rows))
+      }
+      if (controlled())
+        return
+      const shown = normalizeBrushRange(local.value ?? fullRange(previous), previous)
+      const window = local.value
+      if (window && rows === 0)
+        local.value = null
+      else if (window && rows > previous && window.endIndex === previous - 1)
+        local.value = { startIndex: window.startIndex + rows - previous, endIndex: rows - 1 }
+      else if (window && rows < previous)
+        local.value = normalizeBrushRange(window, rows)
+      // A full window grows silently; a shifted or clamped one is announced.
+      if ((rows < previous || local.value !== window) && !sameRange(shown, range.value))
+        announce(range.value)
+    }, { flush: 'sync' })
+    // Ask the parent once per distinct (input, row count) to accept a normalized controlled range.
+    watch(
+      () => [props.range === null, props.range?.startIndex, props.range?.endIndex, length.value],
+      () => {
+        if (controlled() && !sameRange(props.range!, range.value))
+          announce(range.value)
+      },
+      { immediate: true },
+    )
+
+    function updateRange(value: BrushStartEndIndex | null) {
+      const next = normalizeBrushRange(value, length.value)
+      if (sameRange(next, range.value))
+        return
+      if (!controlled())
+        local.value = next == null || sameRange(next, fullRange(length.value)) ? null : next
+      emit('update:range', next)
+    }
+    return () => h(View, {
+      'item': props,
+      'svgAttrs': attrs,
+      'range': range.value,
+      controlled,
+      'onChange': indexes => emit('change', indexes),
+      'onDrag-end': indexes => emit('drag-end', indexes),
+      'onUpdate:range': updateRange,
+    }, slots)
+  },
+}))
+
+function sameRange(left: BrushStartEndIndex | null, right: BrushStartEndIndex | null) {
+  return left === right || (left != null && right != null
+    && left.startIndex === right.startIndex && left.endIndex === right.endIndex)
+}

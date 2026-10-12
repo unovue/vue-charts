@@ -1,4 +1,5 @@
 import { render } from '@testing-library/vue'
+import { h } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
@@ -24,6 +25,34 @@ describe('cartesianGrid', () => {
     { name: 'Page E', uv: 278, pv: 3908, amt: 2400 },
     { name: 'Page F', uv: 189, pv: 4800, amt: 2400 },
   ]
+
+  // Catches defaults overriding explicit null/false or losing SVG attrs at the prop boundary.
+  it.each([
+    { name: 'omitted', props: {}, horizontal: 2, vertical: 1, stroke: 'var(--v-charts-grid, #ccc)', fill: null },
+    { name: 'undefined', props: { horizontal: undefined, stroke: undefined, fill: undefined }, horizontal: 2, vertical: 1, stroke: 'var(--v-charts-grid, #ccc)', fill: null },
+    { name: 'null', props: { horizontal: null, stroke: null, fill: null }, horizontal: 0, vertical: 1, stroke: null, fill: null },
+    { name: 'explicit', props: { vertical: false, stroke: '#123', fill: 'gold' }, horizontal: 2, vertical: 0, stroke: '#123', fill: 'gold' },
+  ])('preserves $name grid defaults and SVG attrs', (row) => {
+    const { container } = render(() => (
+      <BarChart width={400} height={200} data={data}>
+        {h(CartesianGrid, {
+          ...row.props,
+          'horizontalPoints': [20, 50],
+          'verticalPoints': [40],
+          'stroke-dasharray': '3 4',
+        })}
+        <Bar dataKey="uv" isAnimationActive={false} />
+      </BarChart>
+    ))
+    expect(getHorizontalLines(container)).toHaveLength(row.horizontal)
+    expect(getVerticalLines(container)).toHaveLength(row.vertical)
+    for (const line of container.querySelectorAll('.v-charts-cartesian-grid line')) {
+      expect(line.getAttribute('stroke')).toBe(row.stroke)
+      expect(line.getAttribute('stroke-dasharray')).toBe('3 4')
+    }
+    expect(container.querySelector('.v-charts-cartesian-grid-bg')?.getAttribute('fill') ?? null)
+      .toBe(row.fill)
+  })
 
   describe('rendering inside BarChart', () => {
     it('renders horizontal and vertical grid lines', () => {
@@ -166,6 +195,28 @@ describe('cartesianGrid', () => {
   })
 
   describe('rendering inside LineChart', () => {
+    it('keeps grid geometry off lines while preserving user stroke attributes', () => {
+      const { container } = render(() => (
+        <LineChart width={500} height={300} data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <CartesianGrid stroke="#123456" stroke-dasharray="3 3" stroke-opacity={0.5} />
+          <Line dataKey="uv" isAnimationActive={false} />
+        </LineChart>
+      ))
+
+      expect(getHorizontalLines(container).length).toBeGreaterThan(0)
+      expect(getVerticalLines(container).length).toBeGreaterThan(0)
+      container.querySelectorAll('.v-charts-cartesian-grid line').forEach((line) => {
+        for (const attribute of ['x', 'y', 'width', 'height', 'offset']) {
+          expect(line.hasAttribute(attribute), attribute).toBe(false)
+        }
+        expect(line.getAttribute('stroke')).toBe('#123456')
+        expect(line.getAttribute('stroke-dasharray')).toBe('3 3')
+        expect(line.getAttribute('stroke-opacity')).toBe('0.5')
+      })
+    })
+
     it('renders grid lines inside a LineChart', () => {
       const { container } = render(() => (
         <LineChart width={500} height={300} data={data}>

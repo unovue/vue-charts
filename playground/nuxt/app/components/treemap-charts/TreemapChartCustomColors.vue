@@ -44,15 +44,14 @@ const colors = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
   <Card class="flex flex-col">
     <CardHeader class="items-center pb-0">
       <CardTitle>Custom Colors</CardTitle>
-      <CardDescription>Using colorPanel prop</CardDescription>
+      <CardDescription>Using colors prop</CardDescription>
     </CardHeader>
     <CardContent class="flex-1 pb-0">
       <Treemap
-        :width="400"
         :height="250"
         :data="chartData"
         data-key="value"
-        :color-panel="colors"
+        :colors="colors"
         stroke="#fff"
       />
     </CardContent>

@@ -1,0 +1,29 @@
+{
+  "vueCompilerOptions": {
+    "strictTemplates": true,
+    "dataAttributes": [
+      "data-slot",
+      "data-chart"
+    ]
+  },
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue"
+  ]
+}

@@ -1,10 +1,10 @@
 import { render } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Bar, BarChart, XAxis, YAxis } from '@/index'
+import { Bar, BarChart } from '@/index'
 import { Label } from '@/components/label/Label'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
-describe('Label', () => {
+describe('label', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
@@ -32,14 +32,12 @@ describe('Label', () => {
     height: 200,
   }
 
-  // Helper: render Label inside BarChart (provides Redux store context)
+  // Helper: render Label inside BarChart (provides chart-local Vue state)
   function renderLabelInChart(labelProps: Record<string, any>, labelSlots?: any) {
     return render(() => (
       <BarChart width={500} height={300} data={data}>
         <Bar dataKey="uv" isAnimationActive={false} />
-        <Label {...labelProps}>
-          {labelSlots}
-        </Label>
+        <Label {...labelProps} v-slots={labelSlots} />
       </BarChart>
     ))
   }
@@ -108,6 +106,14 @@ describe('Label', () => {
       const labels = container.querySelectorAll('.v-charts-label')
       const found = Array.from(labels).some(l => l.textContent?.includes('top-label'))
       expect(found).toBe(true)
+    })
+
+    // A partial viewBox used to reach the position math with undefined sizes and render NaN.
+    it.each(['top', 'bottom', 'insideRight', 'center'] as const)('renders finite coordinates at %s for a viewBox without a size', (position) => {
+      const { container } = renderLabelInChart({ viewBox: { x: 10, y: 20 }, value: 'partial', position })
+      const label = Array.from(container.querySelectorAll('text.v-charts-label')).find(l => l.textContent?.includes('partial'))!
+      expect(Number.isFinite(Number(label.getAttribute('x')))).toBe(true)
+      expect(Number.isFinite(Number(label.getAttribute('y')))).toBe(true)
     })
 
     it('renders label at inside position', () => {

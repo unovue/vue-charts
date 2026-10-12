@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TrendingDown } from 'lucide-vue-next'
-import { Funnel, FunnelChart, Tooltip } from 'vccs'
+import { Cell, Funnel, FunnelChart, Tooltip } from 'vccs'
 import type { ChartConfig } from '~/components/ui/chart/types'
 import ChartTooltipContent from '~/components/ui/chart/ChartTooltipContent.vue'
 
@@ -30,10 +30,7 @@ const chartConfig: ChartConfig = {
         :config="chartConfig"
         class="mx-auto aspect-square max-h-[300px]"
       >
-        <FunnelChart
-          :width="400"
-          :height="300"
-        >
+        <FunnelChart>
           <Tooltip :cursor="false">
             <template #content="{ active, payload, label }">
               <ChartTooltipContent
@@ -47,7 +44,13 @@ const chartConfig: ChartConfig = {
             :data="chartData"
             data-key="value"
             name-key="stage"
-          />
+          >
+            <Cell
+              v-for="(entry, index) in chartData"
+              :key="entry.stage"
+              :fill="COLORS[index]"
+            />
+          </Funnel>
         </FunnelChart>
       </ChartContainer>
     </CardContent>

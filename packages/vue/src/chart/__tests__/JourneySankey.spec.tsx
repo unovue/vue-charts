@@ -1,0 +1,243 @@
+import { frame } from '@/test/motionClock'
+import { fireEvent, render } from '@testing-library/vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
+import { JourneySankey } from '@/index'
+import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
+import { computeJourneyLayout, reorderedNodes } from '../journeyUtils'
+
+// Shaped like an analytics journeys view: 11 sessions go / → /pricing and 6 of them end there.
+const journeys = [
+  { path: ['/', '/pricing'], count: 6 },
+  { path: ['/', '/pricing', '/', '/docs'], count: 2 },
+  { path: ['/', '/pricing', '/docs/self-hosting'], count: 1 },
+  { path: ['/', '/pricing', '/features', '/web-analytics'], count: 1 },
+  { path: ['/', '/pricing', '/docs/mcp', '/hiding-own-traffic'], count: 1 },
+  { path: ['/', '/docs'], count: 3 },
+  { path: ['/de', '/de/pricing', '/de', '/de/docs'], count: 3 },
+]
+
+const options = { width: 900, height: 600, steps: 4, exitsKnown: true, nodeWidth: 8, nodePadding: 8, labelHeight: 34, labelWidth: 160, top: 28 }
+
+beforeEach(() => {
+  mockGetBoundingClientRect({ width: 900, height: 600 })
+})
+
+describe('computeJourneyLayout', () => {
+  it('counts sessions per step, sessions that end there, and leaves exits unknown where paths are cut', () => {
+    const { nodes } = computeJourneyLayout(journeys, options)
+    const node = (step: number, name: string) => nodes.find(n => n.step === step && n.name === name)!
+    expect([node(1, '/pricing').count, node(1, '/pricing').exits]).toEqual([11, 6])
+    expect(node(1, '/docs').exits).toBe(3)
+    expect(node(3, '/docs').exits).toBeNull()
+
+    const cut = computeJourneyLayout(journeys, { ...options, steps: 3 })
+    expect(cut.nodes.find(n => n.step === 1 && n.name === '/pricing')!.exits).toBe(6)
+    expect(computeJourneyLayout(journeys, { ...options, exitsKnown: false }).nodes.every(n => n.exits === null)).toBe(true)
+  })
+
+  it('stacks bands inside their nodes, keeps label room and fits the height', () => {
+    const layout = computeJourneyLayout(journeys, options)
+    expect(layout.height).toBeLessThanOrEqual(options.height + 1e-6)
+    for (const node of layout.nodes) {
+      expect(node.slotHeight).toBeGreaterThanOrEqual(options.labelHeight)
+      const out = layout.links.filter(link => link.source === node.id)
+      const into = layout.links.filter(link => link.target === node.id)
+      for (const link of out) {
+        expect(link.y0 - link.width / 2).toBeGreaterThanOrEqual(node.y - 1e-6)
+        expect(link.y0 + link.width / 2).toBeLessThanOrEqual(node.y + node.continueHeight + 1e-6)
+      }
+      for (const link of into)
+        expect(link.y1 + link.width / 2).toBeLessThanOrEqual(node.y + node.continueHeight + node.exitHeight + 1e-6)
+    }
+  })
+})
+
+describe('<JourneySankey />', () => {
+  it('ignores invalid counts without changing valid journey geometry', () => {
+    const { container } = render(() => (
+      <JourneySankey
+        width={500}
+        height={300}
+        data={[
+          { path: ['a', 'b'], count: 10 },
+          { path: ['x', 'y', 'z'], count: Infinity },
+          { path: ['x', 'y'], count: NaN },
+          { path: ['x', 'y'], count: -1 },
+        ]}
+        isAnimationActive={false}
+      />
+    ))
+    const attributes = Array.from(container.querySelectorAll('*')).flatMap(element =>
+      Array.from(element.attributes, attribute => attribute.value),
+    )
+    expect(attributes.filter(value => /NaN|Infinity/.test(value))).toEqual([])
+    const nodes = Array.from(container.querySelectorAll('.v-charts-journey-node-continue'))
+    expect(nodes.map(node => ['x', 'y', 'width', 'height'].map(name =>
+      Math.round(Number(node.getAttribute(name))),
+    ))).toEqual([[0, 28, 8, 272], [372, 28, 8, 272]])
+    const link = container.querySelector('.v-charts-journey-link')!
+    const coordinates = link.getAttribute('d')!.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+    expect(coordinates.map(value => Math.round(value * 100) / 100))
+      .toEqual([8, 164, 160.88, 164, 219.12, 164, 372, 164])
+    expect(Number(link.getAttribute('stroke-width'))).toBeCloseTo(272, 8)
+  })
+
+  const links = (container: Element) => Array.from(container.querySelectorAll<SVGPathElement>('.v-charts-journey-link'))
+
+  it('shows how many sessions end at a node, as a grey segment and in its label', () => {
+    const { container, getByText } = render(() => <JourneySankey width={900} height={600} isAnimationActive={false} exitColor="grey" data={journeys} />)
+    expect(getByText('11 · 55% end here')).toBeTruthy()
+    expect(getByText('14 sessions')).toBeTruthy()
+    expect(container.querySelectorAll('.v-charts-journey-node-exit').length).toBeGreaterThan(0)
+    expect(container.querySelector<SVGRectElement>('.v-charts-journey-node-exit')!.style.fill).toBe('grey')
+  })
+
+  it('highlights every path connected to a hovered node and fades the rest', async () => {
+    const { container, getByText } = render(() => <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} />)
+    expect(links(container).every(link => link.style.opacity === '0.2')).toBe(true)
+    const node = getByText('/de/pricing').closest('.v-charts-journey-node')!.querySelector('g')!
+    await fireEvent.mouseEnter(node)
+    const opacities = links(container).map(link => link.style.opacity)
+    expect(opacities.filter(o => o === '0.45')).toHaveLength(3)
+    expect(opacities.filter(o => o === '0.07')).toHaveLength(links(container).length - 3)
+    expect(getByText('/pricing').closest<SVGGElement>('.v-charts-journey-node')!.style.opacity).toBe('0.25')
+    await fireEvent.mouseLeave(node)
+    expect(links(container).every(link => link.style.opacity === '0.2')).toBe(true)
+  })
+
+  it('pins the largest journey through a clicked node through v-model and unpins on a second click', async () => {
+    const pinned = ref<string[] | null>(null)
+    const { container, getByText } = render(() => (
+      <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} pinned={pinned.value} {...{ 'onUpdate:pinned': (path: string[] | null) => { pinned.value = path } }} />
+    ))
+    const node = getByText('/de/pricing').closest('.v-charts-journey-node')!.querySelector('g')!
+    await fireEvent.click(node)
+    expect(pinned.value).toEqual(['/de', '/de/pricing', '/de', '/de/docs'])
+    await nextTick()
+    expect(links(container).filter(link => link.style.opacity === '0.45')).toHaveLength(3)
+    await fireEvent.click(node)
+    expect(pinned.value).toBeNull()
+  })
+
+  it('fades the pages in one after another, starting from the top-left', async () => {
+    const { container } = render(() => <JourneySankey width={900} height={600} data={journeys} />)
+    await nextTick()
+    const nodes = Array.from(container.querySelectorAll<SVGGElement>('.v-charts-journey-node'))
+    const shown = (node: SVGGElement) => Number(node.style.opacity)
+    expect(nodes.every(node => shown(node) === 0)).toBe(true)
+    await frame(0.4)
+    expect(shown(nodes[0]!)).toBeGreaterThan(shown(nodes.at(-1)!))
+    await frame()
+    expect(nodes.every(node => shown(node) === 1)).toBe(true)
+  })
+
+  it('fades a removed journey out before the remaining nodes slide past it', async () => {
+    const data = ref(journeys)
+    const { container, getByText } = render(() => <JourneySankey width={900} height={600} data={data.value} />)
+    await frame()
+    const leaving = getByText('/de/pricing').closest<SVGGElement>('.v-charts-journey-node')!
+    data.value = journeys.filter(journey => journey.path[0] !== '/de')
+    await nextTick()
+    await frame(0.3)
+    expect(Number(leaving.style.opacity)).toBeLessThan(0.5)
+    await frame(0.6)
+    expect(Number(leaving.style.opacity)).toBe(0)
+    await frame()
+    expect(container.textContent).not.toContain('/de/pricing')
+  })
+
+  it('keeps visible pages apart through both directions of a journey rerank', async () => {
+    const paths = [
+      ['/', '/pricing'],
+      ['/', '/pricing', '/', '/docs'],
+      ['/', '/pricing', '/', '/docs/guides/wordpress'],
+      ['/', '/pricing', '/docs/self-hosting'],
+      ['/', '/pricing', '/features/session-replay', '/features/web-analytics'],
+      ['/', '/pricing', '/docs/mcp', '/docs/hiding-own-traffic'],
+      ['/', '/docs'],
+      ['/', '/docs', '/pricing', '/features/session-replay'],
+      ['/de', '/de/pricing', '/de', '/de/compare/fathom'],
+      ['/de', '/de/pricing', '/de', '/de/pricing'],
+      ['/de', '/de/pricing', '/de'],
+      ['/de', '/features/web-analytics', '/de/docs/self-hosting', '/de/docs/managing-your-installation'],
+      ['/de', '/de/docs/self-hosting'],
+      ['/compare/plausible', '/compare/google-analytics', '/compare/posthog', '/compare/umami'],
+      ['/de', '/de/for-european-companies', '/de/docs/self-hosting', '/de/docs/managing-your-installation'],
+    ]
+    const full = paths.map((path, i) => ({ path, count: (i === 0 ? 6 : i === 6 ? 2 : 1) * (i % 3 + 1) + i % 2 }))
+    const top = [...full].sort((a, b) => b.count - a.count).slice(0, 8)
+    const data = ref(full)
+    const { container } = render(() => <JourneySankey width={720} height={480} steps={4} data={data.value} />)
+    const rectangles = () => Array.from(container.querySelectorAll<SVGRectElement>(
+      '.v-charts-journey-node-continue, .v-charts-journey-node-exit',
+    ))
+    const geometry = () => rectangles().map(rect => ['x', 'y', 'width', 'height'].map(name => rect.getAttribute(name)))
+    await frame()
+    const fullGeometry = geometry()
+    let topGeometry: (string | null)[][] = []
+    for (const rows of [top, full, top]) {
+      data.value = rows
+      await nextTick()
+      for (let elapsed = 0; elapsed <= 0.5; elapsed += 0.016) {
+        await frame(elapsed)
+        const visible = rectangles().filter(rect => Number(rect.closest<SVGGElement>('.v-charts-journey-node')?.style.opacity) >= 0.35)
+        for (const [i, rect] of visible.entries()) {
+          const box = ['x', 'y', 'width', 'height'].map(name => Number(rect.getAttribute(name)))
+          for (const other of visible.slice(i + 1)) {
+            const next = ['x', 'y', 'width', 'height'].map(name => Number(other.getAttribute(name)))
+            const overlap = Math.max(0, Math.min(box[0] + box[2], next[0] + next[2]) - Math.max(box[0], next[0]))
+              * Math.max(0, Math.min(box[1] + box[3], next[1] + next[3]) - Math.max(box[1], next[1]))
+            expect(overlap).toBeLessThan(0.000001)
+          }
+        }
+      }
+      await frame()
+      if (rows === full)
+        expect(geometry()).toEqual(fullGeometry)
+      else if (topGeometry.length)
+        expect(geometry()).toEqual(topGeometry)
+      else
+        topGeometry = geometry()
+    }
+  })
+
+  it('shows the first node when it receives keyboard focus', async () => {
+    const { container } = render(() => <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} />)
+    const group = container.querySelector<SVGGElement>('.v-charts-journey')!
+    group.focus()
+    await nextTick()
+    expect(group.getAttribute('aria-label')).toBe('/, step 1: 14 sessions')
+  })
+
+  it('walks nodes with the arrow keys and pins with Enter', async () => {
+    const pinned = ref<string[] | null>(null)
+    const { container } = render(() => (
+      <JourneySankey width={900} height={600} isAnimationActive={false} data={journeys} {...{ 'onUpdate:pinned': (path: string[] | null) => { pinned.value = path } }} />
+    ))
+    const group = container.querySelector('.v-charts-journey')!
+    await fireEvent.keyDown(group, { key: 'ArrowDown' })
+    expect(group.getAttribute('aria-label')).toBe('/, step 1: 14 sessions')
+    await fireEvent.keyDown(group, { key: 'ArrowRight' })
+    expect(group.getAttribute('aria-label')).toBe('/pricing, step 2: 11 · 55% end here')
+    await fireEvent.keyDown(group, { key: 'Enter' })
+    expect(pinned.value).toEqual(['/', '/pricing'])
+  })
+})
+
+describe('reorderedNodes', () => {
+  const layoutOf = (journeys: { path: string[], count: number }[]) => computeJourneyLayout(journeys, { width: 600, height: 300, steps: 2, exitsKnown: true, nodeWidth: 8, nodePadding: 12, labelHeight: 30, labelWidth: 120, top: 0 }).nodes
+  const before = layoutOf([{ path: ['/', '/a'], count: 10 }, { path: ['/', '/b'], count: 5 }, { path: ['/', '/c'], count: 2 }])
+
+  it.each([
+    // /b overtakes /a: both cross each other, /c keeps its place below them.
+    ['a rank swap', [{ path: ['/', '/a'], count: 4 }, { path: ['/', '/b'], count: 9 }, { path: ['/', '/c'], count: 2 }], ['1\u0001/a', '1\u0001/b']],
+    // Same order, other sizes: everything slides and nothing folds.
+    ['a resize in the same order', [{ path: ['/', '/a'], count: 20 }, { path: ['/', '/b'], count: 6 }, { path: ['/', '/c'], count: 1 }], []],
+  ])('folds only nodes that cross a neighbour: %s', (_name, next, expected) => {
+    expect([...reorderedNodes(before, layoutOf(next))].sort()).toEqual(expected)
+  })
+})
+
+vi.mock('motion-v', async original => (await import('@/test/motionClock')).mockMotion(await original<typeof import('motion-v')>()))
+vi.mock('@vueuse/core', async original => (await import('@/test/motionClock')).mockVueUse(await original<typeof import('@vueuse/core')>()))

@@ -32,14 +32,15 @@ const data = {
       </p>
     </div>
 
-    <Sankey
-      :data="data"
-      :width="700"
-      :height="420"
-      node-fill="#f97316"
-      link-fill="#14b8a6"
-    >
-      <Tooltip :cursor="false" />
-    </Sankey>
+    <div class="max-w-[700px]">
+      <Sankey
+        :data="data"
+        :height="420"
+        node-fill="#f97316"
+        link-fill="#14b8a6"
+      >
+        <Tooltip :cursor="false" />
+      </Sankey>
+    </div>
   </div>
 </template>

@@ -1,7 +1,5 @@
-import type { VNode } from 'vue'
+import type { PropType, VNode } from 'vue'
 import { cloneVNode, defineComponent } from 'vue'
-import type { PropType } from 'vue'
-import { PanoramaContextProvider } from '@/context/PanoramaContextProvider'
 import type { Padding } from '@/types/common'
 
 export const Panorama = defineComponent({
@@ -11,7 +9,7 @@ export const Panorama = defineComponent({
     y: { type: Number, required: true },
     width: { type: Number, required: true },
     height: { type: Number, required: true },
-    data: { type: Array as PropType<any[]>, required: true },
+    data: { type: Array as PropType<unknown[]>, required: true },
     padding: { type: Object as PropType<Padding>, default: () => ({ top: 1, right: 1, bottom: 1, left: 1 }) },
   },
   setup(props, { slots }) {
@@ -32,11 +30,7 @@ export const Panorama = defineComponent({
         data: props.data,
       })
 
-      return (
-        <PanoramaContextProvider isPanorama>
-          {cloned}
-        </PanoramaContextProvider>
-      )
+      return cloned
     }
   },
 })

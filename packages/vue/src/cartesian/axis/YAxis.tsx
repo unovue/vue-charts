@@ -1,16 +1,18 @@
-import type { ComponentPublicInstance, PropType } from 'vue'
-import { defineComponent, isVNode, nextTick, onUnmounted, ref, watch, watchEffect } from 'vue'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import type { YAxisSettings } from '@/state/cartesianAxisSlice'
-import { addYAxis, removeYAxis, updateYAxisWidth } from '@/state/cartesianAxisSlice'
-import { implicitYAxis, selectAxisScale, selectTicksOfAxis, selectYAxisPosition, selectYAxisSize } from '@/state/selectors/axisSelectors'
-import { useIsPanorama } from '@/context/PanoramaContextProvider'
-import { CartesianAxis } from '@/cartesian'
-import type { DataKey } from '@/types'
-import { selectAxisViewBox } from '@/state/selectors/selectChartOffset'
-import type { AxisDomain, AxisInterval } from '@/types/axis'
+import { useChart } from '@/model/chart'
+import type { AxisSlots } from '@/types/tick'
+import { useCanMeasureText } from '@/model/runtime'
+import { useDeferredView } from '@/hooks/deferredView'
+import type { ComponentPublicInstance, PropType, SlotsType } from 'vue'
+import { computed, defineComponent, isVNode, nextTick, ref, shallowRef, watch } from 'vue'
+import type { YAxisSettings } from '@/types/axisSettings'
+import { implicitYAxis } from '@/core/axis/settings'
+import { CartesianAxis } from '@/cartesian/cartesian-axis/CartesianAxis'
+import type { YAxisOrientation, YAxisPadding } from '@/types/axis'
+import { AxisVueProps } from './AxisProps'
 import { getCalculatedYAxisWidth } from '@/utils/YAxisUtils'
 import { DEFAULT_Y_AXIS_WIDTH } from '@/utils/const'
+import { forwardsSvgAttributes } from '@/utils/attributes'
+import { axisKey } from '@/core/axis/key'
 
 // Implementation of the YAxis rendering logic
 const YAxisImpl = defineComponent({
@@ -21,24 +23,27 @@ const YAxisImpl = defineComponent({
     },
   },
   inheritAttrs: false,
-  setup(props, { attrs }) {
-    const isPanorama = useIsPanorama()
+  emits: ['measure-width'],
+  setup(props, { attrs, slots, emit }) {
+    const chart = useChart()
+    const canMeasureText = useCanMeasureText()
+
     const axisType = 'yAxis'
-    const dispatch = useAppDispatch()
-    const scale = useAppSelector(state => selectAxisScale(state, axisType, props.yAxisId, isPanorama))
-    const axisSize = useAppSelector(state => selectYAxisSize(state, props.yAxisId!))
-    const position = useAppSelector(state => selectYAxisPosition(state, props.yAxisId!))
-    const cartesianTickItems = useAppSelector(state => selectTicksOfAxis(state, axisType, props.yAxisId!, isPanorama))
-    const viewBox = useAppSelector(selectAxisViewBox)
-    const chartDataLengthEmpty = useAppSelector(state => !state.chartData.chartData?.length)
+    const scale = computed(() => chart.axis(axisType, props.yAxisId).scale.value)
+    const axisSize = computed(() => chart.axis('yAxis', props.yAxisId!).size.value)
+    const position = computed(() => chart.axis('yAxis', props.yAxisId!).position.value)
+    const cartesianTickItems = computed(() => chart.axis(axisType, props.yAxisId!).ticks.value)
+    const viewBox = computed(() => chart.axisViewBox.value)
+    const chartDataLengthEmpty = computed(() => !chart.dataRange.state.value.chartData?.length)
 
     const cartesianAxisRef = ref<ComponentPublicInstance | null>(null)
 
     const isAutoWidth = () => attrs.width === 'auto'
 
     const measureAxisWidth = (): number | undefined => {
-      const el = cartesianAxisRef.value?.$el as Element | undefined
-      if (!el) {
+      // An axis with no room renders nothing, so its root is a comment node.
+      const el: unknown = cartesianAxisRef.value?.$el
+      if (!(el instanceof Element)) {
         return undefined
       }
       const ticks = el.getElementsByClassName('v-charts-cartesian-axis-tick-value')
@@ -51,14 +56,14 @@ const YAxisImpl = defineComponent({
     // Reset to the default width when data becomes available so the axis can shrink back (Recharts 3.x parity)
     watch(chartDataLengthEmpty, (empty) => {
       if (empty === false && isAutoWidth()) {
-        dispatch(updateYAxisWidth({ id: props.yAxisId!, width: DEFAULT_Y_AXIS_WIDTH }))
+        emit('measure-width', DEFAULT_Y_AXIS_WIDTH)
       }
     })
 
     const updateAutoWidth = () => {
       // No dynamic width calculation is done when width !== 'auto'
       // or when a function/VNode is used for label
-      if (!isAutoWidth() || axisSize.value == null) {
+      if (!canMeasureText.value || !isAutoWidth() || axisSize.value == null) {
         return
       }
       const label = attrs.label
@@ -69,16 +74,16 @@ const YAxisImpl = defineComponent({
       if (updatedYAxisWidth == null) {
         return
       }
-      // if the width has changed, dispatch an action to update the width
+      // Update the stored measurement only when its rounded width changes
       if (Math.round(axisSize.value.width) !== Math.round(updatedYAxisWidth)) {
-        dispatch(updateYAxisWidth({ id: props.yAxisId!, width: updatedYAxisWidth }))
+        emit('measure-width', updatedYAxisWidth)
       }
     }
 
-    // Measure in a deferred nextTick: dispatching synchronously inside a watchPostEffect
+    // Measure in a deferred nextTick: updating state synchronously inside a watchPostEffect
     // would hit Vue's activeEffect self-trigger skip and the follow-up re-measure would never run.
     watch(
-      [axisSize, cartesianTickItems, () => attrs.label],
+      [canMeasureText, axisSize, cartesianTickItems, () => attrs.label],
       () => {
         nextTick(updateAutoWidth)
       },
@@ -102,169 +107,52 @@ const YAxisImpl = defineComponent({
           height={axisSize.value?.height}
           ticks={cartesianTickItems.value!}
           tickTextProps={isAutoWidth() ? { width: undefined } : { width: axisSize.value?.width }}
-          class={['v-charts-yAxis yAxis']}
+          data-slot="y-axis"
+          class="v-charts-y-axis"
           ref={cartesianAxisRef}
+          v-slots={{ tick: slots.tick }}
         />
       )
     }
   },
 })
 
-// Handles YAxis settings registration in the store
-const YAxisSettingsDispatcher = defineComponent({
-  props: {
-    interval: [String, Number],
-    yAxisId: {
-      type: [String, Number],
-      default: 0,
-    },
-    scale: [String, Function],
-    type: String,
-    padding: Object,
-    allowDataOverflow: Boolean,
-    allowDuplicatedCategory: Boolean,
-    allowDecimals: Boolean,
-    tickCount: Number,
-    includeHidden: Boolean,
-    reversed: Boolean,
-    ticks: Array,
-    width: [Number, String] as PropType<number | 'auto'>,
-    orientation: String,
-    mirror: Boolean,
-    hide: Boolean,
-    unit: String,
-    name: String,
-    angle: Number,
-    minTickGap: Number,
-    tick: { type: [Boolean, Object], default: true },
-    tickFormatter: Function,
-    domain: Array as PropType<AxisDomain>,
-    dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
-      default: undefined,
-    },
-  },
-  setup(props) {
-    const dispatch = useAppDispatch()
-    let registeredSettings: YAxisSettings | undefined
-    watchEffect(() => {
-      const settings = {
-        ...props,
-        interval: props.interval ?? 'preserveEnd',
-        id: props.yAxisId,
-        dataKey: props.dataKey,
-        includeHidden: props.includeHidden ?? false,
-        angle: props.angle ?? 0,
-        minTickGap: props.minTickGap ?? 5,
-        tick: props.tick ?? true,
-      } as any
-      if (registeredSettings && registeredSettings.id !== settings.id) {
-        dispatch(removeYAxis(registeredSettings))
-      }
-      dispatch(addYAxis(settings))
-      registeredSettings = settings
-    })
-    // SSR stops watchEffect immediately; its cleanup would remove settings before rendering.
-    onUnmounted(() => {
-      if (registeredSettings) {
-        dispatch(removeYAxis(registeredSettings))
-        registeredSettings = undefined
-      }
-    })
-    return () => (
-      <YAxisImpl {...props} />
-    )
-  },
-})
-
-export const YAxis = defineComponent({
+export const YAxis = forwardsSvgAttributes(defineComponent({
   name: 'YAxis',
   props: {
-    allowDataOverflow: {
-      type: Boolean,
-      default: implicitYAxis.allowDataOverflow,
-    },
-    allowDecimals: {
-      type: Boolean,
-      default: implicitYAxis.allowDecimals,
-    },
-    allowDuplicatedCategory: {
-      type: Boolean,
-      default: implicitYAxis.allowDuplicatedCategory,
-    },
-    width: {
-      type: [Number, String] as PropType<number | 'auto'>,
-      default: implicitYAxis.width,
-    },
-    hide: {
-      type: Boolean,
-      default: false,
-    },
-    mirror: {
-      type: Boolean,
-      default: implicitYAxis.mirror,
-    },
-    orientation: {
-      type: String,
-      default: implicitYAxis.orientation,
-    },
-    padding: {
-      type: Object,
-      default: implicitYAxis.padding,
-    },
-    reversed: {
-      type: Boolean,
-      default: implicitYAxis.reversed,
-    },
-    scale: {
-      type: [String, Function],
-      default: implicitYAxis.scale,
-    },
-    tickCount: {
-      type: Number,
-      default: implicitYAxis.tickCount,
-    },
-    type: {
-      type: String,
-      default: implicitYAxis.type,
-    },
-    yAxisId: {
-      type: [String, Number],
-    },
-    dataKey: {
-      type: [String, Number, Function] as PropType<DataKey<any>>,
-      default: undefined,
-    },
-    tickFormatter: {
-      type: Function,
-      default: undefined,
-    },
-    unit: {
-      type: String,
-      default: undefined,
-    },
-    interval: {
-      type: [String, Number] as PropType<AxisInterval>,
-    },
-    domain: {
-      type: Array as PropType<AxisDomain>,
-      default: undefined,
-    },
-    axisLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    tickLine: {
-      type: [Boolean, Object],
-      default: true,
-    },
-    tickMargin: Number,
-    minTickGap: {
-      type: Number,
-      default: 5,
-    },
+    ...AxisVueProps,
+    yAxisId: { type: [String, Number], default: 0 },
+    width: { type: [Number, String] as PropType<number | 'auto'>, default: implicitYAxis.width },
+    orientation: { type: String as PropType<YAxisOrientation>, default: implicitYAxis.orientation },
+    padding: { type: [String, Object] as PropType<YAxisPadding>, default: () => ({ top: 0, bottom: 0 }) },
+    type: { ...AxisVueProps.type, default: implicitYAxis.type },
   },
-  setup(props, { attrs }) {
-    return () => <YAxisSettingsDispatcher {...props} {...attrs} />
+  inheritAttrs: false,
+  slots: Object as SlotsType<AxisSlots>,
+  setup(props, { attrs, slots }) {
+    const measured = shallowRef<{ id: string, width: number, history: number[] }>()
+
+    function updateWidth(width: number) {
+      const previous = measured.value?.id === axisKey(props.yAxisId) ? measured.value : undefined
+      if (previous?.width === width)
+        return
+      const history = previous?.history ?? []
+      // Suppress subpixel A → B → A oscillation, preserving the existing guard.
+      if (history.length === 3 && history[0] === history[2] && width === history[1]
+        && Math.abs(width - history[0]!) <= 1) {
+        return
+      }
+      measured.value = { id: axisKey(props.yAxisId), width, history: [...history, width].slice(-3) }
+    }
+    const settings = computed<YAxisSettings>(() => ({
+      ...props,
+      id: props.yAxisId,
+      width: props.width === 'auto' && measured.value?.id === axisKey(props.yAxisId)
+        ? measured.value.width
+        : props.width,
+    }))
+    useChart().axes.yAxis.register(settings)
+    const View = useDeferredView(YAxisImpl)
+    return () => <View {...props} {...attrs} onMeasure-width={updateWidth} v-slots={slots} />
   },
-})
+}))

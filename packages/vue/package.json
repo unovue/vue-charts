@@ -29,58 +29,76 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/es/index.mjs"
+    },
+    "./nuxt": {
+      "types": "./dist/nuxt.d.ts",
+      "import": "./dist/es/nuxt.mjs"
+    },
+    "./resolver": {
+      "types": "./dist/resolver.d.ts",
+      "import": "./dist/es/resolver.mjs"
     }
   },
   "module": "./dist/es/index.mjs",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "nuxt": [
+        "dist/nuxt.d.ts"
+      ],
+      "resolver": [
+        "dist/resolver.d.ts"
+      ]
+    }
+  },
   "files": [
     "./LICENSE",
     "./README.md",
-    "./dist"
+    "./dist/**/*.d.ts",
+    "./dist/**/*.mjs"
   ],
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && vite build",
     "dev": "vite build --watch",
     "test": "vitest",
-    "bumpp": "bumpp package.json",
-    "pub:release": "pnpm publish --access public",
-    "size": "size-limit"
+    "size": "size-limit",
+    "test:nuxt": "vitest run --config vitest.nuxt.config.ts",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "pnpm run build"
   },
-  "typings": "./dist/index.d.ts",
   "peerDependencies": {
-    "motion-v": ">=2.0.0",
-    "vue": ">=3.0.0"
+    "@nuxt/kit": "^4.0.0",
+    "motion-v": "^2.4.0",
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/kit": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.8.2",
-    "@reduxjs/vue-redux": "^1.0.1",
+    "@types/d3-sankey": "^0.12.5",
+    "@types/d3-shape": "^3.1.7",
     "@vueuse/core": "^13.1.0",
+    "d3-color": "^3.1.0",
     "d3-hierarchy": "^3.1.2",
     "d3-sankey": "^0.12.3",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0",
     "decimal.js-light": "^2.5.1",
-    "es-toolkit": "^1.39.3",
-    "eventemitter3": "^5.0.1",
-    "immer": "^10.1.1",
-    "lodash-es": "^4.17.21",
-    "victory-vendor": "^37.3.6"
+    "es-toolkit": "^1.39.3"
   },
   "devDependencies": {
-    "@types/d3-sankey": "^0.12.5",
-    "@types/lodash-es": "^4.17.12",
+    "@nuxt/kit": "^4.4.2",
+    "@nuxt/schema": "^4.5.2",
+    "@nuxt/test-utils": "^3.21.0",
+    "@types/d3-color": "^3.1.3",
+    "@types/d3-hierarchy": "^3.1.7",
+    "@types/d3-scale": "^4.0.9",
     "@vitejs/plugin-vue-jsx": "^5.0.0",
-    "@vue/babel-plugin-jsx": "^1.1.1",
-    "@vue/runtime-core": "^3.5.13",
+    "fast-check": "^4.10.2",
+    "nuxt": "^4.4.2",
     "vue": "^3.5.13"
-  },
-  "size-limit": [
-    {
-      "path": "dist/es/index.mjs",
-      "limit": "3.4 kb",
-      "ignore": [
-        "vue",
-        "motion-v"
-      ]
-    }
-  ]
+  }
 }

@@ -73,6 +73,6 @@ Verified via CDP after a live light→dark flip: keyword span computes
   future code surface can reuse `codeLightTheme`/`codeDarkTheme` with the
   same dual-theme wiring and flip rule.
 - The bare-`.dark` compilation bug and the inline-style `var()`
-  non-invalidation trap are recorded in `tasks/lessons.md`; the
+  non-invalidation trap are described above; the
   `:global(.dark)` pattern in any other component should be migrated to an
   unscoped style block.

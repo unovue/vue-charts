@@ -1,148 +1,173 @@
-import type { PropType, SlotsType, SVGAttributes } from 'vue'
-import type { AnimationOptions } from 'motion-v'
-import { Teleport, computed, defineComponent, useAttrs } from 'vue'
+import type { ExtractPropTypes, PropType, SVGAttributes, ShallowRef, SlotsType } from 'vue'
+import { useChart } from '@/model/chart'
+import { useSeriesProps } from '@/hooks/useSeriesProps'
+import { scatterEvents } from '@/events/itemEvents'
+import { delegateItemEvents, itemEventIndex } from '@/events/delegateItemEvents'
+import { useLayerTeleport } from '@/hooks/useLayerTeleport'
+import { Fragment, computed, defineComponent, h, proxyRefs, toRefs } from 'vue'
+import { useDeferredView } from '@/hooks/deferredView'
 import { useScatter } from './hooks/useScatter'
 import { useSetupGraphicalItem } from '@/hooks/useSetupGraphicalItem'
 import { Layer } from '@/container/Layer'
 import { Symbols } from '@/shape/Symbols'
 import type { SymbolType, SymbolsProps } from '@/shape/Symbols'
 import { Curve } from '@/shape/Curve'
-import type { CurveType } from '@/shape/Curve'
-import { useGraphicalLayerRef } from '@/context/graphicalLayerContext'
-import { LabelList } from '@/components/label'
-import type { DataKey } from '@/types'
-import type { TooltipType } from '@/types/tooltip'
+import { useChartLayer } from '@/model/runtime'
+import { LabelList } from '@/components/label/LabelList'
 import type { ScatterPointItem } from '@/types/common'
-import type { ErrorBarDirection } from '@/types/bar'
-import { Animate } from '@/animation/Animate'
+import { useAnimationCallbacks } from '@/animation/useAnimationCallbacks'
+import { useKeyedTransition } from '@/animation/useKeyedTransition'
+import { labelOpacity } from '@/animation/ridingLabels'
 import { getLinearRegression } from '@/utils/getLinearRegression'
-import { SetTooltipEntrySettings } from '@/state/SetTooltipEntrySettings'
-import { getTooltipNameProp, getValueByDataKey } from '@/utils/chart'
-import { useAppDispatch, useAppSelector } from '@/state/hooks'
-import { selectActiveTooltipDataKey, selectActiveTooltipIndex } from '@/state/selectors/tooltipSelectors'
-import { mouseLeaveChart, setActiveMouseOverItemIndex, setMouseOverAxisIndex } from '@/state/tooltipSlice'
+import { getTooltipNameProp } from '@/core/tooltip'
+import { mainColor } from '@/core/color'
+import { getValueByDataKey } from '@/utils/chart'
+import type { ScatterSlots } from './type'
+import { ScatterVueProps } from './type'
 import { createErrorBarRegistry, provideErrorBarContext, provideErrorBarRegistry } from '@/cartesian/error-bar/ErrorBarContext'
 import type { ErrorBarDataPointFormatter } from '@/cartesian/error-bar/ErrorBarContext'
+import { forwardsSvgAttributes } from '@/utils/attributes'
 
 const interpolateNumber = (from: number, to: number) => (t: number) => from + (to - from) * t
 
-const errorBarDataPointFormatter: ErrorBarDataPointFormatter<ScatterPointItem> = (
-  dataPoint: ScatterPointItem,
-  dataKey: DataKey<any>,
-  direction: ErrorBarDirection,
-) => ({
-  x: dataPoint.cx,
-  y: dataPoint.cy,
-  value: direction === 'x' ? Number(dataPoint.node.x) : Number(dataPoint.node.y),
-  errorVal: getValueByDataKey(dataPoint.payload, dataKey),
-})
-
-const ScatterVueProps = {
-  xAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  yAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  zAxisId: { type: [String, Number] as PropType<string | number>, default: 0 },
-  dataKey: { type: [String, Number, Function] as PropType<DataKey<any>>, default: undefined },
-  data: { type: Array as PropType<ReadonlyArray<Record<string, any>>>, default: undefined },
-  name: { type: [String, Number] as PropType<string | number>, default: undefined },
-  hide: { type: Boolean, default: false },
-  fill: { type: String, default: undefined },
-  shape: { type: String as PropType<SymbolType>, default: 'circle' },
-  isAnimationActive: { type: Boolean, default: true },
-  line: { type: [Boolean, Object], default: false },
-  lineType: { type: String as PropType<'fitting' | 'joint'>, default: 'joint' },
-  lineJointType: { type: [String, Function] as PropType<CurveType>, default: 'linear' },
-  label: { type: [Boolean, Object], default: false },
-  legendType: { type: String, default: 'circle' },
-  tooltipType: { type: String as PropType<TooltipType>, default: undefined },
-  transition: { type: Object as PropType<AnimationOptions>, default: undefined },
+const errorBarDataPointFormatter: ErrorBarDataPointFormatter<unknown> = (
+  dataPoint,
+  dataKey,
+  direction,
+) => {
+  if (dataPoint == null || typeof dataPoint !== 'object'
+    || !('cx' in dataPoint) || !('cy' in dataPoint) || !('node' in dataPoint)
+    || (dataPoint.cx !== undefined && typeof dataPoint.cx !== 'number')
+    || (dataPoint.cy !== undefined && typeof dataPoint.cy !== 'number')
+    || dataPoint.node == null || typeof dataPoint.node !== 'object') {
+    throw new Error('vccs: ErrorBar requires Scatter geometry.')
+  }
+  const node = dataPoint.node
+  const value = direction === 'x'
+    ? ('x' in node ? node.x : undefined)
+    : ('y' in node ? node.y : undefined)
+  return {
+    x: dataPoint.cx,
+    y: dataPoint.cy,
+    value: Number(value),
+    errorVal: getValueByDataKey('payload' in dataPoint ? dataPoint.payload : undefined, dataKey),
+  }
 }
 
-export const Scatter = defineComponent({
-  name: 'Scatter',
-  props: ScatterVueProps,
+const ScatterView = defineComponent({
+  name: 'ScatterView',
   inheritAttrs: false,
-  slots: Object as SlotsType<{
-    default?: () => any
-  }>,
-  setup(props, { attrs, slots }) {
-    const errorBarRegistry = createErrorBarRegistry()
-    provideErrorBarRegistry(errorBarRegistry)
-    useSetupGraphicalItem(props as any, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
-    const { shouldRender, points } = useScatter(props)
-    const graphicalLayerRef = useGraphicalLayerRef()
-    const svgAttrs = useAttrs() as SVGAttributes
-    const dispatch = useAppDispatch()
-    const activeIndex = useAppSelector(selectActiveTooltipIndex)
-    const activeDataKey = useAppSelector(selectActiveTooltipDataKey)
-
+  props: {
+    item: { type: Object as PropType<ExtractPropTypes<typeof ScatterVueProps>>, required: true },
+    svgAttrs: { type: Object as PropType<SVGAttributes>, required: true },
+    data: { type: Object as PropType<ShallowRef<unknown[] | undefined>>, required: true },
+  },
+  slots: Object as SlotsType<ScatterSlots>,
+  setup(view, { slots }) {
+    const chart = useChart()
+    const emit = scatterEvents.use()
+    const props = view.item
+    const svgAttrs = view.svgAttrs
+    const data = view.data
+    const trackedProps = proxyRefs({ ...toRefs(props), data })
+    const { shouldRender, points } = useScatter(trackedProps)
+    const tooltip = chart.tooltip
     // Scatter needs custom tooltip: each computed scatter point has a tooltipPayload array
     // with per-axis name/unit/value. We pass these arrays as dataDefinedOnItem so that
-    // arrayTooltipSearcher returns the tooltipPayload array for the active index,
-    // which combineTooltipPayload processes into per-axis tooltip entries.
-    SetTooltipEntrySettings({
-      fn: (input) => ({
-        dataDefinedOnItem: input.points?.map(p => p.tooltipPayload),
-        positions: undefined,
-        settings: {
-          stroke: input.stroke,
-          strokeWidth: input.strokeWidth,
-          fill: input.fill,
-          dataKey: input.dataKey,
-          nameKey: undefined,
-          name: getTooltipNameProp(input.name, input.dataKey),
-          hide: input.hide,
-          type: input.tooltipType,
-          color: input.fill,
-          unit: '',
-        },
-      }),
-      args: computed(() => ({
-        points: points.value,
-        fill: svgAttrs.fill as string ?? props.fill,
-        stroke: svgAttrs.stroke as string,
-        strokeWidth: svgAttrs['stroke-width'] as string | number | undefined,
-        name: props.name,
+    // the selected row supplies the tooltipPayload array for the active index,
+    // which tooltipPayload processes into per-axis tooltip entries.
+    const tooltipConfiguration = computed(() => ({
+      // This owned array contains payloads that reference caller-owned rows.
+      dataDefinedOnItem: points.value?.map(point => point.tooltipPayload),
+      positions: points.value?.map(point => point.tooltipPosition),
+      settings: {
+        stroke: svgAttrs.stroke,
+        strokeWidth: svgAttrs['stroke-width'],
+        fill: props.fill,
         dataKey: props.dataKey,
+        nameKey: undefined,
+        name: getTooltipNameProp(props.name, props.dataKey),
         hide: props.hide,
-        tooltipType: props.tooltipType,
-      })),
-    })
+        type: props.tooltipType,
+        color: mainColor('scatter', props),
+        unit: '',
+      },
+    }))
+    tooltip.entries.register(tooltipConfiguration)
+    const activeIndex = tooltip.activeIndexFor(tooltipConfiguration)
 
     provideErrorBarContext({
       data: points,
-      xAxisId: props.xAxisId,
-      yAxisId: props.yAxisId,
+      get xAxisId() { return props.xAxisId },
+      get yAxisId() { return props.yAxisId },
       dataPointFormatter: errorBarDataPointFormatter,
       errorBarOffset: computed(() => 0),
     })
 
-    let previousPoints: ReadonlyArray<ScatterPointItem> | null = null
-    let animationId = 0
+    const createDisplay = () => {
+      const callbacks = useAnimationCallbacks(() => emit('animation-start'), () => emit('animation-end'))
+      return useKeyedTransition(() => points.value, {
+        key: (_point, index) => index,
+        interpolate: (from, to, t) => ({
+          ...to,
+          cx: to.cx == null ? to.cx : interpolateNumber(from.cx ?? to.cx, to.cx)(t),
+          cy: to.cy == null ? to.cy : interpolateNumber(from.cy ?? to.cy, to.cy)(t),
+          size: interpolateNumber(from.size ?? 0, to.size ?? 0)(t),
+        }),
+        enterFrom: to => ({ ...to, size: 0 }),
+        exitTo: from => ({ ...from, size: 0 }),
+        isActive: () => props.isAnimationActive !== false,
+        transition: () => props.transition,
+        ...callbacks,
+      })
+    }
 
     const dispatchScatterHover = (point: ScatterPointItem, index: number) => {
-      const payload = {
-        activeDataKey: props.dataKey,
-        activeIndex: String(index),
-        activeCoordinate: point.tooltipPosition,
-      }
-      // Dispatch to both axis and item interaction so Scatter works in both
-      // ComposedChart (tooltipEventType='axis') and ScatterChart (tooltipEventType='item')
-      dispatch(setMouseOverAxisIndex(payload))
-      dispatch(setActiveMouseOverItemIndex(payload))
+      // No type: the chart's own event type decides, so Scatter works in a ComposedChart
+      // (axis) and in a ScatterChart (item); the configuration names this series.
+      tooltip.activate('hover', {
+        configuration: tooltipConfiguration.value,
+        index,
+        coordinate: point.tooltipPosition,
+      })
     }
     const onMouseLeaveSymbol = () => {
-      dispatch(mouseLeaveChart())
+      tooltip.clear('hover')
+    }
+    let symbolData: ReadonlyArray<ScatterPointItem> = []
+    const listeners = delegateItemEvents(index => symbolData[index], {
+      click: (point, index, event) => {
+        tooltip.activate('click', { type: 'item', configuration: tooltipConfiguration.value, index, coordinate: point.tooltipPosition })
+        emit('click', point, index, event)
+      },
+      mouseenter: (point, index, event) => {
+        dispatchScatterHover(point, index)
+        emit('mouseenter', point, index, event)
+      },
+      mouseleave: (point, index, event) => {
+        onMouseLeaveSymbol()
+        emit('mouseleave', point, index, event)
+      },
+    })
+    function handleSymbolMove(event: MouseEvent) {
+      const index = itemEventIndex(event)
+      const point = index == null ? undefined : symbolData[index]
+      if (point && index !== undefined) {
+        // Keep the SVG's axis hover handler from replacing the selected Scatter item.
+        event.stopPropagation()
+        dispatchScatterHover(point, index)
+      }
     }
 
     const renderSymbols = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
+      symbolData = data
       const currentActiveIndex = activeIndex.value
-      const currentActiveDataKey = activeDataKey.value
 
       return data.map((point, i) => {
         if (point.cx == null || point.cy == null) {
           return null
         }
-        const isActive = currentActiveIndex === String(i) && currentActiveDataKey === props.dataKey
+        const isActive = currentActiveIndex === i
         const symbolProps: SymbolsProps = {
           ...svgAttrs,
           ...(props.fill != null ? { fill: props.fill } : {}),
@@ -150,33 +175,29 @@ export const Scatter = defineComponent({
           cy: point.cy,
           size: isActive ? (point.size ?? 64) * 1.6 : point.size,
           type: props.shape as SymbolType,
-          ...(isActive ? { stroke: '#fff', 'stroke-width': 2 } : {}),
+          ...(isActive ? { 'stroke': 'var(--v-charts-background, #fff)', 'stroke-width': 2 } : {}),
         }
         return (
           <g
+            key={i}
             class="v-charts-scatter-symbol"
-            onMouseenter={() => dispatchScatterHover(point, i)}
-            onMousemove={(e: MouseEvent) => {
-              // Stop propagation to prevent SVG-level mousemove from overriding
-              // our per-dot index with the axis-computed index
-              e.stopPropagation()
-              dispatchScatterHover(point, i)
-            }}
-            onMouseleave={onMouseLeaveSymbol}
+            data-v-charts-item-index={i}
           >
-            {Symbols(symbolProps)}
+            {slots.shape ? slots.shape({ ...point, index: i, isActive }) : Symbols(symbolProps)}
           </g>
         )
       })
     }
 
     const renderLine = (data: ReadonlyArray<ScatterPointItem>, svgAttrs: SVGAttributes) => {
-      if (!props.line) return null
+      if (!props.line)
+        return null
 
       let linePoints: { x: number, y: number }[]
       if (props.lineType === 'joint') {
         linePoints = data.map(p => ({ x: p.cx ?? 0, y: p.cy ?? 0 }))
-      } else {
+      }
+      else {
         const { xmin, xmax, a, b } = getLinearRegression(data)
         linePoints = [
           { x: xmin, y: a * xmin + b },
@@ -186,7 +207,7 @@ export const Scatter = defineComponent({
 
       const lineProps = {
         fill: 'none',
-        stroke: (svgAttrs.stroke as string) ?? props.fill,
+        stroke: svgAttrs.stroke ?? props.fill,
         ...(typeof props.line === 'object' ? props.line : {}),
         points: linePoints,
       }
@@ -198,93 +219,87 @@ export const Scatter = defineComponent({
       )
     }
 
-    return () => {
+    const renderGeometry = (display: ReturnType<typeof createDisplay>) => {
       if (!shouldRender.value) {
         return null
       }
 
-      const svgAttrs = attrs as SVGAttributes
-      const data = points.value!
-      const isAnimationActive = props.isAnimationActive
+      const data = display.items.value.map(item => item.value)
+      const symbolsContent = (
+        <>
+          {renderLine(data, svgAttrs)}
+          {renderSymbols(data, svgAttrs)}
+        </>
+      )
 
-      let symbolsContent: any
-
-      if (isAnimationActive && previousPoints !== data) {
-        const prevData = previousPoints
-        animationId++
-        symbolsContent = (
-          <Animate
-            key={animationId}
-            transition={props.transition}
-            isActive={isAnimationActive}
-          >
-            {(t: number) => {
-              const stepData: ReadonlyArray<ScatterPointItem> = t === 1
-                ? data
-                : data.map((entry, index) => {
-                    const prev = prevData && prevData[index]
-                    if (prev) {
-                      return {
-                        ...entry,
-                        cx: entry.cx == null ? undefined : interpolateNumber(prev.cx ?? 0, entry.cx)(t),
-                        cy: entry.cy == null ? undefined : interpolateNumber(prev.cy ?? 0, entry.cy)(t),
-                        size: interpolateNumber(prev.size ?? 0, entry.size ?? 0)(t),
-                      }
-                    }
-                    // New point: animate size from 0
-                    return { ...entry, size: interpolateNumber(0, entry.size ?? 0)(t) }
-                  })
-
-              if (t > 0) {
-                previousPoints = stepData
-              }
-              return (
-                <>
-                  {renderLine(stepData, svgAttrs)}
-                  {renderSymbols(stepData, svgAttrs)}
-                </>
-              )
-            }}
-          </Animate>
-        )
-      }
-      else {
-        previousPoints = data
-        symbolsContent = (
-          <>
-            {renderLine(data, svgAttrs)}
-            {renderSymbols(data, svgAttrs)}
-          </>
-        )
-      }
-
-      const content = (
-        <Layer class="v-charts-scatter">
-          {slots.default?.()}
+      return (
+        <Fragment>
           {symbolsContent}
           {props.label && (() => {
-            const labelData = data.map(point => ({
-              x: point.cx ?? 0,
-              y: point.cy ?? 0,
-              width: 0,
-              height: 0,
-              value: undefined,
-              payload: point.payload,
-            }))
+            // Labels ride along with the points as drawn and fade with points that enter or leave.
+            const labelData = display.items.value.map((item) => {
+              const point = item.value
+              const opacity = labelOpacity(item)
+              return {
+                x: point.cx ?? 0,
+                y: point.cy ?? 0,
+                width: 0,
+                height: 0,
+                value: undefined,
+                payload: point.payload,
+                key: item.key,
+                ...(opacity != null ? { opacity } : {}),
+              }
+            })
             return (
               <LabelList
                 {...(typeof props.label === 'object' ? props.label : {})}
                 data={labelData}
+
               />
             )
           })()}
-        </Layer>
+        </Fragment>
       )
+    }
 
-      if (graphicalLayerRef?.value) {
-        return <Teleport to={graphicalLayerRef.value}>{content}</Teleport>
-      }
-      return content
+    // Default children (notably ErrorBar) must register before any deferred geometry runs.
+    // Keep their context in this synchronous shell; defer only the geometry render.
+    const Geometry = useDeferredView(defineComponent({
+      name: 'ScatterGeometry',
+      setup: () => {
+        const display = createDisplay()
+        return () => renderGeometry(display)
+      },
+    }))
+    const teleport = useLayerTeleport()
+    const graphicalLayerRef = useChartLayer('graphical')
+    return () => {
+      if (props.hide)
+        return null
+      return teleport((
+        <Layer data-slot="series" class={['v-charts-scatter', props.class]} {...listeners} onMousemove={handleSymbolMove}>
+          {slots.default?.()}
+          {h(Geometry)}
+        </Layer>
+      ), graphicalLayerRef,
+      )
     }
   },
 })
+
+export const Scatter = forwardsSvgAttributes(defineComponent({
+  name: 'Scatter',
+  emits: scatterEvents.emits,
+  props: ScatterVueProps,
+  inheritAttrs: false,
+  slots: Object as SlotsType<ScatterSlots>,
+  setup(inputProps, { attrs, slots, emit }) {
+    const props = useSeriesProps(inputProps, ['fill'])
+    scatterEvents.provide(emit)
+    const errorBarRegistry = createErrorBarRegistry()
+    provideErrorBarRegistry(errorBarRegistry)
+    const { data } = useSetupGraphicalItem(props, 'scatter', { skipTooltip: true, errorBars: errorBarRegistry.errorBars })
+    return () => h(ScatterView, { item: props, svgAttrs: attrs, data }, slots)
+  },
+}))

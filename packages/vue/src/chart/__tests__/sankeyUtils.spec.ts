@@ -69,4 +69,20 @@ describe('computeSankeyLayout', () => {
     })
     expect(JSON.stringify(data)).toBe(snapshot)
   })
+
+  it.each([
+    ['no links', []],
+    ['only zero-value links', [{ source: 0, target: 1, value: 0 }]],
+  ])('lays out nothing instead of NaN when there is %s', (_, links) => {
+    const { nodes } = computeSankeyLayout({
+      data: { nodes: sample.nodes, links },
+      width: 600,
+      height: 400,
+      nodePadding: 10,
+      nodeWidth: 10,
+      iterations: 32,
+      margin: { top: 5, right: 5, bottom: 5, left: 5 },
+    })
+    expect(nodes.flatMap(n => [n.x0, n.x1, n.y0, n.y1]).every(Number.isFinite)).toBe(true)
+  })
 })

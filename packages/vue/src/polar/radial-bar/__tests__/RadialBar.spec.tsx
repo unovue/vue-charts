@@ -1,10 +1,7 @@
-import { render } from '@testing-library/vue'
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, beforeEach } from 'vitest'
-import { RadialBarChart } from '@/chart/RadialBarChart'
-import { RadialBar } from '@/polar/radial-bar/RadialBar'
-import { PolarGrid } from '@/polar/radar/PolarGrid'
-import { Animate } from '@/animation/Animate'
+import { fireEvent, render } from '@testing-library/vue'
+import { nextTick, ref } from 'vue'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { PolarGrid, RadialBar, RadialBarChart, Tooltip } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const data = [
@@ -17,32 +14,126 @@ const data = [
   { name: 'unknown', uv: 6.67, pv: 4800, fill: '#ffc658' },
 ]
 
-describe('RadialBar', () => {
+describe('radialBar', () => {
   beforeEach(() => {
     mockGetBoundingClientRect({ width: 500, height: 500 })
   })
 
   describe('basic rendering', () => {
-    it('renders sectors in a RadialBarChart', () => {
+    it('positions item tooltips on the selected sector for hover and click', async () => {
+      const trigger = ref<'hover' | 'click'>('hover')
       const { container } = render(() => (
-        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={10} data={data}>
+        <RadialBarChart width={500} height={300} data={data}>
           <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip shared={false} trigger={trigger.value} isAnimationActive={false}>
+            {{ content: ({ coordinate, payload }) => (
+              <div data-testid="radial-tooltip">
+                {`${coordinate ? 'positioned' : 'unpositioned'}:${payload[0]?.value}`}
+              </div>
+            ) }}
+          </Tooltip>
         </RadialBarChart>
       ))
-      const sectors = container.querySelectorAll('.v-charts-sector')
-      expect(sectors.length).toBe(7)
+      await nextTick()
+      const sectors = container.querySelectorAll('.v-charts-radial-bar .v-charts-sector')
+      for (const scenario of [
+        { trigger: 'hover' as const, index: 0, value: 'positioned:31.47' },
+        { trigger: 'click' as const, index: 1, value: 'positioned:26.69' },
+      ]) {
+        trigger.value = scenario.trigger
+        await nextTick()
+        if (scenario.trigger === 'hover')
+          await fireEvent.mouseEnter(sectors[scenario.index])
+        else
+          await fireEvent.click(sectors[scenario.index])
+        expect(container.querySelector('[data-testid="radial-tooltip"]')?.textContent)
+          .toBe(scenario.value)
+      }
     })
 
-    it('passes transition prop through to Animate', () => {
-      const customTransition = { duration: 0.3, ease: 'linear' as const }
-      const wrapper = mount(() => (
-        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={10} data={data}>
-          <RadialBar dataKey="uv" transition={customTransition} />
+    // Wrong behaviour: a touched sector opens no item tooltip, because its series is looked up
+    // by a data-key attribute that no element carries.
+    it('opens the item tooltip of a touched sector', async () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip shared={false} isAnimationActive={false}>
+            {{ content: ({ payload }) => <div data-testid="radial-tooltip">{payload[0]?.value}</div> }}
+          </Tooltip>
         </RadialBarChart>
       ))
-      const animate = wrapper.findComponent(Animate)
-      expect(animate.exists()).toBe(true)
-      expect(animate.props('transition')).toEqual(customTransition)
+      await nextTick()
+      const sector = container.querySelectorAll('.v-charts-radial-bar [data-v-charts-item-index]')[1]!
+      const elementFromPoint = document.elementFromPoint
+      document.elementFromPoint = () => sector
+      try {
+        const event = new TouchEvent('touchmove', { bubbles: true })
+        Object.defineProperty(event, 'touches', { value: [{ clientX: 250, clientY: 150, target: sector }] })
+        container.querySelector('.v-charts-wrapper')!.dispatchEvent(event)
+        await nextTick()
+        await nextTick()
+      }
+      finally {
+        document.elementFromPoint = elementFromPoint
+      }
+      expect(container.querySelector('[data-testid="radial-tooltip"]')?.textContent).toBe('26.69')
+    })
+
+    it('shows axis tooltips on painted sectors at the polar viewport edge', async () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} innerRadius={30} outerRadius={110} data={data}>
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip isAnimationActive={false}>
+            {{ content: ({ active, coordinate, payload }) => (
+              <div data-testid="radial-axis-tooltip" data-y={coordinate?.y}>
+                {`${active}:${payload[0]?.value}`}
+              </div>
+            ) }}
+          </Tooltip>
+        </RadialBarChart>
+      ))
+      await nextTick()
+      const sector = container.querySelector('.v-charts-radial-bar .v-charts-sector')!
+      for (const clientX of [285, 277]) {
+        await fireEvent.mouseMove(sector, { clientX, clientY: 150 })
+        const content = container.querySelector('[data-testid="radial-axis-tooltip"]')
+        expect(content?.textContent).toBe('true:31.47')
+        expect(content?.getAttribute('data-y')).toBe('150')
+        expect(container.querySelector<HTMLElement>('.v-charts-tooltip-wrapper')?.style.visibility).toBe('visible')
+      }
+      await fireEvent.mouseMove(container.querySelector('.v-charts-wrapper')!, { clientX: 277, clientY: 150 })
+      expect(container.querySelector<HTMLElement>('.v-charts-tooltip-wrapper')?.style.visibility).toBe('hidden')
+    })
+
+    // A setup-time size snapshot would leave the sectors at their original thickness.
+    it('renders sectors and updates their thickness with the chart bar size', async () => {
+      const barSize = ref(4)
+      const clicked: { thickness: number, value: unknown, index: number }[] = []
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} cx={150} cy={150} innerRadius={20} outerRadius={140} barSize={barSize.value} data={data}>
+          <RadialBar
+            dataKey="uv"
+            isAnimationActive={false}
+            onClick={(sector, index) => clicked.push({
+              thickness: sector.outerRadius! - sector.innerRadius!,
+              value: sector.value,
+              index,
+            })}
+          />
+        </RadialBarChart>
+      ))
+      await nextTick()
+      expect(container.querySelectorAll('.v-charts-sector')).toHaveLength(7)
+      await fireEvent.click(container.querySelector('.v-charts-sector')!)
+      barSize.value = 8
+      await nextTick()
+      await nextTick()
+      expect(container.querySelectorAll('.v-charts-sector')).toHaveLength(7)
+      await fireEvent.click(container.querySelector('.v-charts-sector')!)
+      expect(clicked).toEqual([
+        { thickness: 4, value: 31.47, index: 0 },
+        { thickness: 8.000000000000002, value: 31.47, index: 0 },
+      ])
     })
 
     it('accepts custom transition prop', () => {
@@ -110,7 +201,7 @@ describe('RadialBar', () => {
           <RadialBar background dataKey="uv" isAnimationActive={false} />
         </RadialBarChart>
       ))
-      const backgroundSectors = container.querySelectorAll('.v-charts-sector[fill="#eee"]')
+      const backgroundSectors = container.querySelectorAll('.v-charts-sector[fill="var(--v-charts-muted, #eee)"]')
       expect(backgroundSectors.length).toBe(7)
     })
 

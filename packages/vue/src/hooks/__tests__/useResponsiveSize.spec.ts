@@ -1,10 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
-import { nextTick, reactive, watch } from 'vue'
-import { useResponsiveSize } from '@/hooks/useResponsiveSize'
+import { defineComponent, nextTick, reactive, watch } from 'vue'
+import { useResponsiveSize as resolveSize } from '@/hooks/useResponsiveSize'
+import { mount } from '@vue/test-utils'
 
-function createProps(overrides: Partial<{ responsive: boolean, width: number, height: number }> = {}) {
-  return reactive({ responsive: false, width: undefined, height: undefined, ...overrides }) as {
-    responsive: boolean
+function useResponsiveSize(props: Parameters<typeof resolveSize>[0]) {
+  let result: ReturnType<typeof resolveSize>
+  mount(defineComponent({
+    setup() {
+      result = resolveSize(props)
+      return () => null
+    },
+  }))
+  return result!
+}
+
+function createProps(overrides: Partial<{ width: number, height: number }> = {}) {
+  return reactive({ width: undefined, height: undefined, ...overrides }) as {
     width?: number
     height?: number
   }
@@ -20,28 +31,28 @@ describe('useResponsiveSize', () => {
     expect(hasValidSize.value).toBe(true)
   })
 
-  it('reports invalid size when props are missing', () => {
+  it('starts at valid server geometry when props are missing', () => {
     const props = createProps()
     const { hasValidSize } = useResponsiveSize(props)
 
-    expect(hasValidSize.value).toBe(false)
+    expect(hasValidSize.value).toBe(true)
   })
 
   it('ignores handleResize when not responsive', () => {
     const props = createProps({ width: 400, height: 300 })
     const { effectiveWidth, effectiveHeight, handleResize } = useResponsiveSize(props)
 
-    handleResize(640, 480)
+    handleResize(650, 480)
 
     expect(effectiveWidth.value).toBe(400)
     expect(effectiveHeight.value).toBe(300)
   })
 
-  it('starts invalid in responsive mode and takes the measured size from handleResize', () => {
-    const props = createProps({ responsive: true })
+  it('starts at the initial size and takes the measured size from handleResize', () => {
+    const props = createProps({})
     const { effectiveWidth, effectiveHeight, hasValidSize, handleResize } = useResponsiveSize(props)
 
-    expect(hasValidSize.value).toBe(false)
+    expect(hasValidSize.value).toBe(true)
 
     handleResize(500, 300)
 
@@ -51,7 +62,7 @@ describe('useResponsiveSize', () => {
   })
 
   it('rounds fractional measured sizes', () => {
-    const props = createProps({ responsive: true })
+    const props = createProps({})
     const { effectiveWidth, effectiveHeight, handleResize } = useResponsiveSize(props)
 
     handleResize(500.4, 299.6)
@@ -61,28 +72,29 @@ describe('useResponsiveSize', () => {
   })
 
   it('dedupes no-change resize notifications', async () => {
-    const props = createProps({ responsive: true })
+    const props = createProps({})
     const { effectiveWidth, handleResize } = useResponsiveSize(props)
     const onChange = vi.fn()
     watch(effectiveWidth, onChange)
 
-    handleResize(640, 480)
-    handleResize(640, 480)
-    handleResize(640.2, 479.7) // rounds to the same 640x480
+    handleResize(650, 480)
+    handleResize(650, 480)
+    handleResize(650.2, 479.7) // rounds to the same 650x480
     await nextTick()
 
     expect(onChange).toHaveBeenCalledTimes(1)
-    expect(effectiveWidth.value).toBe(640)
+    expect(effectiveWidth.value).toBe(650)
   })
 
-  it('follows the responsive flag reactively', () => {
-    const props = createProps({ responsive: true, width: 400, height: 300 })
+  it('follows dimension props reactively', () => {
+    const props = createProps()
     const { effectiveWidth, handleResize } = useResponsiveSize(props)
 
-    handleResize(640, 480)
-    expect(effectiveWidth.value).toBe(640)
+    handleResize(650, 480)
+    expect(effectiveWidth.value).toBe(650)
 
-    props.responsive = false
+    props.width = 400
+    props.height = 300
     expect(effectiveWidth.value).toBe(400)
   })
 })

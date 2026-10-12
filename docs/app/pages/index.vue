@@ -15,12 +15,6 @@ useSeoMeta({
 // Hero card's active chart type — the background follows it
 const heroChart = ref('area')
 
-const stats = [
-  { n: '30+', label: 'chart variants' },
-  { n: '07', label: 'categories' },
-  { n: '01', label: 'peer dependency' },
-  { n: '100%', label: 'typescript' },
-]
 const appConfig = useAppConfig()
 </script>
 
@@ -81,20 +75,6 @@ const appConfig = useAppConfig()
           <LandingCodeCard v-model:active="heroChart" />
         </div>
       </section>
-
-      <!-- stat strip — hidden for now; re-enable by uncommenting
-      <section class="mx-auto grid max-w-[1080px] grid-cols-4 gap-4 px-6 pb-20 max-[900px]:grid-cols-2">
-        <div
-          v-for="(s, i) in stats"
-          :key="s.label"
-          class="sp-rise flex flex-col gap-1.5 rounded-(--ds-radius-card) bg-(--ds-surface) p-6 shadow-(--ds-shadow-card)"
-          :style="{ '--d': `${350 + i * 70}ms` }"
-        >
-          <span class="font-mono text-[1.75rem] font-semibold tabular-nums tracking-[-0.02em]">{{ s.n }}</span>
-          <span class="text-[13px] text-(--ds-muted)">{{ s.label }}</span>
-        </div>
-      </section>
-      -->
     </div>
   </div>
 </template>

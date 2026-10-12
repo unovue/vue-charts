@@ -1,5 +1,7 @@
-import type { Coordinate, VueClassValue } from '@/types/common'
-import type { CartesianViewBox } from '@/cartesian/type'
+import type { Coordinate, DataKey, VueClassValue } from '@/types/common'
+import type { ChartData } from '@/types/chartData'
+import type { MinPointSize } from '@/types/shape'
+import type { CartesianViewBox } from '@/types/viewBox'
 
 export type BarPositionPosition = {
   /**
@@ -21,8 +23,8 @@ export type RectRadius = [number, number, number, number]
 
 interface RectangleProps {
   class?: VueClassValue
-  x?: number
-  y?: number
+  x?: number | null
+  y?: number | null
   width?: number
   height?: number
   radius?: number | RectRadius
@@ -33,11 +35,11 @@ interface RectangleProps {
 export interface BarRectangleItem extends RectangleProps {
   value?: number | [number, number]
   /** the original data entry */
-  payload?: any
+  payload?: unknown
   /** the coordinate of background rectangle */
   background?: {
-    x?: number
-    y?: number
+    x?: number | null
+    y?: number | null
     width?: number
     height?: number
   }
@@ -49,3 +51,12 @@ export interface BarRectangleItem extends RectangleProps {
 }
 
 export type ErrorBarDirection = 'x' | 'y'
+
+export interface BarSettings {
+  barSize?: string | number
+  data?: ChartData
+  dataKey: DataKey<unknown>
+  maxBarSize?: number
+  minPointSize: MinPointSize
+  stackId?: string | number
+}

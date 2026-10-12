@@ -1,4 +1,4 @@
-import { useOffset } from '@/context/chartLayoutContext'
+import { useChartPresentation } from '@/model/presentation'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -10,7 +10,7 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const offset = useOffset()
+    const offset = useChartPresentation().offset
 
     return () => {
       if (!offset.value)
