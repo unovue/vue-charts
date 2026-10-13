@@ -95,6 +95,39 @@ it('follows a resize at once instead of trailing behind the box', async () => {
   expect(right).toBeLessThanOrEqual(200)
 })
 
+// A regression: the pre-mount first frame must not count as "already shown", or the entrance
+// collapses bars to their band edge (full height, zero width) instead of the baseline.
+it('grows bars from the baseline on first appearance', async () => {
+  const { container } = render(() => (
+    <BarChart width={400} height={300} data={[{ name: 'A', value: 10 }, { name: 'B', value: 20 }, { name: 'C', value: 15 }]}>
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Bar dataKey="value" />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  clock.update(clock.to * 0.1)
+  await nextTick()
+  const early = [...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => ({
+    x: Number(path.getAttribute('x')),
+    width: Number(path.getAttribute('width')),
+    height: Number(path.getAttribute('height')),
+  })).sort((a, b) => a.x - b.x)
+  clock.update(clock.to)
+  await nextTick()
+  const settled = [...container.querySelectorAll('.v-charts-bar-rectangle path')].map(path => ({
+    x: Number(path.getAttribute('x')),
+    width: Number(path.getAttribute('width')),
+    height: Number(path.getAttribute('height')),
+  })).sort((a, b) => a.x - b.x)
+  expect(early).toHaveLength(3)
+  for (const [i, bar] of early.entries()) {
+    expect(Math.abs(bar.width - settled[i].width)).toBeLessThanOrEqual(1)
+    expect(bar.height).toBeLessThan(settled[i].height * 0.6)
+  }
+})
+
 it.each([
   { chart: false, item: undefined, height: '100' },
   { chart: false, item: true, height: null },

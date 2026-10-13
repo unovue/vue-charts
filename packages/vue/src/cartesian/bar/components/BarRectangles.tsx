@@ -56,6 +56,7 @@ export const BarRectangles = defineComponent({
     // close at the nearer edge of their band while the other series of the group make room.
     // Stacked series share the whole band, so theirs grow from and sink to the baseline, like
     // the first appearance.
+    // Flips when the entrance animation starts; the pre-mount first frame must not count.
     let shown = false
     const nearerEdge = ({ bar, band }: IndexedBar) => {
       if (!shown || !band || props.stackId != null)
@@ -107,16 +108,16 @@ export const BarRectangles = defineComponent({
         connected: true,
         isActive: () => props.isAnimationActive !== false,
         transition: () => props.transition,
-        onStart: () => emit('animation-start'),
+        onStart: () => {
+          shown = true
+          emit('animation-start')
+        },
         onEnd: () => emit('animation-end'),
       },
     )
     watch(items, (value) => {
       drawn.value = value.map(({ key, value: bar }) => ({ ...bar, key }))
     }, { immediate: true, flush: 'sync' })
-    watch(() => items.value.length > 0, (value) => {
-      shown ||= value
-    }, { immediate: true })
 
     const activate = (kind: 'hover' | 'click', bar: BarRectangleItem, index: number) => {
       const payload = {
