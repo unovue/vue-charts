@@ -268,6 +268,33 @@ describe('barChart', () => {
       const tooltipWrapper = document.body.querySelector('.v-charts-tooltip-wrapper')
       expect(tooltipWrapper).toBeTruthy()
     })
+
+    it('keeps the axis tooltip visible when the pointer crosses from one bar to a neighbor', async () => {
+      const { container } = render(() => (
+        <BarChart width={500} height={300} data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Bar dataKey="uv" fill="#8884d8" isAnimationActive={false} />
+          <Tooltip isAnimationActive={false} />
+        </BarChart>
+      ))
+
+      const chart = container.querySelector('.v-charts-wrapper')!
+      await fireEvent(chart, new MouseEvent('mousemove', { clientX: 200, clientY: 150, bubbles: true }))
+      await nextTick()
+      await nextTick()
+
+      const tooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]')!
+      expect(tooltip.style.visibility).toBe('visible')
+
+      // Crossing into the adjacent bar fires mouseleave on the first bar's rectangle.
+      const bar = getBarRectangles(container)[0]
+      await fireEvent(bar, new MouseEvent('mouseleave'))
+      await nextTick()
+      await nextTick()
+
+      expect(tooltip.style.visibility).toBe('visible')
+    })
   })
 
   describe('with other components', () => {

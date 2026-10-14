@@ -257,7 +257,7 @@ const RadialBarView = defineComponent({
               emit('mouseenter', sector, sector.index, event)
             }
             const onMouseleave = (event: MouseEvent) => {
-              tooltip.clear('hover')
+              tooltip.clear('hover', 'item')
               emit('mouseleave', sector, sector.index, event)
             }
             if (slots.shape) {

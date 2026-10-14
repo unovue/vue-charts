@@ -24,7 +24,7 @@ export function usePointEvents<Entry extends { x: number, y: number }>(emit: Poi
         emit('mouseenter', entry, index, event)
       },
       onMouseleave: (event: MouseEvent) => {
-        tooltip.clear('hover')
+        tooltip.clear('hover', 'item')
         emit('mouseleave', entry, index, event)
       },
     }

@@ -120,7 +120,7 @@ const FunnelView = defineComponent({
     }
 
     function handleTrapezoidLeave() {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
     }
 
     return () => {

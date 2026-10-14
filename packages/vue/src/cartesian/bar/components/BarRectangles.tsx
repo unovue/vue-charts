@@ -140,7 +140,7 @@ export const BarRectangles = defineComponent({
         emit('mouseenter', bar, index, event)
       },
       mouseleave: ({ bar, index }, _position, event) => {
-        tooltip.clear('hover')
+        tooltip.clear('hover', 'item')
         emit('mouseleave', bar, index, event)
       },
     })

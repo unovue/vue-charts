@@ -278,7 +278,7 @@ function useTreemap(
   }
 
   function handleNodeMouseLeave(node: TreemapLayoutNode, index: number, e: MouseEvent) {
-    tooltip.clear('hover')
+    tooltip.clear('hover', 'item')
     emit('node-mouseleave', node, index, e)
   }
 

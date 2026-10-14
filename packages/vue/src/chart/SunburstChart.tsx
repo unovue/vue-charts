@@ -186,7 +186,7 @@ function useSunburst(props: SunburstInput, slots: SunburstSlots, emit: EmitFn<ty
   }
 
   function handleMouseLeave(node: SunburstLayoutNode, e: MouseEvent) {
-    tooltip.clear('hover')
+    tooltip.clear('hover', 'item')
     emit('node-mouseleave', node, indexOf(node), e)
   }
 

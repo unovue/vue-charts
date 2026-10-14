@@ -411,8 +411,13 @@ export function createTooltip(inputs: TooltipInputs) {
     }
   }
 
-  function clear(channel: Channel) {
+  function clear(channel: Channel, scope?: 'item') {
     if (channel === 'hover' && settings.value.trigger !== 'hover')
+      return
+    // An item's leave clears only the item interaction; an axis selection survives it.
+    // Recharts keeps the two in separate interaction slots; the single selection here
+    // tells them apart by whether the target carries a series entry.
+    if (scope === 'item' && selection.value?.target.entry === undefined)
       return
     request(null)
     if (channel === 'keyboard') {

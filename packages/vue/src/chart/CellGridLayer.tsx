@@ -200,7 +200,7 @@ export const CellGridLayer = defineComponent({
       if (keyboard.value)
         tooltip.activate('keyboard', { index: null, coordinate: undefined, active: false })
       else
-        tooltip.clear('hover')
+        tooltip.clear('hover', 'item')
     }
 
     function onEnter(cell: GridCell, index: number, event: MouseEvent) {

@@ -255,12 +255,12 @@ function useSankey(
     }
 
     function handleNodeMouseLeave(node: SankeyLayoutNode, index: number, e: MouseEvent) {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
       emit('node-mouseleave', node, index, e)
     }
 
     function handleLinkMouseLeave(link: SankeyLayoutLink, index: number, e: MouseEvent) {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
       emit('link-mouseleave', link, index, e)
     }
 
