@@ -26,14 +26,6 @@ const data = [
       stack-id="a"
       :corner-radius="5"
     />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
   </RadialBarChart>
 </template>

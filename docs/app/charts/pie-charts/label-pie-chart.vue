@@ -13,15 +13,7 @@ const COLORS = ['#f97316', '#14b8a6', '#f59e0b', '#06b6d4']
 
 <template>
   <PieChart :height="300">
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Pie
       :data="data"
       data-key="value"

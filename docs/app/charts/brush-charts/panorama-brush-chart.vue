@@ -23,15 +23,7 @@ const range = ref<BrushStartEndIndex | null>({ startIndex: 10, endIndex: 19 })
       />
       <XAxis data-key="day" />
       <YAxis />
-      <Tooltip :cursor="false">
-        <template #content="{ active, payload, label }">
-          <ChartTooltipContent
-            :active="active"
-            :payload="payload"
-            :label="label"
-          />
-        </template>
-      </Tooltip>
+      <Tooltip :cursor="false" />
       <Bar
         data-key="orders"
         fill="#f97316"

@@ -45,15 +45,7 @@ const TargetBand = defineComponent({
       :from="250"
       :to="320"
     />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Line
       type="monotone"
       data-key="visits"
