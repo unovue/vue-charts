@@ -234,7 +234,7 @@ function useSparkline(props: SparklineInput, emit: EmitFn<typeof sparklineEmits>
   function setActive(index: number | null, keyboard = false) {
     const point = index === null ? undefined : points.value[index]
     if (!point && !keyboard) {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
       return
     }
     const action = {

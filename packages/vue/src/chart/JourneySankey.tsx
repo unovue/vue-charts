@@ -309,7 +309,7 @@ function useJourneySankey(props: JourneyInputProps, slots: JourneySankeySlots, e
   }
   function leave() {
     hover.value = undefined
-    tooltip.clear('hover')
+    tooltip.clear('hover', 'item')
   }
   function leaveNode(node: JourneyNode, event: MouseEvent) {
     leave()

@@ -132,7 +132,7 @@ const ScatterView = defineComponent({
       })
     }
     const onMouseLeaveSymbol = () => {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
     }
     let symbolData: ReadonlyArray<ScatterPointItem> = []
     const listeners = delegateItemEvents(index => symbolData[index], {

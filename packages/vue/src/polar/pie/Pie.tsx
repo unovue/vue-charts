@@ -120,7 +120,7 @@ const PieView = defineComponent({
     }
 
     function handleSectorLeave() {
-      tooltip.clear('hover')
+      tooltip.clear('hover', 'item')
     }
     let sectorList = items.value
     const listeners = delegateItemEvents(position => sectorList[position]?.value, {
