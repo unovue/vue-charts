@@ -22,15 +22,7 @@ const data = [
       data-key="name"
       type="category"
     />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Bar
       data-key="value"
       fill="#f97316"

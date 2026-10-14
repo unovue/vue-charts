@@ -31,15 +31,7 @@ const data = [
       name="Weight"
       unit="kg"
     />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          hide-label
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Scatter
       name="Samples"
       :data="data"

@@ -25,15 +25,7 @@ const yTicks = [0, 40, 80, 120, 160, 200]
       :ticks="xTicks"
     />
     <YAxis :ticks="yTicks" />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Line
       type="monotone"
       data-key="y"

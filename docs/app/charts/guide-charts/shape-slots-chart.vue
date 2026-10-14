@@ -22,15 +22,7 @@ const data = [
     />
     <XAxis data-key="month" />
     <YAxis />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Bar
       data-key="desktop"
       fill="#f97316"

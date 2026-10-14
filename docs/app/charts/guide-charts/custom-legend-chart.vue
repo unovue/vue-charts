@@ -23,15 +23,7 @@ const data = [
       stroke="#8884d8"
     />
     <YAxis />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Legend
       :width="100"
       :wrapper-style="{

@@ -35,15 +35,7 @@ const data02 = [
       data-key="z"
       :range="[60, 400]"
     />
-    <Tooltip :cursor="false">
-      <template #content="{ active, payload, label }">
-        <ChartTooltipContent
-          :active="active"
-          :payload="payload"
-          :label="label"
-        />
-      </template>
-    </Tooltip>
+    <Tooltip :cursor="false" />
     <Scatter
       name="Series A"
       :data="data01"
