@@ -477,10 +477,7 @@ export function createTooltip(inputs: TooltipInputs) {
   const keyboardInteraction = computed(() => selection.value?.channel === 'keyboard'
     ? { ...interaction.value, index: selection.value.requestedIndex, active: selection.value.active }
     : noInteraction)
-  const syncInteraction = computed(() => ({
-    ...(selection.value?.channel === 'sync' ? interaction.value : noInteraction),
-    label: label.value,
-  }))
+  const receivingSynchronisation = computed(() => selection.value?.channel === 'sync')
 
   return {
     source,
@@ -499,7 +496,7 @@ export function createTooltip(inputs: TooltipInputs) {
     entries,
     announcement,
     keyboardInteraction,
-    syncInteraction,
+    receivingSynchronisation,
     activeIndexFor,
     coordinateFor,
     activate,

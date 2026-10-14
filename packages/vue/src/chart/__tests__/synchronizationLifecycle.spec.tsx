@@ -5,7 +5,7 @@ import type { SyncMethod } from '@/types'
 import { createSSRApp, defineComponent, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { Bar, BarChart, Brush, Tooltip, XAxis, YAxis } from '@/index'
-import { eventCenter } from '@/utils/events'
+import { TOOLTIP_SYNC_EVENT, eventCenter } from '@/utils/events'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 beforeEach(() => {
@@ -61,6 +61,32 @@ describe('chart synchronization lifetime', () => {
     expect((tooltips[1] as HTMLElement).style.visibility).toBe('visible')
     expect((tooltips[2] as HTMLElement).style.visibility).toBe('hidden')
     expect(shapes.map(shape => shape.mock.calls.length)).toEqual(renders)
+  })
+
+  it('leaving a synced chart broadcasts the deactivate once instead of ping-ponging it between charts', async () => {
+    const emit = vi.spyOn(eventCenter, 'emit')
+    const { container } = render(() => (
+      <div>
+        <Chart syncId="leave" />
+        <Chart syncId="leave" />
+      </div>
+    ))
+    await nextTick()
+    await nextTick()
+    const charts = container.querySelectorAll('.v-charts-wrapper')
+    await fireEvent.mouseMove(charts[0], { clientX: 400, clientY: 150 })
+    await nextTick()
+    await nextTick()
+    emit.mockClear()
+    await fireEvent.mouseLeave(charts[0])
+    await nextTick()
+    await nextTick()
+    await nextTick()
+    const syncEmits = emit.mock.calls.filter(([event]) => event === TOOLTIP_SYNC_EVENT)
+    expect(syncEmits.length).toBeLessThanOrEqual(2)
+    const tooltips = container.parentElement!.querySelectorAll<HTMLElement>('.v-charts-tooltip-wrapper')
+    expect(tooltips[0].style.visibility).toBe('hidden')
+    expect(tooltips[1].style.visibility).toBe('hidden')
   })
 
   it('does not register global listeners for an unsynchronized chart', async () => {

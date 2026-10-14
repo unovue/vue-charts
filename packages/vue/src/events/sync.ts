@@ -16,17 +16,17 @@ export function useTooltipChartSynchronisation(source: TooltipSource, enabled: (
   const activeDataKey = computed(() => tooltip.target.value?.entry?.value?.settings.dataKey)
   const eventEmitterSymbol = presentation.emitter
   const syncId = presentation.syncId
-  const tooltipState = computed(() => tooltip.syncInteraction.value)
-  const isReceivingSynchronisation = computed(() => tooltipState.value?.active)
+  const isReceivingSynchronisation = computed(() => tooltip.receivingSynchronisation.value)
 
   watchEffect(() => {
     if (!enabled())
       return
     if (isReceivingSynchronisation.value)
     /*
-       * This chart currently has active tooltip, synchronised from another chart.
+       * This chart's tooltip is driven by another chart in the sync group, active or not.
        * Let's not send any outgoing synchronisation events while that's happening
-       * to avoid infinite loops.
+       * to avoid infinite loops: relaying a received deactivation back to its sender
+       * starts an endless ping-pong.
        */
       return
     if (syncId.value == null)
