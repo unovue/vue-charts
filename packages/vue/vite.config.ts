@@ -5,9 +5,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import dts from 'vite-plugin-dts'
-import pkg from './package.json'
+import pkg from './package.json' with { type: 'json' }
 
-const projectRootDir = resolve(__dirname)
+const projectRootDir = import.meta.dirname
 
 const externalDeps = [
   ...Object.keys(pkg.dependencies || {}),
@@ -20,12 +20,12 @@ export default defineConfig({
     vue(),
     vueJsx() as any,
     dts({
-      tsconfigPath: resolve(__dirname, 'tsconfig.json'),
+      tsconfigPath: resolve(import.meta.dirname, 'tsconfig.json'),
       // Node ESM requires explicit file extensions, including inside declarations.
       // Resolve against emitted declarations so directory barrels and Vue files
       // use the same paths that consumers receive in the tarball.
       async afterBuild() {
-        const dist = resolve(__dirname, 'dist')
+        const dist = resolve(import.meta.dirname, 'dist')
         const files = await readdir(dist, { recursive: true })
         for (const file of files.filter(file => file.endsWith('.d.ts'))) {
           const path = join(dist, file)
@@ -68,9 +68,9 @@ export default defineConfig({
     minify: false,
     lib: {
       entry: {
-        index: resolve(__dirname, 'src/index.ts'),
-        nuxt: resolve(__dirname, 'src/nuxt.ts'),
-        resolver: resolve(__dirname, 'src/resolver.ts'),
+        index: resolve(import.meta.dirname, 'src/index.ts'),
+        nuxt: resolve(import.meta.dirname, 'src/nuxt.ts'),
+        resolver: resolve(import.meta.dirname, 'src/resolver.ts'),
       },
       formats: ['es'],
     },
