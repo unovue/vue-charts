@@ -375,6 +375,49 @@ it.each(['mouse slide', 'touch traveller', 'keyboard traveller'] as const)(
   },
 )
 
+// Catches the accepted controlled range snapping the slide back to the scale grid
+// mid-drag: floor rounding in getIndex makes a leftward gridline crossing jump the
+// slide a whole step, so it moves several times the mouse delta.
+it('moves the slide one-to-one with the mouse in both directions', async () => {
+  const rangeModel = ref<BrushStartEndIndex | null>({ startIndex: 1, endIndex: 3 })
+  render(() => (
+    <BarChart
+      width={400}
+      height={200}
+      data={[{ value: 10 }, { value: 20 }, { value: 30 }, { value: 40 }, { value: 50 }]}
+    >
+      <Bar dataKey="value" isAnimationActive={false} />
+      <Brush
+        x={0}
+        y={0}
+        width={405}
+        height={40}
+        range={rangeModel.value}
+        {...{ 'onUpdate:range': value => rangeModel.value = value }}
+      />
+    </BarChart>
+  ))
+  await nextTick()
+  await nextTick()
+  const slide = document.querySelector('.v-charts-brush-slide')!
+  // scale values: 0, 100, 200, 300, 400 → slide starts at min(startX, endX) + travellerWidth = 105
+  expect(slide.getAttribute('x')).toBe('105')
+
+  await fireEvent.mouseDown(slide, { clientX: 200 })
+  await fireEvent.mouseMove(window, { clientX: 190 })
+  await nextTick()
+  expect(slide.getAttribute('x')).toBe('95')
+
+  await fireEvent.mouseMove(window, { clientX: 180 })
+  await nextTick()
+  expect(slide.getAttribute('x')).toBe('85')
+
+  await fireEvent.mouseMove(window, { clientX: 200 })
+  await nextTick()
+  expect(slide.getAttribute('x')).toBe('105')
+  await fireEvent.mouseUp(window)
+})
+
 // Invalid parent ranges must select safe rows and request normalization only once.
 it.each([
   { input: { startIndex: -2.8, endIndex: 3.9 }, expected: { startIndex: 0, endIndex: 3 }, values: ['0', '3'], bars: 4 },

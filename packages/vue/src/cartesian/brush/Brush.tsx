@@ -51,9 +51,16 @@ const BrushView = defineComponent({
     const endIndex = computed(() => view.range?.endIndex ?? Math.max(0, (chartData.value?.length ?? 0) - 1))
     const calculatedY = computed(() => (y.value ?? 0) + (props.dy ?? 0))
 
+    // The last range this brush proposed. When the parent accepts it, the dragged
+    // positions already reflect it, so restoreControlledPositions must not snap them
+    // back to the scale grid — getIndex floor-rounds, and snapping a leftward gridline
+    // crossing moves the slide a whole step for a fraction of mouse movement.
+    let proposed: BrushStartEndIndex | undefined
+
     function onChange(nextState: BrushStartEndIndex) {
       if (sameRange(nextState, view.range))
         return
+      proposed = nextState
       emit('update:range', nextState)
       emit('change', nextState)
       nextTick(restoreControlledPositions)
@@ -79,6 +86,9 @@ const BrushView = defineComponent({
     function restoreControlledPositions() {
       if (!view.controlled())
         return
+      if (sameRange(view.range, proposed ?? null))
+        return
+      proposed = undefined
       brushState.value.startX = brushState.value.scale?.(startIndex.value)
       brushState.value.endX = brushState.value.scale?.(endIndex.value)
     }
