@@ -114,7 +114,7 @@ const navLink = 'text-inherit no-underline transition-colors duration-(--ds-t-co
       <!-- mobile menu panel -->
       <div
         v-if="menuOpen"
-        class="absolute inset-x-4 top-full mt-2 rounded-(--ds-radius-card) bg-(--ds-surface) p-4 shadow-(--ds-shadow-card) lg:hidden"
+        class="absolute inset-x-4 top-full mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-(--ds-radius-card) bg-(--ds-surface) p-4 shadow-(--ds-shadow-card) lg:hidden"
       >
         <nav class="flex flex-col gap-0.5 font-mono text-[13px]">
           <NuxtLink
