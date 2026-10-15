@@ -24,6 +24,12 @@ const menuOpen = ref(false)
 const route = useRoute()
 watch(() => route.path, () => { menuOpen.value = false })
 
+// Section links (Docs, Charts) are active for their whole subtree, tree links
+// for their exact page — same language as the desktop sidebar (accent + medium).
+function isSectionActive(to: string) {
+  return route.path.startsWith(to.split('/').slice(0, 2).join('/'))
+}
+
 const iconBtn = 'relative grid h-7 w-7 cursor-pointer touch-manipulation place-items-center rounded-full bg-(--ds-surface) p-0 text-(--ds-muted) shadow-[inset_0_0_0_1px_var(--ds-border),0_1px_2px_rgba(0,0,0,0.06)] transition-colors duration-(--ds-t-colour) ease-(--ds-ease) [-webkit-tap-highlight-color:transparent] [corner-shape:squircle] before:absolute before:-inset-1.5 before:content-[""] hover:bg-(--ds-block) hover:text-(--ds-text) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ds-accent)'
 const navLink = 'text-inherit no-underline transition-colors duration-(--ds-t-colour) ease-(--ds-ease) hover:text-(--ds-text) focus-visible:rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-(--ds-accent)'
 </script>
@@ -121,7 +127,8 @@ const navLink = 'text-inherit no-underline transition-colors duration-(--ds-t-co
             v-for="l in links"
             :key="l.to"
             :to="l.to"
-            class="rounded-md px-2 py-1.5 font-semibold text-(--ds-text) no-underline hover:bg-(--ds-block)"
+            class="rounded-md px-2 py-1.5 font-semibold no-underline hover:bg-(--ds-block)"
+            :class="isSectionActive(l.to) ? 'text-(--ds-accent)' : 'text-(--ds-text)'"
           >
             {{ l.label }}
           </NuxtLink>
@@ -138,7 +145,10 @@ const navLink = 'text-inherit no-underline transition-colors duration-(--ds-t-co
                 v-for="child in group.children"
                 :key="child.path"
                 :to="child.path"
-                class="block rounded-md px-2 py-1 text-(--ds-muted) no-underline hover:bg-(--ds-block) hover:text-(--ds-text)"
+                class="block rounded-md px-2 py-1 no-underline hover:bg-(--ds-block)"
+                :class="route.path === child.path
+                  ? 'font-medium text-(--ds-accent) hover:text-(--ds-accent)'
+                  : 'text-(--ds-muted) hover:text-(--ds-text)'"
               >
                 {{ child.title }}
               </NuxtLink>
