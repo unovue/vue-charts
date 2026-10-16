@@ -76,24 +76,54 @@ export default defineConfig({
 })
 ```
 
-## Usage guides
+## Use vccs with an AI agent
 
-The package ships a `vccs-usage` CLI that returns task-specific guides for every chart: the data
-shape, a minimal Vue example and the rules that differ from Recharts. The guides are read from the
-installed package, so they always match the vccs version in your lockfile.
+This repository ships a `vccs-usage` skill: a thin `SKILL.md` that teaches an AI coding agent to
+build charts through the usage guides inside the installed vccs package. Install it into your
+agent's skills directory — for Claude Code, project-wide or user-wide:
 
 ```sh
-pnpm exec vccs-usage search "show weekly retention by signup month"
+# from your project root
+mkdir -p .claude/skills/vccs-usage
+curl -fsSL https://raw.githubusercontent.com/unovue/vue-charts/main/skills/vccs-usage/SKILL.md \
+  -o .claude/skills/vccs-usage/SKILL.md
+```
+
+Then just ask for a chart. Given *"add a card with weekly user retention by signup month"*, the
+agent searches the guides that ship with your installed vccs, retrieves the matching ones, and
+writes the component from them:
+
+```sh
+pnpm exec vccs-usage search "show weekly user retention by signup month"   # → cohort-chart
 pnpm exec vccs-usage retrieve "cohort-chart,vue-api"
 ```
 
-`search` ranks guides for a query and prints their ids, `retrieve` prints the full guides, and
-`list` shows every id. Run it through your package manager's local exec (`pnpm exec`, `npm exec`,
-`bunx`); avoid `npx vccs-usage@latest`, which may fetch guides for a version you have not
-installed.
+```vue
+<script setup lang="ts">
+const retention = [
+  { cohort: '2026-05', values: [420, 301, 258, 236, 221, 212, 205, 199, 194, 190, 187, 185, 183] },
+  { cohort: '2026-06', values: [385, 269, 224, 201, 188, 180, 174, 170, 166, 163, 161] },
+  { cohort: '2026-07', values: [512, 371, 318, 291, 274, 264, 257, 251, 247] },
+]
 
-If you work with an AI coding agent, point it at this CLI before it writes chart code — the
-guides keep it on the Vue API instead of Recharts habits.
+const formatPeriod = (period: number) => `W${period}`
+</script>
+
+<template>
+  <CohortChart
+    :data="retention"
+    color="#f97316"
+    :period-formatter="formatPeriod"
+  >
+    <Tooltip :cursor="false" />
+  </CohortChart>
+</template>
+```
+
+`values[0]` is the cohort size, later entries the users still active in that week — the guide
+covers this shape, so the agent does not guess it. The guides are read from the installed
+package, so what the agent follows always matches the vccs version in your lockfile; never run
+the CLI through `@latest`.
 
 ## Typed rows
 
