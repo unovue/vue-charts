@@ -76,6 +76,25 @@ export default defineConfig({
 })
 ```
 
+## Usage guides
+
+The package ships a `vccs-usage` CLI that returns task-specific guides for every chart: the data
+shape, a minimal Vue example and the rules that differ from Recharts. The guides are read from the
+installed package, so they always match the vccs version in your lockfile.
+
+```sh
+pnpm exec vccs-usage search "show weekly retention by signup month"
+pnpm exec vccs-usage retrieve "cohort-chart,vue-api"
+```
+
+`search` ranks guides for a query and prints their ids, `retrieve` prints the full guides, and
+`list` shows every id. Run it through your package manager's local exec (`pnpm exec`, `npm exec`,
+`bunx`); avoid `npx vccs-usage@latest`, which may fetch guides for a version you have not
+installed.
+
+If you work with an AI coding agent, point it at this CLI before it writes chart code — the
+guides keep it on the Vue API instead of Recharts habits.
+
 ## Typed rows
 
 `defineChartComponents` binds your row type to the components you pick. A wrong `data-key` is
