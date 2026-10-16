@@ -51,11 +51,15 @@
       ]
     }
   },
+  "bin": {
+    "vccs-usage": "./usage/vccs-usage.mjs"
+  },
   "files": [
     "./LICENSE",
     "./README.md",
     "./dist/**/*.d.ts",
-    "./dist/**/*.mjs"
+    "./dist/**/*.mjs",
+    "./usage"
   ],
   "scripts": {
     "clean": "rm -rf dist",
