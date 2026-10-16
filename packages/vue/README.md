@@ -78,57 +78,14 @@ export default defineConfig({
 
 ## Use vccs with an AI agent
 
-This repository ships a `vccs-usage` skill: a thin `SKILL.md` that teaches an AI coding agent to
-build charts through the usage guides inside the installed vccs package. Install it with the
-[`skills`](https://github.com/vercel-labs/skills) CLI:
-
 ```sh
 npx skills add unovue/vue-charts      # add -g to install for every project
 ```
-
-It installs `vccs-usage` into `.agents/skills/`, symlinked into `.claude/skills/`, Cursor,
-Codex and the other agents it detects, and records the source in `skills-lock.json` so
-`npx skills update` keeps it current.
 
 Then just ask for the chart — you run nothing yourself. Claude loads the skill when the request
 matches it, or you can invoke it explicitly with `/vccs-usage`:
 
 > add a card with weekly user retention by signup month
-
-The skill looks the request up in the guides that ship with your installed vccs and writes the
-component. The agent runs the guide CLI for you:
-
-```sh
-pnpm exec vccs-usage search "show weekly user retention by signup month"   # → cohort-chart
-pnpm exec vccs-usage retrieve "cohort-chart,vue-api"
-```
-
-```vue
-<script setup lang="ts">
-const retention = [
-  { cohort: '2026-05', values: [420, 301, 258, 236, 221, 212, 205, 199, 194, 190, 187, 185, 183] },
-  { cohort: '2026-06', values: [385, 269, 224, 201, 188, 180, 174, 170, 166, 163, 161] },
-  { cohort: '2026-07', values: [512, 371, 318, 291, 274, 264, 257, 251, 247] },
-]
-
-const formatPeriod = (period: number) => `W${period}`
-</script>
-
-<template>
-  <CohortChart
-    :data="retention"
-    color="#f97316"
-    :period-formatter="formatPeriod"
-  >
-    <Tooltip :cursor="false" />
-  </CohortChart>
-</template>
-```
-
-`values[0]` is the cohort size, later entries the users still active in that week — the guide
-covers this shape, so the agent does not guess it. The guides are read from the installed
-package, so what the agent follows always matches the vccs version in your lockfile; it runs the
-CLI through your local install, never `npx vccs-usage@latest`.
 
 ## Typed rows
 
