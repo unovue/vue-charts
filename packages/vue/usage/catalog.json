@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "guides": [
+    {
+      "id": "installation",
+      "title": "Installation and registration",
+      "description": "Install vccs in Vite or Nuxt 4, use explicit imports, auto-imports, or the Nuxt module.",
+      "category": "core",
+      "path": "guides/core/installation.md",
+      "components": [],
+      "useCases": ["Set up a new Vue or Nuxt chart", "Configure VccsResolver or vccs/nuxt"],
+      "keywords": ["install", "setup", "vite", "nuxt", "resolver", "auto-import", "安装", "自动导入"]
+    },
+    {
+      "id": "vue-api",
+      "title": "Vue API rules",
+      "description": "Use slots, events, Vue models, responsive sizing, data keys, and CSS theme variables correctly.",
+      "category": "core",
+      "path": "guides/core/vue-api.md",
+      "components": ["Tooltip", "Brush", "Legend"],
+      "useCases": ["Customize chart content", "Control active state", "Fix a Recharts-to-Vue API mismatch"],
+      "keywords": ["slots", "events", "v-model", "active-index", "brush", "tooltip", "responsive", "theme", "插槽", "事件", "主题"]
+    },
+    {
+      "id": "typed-rows",
+      "title": "Typed chart rows",
+      "description": "Make data-key and tooltip payload types follow the application's row type.",
+      "category": "core",
+      "path": "guides/core/typed-rows.md",
+      "components": [],
+      "useCases": ["Reject wrong data keys at compile time", "Type tooltip payloads"],
+      "keywords": ["typescript", "types", "generic", "defineChartComponents", "row", "类型", "类型安全"]
+    },
+    {
+      "id": "ssr-testing",
+      "title": "SSR and deterministic testing",
+      "description": "Render charts on the server and disable motion for stable SSR and geometry assertions.",
+      "category": "core",
+      "path": "guides/core/ssr-testing.md",
+      "components": [],
+      "useCases": ["Render charts in Nuxt SSR", "Write deterministic chart tests"],
+      "keywords": ["ssr", "server", "hydration", "test", "animation", "服务端渲染", "测试"]
+    },
+    {
+      "id": "area-chart",
+      "title": "AreaChart",
+      "description": "Show a filled trend, accumulated magnitude, or stacked total over an ordered axis.",
+      "category": "chart",
+      "path": "guides/charts/area-chart.md",
+      "components": ["AreaChart", "Area"],
+      "useCases": ["Show a filled trend over time", "Show stacked totals over an ordered axis", "用面积展示趋势或堆积总量"],
+      "keywords": ["area", "filled line", "stacked area", "trend", "time series", "面积图", "趋势", "堆积"]
+    },
+    {
+      "id": "bar-chart",
+      "title": "BarChart",
+      "description": "Compare categories with vertical or horizontal bars, including stacked and negative values.",
+      "category": "chart",
+      "path": "guides/charts/bar-chart.md",
+      "components": ["BarChart", "Bar"],
+      "useCases": ["Compare values across categories", "Rank categories or show a stacked composition", "用柱状图或条形图比较分类"],
+      "keywords": ["bar", "column", "comparison", "ranking", "stacked", "柱状图", "条形图", "对比", "排名"]
+    },
+    {
+      "id": "line-chart",
+      "title": "LineChart",
+      "description": "Show one or more trends over an ordered numeric or categorical axis.",
+      "category": "chart",
+      "path": "guides/charts/line-chart.md",
+      "components": ["LineChart", "Line"],
+      "useCases": ["Show a time series", "Compare trends across series", "用折线展示趋势"],
+      "keywords": ["line", "trend", "time series", "spark alternative", "折线图", "趋势", "时间序列"]
+    },
+    {
+      "id": "scatter-chart",
+      "title": "ScatterChart",
+      "description": "Show relationships between numeric variables with points or bubbles.",
+      "category": "chart",
+      "path": "guides/charts/scatter-chart.md",
+      "components": ["ScatterChart", "Scatter", "ZAxis"],
+      "useCases": ["Show correlation or distribution", "Encode a third numeric value as bubble size", "用散点展示相关性或分布"],
+      "keywords": ["scatter", "correlation", "distribution", "bubble", "散点图", "气泡图", "相关性"]
+    },
+    {
+      "id": "composed-chart",
+      "title": "ComposedChart",
+      "description": "Combine Bar, Line, Area, and Scatter series on shared Cartesian axes.",
+      "category": "chart",
+      "path": "guides/charts/composed-chart.md",
+      "components": ["ComposedChart", "Bar", "Line", "Area", "Scatter"],
+      "useCases": ["Compare actual bars with a target line", "Mix series types on one chart", "在同一坐标系混合柱状和折线"],
+      "keywords": ["composed", "mixed", "combo", "bar and line", "组合图", "混合图"]
+    },
+    {
+      "id": "funnel-chart",
+      "title": "FunnelChart",
+      "description": "Show values and drop-off across ordered conversion stages.",
+      "category": "chart",
+      "path": "guides/charts/funnel-chart.md",
+      "components": ["FunnelChart", "Funnel"],
+      "useCases": ["Show conversion across stages", "Expose drop-off in a process", "展示阶段转化和流失"],
+      "keywords": ["funnel", "conversion", "drop-off", "stages", "漏斗图", "转化率"]
+    },
+    {
+      "id": "pie-chart",
+      "title": "PieChart",
+      "description": "Show a small number of part-to-whole proportions as a pie or donut.",
+      "category": "chart",
+      "path": "guides/charts/pie-chart.md",
+      "components": ["PieChart", "Pie", "Cell"],
+      "useCases": ["Show proportions of a total", "Build a donut chart", "展示少量分类的占比"],
+      "keywords": ["pie", "donut", "proportion", "part-to-whole", "饼图", "环形图", "占比"]
+    },
+    {
+      "id": "radar-chart",
+      "title": "RadarChart",
+      "description": "Compare multivariate profiles across a shared set of dimensions.",
+      "category": "chart",
+      "path": "guides/charts/radar-chart.md",
+      "components": ["RadarChart", "Radar", "PolarAngleAxis", "PolarGrid"],
+      "useCases": ["Compare scores across dimensions", "Show a multivariate profile", "比较多维评分"],
+      "keywords": ["radar", "spider", "multivariate", "profile", "雷达图", "多维"]
+    },
+    {
+      "id": "radial-bar-chart",
+      "title": "RadialBarChart",
+      "description": "Show progress or category values as concentric or stacked radial bars.",
+      "category": "chart",
+      "path": "guides/charts/radial-bar-chart.md",
+      "components": ["RadialBarChart", "RadialBar"],
+      "useCases": ["Show progress toward a goal", "Compare values on polar tracks", "展示环形进度或径向分类值"],
+      "keywords": ["radial bar", "progress", "gauge", "polar bar", "径向条形图", "进度", "仪表盘"]
+    },
+    {
+      "id": "bar-list",
+      "title": "BarList",
+      "description": "Render a lightweight plain-HTML ranked list with inline value bars.",
+      "category": "chart",
+      "path": "guides/charts/bar-list.md",
+      "components": ["BarList"],
+      "useCases": ["Build a compact ranking list", "Show labeled values without SVG axes", "用 HTML 列表展示排行"],
+      "keywords": ["bar list", "ranking", "html", "leaderboard", "条形列表", "排行榜"]
+    },
+    {
+      "id": "sparkline",
+      "title": "Sparkline",
+      "description": "Place a tiny inline trend in a table, KPI tile, or dense dashboard row.",
+      "category": "chart",
+      "path": "guides/charts/sparkline.md",
+      "components": ["Sparkline"],
+      "useCases": ["Show a compact trend without axes", "Add a trend to a KPI or table row", "在指标卡或表格中展示迷你趋势"],
+      "keywords": ["sparkline", "mini line", "kpi", "inline trend", "火花线", "迷你趋势"]
+    },
+    {
+      "id": "tracker",
+      "title": "Tracker",
+      "description": "Show a compact sequence of discrete activity or status cells.",
+      "category": "chart",
+      "path": "guides/charts/tracker.md",
+      "components": ["Tracker"],
+      "useCases": ["Show service or activity status over a sequence", "Render compact status cells", "展示一组状态或活动点"],
+      "keywords": ["tracker", "status", "activity", "cells", "状态", "活动点", "追踪"]
+    },
+    {
+      "id": "heatmap",
+      "title": "Heatmap",
+      "description": "Show magnitude or density across two categorical dimensions.",
+      "category": "chart",
+      "path": "guides/charts/heatmap.md",
+      "components": ["Heatmap"],
+      "useCases": ["Show a matrix of values", "Find concentration across two categories", "展示两个分类维度的密度或强度"],
+      "keywords": ["heatmap", "matrix", "density", "intensity", "热力图", "矩阵", "密度"]
+    },
+    {
+      "id": "calendar-heatmap",
+      "title": "CalendarHeatmap",
+      "description": "Show daily activity or intensity on a calendar.",
+      "category": "chart",
+      "path": "guides/charts/calendar-heatmap.md",
+      "components": ["CalendarHeatmap"],
+      "useCases": ["Show daily activity over weeks or months", "Build a contribution calendar", "展示每日活动或贡献日历"],
+      "keywords": ["calendar heatmap", "daily", "contribution", "activity calendar", "日历热力图", "贡献图"]
+    },
+    {
+      "id": "cohort-chart",
+      "title": "CohortChart",
+      "description": "Show retention or another metric by cohort and elapsed period.",
+      "category": "chart",
+      "path": "guides/charts/cohort-chart.md",
+      "components": ["CohortChart"],
+      "useCases": ["Analyze retention by signup cohort", "Compare behavior across elapsed periods", "分析分群留存"],
+      "keywords": ["cohort", "retention", "signup", "period", "队列图", "留存", "分群"]
+    },
+    {
+      "id": "journey-sankey",
+      "title": "JourneySankey",
+      "description": "Show how entities move through ordered journey steps and where they drop off.",
+      "category": "chart",
+      "path": "guides/charts/journey-sankey.md",
+      "components": ["JourneySankey"],
+      "useCases": ["Visualize a user journey", "Compare paths through ordered steps", "展示用户旅程和路径流失"],
+      "keywords": ["journey", "path", "conversion", "sankey", "用户旅程", "路径", "桑基图"]
+    },
+    {
+      "id": "sankey",
+      "title": "Sankey",
+      "description": "Show weighted flows between arbitrary source and target nodes.",
+      "category": "chart",
+      "path": "guides/charts/sankey.md",
+      "components": ["Sankey"],
+      "useCases": ["Show transfers or flows between nodes", "Visualize weighted relationships in a network", "展示节点之间的加权流动"],
+      "keywords": ["sankey", "flow", "nodes", "links", "桑基图", "流量", "流向"]
+    },
+    {
+      "id": "treemap",
+      "title": "Treemap",
+      "description": "Show hierarchical part-to-whole values as nested rectangles.",
+      "category": "chart",
+      "path": "guides/charts/treemap.md",
+      "components": ["Treemap"],
+      "useCases": ["Show hierarchy and magnitude together", "Compare branches of a whole", "用嵌套矩形展示层级和占比"],
+      "keywords": ["treemap", "hierarchy", "nested rectangles", "矩形树图", "层级", "占比"]
+    },
+    {
+      "id": "sunburst-chart",
+      "title": "SunburstChart",
+      "description": "Show hierarchical part-to-whole values as concentric radial rings.",
+      "category": "chart",
+      "path": "guides/charts/sunburst-chart.md",
+      "components": ["SunburstChart"],
+      "useCases": ["Show hierarchy as radial rings", "Explore nested proportions", "用同心环展示层级和占比"],
+      "keywords": ["sunburst", "hierarchy", "radial rings", "旭日图", "层级", "环形"]
+    }
+  ]
+}
