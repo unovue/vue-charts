@@ -148,7 +148,8 @@ never written by hand; they hold the declared props and events only.
 Demos use the palette `#f97316`, `#14b8a6`, `#f59e0b`, `#06b6d4`, add `:cursor="false"` to
 `<Tooltip>`, and embed with `::chart-demo{src="…"}::`. Style with Tailwind v4 utilities
 (`border-(--color-border)`); buttons use `DsButton`. Every public component needs a page title,
-heading or table entry (`node scripts/check-docs-coverage.mjs`).
+heading or table entry (`node scripts/check-docs-coverage.mjs`). README and skill text address
+the user: say what they ask the agent for, and mark every CLI command as one the agent runs.
 
 ## Dependencies
 
