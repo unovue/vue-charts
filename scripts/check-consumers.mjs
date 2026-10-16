@@ -100,6 +100,32 @@ function check(cwd, args) {
   }
 }
 
+async function writeUsageGuideExamples(app) {
+  const usage = join(app, 'node_modules/vccs/usage')
+  const catalog = JSON.parse(await readFile(join(usage, 'catalog.json'), 'utf8'))
+  const guides = catalog.guides.filter(guide => guide.category === 'chart' || guide.id === 'typed-rows')
+  for (const guide of guides) {
+    const markdown = await readFile(join(usage, guide.path), 'utf8')
+    const section = markdown.match(/## Minimal example\s+([\s\S]*?)(?=\n## |$)/)
+    const example = section?.[1].match(/```vue\n([\s\S]*?)\n```/)
+    if (!example)
+      throw new Error(`${guide.id}: installed guide has no minimal Vue example`)
+    await writeFile(join(app, 'src', `usage-${guide.id}.vue`), `${example[1]}\n`)
+  }
+  console.log(`Usage guides: ${guides.length} minimal Vue examples from the installed package`)
+}
+
+async function checkUsageCli(app) {
+  const { version } = JSON.parse(await readFile(join(app, 'node_modules/vccs/package.json'), 'utf8'))
+  const result = spawnSync('pnpm', ['exec', 'vccs-usage', 'validate'], { cwd: app, env, encoding: 'utf8' })
+  process.stdout.write(result.stdout ?? '')
+  process.stderr.write(result.stderr ?? '')
+  if (result.error)
+    throw result.error
+  if (result.status !== 0 || !result.stdout.includes(`PASS: vccs ${version};`))
+    failures.push(new Error(`vccs-usage validate did not report PASS for ${version} (exit ${result.status})`))
+}
+
 try {
   console.log(`Packed consumers; Node ${process.version}; ${temporary}`)
   run(root, ['--filter', 'vccs', 'build'])
@@ -131,6 +157,8 @@ try {
       if (config.vueCompilerOptions?.strictTemplates !== true)
         throw new Error('Vite must use strictTemplates: true')
       console.log('Vite: strictTemplates=true')
+      await checkUsageCli(app)
+      await writeUsageGuideExamples(app)
       check(app, ['exec', 'vue-tsc', '--noEmit', '-p', 'tsconfig.json'])
       check(app, ['exec', 'vite', 'build'])
       check(app, ['exec', 'vite', 'build', '--config', 'selected.config.mjs'])
