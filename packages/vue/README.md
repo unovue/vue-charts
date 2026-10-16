@@ -79,15 +79,16 @@ export default defineConfig({
 ## Use vccs with an AI agent
 
 This repository ships a `vccs-usage` skill: a thin `SKILL.md` that teaches an AI coding agent to
-build charts through the usage guides inside the installed vccs package. Install it into your
-agent's skills directory — for Claude Code, project-wide or user-wide:
+build charts through the usage guides inside the installed vccs package. Install it with the
+[`skills`](https://github.com/vercel-labs/skills) CLI:
 
 ```sh
-# from your project root
-mkdir -p .claude/skills/vccs-usage
-curl -fsSL https://raw.githubusercontent.com/unovue/vue-charts/main/skills/vccs-usage/SKILL.md \
-  -o .claude/skills/vccs-usage/SKILL.md
+npx skills add unovue/vue-charts      # add -g to install for every project
 ```
+
+It installs `vccs-usage` into `.agents/skills/`, symlinked into `.claude/skills/`, Cursor,
+Codex and the other agents it detects, and records the source in `skills-lock.json` so
+`npx skills update` keeps it current.
 
 Then just ask for a chart. Given *"add a card with weekly user retention by signup month"*, the
 agent searches the guides that ship with your installed vccs, retrieves the matching ones, and
@@ -122,8 +123,8 @@ const formatPeriod = (period: number) => `W${period}`
 
 `values[0]` is the cohort size, later entries the users still active in that week — the guide
 covers this shape, so the agent does not guess it. The guides are read from the installed
-package, so what the agent follows always matches the vccs version in your lockfile; never run
-the CLI through `@latest`.
+package, so what the agent follows always matches the vccs version in your lockfile; run the
+guide CLI through your package manager's local exec, not `npx vccs-usage@latest`.
 
 ## Typed rows
 
