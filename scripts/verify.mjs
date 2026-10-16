@@ -15,7 +15,7 @@ if (quick && release)
   throw new Error('Use --quick or --release, not both')
 const checks = [
   ['unit and regression tests', 'pnpm --filter vccs exec vitest run --maxWorkers=2'],
-  ['tooling verdict regressions', 'node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs'],
+  ['tooling verdict regressions', 'node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs'],
   ['lint', 'pnpm lint'],
   ['typecheck', 'pnpm typecheck'],
   ['library build', 'pnpm --filter vccs build'],
