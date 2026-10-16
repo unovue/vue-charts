@@ -20,6 +20,11 @@ jobs:
         with:
           node-version: 22
 
-      - run: npx changelogithub
+      # Release notes come from CHANGELOG.md, not from the commit log, so the release page,
+      # the changelog file and npm all carry the same reviewed text. A tag without a matching
+      # section fails here instead of publishing an empty release.
+      - run: node scripts/release.mjs section --version="${GITHUB_REF_NAME#v}" > release-notes.md
+
+      - run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}

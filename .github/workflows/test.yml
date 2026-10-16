@@ -28,7 +28,7 @@ jobs:
 
       - name: Check tooling regressions and motion tokens
         run: |
-          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs
+          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs scripts/check-release.test.mjs
           node scripts/update-motion-docs.mjs --check
           node packages/vue/test/lab/cli.mjs help
 

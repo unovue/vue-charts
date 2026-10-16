@@ -16,6 +16,7 @@
     "play": "pnpm --filter play dev",
     "prepare": "simple-git-hooks",
     "pub:release": "pnpm --filter vccs publish --access public",
+    "release": "node scripts/release.mjs",
     "docs": "pnpm --filter docs dev",
     "bumpp": "bumpp package.json packages/*/package.json docs/package.json",
     "check:a11y": "node scripts/check-a11y.mjs",
