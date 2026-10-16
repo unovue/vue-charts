@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-10-16
 
 1.0 rebuilds vccs on Vue. Each chart keeps its state in Vue computeds instead of a Redux store,
 and the public API follows Vue conventions: `v-model`, events, slots and responsive charts by
@@ -70,6 +70,9 @@ Update your dependencies:
   shadcn-vue `ChartContainer` recipe.
 - Slots: Radar `#shape`, `#dot`, `#activeDot` and `#label`; RadialBar `#shape` and `#label`;
   CartesianGrid `#horizontal` and `#vertical`. Tooltip `labelFormatter`. Pie and Funnel `name`.
+- Usage guides shipped in the package: `vccs-usage search "<task>"`, `list` and
+  `retrieve "<ids>"` print the guide for the chart you are building. The same catalog backs the
+  `vccs-usage` agent skill, installed with `npx skills add unovue/vue-charts`.
 
 ### Fixed
 
@@ -99,6 +102,8 @@ Update your dependencies:
   errors.
 - With Tooltip `shared` set to `false`, Line, Area and Radar show the active dot only on the
   hovered series.
+- A Brush slide dragged leftwards moved a whole step for a fraction of mouse movement when it
+  crossed a gridline. The slide now follows the mouse one-to-one in both directions.
 
 ### Changed
 
