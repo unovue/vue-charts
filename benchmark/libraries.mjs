@@ -99,7 +99,7 @@ export const libraries = [
   {
     id: 'vega-lite',
     name: 'Vega-Lite',
-    packages: ['vega', 'vega-embed', 'vega-lite'],
+    packages: ['vega-lite', 'vega', 'vega-embed'],
     renderer: 'SVG or Canvas',
     license: 'BSD-3-Clause',
     docs: 'https://vega.github.io/vega-lite/',
