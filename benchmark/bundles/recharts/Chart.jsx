@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars -- the components are used in JSX */
+/* eslint-disable no-unused-vars, unused-imports/no-unused-imports -- the components are used in JSX */
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 // Recharts has no default palette; these are the colors from its documentation.
