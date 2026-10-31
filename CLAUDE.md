@@ -23,6 +23,7 @@ pnpm verify               # the gates and a verdict table (~10 min, see VERIFY.m
                           # --release adds motion geometry and the playground sweep
 pnpm lab <command>        # motion instruments: film, timing, seen, dev (never a gate)
 pnpm compare:upstream     # bundle, dependency and line comparison with vccs 0.6.0
+pnpm compare:libraries    # same chart bundled and browser-checked per library (see benchmark/README.md)
 ```
 
 `VERIFY.md` lists every gate (what it proves, its tier and latest result) and every instrument.
@@ -55,6 +56,7 @@ packages/vue/src/           # Library source (published as vccs)
 ├── nuxt.ts                 # Nuxt module (vccs/nuxt)
 └── resolver.ts             # unplugin-vue-components resolver (vccs/resolver)
 
+benchmark/                  # Library comparison: live site and isolated bundle installs, outside the pnpm workspace
 scripts/                    # Release checks (see VERIFY.md) and their helpers in scripts/lib/
 internals/                  # decisions.md (library; docs-site design is in docs/adr/), open-items.md, migrations.md
 ```

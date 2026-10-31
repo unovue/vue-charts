@@ -1,0 +1,10 @@
+{
+  "name": "bundle-tanstack",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@tanstack/charts": "1.1.0",
+    "d3-shape": "3.2.0",
+    "vue": "3.5.18"
+  }
+}

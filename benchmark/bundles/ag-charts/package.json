@@ -1,0 +1,10 @@
+{
+  "name": "bundle-ag-charts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "ag-charts-community": "14.2.0",
+    "ag-charts-vue3": "14.2.0",
+    "vue": "3.5.18"
+  }
+}

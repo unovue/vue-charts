@@ -1,0 +1,11 @@
+{
+  "name": "bundle-vega-lite",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "vega": "6.4.0",
+    "vega-embed": "7.3.0",
+    "vega-lite": "6.5.0",
+    "vue": "3.5.18"
+  }
+}

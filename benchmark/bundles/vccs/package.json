@@ -1,0 +1,10 @@
+{
+  "name": "bundle-vccs",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "motion-v": "2.9.0",
+    "vccs": "1.0.0",
+    "vue": "3.5.18"
+  }
+}

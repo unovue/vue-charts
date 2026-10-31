@@ -1,0 +1,39 @@
+{
+  "name": "vccs-benchmark-site",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Live side-by-side chart comparison. Outside the pnpm workspace; install with --ignore-workspace.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@observablehq/plot": "0.6.17",
+    "@shikijs/langs": "4.5.0",
+    "@shikijs/themes": "4.5.0",
+    "@tanstack/charts": "1.1.0",
+    "@unovis/ts": "1.7.1",
+    "@unovis/vue": "1.7.1",
+    "ag-charts-community": "14.2.0",
+    "ag-charts-vue3": "14.2.0",
+    "chart.js": "4.6.1",
+    "d3-shape": "3.2.0",
+    "echarts": "6.1.0",
+    "motion-v": "2.9.0",
+    "shiki": "4.5.0",
+    "vccs": "1.0.0",
+    "vega": "6.4.0",
+    "vega-embed": "7.3.0",
+    "vega-lite": "6.5.0",
+    "vue": "3.5.18",
+    "vue-chartjs": "5.3.4",
+    "vue-data-ui": "3.28.7",
+    "vue-echarts": "8.3.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
+    "vite": "8.3.5"
+  }
+}
