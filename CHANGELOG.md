@@ -258,3 +258,13 @@ Initial release of **vccs** — an unofficial Vue 3 port of [Recharts](https://r
 - **TypeScript**: Full type support with Volar-compatible slot types
 - **Build**: ESM-only output (`preserveModules`) via Vite + Rolldown
 - **Tooling**: Storybook stories, Vitest test suite, GitHub Actions CI, Nuxt playground, Docus documentation site
+
+## [1.1.0] - 2026-11-01
+
+### Added
+
+- Scatter tooltip payload rows expose `seriesName`, so custom formatting can distinguish points from multiple series.
+
+### Fixed
+
+- `hide` on `PolarAngleAxis` and `PolarRadiusAxis` now hides the axis while preserving its scale and categories.
