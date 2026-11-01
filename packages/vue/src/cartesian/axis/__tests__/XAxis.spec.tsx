@@ -28,6 +28,25 @@ describe('xAxis', () => {
   ]
 
   describe('rendering tick labels', () => {
+    // The recipe in the axis guide: it fails if the axis's own width overrides the one in `tick`.
+    it('keeps every long label and wraps it to the width in tick', async () => {
+      const longNames = ['Small and medium businesses', 'Public sector organizations', 'Independent software vendors']
+      const { container } = render(() => (
+        <BarChart width={490} height={300} data={longNames.map(name => ({ name, uv: 100 }))}>
+          <XAxis dataKey="name" interval={0} tick={{ width: 90 }} />
+          <YAxis />
+          <Bar dataKey="uv" isAnimationActive={false} />
+        </BarChart>
+      ))
+
+      await nextTick()
+      await nextTick()
+      const ticks = [...getXAxisTicks(container)]
+      expect(ticks).toHaveLength(longNames.length)
+      for (const tick of ticks)
+        expect(tick.querySelectorAll('tspan').length).toBeGreaterThan(1)
+    })
+
     it('renders tick labels from data when dataKey is specified', async () => {
       const { container } = render(() => (
         <BarChart width={500} height={300} data={data}>
