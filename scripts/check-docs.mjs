@@ -8,7 +8,7 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
-import { emptySurface } from './lib/check-verdicts.mjs'
+import { droppedPrefetch, emptySurface } from './lib/check-verdicts.mjs'
 import { checkPorts, portText } from './lib/ports.mjs'
 
 const ports = checkPorts(4680, 4689)
@@ -106,8 +106,9 @@ async function audit(browser, engine, route, mobile) {
     }
   })
   page.on('requestfailed', (request) => {
-    if (new URL(request.url()).origin === origin)
-      result.findings.push({ kind: 'requestfailed', text: `${request.url().replace(origin, '')}: ${request.failure()?.errorText}` })
+    const errorText = request.failure()?.errorText
+    if (new URL(request.url()).origin === origin && !droppedPrefetch(errorText, request.resourceType()))
+      result.findings.push({ kind: 'requestfailed', text: `${request.url().replace(origin, '')}: ${errorText}` })
   })
   try {
     await page.goto(`${origin}${route}`, { waitUntil: 'networkidle', timeout: 30000 })
