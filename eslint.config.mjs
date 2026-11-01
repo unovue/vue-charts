@@ -13,6 +13,8 @@ export default antfu(
       '**/.data/**',
       '**/coverage/**',
       '.evidence/**',
+      // Generated bundles of the library comparison.
+      'benchmark/**/.build/**',
       // Symlink to packages/vue/README.md; lint the file once, at its source.
       'README.md',
     ],

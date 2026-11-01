@@ -28,7 +28,7 @@ jobs:
 
       - name: Check tooling regressions and motion tokens
         run: |
-          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs scripts/check-release.test.mjs
+          node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs scripts/check-release.test.mjs scripts/compare-libraries.test.mjs
           node scripts/update-motion-docs.mjs --check
           node packages/vue/test/lab/cli.mjs help
 
@@ -134,5 +134,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node scripts/check-docs-coverage.mjs
+      - run: node scripts/check-comparison.mjs
+      - name: Build the comparison site
+        working-directory: benchmark/site
+        run: |
+          pnpm install --ignore-workspace --frozen-lockfile
+          pnpm build
       - run: pnpm --filter vccs build
       - run: pnpm --filter docs build

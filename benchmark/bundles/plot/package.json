@@ -1,0 +1,9 @@
+{
+  "name": "bundle-plot",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@observablehq/plot": "0.6.17",
+    "vue": "3.5.18"
+  }
+}

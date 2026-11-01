@@ -15,7 +15,7 @@ if (quick && release)
   throw new Error('Use --quick or --release, not both')
 const checks = [
   ['unit and regression tests', 'pnpm --filter vccs exec vitest run --maxWorkers=2'],
-  ['tooling verdict regressions', 'node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs scripts/check-release.test.mjs'],
+  ['tooling verdict regressions', 'node --test scripts/check-verdicts.test.mjs scripts/check-process.test.mjs scripts/benchmark-verdict.test.mjs scripts/benchmark-motion.test.mjs scripts/check-vccs-usage.test.mjs scripts/check-release.test.mjs scripts/compare-libraries.test.mjs'],
   ['lint', 'pnpm lint'],
   ['typecheck', 'pnpm typecheck'],
   ['library build', 'pnpm --filter vccs build'],
@@ -24,6 +24,7 @@ const checks = [
   ['packed consumers', `node scripts/check-consumers.mjs${quick ? ' --skip-dev' : ''}`],
   ['code health', 'pnpm check:code'],
   ['docs cover every public component', 'node scripts/check-docs-coverage.mjs'],
+  ['library comparison is consistent', 'node scripts/check-comparison.mjs'],
   ['standalone bundles', 'pnpm check:bundle --assert-standalone'],
   ['Nuxt SSR fixture', 'pnpm --filter vccs test:nuxt'],
   ...(quick ? [] : [['accessibility, contrast and hydration', 'pnpm check:a11y']]),

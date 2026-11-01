@@ -1,0 +1,10 @@
+{
+  "name": "bundle-echarts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "echarts": "6.1.0",
+    "vue": "3.5.18",
+    "vue-echarts": "8.3.2"
+  }
+}

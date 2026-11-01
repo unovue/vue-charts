@@ -1,0 +1,45 @@
+/* Same values as the --ds-* tokens in docs/app/assets/main.css (ADR-0002). */
+:root {
+  --ds-bg: #fafafa;
+  --ds-surface: #fff;
+  --ds-block: #f4f4f5;
+  --ds-border: #e4e4e7;
+  --ds-text: #18181b;
+  --ds-muted: #71717a;
+  --ds-accent-strong: #2b7a56;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+:root.dark {
+  --ds-bg: #09090b;
+  --ds-surface: #131316;
+  --ds-block: #1c1c20;
+  --ds-border: #27272a;
+  --ds-text: #fafafa;
+  --ds-muted: #a1a1aa;
+  --ds-accent-strong: #42d392;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ds-bg);
+  color: var(--ds-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+a { color: var(--ds-accent-strong); }
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--ds-border);
+  border-radius: 999px;
+  background: var(--ds-surface);
+  padding: 4px 12px;
+}
+button:hover { background: var(--ds-block); }
+.code .shiki { margin: 0; padding: 12px; font: 12px/1.6 var(--font-mono); overflow: auto; max-height: 300px; background: transparent !important; }
+.dark .code .shiki span { color: var(--shiki-dark) !important; }

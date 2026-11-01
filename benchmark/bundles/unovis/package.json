@@ -1,0 +1,10 @@
+{
+  "name": "bundle-unovis",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@unovis/ts": "1.7.1",
+    "@unovis/vue": "1.7.1",
+    "vue": "3.5.18"
+  }
+}

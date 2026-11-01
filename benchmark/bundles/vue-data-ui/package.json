@@ -1,0 +1,9 @@
+{
+  "name": "bundle-vue-data-ui",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "vue": "3.5.18",
+    "vue-data-ui": "3.28.7"
+  }
+}

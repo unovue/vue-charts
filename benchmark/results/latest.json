@@ -1,0 +1,253 @@
+{
+  "updatedAt": "2026-10-31",
+  "settings": {
+    "esbuild": "0.28.2",
+    "vite": "8.3.2",
+    "format": "esm",
+    "target": "es2020",
+    "minify": true,
+    "gzipLevel": 9,
+    "external": "vue (react for Recharts)",
+    "counts": "first-load JavaScript and CSS; lazy chunks excluded"
+  },
+  "builds": [
+    {
+      "library": "vccs",
+      "build": "default",
+      "reference": false,
+      "label": "vccs with motion-v, its required animation peer",
+      "versions": {
+        "motion-v": "2.9.0",
+        "vccs": "1.0.0"
+      },
+      "minBytes": 320650,
+      "gzipBytes": 110300,
+      "viteGzipBytes": 121398,
+      "animated": true,
+      "enterFrames": 62,
+      "updateFrames": 22,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "vccs",
+      "build": "motion-external",
+      "reference": true,
+      "label": "vccs only, for an app that already ships motion-v",
+      "versions": {
+        "motion-v": "2.9.0",
+        "vccs": "1.0.0"
+      },
+      "minBytes": 249109,
+      "gzipBytes": 84213,
+      "viteGzipBytes": 92011,
+      "animated": true,
+      "enterFrames": 63,
+      "updateFrames": 30,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "chartjs",
+      "build": "default",
+      "reference": false,
+      "label": "vue-chartjs + chart.js, registered components only, and a small crosshair plugin",
+      "versions": {
+        "chart.js": "4.6.1",
+        "vue-chartjs": "5.3.4"
+      },
+      "minBytes": 176514,
+      "gzipBytes": 61765,
+      "viteGzipBytes": 74754,
+      "animated": true,
+      "enterFrames": 43,
+      "updateFrames": 60,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "echarts",
+      "build": "default",
+      "reference": false,
+      "label": "vue-echarts + echarts/core, registered components only",
+      "versions": {
+        "echarts": "6.1.0",
+        "vue-echarts": "8.3.2"
+      },
+      "minBytes": 535281,
+      "gzipBytes": 183538,
+      "viteGzipBytes": 199681,
+      "animated": true,
+      "enterFrames": 52,
+      "updateFrames": 30,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "unovis",
+      "build": "default",
+      "reference": false,
+      "label": "@unovis/vue + @unovis/ts",
+      "versions": {
+        "@unovis/ts": "1.7.1",
+        "@unovis/vue": "1.7.1"
+      },
+      "minBytes": 213597,
+      "gzipBytes": 70957,
+      "viteGzipBytes": 75599,
+      "animated": true,
+      "enterFrames": 1,
+      "updateFrames": 25,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "tanstack",
+      "build": "default",
+      "reference": false,
+      "label": "@tanstack/charts/vue with svgAnimation, d3Curve(curveMonotoneX) and crosshair",
+      "versions": {
+        "@tanstack/charts": "1.1.0",
+        "d3-shape": "3.2.0"
+      },
+      "minBytes": 126475,
+      "gzipBytes": 43540,
+      "viteGzipBytes": 47776,
+      "animated": true,
+      "enterFrames": 1,
+      "updateFrames": 15,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "tanstack",
+      "build": "defaults",
+      "reference": true,
+      "label": "Library defaults: straight lines, no crosshair, no animation",
+      "versions": {
+        "@tanstack/charts": "1.1.0",
+        "d3-shape": "3.2.0"
+      },
+      "minBytes": 111433,
+      "gzipBytes": 39074,
+      "viteGzipBytes": 42768,
+      "animated": false,
+      "enterFrames": 1,
+      "updateFrames": 1,
+      "rendered": true,
+      "hover": true,
+      "omits": [
+        "animation"
+      ]
+    },
+    {
+      "library": "ag-charts",
+      "build": "default",
+      "reference": false,
+      "label": "ag-charts-vue3 + ag-charts-community, registered modules only",
+      "versions": {
+        "ag-charts-community": "14.2.0",
+        "ag-charts-vue3": "14.2.0"
+      },
+      "minBytes": 1352287,
+      "gzipBytes": 407392,
+      "viteGzipBytes": 405293,
+      "animated": false,
+      "enterFrames": 1,
+      "updateFrames": 1,
+      "rendered": true,
+      "hover": true,
+      "omits": [
+        "crosshair",
+        "animation"
+      ]
+    },
+    {
+      "library": "vue-data-ui",
+      "build": "default",
+      "reference": false,
+      "label": "vue-data-ui/vue-ui-xy and its stylesheet",
+      "versions": {
+        "vue-data-ui": "3.28.7"
+      },
+      "minBytes": 725304,
+      "gzipBytes": 151795,
+      "viteGzipBytes": 166328,
+      "animated": true,
+      "enterFrames": 1,
+      "updateFrames": 13,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    },
+    {
+      "library": "plot",
+      "build": "default",
+      "reference": false,
+      "label": "@observablehq/plot mounted in onMounted, with a pointer rule as the crosshair",
+      "versions": {
+        "@observablehq/plot": "0.6.17"
+      },
+      "minBytes": 268944,
+      "gzipBytes": 91775,
+      "viteGzipBytes": 101635,
+      "animated": false,
+      "enterFrames": 1,
+      "updateFrames": 1,
+      "rendered": true,
+      "hover": true,
+      "omits": [
+        "animation"
+      ]
+    },
+    {
+      "library": "vega-lite",
+      "build": "default",
+      "reference": false,
+      "label": "vega-embed + vega-lite + vega, with a rule as the crosshair",
+      "versions": {
+        "vega": "6.4.0",
+        "vega-embed": "7.3.0",
+        "vega-lite": "6.5.0"
+      },
+      "minBytes": 843770,
+      "gzipBytes": 292695,
+      "viteGzipBytes": 319343,
+      "animated": false,
+      "enterFrames": 1,
+      "updateFrames": 1,
+      "rendered": true,
+      "hover": true,
+      "omits": [
+        "animation"
+      ]
+    },
+    {
+      "library": "recharts",
+      "build": "default",
+      "reference": true,
+      "label": "recharts, React external; vccs is its Vue port",
+      "versions": {
+        "react": "19.2.0",
+        "react-dom": "19.2.0",
+        "react-is": "19.2.0",
+        "recharts": "3.10.1"
+      },
+      "minBytes": 376883,
+      "gzipBytes": 110950,
+      "viteGzipBytes": null,
+      "animated": true,
+      "enterFrames": 87,
+      "updateFrames": 90,
+      "rendered": true,
+      "hover": true,
+      "omits": []
+    }
+  ]
+}

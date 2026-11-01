@@ -1,0 +1,10 @@
+{
+  "name": "bundle-chartjs",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "chart.js": "4.6.1",
+    "vue": "3.5.18",
+    "vue-chartjs": "5.3.4"
+  }
+}
