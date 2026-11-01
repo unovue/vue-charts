@@ -83,5 +83,6 @@ test('setChangelogSection adds a section when the version is new', () => {
   const updated = setChangelogSection('# Changelog\n\n## [0.6.0] - 2026-09-09\n\nOlder notes.\n', '0.7.0', { body: 'New.', date: '2026-10-16' })
   assert.match(updated, /## \[0\.7\.0\] - 2026-10-16\n\nNew\./)
   assert.match(updated, /Older notes\./)
+  assert.ok(updated.indexOf('## [0.7.0]') < updated.indexOf('## [0.6.0]'))
   assert.equal(changelogSection(updated, '0.7.0').body, 'New.')
 })

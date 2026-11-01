@@ -21,8 +21,12 @@ export function changelogSection(markdown, version) {
 export function setChangelogSection(markdown, version, { body, date }) {
   const match = markdown.match(headingPattern(version))
   const section = `## [${version}] - ${date}\n\n${body.trim()}\n`
-  if (!match)
-    return `${markdown.trimEnd()}\n\n${section}`
+  if (!match) {
+    const first = markdown.search(/^## /m)
+    if (first === -1)
+      return `${markdown.trimEnd()}\n\n${section}`
+    return `${markdown.slice(0, first)}${section}\n${markdown.slice(first)}`
+  }
   const start = match.index
   const rest = markdown.slice(start + match[0].length)
   const next = rest.search(/^## /m)
