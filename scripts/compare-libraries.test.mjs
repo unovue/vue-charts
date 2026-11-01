@@ -32,12 +32,13 @@ const library = { id: 'one', packages: ['one'], builds: [{ id: 'default' }] }
 const reference = { id: 'ref', packages: ['ref'], builds: [{ id: 'default' }] }
 function valid() {
   return {
+    charts: [{ id: 'line' }],
     libraries: [library],
     reference,
     sitePins: { one: '1.0.0' },
     bundleManifests: { one: { dependencies: { one: '1.0.0' } }, ref: { dependencies: { ref: '2.0.0' } } },
     lockfiles: ['one', 'ref'],
-    chartFiles: ['one.vue'],
+    chartFiles: { line: ['one.vue'] },
     results: { builds: [{ library: 'one', build: 'default', versions: { one: '1.0.0' } }, { library: 'ref', build: 'default', versions: { ref: '2.0.0' } }] },
   }
 }
@@ -46,16 +47,26 @@ test('a consistent comparison has no problems', () => {
   assert.deepEqual(comparisonProblems(valid()), [])
 })
 
+test('a sourced placeholder needs no chart file', () => {
+  const input = valid()
+  input.chartFiles = { line: [] }
+  input.libraries = [{ ...library, limits: { line: { unsupported: true, note: 'No.', noteSource: 'https://example.com' } } }]
+  assert.deepEqual(comparisonProblems(input), [])
+})
+
 test('each way the numbers can stop describing the cards is reported', () => {
   const cases = [
     [(input) => { input.sitePins.one = '1.1.0' }, /in the site/],
     [(input) => { input.results.builds[0].versions.one = '0.9.0' }, /measured versions differ/],
     [(input) => { input.results.builds.shift() }, /no measurement/],
     [(input) => { input.lockfiles = ['ref'] }, /no lockfile/],
-    [(input) => { input.chartFiles = [] }, /no chart/],
+    [(input) => { input.chartFiles = { line: [] } }, /no chart/],
+    [(input) => { input.charts.push({ id: 'area' }) }, /no chart at benchmark\/site\/src\/charts\/area/],
     [(input) => { delete input.bundleManifests.one }, /no benchmark\/bundles/],
-    [(input) => { input.libraries = [{ ...library, omits: ['animation'] }] }, /omits animation without a note/],
-    [(input) => { input.libraries = [{ ...library, omits: ['animation'], note: 'No animation.' }] }, /omits animation without a source/],
+    [(input) => { input.libraries = [{ ...library, limits: { line: { omits: ['animation'] } } }] }, /line omits animation without a note/],
+    [(input) => { input.libraries = [{ ...library, limits: { line: { omits: ['animation'], note: 'No animation.' } } }] }, /line omits animation without a source/],
+    [(input) => { input.libraries = [{ ...library, limits: { line: { unsupported: true } } }] }, /is marked unsupported but has a chart file/],
+    [(input) => { input.chartFiles = { line: [] }; input.libraries = [{ ...library, limits: { line: { unsupported: true, note: 'No.' } } }] }, /line omits the chart without a source/],
   ]
   for (const [mutate, expected] of cases) {
     const input = valid()

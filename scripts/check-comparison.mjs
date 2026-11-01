@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { libraries, reference } from '../benchmark/libraries.mjs'
+import { charts, libraries, reference } from '../benchmark/libraries.mjs'
 import { comparisonProblems } from './lib/compare-libraries.mjs'
 
 const benchmark = fileURLToPath(new URL('../benchmark/', import.meta.url))
@@ -15,12 +15,13 @@ const json = async path => JSON.parse(await readFile(join(benchmark, path), 'utf
 const ids = [...libraries, reference].map(library => library.id)
 const manifests = await Promise.all(ids.map(id => existsSync(join(benchmark, 'bundles', id, 'package.json')) ? json(`bundles/${id}/package.json`) : null))
 const problems = comparisonProblems({
+  charts,
   libraries,
   reference,
   sitePins: (await json('site/package.json')).dependencies,
   bundleManifests: Object.fromEntries(ids.flatMap((id, index) => manifests[index] ? [[id, manifests[index]]] : [])),
   lockfiles: ids.filter(id => existsSync(join(benchmark, 'bundles', id, 'pnpm-lock.yaml'))),
-  chartFiles: await readdir(join(benchmark, 'site/src/charts/line')),
+  chartFiles: Object.fromEntries(await Promise.all(charts.map(async ({ id }) => [id, await readdir(join(benchmark, 'site/src/charts', id)).catch(() => [])]))),
   results: await json('results/latest.json'),
 })
 
@@ -28,4 +29,4 @@ if (problems.length) {
   console.error(`The comparison disagrees with itself:\n${problems.join('\n')}`)
   process.exit(1)
 }
-console.log(`Comparison consistent: ${libraries.length} libraries and the ${reference.name} reference.`)
+console.log(`Comparison consistent: ${charts.length} charts, ${libraries.length} libraries and the ${reference.name} reference.`)

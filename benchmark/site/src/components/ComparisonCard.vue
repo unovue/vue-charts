@@ -6,14 +6,15 @@ interface Build {
   gzipBytes: number
   minBytes: number
   label: string
-  versions: Record<string, string>
 }
 
 const props = defineProps<{
-  library: { id: string, name: string, renderer: string, docs: string, packages: string[], note?: string, noteSource?: string }
+  library: { id: string, name: string, renderer: string, docs: string, packages: string[] }
+  limit?: { unsupported?: boolean, note?: string, noteSource?: string }
   build?: Build
+  version?: string
   chart: string
-  data: unknown[]
+  data: unknown
   dark: boolean
 }>()
 
@@ -28,6 +29,8 @@ const code = ref('')
 let observer: IntersectionObserver | undefined
 
 onMounted(() => {
+  if (props.limit?.unsupported)
+    return
   observer = new IntersectionObserver(([entry]) => {
     if (entry?.isIntersecting) {
       chart.value = defineAsyncComponent(charts[path.value]!)
@@ -55,7 +58,6 @@ watch(tab, async (value) => {
 })
 
 const size = computed(() => props.build && `${(props.build.gzipBytes / 1024).toFixed(1)} KB gzip`)
-const version = computed(() => props.build?.versions[props.library.packages[0]!])
 </script>
 
 <template>
@@ -84,6 +86,7 @@ const version = computed(() => props.build?.versions[props.library.packages[0]!]
         </div>
       </div>
       <div
+        v-if="!limit?.unsupported"
         class="tabs"
         role="tablist"
       >
@@ -107,8 +110,15 @@ const version = computed(() => props.build?.versions[props.library.packages[0]!]
         </button>
       </div>
     </header>
+    <p
+      v-if="limit?.unsupported"
+      class="missing"
+    >
+      Not available in this library.
+    </p>
     <!-- v-show keeps the chart alive so returning to Preview does not replay its entrance. -->
     <div
+      v-if="!limit?.unsupported"
       v-show="tab === 'preview'"
       class="stage"
     >
@@ -125,13 +135,13 @@ const version = computed(() => props.build?.versions[props.library.packages[0]!]
       v-html="code"
     />
     <p
-      v-if="library.note"
+      v-if="limit?.note"
       class="note"
     >
-      {{ library.note }}
+      {{ limit.note }}
       <a
-        v-if="library.noteSource"
-        :href="library.noteSource"
+        v-if="limit.noteSource"
+        :href="limit.noteSource"
         target="_blank"
         rel="noopener"
       >Source</a>
@@ -153,4 +163,5 @@ const version = computed(() => props.build?.versions[props.library.packages[0]!]
 .code { height: 300px; overflow: hidden; }
 .note { margin: 8px 0 0; font-size: 12px; color: var(--ds-muted); }
 .note a { color: inherit; }
+.missing { display: grid; place-items: center; flex: 1; min-height: 120px; margin: 0; border: 1px dashed var(--ds-border); border-radius: 12px; font-size: 13px; color: var(--ds-muted); }
 </style>

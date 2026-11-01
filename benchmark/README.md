@@ -17,6 +17,7 @@ packages never enter the root lockfile or the docs build.
 ```bash
 pnpm compare:libraries                    # measure and browser-check everything, then write the results
 pnpm compare:libraries --only=vccs        # check one library without writing results
+pnpm compare:cards [--chart=area]         # build the site and browser-check every card on every page
 node scripts/check-comparison.mjs         # offline check that cards, pins and results agree
 
 cd benchmark/site
@@ -33,6 +34,11 @@ library's lazy chunks are left out. Vite 8, which bundles with Rolldown, is the 
 Each build also runs in Chromium. It must render without page errors and react to hover, and its
 animation must match `omits`: at least one on-screen state between the first and last, counted in
 pixels on entrance or update. Crosshairs are reviewed by eye in `.evidence/libraries/*-hover.png`.
+
+Only the line chart is measured for size. `compare:cards` checks the built site instead, so it covers
+every chart page, and also fails a card whose new data or theme changes nothing. Pixels can't judge
+whether a chart is correct, so review `.evidence/libraries/cards/` by eye: stacking order, a zero
+baseline, leftover markers and dark-mode legibility.
 
 A card that leaves something out says so in `note`, with a link in `noteSource`. `check-comparison`
 fails without both. The link is read by a person: no check confirms that it still says the same thing.

@@ -36,7 +36,7 @@ export function loadedOutputs(metafile, entryName) {
  * has a chart and a locked install, the site and the bundles pin the same versions, the results
  * were measured at those versions, and every declared omission is explained with a source.
  */
-export function comparisonProblems({ libraries, reference, sitePins, bundleManifests, lockfiles, chartFiles, results }) {
+export function comparisonProblems({ charts, libraries, reference, sitePins, bundleManifests, lockfiles, chartFiles, results }) {
   const problems = []
   for (const library of [...libraries, reference]) {
     const manifest = bundleManifests[library.id]
@@ -62,13 +62,19 @@ export function comparisonProblems({ libraries, reference, sitePins, bundleManif
     }
   }
   for (const library of libraries) {
-    if (!chartFiles.includes(`${library.id}.vue`))
-      problems.push(`${library.id}: no chart at benchmark/site/src/charts/line/${library.id}.vue`)
-    for (const omission of library.omits ?? []) {
-      if (!library.note)
-        problems.push(`${library.id}: omits ${omission} without a note`)
-      if (!library.noteSource?.startsWith('https://'))
-        problems.push(`${library.id}: omits ${omission} without a source`)
+    for (const { id: chart } of charts) {
+      const limit = library.limits?.[chart]
+      const hasFile = chartFiles[chart]?.includes(`${library.id}.vue`)
+      if (limit?.unsupported && hasFile)
+        problems.push(`${library.id}: ${chart} is marked unsupported but has a chart file`)
+      if (!limit?.unsupported && !hasFile)
+        problems.push(`${library.id}: no chart at benchmark/site/src/charts/${chart}/${library.id}.vue`)
+      for (const omission of limit?.unsupported ? ['the chart'] : limit?.omits ?? []) {
+        if (!limit.note)
+          problems.push(`${library.id}: ${chart} omits ${omission} without a note`)
+        if (!limit.noteSource?.startsWith('https://'))
+          problems.push(`${library.id}: ${chart} omits ${omission} without a source`)
+      }
     }
   }
   return problems

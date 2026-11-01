@@ -40,7 +40,8 @@ this slice it ranks 5th of 9 and its default ticks drop a label.
 **Claims are checked where they can be.** `pnpm compare:libraries` runs each build in Chromium and
 fails it if it does not render, ignores hover or contradicts its animation claim, counted in pixels.
 It writes `results/latest.json` only after a full passing run. `check-comparison` is the offline
-gate that cards, pins, results and omission sources agree.
+gate that cards, pins, results and omission sources agree. Only the line chart is measured for size;
+`pnpm compare:cards` browser-checks every card on every page of the built site.
 
 ## Consequences
 

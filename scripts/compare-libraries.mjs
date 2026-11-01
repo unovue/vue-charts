@@ -177,7 +177,7 @@ for (const library of [...libraries, reference]) {
     const { outdir } = await runEsbuild(work, 'verify.js', 'verify', [])
     await writeFile(join(outdir, 'verify.js'), `window.__next = (${JSON.stringify(nextRows)});\n${await readFile(join(outdir, 'verify.js'), 'utf8')}`)
     const render = await verify(browser, work, outdir, `${library.id}-${build.id}`)
-    const omits = build.omits ?? library.omits
+    const omits = build.omits ?? library.limits?.line.omits ?? []
     const animation = animationVerdict(render, omits.includes('animation'))
     const problems = [
       ...render.errors.map(text => `page error: ${text}`),
