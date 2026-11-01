@@ -54,6 +54,7 @@ export function tooltipPayload(tooltipPayloadConfigurations: ReadonlyArray<Toolt
         const newSettings: TooltipEntrySettings = {
           ...settings,
           name: item.name,
+          seriesName: settings?.name,
           unit: item.unit,
         }
         agg.push(
