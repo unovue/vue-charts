@@ -4,6 +4,8 @@ export default antfu(
   {
     vue: true,
     typescript: true,
+    // Editors keep their relaxed rules, but `pnpm lint` must check what CI checks, even in an editor's terminal.
+    isInEditor: process.env.npm_lifecycle_event === 'lint' ? false : undefined,
     ignores: [
       '**/dist/**',
       '**/.nuxt/**',

@@ -39,6 +39,7 @@ const PolarRadiusAxisViewProps = {
   type: { type: String as PropType<'number' | 'category' | 'auto'>, default: 'auto' },
   stroke: { type: String, default: undefined },
   allowDecimals: { type: Boolean, default: false },
+  hide: { type: Boolean, default: false },
 }
 
 const PolarRadiusAxisView = defineComponent({
@@ -59,6 +60,9 @@ const PolarRadiusAxisView = defineComponent({
     provide(POLAR_LABEL_VIEW_BOX_KEY, computed(() => polarViewBox.value))
 
     return () => {
+      if (props.hide)
+        return null
+
       const viewBox = polarViewBox.value
       const tickItems = ticks.value
       const hasChildren = !!slots.default

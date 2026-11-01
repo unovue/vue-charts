@@ -24,6 +24,8 @@ export interface Payload<TValue extends ValueType, TName extends NameType> {
   color?: string
   // formatter?: Formatter<TValue, TName>
   name?: TName
+  /** The series' `name` on a row that `name` labels by axis, such as the x and y rows of a Scatter point. */
+  seriesName?: NameType
   value?: TValue
   unit?: string | number
   fill?: string

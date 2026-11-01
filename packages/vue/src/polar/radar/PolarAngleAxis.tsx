@@ -50,6 +50,7 @@ const PolarAngleAxisViewProps = {
   type: { type: String as PropType<'category' | 'number'>, default: 'category' },
   domain: { type: Array as PropType<AxisDomain>, default: undefined },
   tickCount: { type: Number, default: undefined },
+  hide: { type: Boolean, default: false },
 }
 
 const PolarAngleAxisView = defineComponent({
@@ -73,7 +74,7 @@ const PolarAngleAxisView = defineComponent({
       const viewBox = polarViewBox.value
       const tickItems = ticks.value
 
-      if (viewBox == null || tickItems == null || tickItems.length === 0) {
+      if (props.hide || viewBox == null || tickItems == null || tickItems.length === 0) {
         return null
       }
 

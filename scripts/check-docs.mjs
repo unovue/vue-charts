@@ -8,7 +8,7 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { launchBrowser, playwrightVersion } from './lib/browser.mjs'
-import { emptySurface } from './lib/check-verdicts.mjs'
+import { droppedPrefetch, emptySurface } from './lib/check-verdicts.mjs'
 import { checkPorts, portText } from './lib/ports.mjs'
 
 const ports = checkPorts(4680, 4689)
@@ -105,10 +105,12 @@ async function audit(browser, engine, route, mobile) {
         result.findings.push({ kind: 'http', text: `${response.status()} ${response.url().replace(origin, '')}` })
     }
   })
+  const failedRequests = []
   page.on('requestfailed', (request) => {
     if (new URL(request.url()).origin === origin)
-      result.findings.push({ kind: 'requestfailed', text: `${request.url().replace(origin, '')}: ${request.failure()?.errorText}` })
+      failedRequests.push({ url: request.url(), errorText: request.failure()?.errorText })
   })
+  let prefetchedUrls = []
   try {
     await page.goto(`${origin}${route}`, { waitUntil: 'networkidle', timeout: 30000 })
     result.heading = await page.locator('h1').first().textContent({ timeout: 5000 }).catch(() => null)
@@ -158,7 +160,12 @@ async function audit(browser, engine, route, mobile) {
     catch (error) {
       result.findings.push({ kind: 'screenshot', text: error.message })
     }
+    prefetchedUrls = await page.locator('link[rel="prefetch"]').evaluateAll(nodes => nodes.map(node => node.href)).catch(() => [])
     await page.close()
+  }
+  for (const { url, errorText } of failedRequests) {
+    if (!droppedPrefetch(errorText, url, prefetchedUrls))
+      result.findings.push({ kind: 'requestfailed', text: `${url.replace(origin, '')}: ${errorText}` })
   }
   result.passed = !result.findings.length
   results.push(result)
