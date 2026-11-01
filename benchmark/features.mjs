@@ -98,8 +98,8 @@ export const features = {
       source: 'https://github.com/chartjs/Chart.js/blob/v4.6.1/docs/general/colors.md',
     },
     darkMode: {
-      support: 'no',
-      value: 'None documented; pass colours yourself',
+      support: 'partial',
+      value: 'Pass dark colours yourself; no documented switch',
       source: 'https://github.com/chartjs/Chart.js/blob/v4.6.1/docs/general/colors.md',
     },
     animatedUpdates: {
@@ -584,7 +584,7 @@ export function alternatives(results, libraries) {
     {
       need: 'Very large datasets',
       suggestion: 'ECharts or Chart.js',
-      why: 'vccs draws every mark as an SVG element, and Canvas keeps the page lighter as points grow. This comparison does not benchmark runtime speed yet, so test with your own data.',
+      why: 'vccs draws every mark as an SVG element, which adds up as points grow, so a Canvas library is worth trying. This comparison does not benchmark runtime speed yet, so test with your own data.',
       source: 'https://echarts.apache.org/handbook/en/best-practices/canvas-vs-svg/',
     },
     {

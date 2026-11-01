@@ -3,6 +3,7 @@
 // compare-libraries.mjs and compare-cards.mjs test the animation claim in a browser, so a wrong one fails.
 // `builds` are the bundles it measures; only the line chart is measured, as the size benchmark.
 // `tooltipNames` are the names a chart's tooltip must show; compare-cards.mjs reads them from the page.
+// `tooltipOnCanvas` marks a library whose tooltip adds no text to read, so its tooltips are reviewed by eye.
 
 export const charts = [
   { id: 'line', title: 'Line', description: 'three smooth lines, axes, a legend, a shared tooltip, a crosshair and animation' },
@@ -70,6 +71,7 @@ export const libraries = [
     name: 'Chart.js',
     packages: ['chart.js', 'vue-chartjs'],
     renderer: 'Canvas',
+    tooltipOnCanvas: true,
     license: 'MIT',
     docs: 'https://vue-chartjs.org',
     limits: {

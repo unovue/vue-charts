@@ -48,7 +48,7 @@ The geometry gate does not measure arc shapes (pie and donut sectors, radial bar
 | Does a visitor see the entrance when scrolling to a chart or switching landing tabs? | `pnpm lab seen [route…]` | `.evidence/lab/seen/index.html`: visitor-viewpoint filmstrips, rAF data, verdict per chart (rows with real-clock gaps over 50 ms are "unreliable") |
 | How does a scenario look by hand? | `pnpm lab dev` | the lab app on a Vite dev server (`?s=<scenario>`) |
 | How large is the same chart in other libraries, and does each build render, respond to hover and animate as claimed? | `pnpm compare:libraries` | `benchmark/results/latest.json` (committed), `.evidence/libraries/` hover screenshots |
-| Does every card on the comparison site draw, show a tooltip naming the data, follow theme changes and animate as claimed? Tooltips on canvas add no text, so review those by eye. | `pnpm compare:cards` | `.evidence/libraries/cards/` light, hover and dark screenshots |
+| Does every card on the comparison site draw, show a tooltip naming the data, follow theme changes and animate as claimed? Libraries marked `tooltipOnCanvas` add no text, so review those by eye. | `pnpm compare:cards` | `.evidence/libraries/cards/` light, hover and dark screenshots |
 | Is it faster or slower than vccs 0.6.0? | `pnpm bench`, `pnpm compare:upstream` | `.evidence/bench/`, `.evidence/upstream/summary.json` |
 
 Every `pnpm lab` run lists its recordings (command, scenario or page, step, flags, files) in `.evidence/lab/manifest.json` and `.evidence/lab/index.html`. To debug an animation, see "Debug a motion bug" in [packages/vue/test/lab/README.md](packages/vue/test/lab/README.md).

@@ -37,8 +37,9 @@ animation must match `omits`: at least one on-screen state between the first and
 pixels on entrance or update. Crosshairs are reviewed by eye in `.evidence/libraries/*-hover.png`.
 
 Only the line chart is measured for size. `compare:cards` checks the built site instead, so it covers
-every chart page, and also fails a card whose new data or theme changes nothing, or whose tooltip names
-nothing from the data. A tooltip drawn on canvas adds no text to read. Pixels can't judge
+every chart page, and also fails a card whose new data or theme changes nothing, whose hover adds no
+tooltip text, or whose tooltip names nothing from the data. A library marked `tooltipOnCanvas` adds no
+text to read, so its tooltips are reviewed by eye. Pixels can't judge
 whether a chart is correct, so review `.evidence/libraries/cards/` by eye: stacking order, a zero
 baseline, leftover markers and dark-mode legibility.
 

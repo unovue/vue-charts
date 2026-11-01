@@ -51,7 +51,7 @@ function newLines(before, after) {
   })
 }
 
-// Pixels can't tell `Chrome: 275` from layout coordinates. A tooltip drawn on canvas adds no text, so it stays a review by eye.
+// Pixels can't tell `Chrome: 275` from layout coordinates, or a tooltip from a crosshair. A tooltip drawn on canvas adds no text, so it stays a review by eye.
 function tooltipNamesNothing(chart, before, after) {
   const lines = newLines(before, after)
   return lines.length > 0 && !lines.some(line => chart.tooltipNames.some(name => line.includes(name)))
@@ -87,7 +87,9 @@ async function checkCard(chart, library) {
   }
   await page.waitForTimeout(800)
   const updated = await stage.screenshot()
-  const textBefore = await stage.innerText()
+  // The whole page, because some libraries render their tooltip outside the card, on the body.
+  const pageText = () => page.locator('body').innerText()
+  const textBefore = await pageText()
 
   const box = await stage.boundingBox()
   // Several points, because one can land in a gap between bars, tiles or slices.
@@ -110,13 +112,16 @@ async function checkCard(chart, library) {
     await page.mouse.move(x - 4, y)
     await page.mouse.move(x, y)
     await page.waitForTimeout(wait)
-    hovered = await stage.screenshot({ path: join(evidence, `${name}-hover.png`) })
-    if (!hovered.equals(updated)) {
+    const shot = await stage.screenshot({ path: join(evidence, `${name}-hover.png`) })
+    if (!shot.equals(updated)) {
+      hovered = shot
       // The first changed pixels can come before the tooltip fades in, and the evidence should show it.
       await page.waitForTimeout(400)
       await stage.screenshot({ path: join(evidence, `${name}-hover.png`) })
-      textOnHover = await stage.innerText()
-      break
+      textOnHover = await pageText()
+      // A highlight or crosshair changes pixels too, so a readable tooltip keeps the search going until text appears.
+      if (library.tooltipOnCanvas || newLines(textBefore, textOnHover).length)
+        break
     }
   }
   await page.mouse.move(0, 0)
@@ -133,6 +138,7 @@ async function checkCard(chart, library) {
     ...(updated.equals(settled) ? ['new data changed nothing'] : []),
     ...(hovered.equals(updated) && hasTooltip ? ['hover changed nothing'] : []),
     ...(dark.equals(updated) ? ['the theme changed nothing'] : []),
+    ...(hasTooltip && !library.tooltipOnCanvas && !hovered.equals(updated) && !newLines(textBefore, textOnHover).length ? ['hover added no tooltip text'] : []),
     ...(tooltipNamesNothing(chart, textBefore, textOnHover) ? [`the tooltip names nothing from the data: ${newLines(textBefore, textOnHover).join(' ').slice(0, 60)}`] : []),
     ...(animation.ok ? [] : [animation.message]),
   ]
