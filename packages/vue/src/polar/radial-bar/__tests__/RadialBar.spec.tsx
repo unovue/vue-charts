@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue'
 import { nextTick, ref } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { PolarGrid, RadialBar, RadialBarChart, Tooltip } from '@/index'
+import { PolarGrid, PolarRadiusAxis, RadialBar, RadialBarChart, Tooltip } from '@/index'
 import { mockGetBoundingClientRect } from '@/test/mockGetBoundingClientRect'
 
 const data = [
@@ -49,6 +49,27 @@ describe('radialBar', () => {
         expect(container.querySelector('[data-testid="radial-tooltip"]')?.textContent)
           .toBe(scenario.value)
       }
+    })
+
+    // Wrong behaviour: `hide` falls through as an attribute, so the axis draws its ticks over the
+    // rings, or hiding the axis also drops its categories and the tooltip goes back to row indexes.
+    it('keeps the categories of a hidden radius axis for the tooltip label', async () => {
+      const { container } = render(() => (
+        <RadialBarChart width={500} height={300} data={data}>
+          <PolarRadiusAxis dataKey="name" type="category" hide />
+          <RadialBar dataKey="uv" isAnimationActive={false} />
+          <Tooltip isAnimationActive={false}>
+            {{ content: ({ label }) => <div data-testid="radial-tooltip">{label}</div> }}
+          </Tooltip>
+        </RadialBarChart>
+      ))
+      await nextTick()
+      expect(container.querySelector('.v-charts-polar-radius-axis')).toBeNull()
+      const wrapper = container.querySelector('.v-charts-wrapper')!
+      fireEvent(wrapper, new MouseEvent('mousemove', { clientX: 310, clientY: 150, bubbles: true }))
+      await nextTick()
+      await nextTick()
+      expect(data.map(row => row.name)).toContain(container.querySelector('[data-testid="radial-tooltip"]')?.textContent)
     })
 
     // Wrong behaviour: a touched sector opens no item tooltip, because its series is looked up

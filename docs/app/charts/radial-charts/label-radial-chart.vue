@@ -1,5 +1,5 @@
 <script setup>
-import { LabelList, RadialBar, RadialBarChart, Tooltip } from 'vccs'
+import { LabelList, PolarRadiusAxis, RadialBar, RadialBarChart, Tooltip } from 'vccs'
 
 const data = [
   { name: 'Chrome', visitors: 275, fill: '#f97316' },
@@ -18,8 +18,14 @@ const data = [
     :end-angle="380"
     :height="300"
   >
+    <PolarRadiusAxis
+      data-key="name"
+      type="category"
+      hide
+    />
     <RadialBar
       data-key="visitors"
+      name="Visitors"
       :background="true"
     >
       <LabelList
