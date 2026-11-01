@@ -135,5 +135,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node scripts/check-docs-coverage.mjs
       - run: node scripts/check-comparison.mjs
+      - name: Build the comparison site
+        working-directory: benchmark/site
+        run: |
+          pnpm install --ignore-workspace --frozen-lockfile
+          pnpm build
       - run: pnpm --filter vccs build
       - run: pnpm --filter docs build

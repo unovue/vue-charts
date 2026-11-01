@@ -1,5 +1,6 @@
 // Checks the comparison site as visitors get it: every library's card on every chart page must draw,
-// react to hover, follow the theme and match its animation claim, with no page or console errors.
+// react to hover with a tooltip naming the data, follow the theme and match its animation claim, with no
+// page or console errors.
 // Screenshots go to .evidence/libraries/cards/ for review by eye. An instrument, like
 // compare-libraries.mjs, whose bundles cover only the line chart.
 // Usage: pnpm compare:cards [--chart=area] [--only=vccs,chartjs]. Needs an install in benchmark/site.
@@ -39,6 +40,23 @@ async function frames(stage, action) {
   return seen.size
 }
 
+/** Lines of text that hovering added. A tooltip's line can match a legend's, so each old line cancels one new line. */
+function newLines(before, after) {
+  const old = before.split('\n').map(line => line.trim())
+  return after.split('\n').map(line => line.trim()).filter((line) => {
+    const index = old.indexOf(line)
+    if (index >= 0)
+      old.splice(index, 1)
+    return line && index < 0
+  })
+}
+
+// Pixels can't tell `Chrome: 275` from layout coordinates. A tooltip drawn on canvas adds no text, so it stays a review by eye.
+function tooltipNamesNothing(chart, before, after) {
+  const lines = newLines(before, after)
+  return lines.length > 0 && !lines.some(line => chart.tooltipNames.some(name => line.includes(name)))
+}
+
 async function checkCard(chart, library) {
   const page = await browser.newPage({ viewport: { width: 760, height: 620 } })
   const errors = []
@@ -69,10 +87,12 @@ async function checkCard(chart, library) {
   }
   await page.waitForTimeout(800)
   const updated = await stage.screenshot()
+  const textBefore = await stage.innerText()
 
   const box = await stage.boundingBox()
   // Several points, because one can land in a gap between bars, tiles or slices.
   let hovered = updated
+  let textOnHover = textBefore
   const hasTooltip = !library.limits?.[chart.id]?.omits?.includes('tooltip')
   const coarse = [[0.5, 0.45], [0.35, 0.65], [0.65, 0.65], [0.5, 0.55], [0.25, 0.75], [0.75, 0.75]].map(point => [...point, 600])
   // Small marks such as scatter points only respond when the pointer is on them.
@@ -95,6 +115,7 @@ async function checkCard(chart, library) {
       // The first changed pixels can come before the tooltip fades in, and the evidence should show it.
       await page.waitForTimeout(400)
       await stage.screenshot({ path: join(evidence, `${name}-hover.png`) })
+      textOnHover = await stage.innerText()
       break
     }
   }
@@ -112,6 +133,7 @@ async function checkCard(chart, library) {
     ...(updated.equals(settled) ? ['new data changed nothing'] : []),
     ...(hovered.equals(updated) && hasTooltip ? ['hover changed nothing'] : []),
     ...(dark.equals(updated) ? ['the theme changed nothing'] : []),
+    ...(tooltipNamesNothing(chart, textBefore, textOnHover) ? [`the tooltip names nothing from the data: ${newLines(textBefore, textOnHover).join(' ').slice(0, 60)}`] : []),
     ...(animation.ok ? [] : [animation.message]),
   ]
   console.log(`${name.padEnd(24)} frames ${String(enterFrames).padStart(3)}/${String(updateFrames).padEnd(3)} ${problems.length ? `FAIL ${problems.join('; ')}` : 'ok'}`)

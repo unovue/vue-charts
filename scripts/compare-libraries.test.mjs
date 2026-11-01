@@ -74,3 +74,10 @@ test('each way the numbers can stop describing the cards is reported', () => {
     assert.match(comparisonProblems(input).join('\n'), expected)
   }
 })
+
+test('a feature cell with no source, or a missing cell, is reported', () => {
+  const base = { charts: [], libraries: [{ id: 'a', packages: [], builds: [] }], reference: { id: 'r', packages: [], builds: [] }, sitePins: {}, bundleManifests: { a: {}, r: {} }, lockfiles: ['a', 'r'], chartFiles: {}, results: { builds: [] }, featureColumns: [{ id: 'ssr' }, { id: 'a11y' }] }
+  const problems = comparisonProblems({ ...base, features: { a: { ssr: { support: 'yes', value: 'Server-renders', source: '' } } } })
+  assert.ok(problems.some(text => text.includes('ssr cell needs')))
+  assert.ok(problems.some(text => text.includes('no a11y cell')))
+})

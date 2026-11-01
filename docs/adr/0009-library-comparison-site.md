@@ -47,8 +47,10 @@ gate that cards, pins, results and omission sources agree. Only the line chart i
 
 - A library upgrade touches three places (site pin, bundle pin, results); the gate fails until they agree.
 - Crosshairs are reviewed by eye, and source links are read by a person, not checked.
+- Features and verdicts live with the data in `benchmark/features.mjs`, so the site and the docs page read one source. The docs page is built from these files, so it merges with them.
+- Runtime performance is left out for now: load on the machine moved frame counts enough that timings need a quiet or dedicated runner to be credible.
 - TanStack is measured with `svgAnimation` and its core `crosshair` mark. The issue named `motion()`
   and `focusGuideX`, but its docs list no `motion()` renderer or `/core` entry for the Vue `Chart`.
 - Animation frames describe this setup, not a library's full ability: Unovis, TanStack and
   vue-data-ui animated updates but not the entrance here, and Vega-Lite's time encoding is unused.
-- The site has no CI build of its own yet. Its Worker is named `vue-charts-benchmark`.
+- CI builds the site in the `docs` job; the slow browser checks stay instruments. Its Worker is named `vue-charts-benchmark`.

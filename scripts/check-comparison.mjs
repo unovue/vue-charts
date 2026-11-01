@@ -1,11 +1,12 @@
 // Fails when the comparison disagrees with itself: a library without a chart or a lockfile, a pin
-// that differs between the site and its bundle, results measured at other versions, or an omission
-// without a note and a source. Offline.
+// that differs between the site and its bundle, results measured at other versions, an omission
+// without a note and a source, or a feature cell without a value and a source. Offline.
 /* eslint-disable no-console -- the problem list is the interface */
 import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { featureColumns, features } from '../benchmark/features.mjs'
 import { charts, libraries, reference } from '../benchmark/libraries.mjs'
 import { comparisonProblems } from './lib/compare-libraries.mjs'
 
@@ -23,6 +24,8 @@ const problems = comparisonProblems({
   lockfiles: ids.filter(id => existsSync(join(benchmark, 'bundles', id, 'pnpm-lock.yaml'))),
   chartFiles: Object.fromEntries(await Promise.all(charts.map(async ({ id }) => [id, await readdir(join(benchmark, 'site/src/charts', id)).catch(() => [])]))),
   results: await json('results/latest.json'),
+  featureColumns,
+  features,
 })
 
 if (problems.length) {

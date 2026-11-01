@@ -7,6 +7,7 @@ packages never enter the root lockfile or the docs build.
 | Path | What it holds |
 | --- | --- |
 | `libraries.mjs` | The libraries, what each one omits and which builds to measure |
+| `features.mjs` | The feature table with a source per cell, the selection data and when another library suits better |
 | `site/` | The live comparison (Vite and Vue, static assets on a Worker) |
 | `site/src/charts/<chart>/<library>.vue` | The exact code a card shows and the benchmark bundles |
 | `bundles/<library>/` | One isolated install and lockfile per library, plus reference builds |
@@ -36,12 +37,23 @@ animation must match `omits`: at least one on-screen state between the first and
 pixels on entrance or update. Crosshairs are reviewed by eye in `.evidence/libraries/*-hover.png`.
 
 Only the line chart is measured for size. `compare:cards` checks the built site instead, so it covers
-every chart page, and also fails a card whose new data or theme changes nothing. Pixels can't judge
+every chart page, and also fails a card whose new data or theme changes nothing, or whose tooltip names
+nothing from the data. A tooltip drawn on canvas adds no text to read. Pixels can't judge
 whether a chart is correct, so review `.evidence/libraries/cards/` by eye: stacking order, a zero
 baseline, leftover markers and dark-mode legibility.
 
 A card that leaves something out says so in `note`, with a link in `noteSource`. `check-comparison`
 fails without both. The link is read by a person: no check confirms that it still says the same thing.
+
+## How features are scored
+
+Each column in `features.mjs` has one written rule, shown on the site, and each cell links to a source for
+the tested version. A `no` means it was looked for and not found. `unknown` means the check couldn't be
+completed. Runtime speed is not measured.
+
+## Deploy
+
+The site is a Worker named `vue-charts-benchmark`, deployed by hand from `main` after results change: `pnpm build && pnpm exec wrangler deploy` in `benchmark/site`. CI only builds it.
 
 ## To update a version
 

@@ -2,6 +2,7 @@
 // `limits` holds, per chart, what its card leaves out (`omits`), why (`note`) and the proof (`noteSource`).
 // compare-libraries.mjs and compare-cards.mjs test the animation claim in a browser, so a wrong one fails.
 // `builds` are the bundles it measures; only the line chart is measured, as the size benchmark.
+// `tooltipNames` are the names a chart's tooltip must show; compare-cards.mjs reads them from the page.
 
 export const charts = [
   { id: 'line', title: 'Line', description: 'three smooth lines, axes, a legend, a shared tooltip, a crosshair and animation' },
@@ -18,7 +19,27 @@ export const charts = [
   { id: 'funnel', title: 'Funnel', description: 'four stages, labels or a legend, a tooltip and animation' },
 ]
 
+const series = ['Desktop', 'Mobile', 'Tablet']
+const browsers = ['Chrome', 'Safari', 'Firefox', 'Edge']
+const tooltipNames = {
+  'line': series,
+  'area': series,
+  'bar': series,
+  'stacked-bar': series,
+  'composed': series,
+  // x and y are this chart's data, unlike the layout coordinates a wrong tooltip shows on the others.
+  'scatter': [...series, 'x', 'y'],
+  'pie': browsers,
+  'radar': series,
+  'radial-bar': browsers,
+  'treemap': ['Line', 'Bar', 'Pie', 'XAxis', 'YAxis', 'Curve', 'Sector', 'Dot'],
+  'sankey': ['Visit', 'Sign up', 'Left', 'Onboarding', 'Active', 'Churned'],
+  'funnel': ['Visit', 'Sign up', 'Checkout', 'Purchase'],
+}
+
 const line = { chart: 'line' }
+for (const chart of charts)
+  chart.tooltipNames = tooltipNames[chart.id]
 const chartIds = charts.map(chart => chart.id)
 /** The same limit on some charts. A limit with `unsupported` gets a placeholder card instead of a chart. */
 const on = (ids, limit) => Object.fromEntries(ids.map(id => [id, limit]))

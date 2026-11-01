@@ -105,8 +105,10 @@ async function measureVite(dir, external) {
   return { gzipBytes }
 }
 
+const nextRows = Array.from({ length: 12 }, (_, index) => ({ month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index], desktop: 320 - index * 15, mobile: 90 + index * 14, tablet: 60 + (index % 3) * 30 }))
+
 /** Loads the built chart in a real page; only pixels count, because libraries animate by attributes, CSS or Web Animations. */
-async function verify(browser, dir, outdir, id) {
+async function verify(browser, dir, outdir, id, declaredStill) {
   const page = await browser.newPage({ viewport: { width: 760, height: 420 } })
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
@@ -132,7 +134,18 @@ async function verify(browser, dir, outdir, id) {
   const enterFrames = await frames(() => page.evaluate(() => { window.__mount() }))
   await page.waitForTimeout(1500)
   const settled = await page.screenshot()
-  const updateFrames = await frames(() => page.evaluate(() => { window.__setData(window.__next) }))
+  // Each measurement needs new data, so repeats swap between the next rows and their mirror image.
+  let updates = 0
+  const update = () => frames(() => page.evaluate((rows) => {
+    window.__setData(rows)
+  }, updates++ % 2 ? nextRows.toReversed().map((row, index) => ({ ...row, month: nextRows[index].month })) : nextRows))
+  let updateFrames = await update()
+  // A busy machine samples short transitions too thinly. One sighting proves motion and a low count
+  // proves nothing, so a build claiming animation is measured again. The threshold stays the same.
+  if (!declaredStill) {
+    for (let attempt = 0; attempt < 4 && !animationVerdict({ enterFrames, updateFrames }, false).ok; attempt++)
+      updateFrames = Math.max(updateFrames, await update())
+  }
   await page.waitForTimeout(800)
   await page.mouse.move(380, 180)
   await page.mouse.move(420, 180)
@@ -151,7 +164,6 @@ function install(dir) {
 await mkdir(evidence, { recursive: true })
 const browser = await launchBrowser()
 const lineSource = join(chartsDir, 'line')
-const nextRows = Array.from({ length: 12 }, (_, index) => ({ month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index], desktop: 320 - index * 15, mobile: 90 + index * 14, tablet: 60 + (index % 3) * 30 }))
 const rows = []
 const failures = []
 for (const library of [...libraries, reference]) {
@@ -175,9 +187,13 @@ for (const library of [...libraries, reference]) {
     const size = await measureEsbuild(work, external)
     const vite = react ? null : await measureVite(work, external)
     const { outdir } = await runEsbuild(work, 'verify.js', 'verify', [])
-    await writeFile(join(outdir, 'verify.js'), `window.__next = (${JSON.stringify(nextRows)});\n${await readFile(join(outdir, 'verify.js'), 'utf8')}`)
-    const render = await verify(browser, work, outdir, `${library.id}-${build.id}`)
-    const omits = build.omits ?? library.limits?.line.omits ?? []
+    const omits = build.omits ?? library.limits?.line?.omits ?? []
+    const check = () => verify(browser, work, outdir, `${library.id}-${build.id}`, omits.includes('animation'))
+    // Screenshots occasionally stall on a stability wait, on a different build each run, so a stall gets one retry.
+    const render = await check().catch((error) => {
+      console.log(`${label.padEnd(30)} retrying after: ${error.message.split('\n')[0]}`)
+      return check()
+    })
     const animation = animationVerdict(render, omits.includes('animation'))
     const problems = [
       ...render.errors.map(text => `page error: ${text}`),

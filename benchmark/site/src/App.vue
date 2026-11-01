@@ -5,6 +5,7 @@ import results from '../../results/latest.json'
 import { datasets } from './charts/datasets'
 import BundleTable from './components/BundleTable.vue'
 import ComparisonCard from './components/ComparisonCard.vue'
+import FeaturePage from './components/FeaturePage.vue'
 
 const dark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches)
 const showData = ref(false)
@@ -18,6 +19,7 @@ watchEffect(() => {
 // One page per chart at #/<id>. `?only=<library>` keeps one card, so compare-cards.mjs can watch it alone.
 const route = ref(window.location.hash.slice(2))
 window.addEventListener('hashchange', () => { route.value = window.location.hash.slice(2) })
+const onFeatures = computed(() => route.value === 'features')
 const chart = computed(() => charts.find(item => item.id === route.value) ?? charts[0]!)
 const only = new URLSearchParams(window.location.search).get('only')
 const limitOf = (library: { limits?: Record<string, unknown> }) => library.limits?.[chart.value.id] as { unsupported?: boolean, note?: string, noteSource?: string } | undefined
@@ -44,23 +46,32 @@ const dataJson = computed(() => JSON.stringify(data.value, null, 2))
             v-for="item in charts"
             :key="item.id"
             :href="`#/${item.id}`"
-            :aria-current="item.id === chart.id ? 'page' : undefined"
+            :aria-current="!onFeatures && item.id === chart.id ? 'page' : undefined"
           >{{ item.title }}</a>
+          <a
+            href="#/features"
+            :aria-current="onFeatures ? 'page' : undefined"
+          >Features</a>
         </nav>
-        <h1>{{ chart.title }} chart</h1>
-        <p>
+        <h1>{{ onFeatures ? 'Features' : `${chart.title} chart` }}</h1>
+        <p v-if="onFeatures">
+          What each library offers at the tested version, with a source for every cell, and when another library suits you better than vccs.
+        </p>
+        <p v-else>
           One dataset in {{ drawing }} of {{ libraries.length }} charting libraries for Vue: {{ chart.description }},
           each in the library's default look. A library that can't do part of this says so on its card.
         </p>
       </div>
       <div class="controls">
         <button
+          v-if="!onFeatures"
           type="button"
           @click="data = dataset.randomize()"
         >
           Randomize data
         </button>
         <button
+          v-if="!onFeatures"
           type="button"
           :aria-pressed="showData"
           @click="showData = !showData"
@@ -76,11 +87,18 @@ const dataJson = computed(() => JSON.stringify(data.value, null, 2))
         </button>
       </div>
     </header>
+    <FeaturePage
+      v-if="onFeatures"
+      :results="results"
+    />
     <pre
-      v-if="showData"
+      v-if="!onFeatures && showData"
       class="data"
     >{{ dataJson }}</pre>
-    <section class="grid">
+    <section
+      v-if="!onFeatures"
+      class="grid"
+    >
       <ComparisonCard
         v-for="library in shown"
         :key="`${chart.id}-${library.id}`"
@@ -94,11 +112,11 @@ const dataJson = computed(() => JSON.stringify(data.value, null, 2))
       />
     </section>
     <BundleTable
-      v-if="chart.id === 'line'"
+      v-if="!onFeatures && chart.id === 'line'"
       :results="results"
     />
     <p
-      v-else
+      v-else-if="!onFeatures"
       class="sizes"
     >
       Bundle sizes are measured once, on the <a href="#/line">line chart</a>.

@@ -36,8 +36,17 @@ export function loadedOutputs(metafile, entryName) {
  * has a chart and a locked install, the site and the bundles pin the same versions, the results
  * were measured at those versions, and every declared omission is explained with a source.
  */
-export function comparisonProblems({ charts, libraries, reference, sitePins, bundleManifests, lockfiles, chartFiles, results }) {
+export function comparisonProblems({ charts, libraries, reference, sitePins, bundleManifests, lockfiles, chartFiles, results, featureColumns = [], features = {} }) {
   const problems = []
+  for (const library of libraries) {
+    for (const { id: column } of featureColumns) {
+      const cell = features[library.id]?.[column]
+      if (!cell)
+        problems.push(`${library.id}: no ${column} cell in the feature table`)
+      else if (!['yes', 'partial', 'no', 'unknown'].includes(cell.support) || !cell.value || !cell.source?.startsWith('https://'))
+        problems.push(`${library.id}: the ${column} cell needs a support level, a value and a source`)
+    }
+  }
   for (const library of [...libraries, reference]) {
     const manifest = bundleManifests[library.id]
     if (!manifest) {
