@@ -227,3 +227,23 @@ it('identifies the hovered Scatter by its series, not by dataKey', async () => {
   expect([...seriesA.querySelectorAll('.v-charts-scatter-symbol')].map(size)).toEqual([null, null])
   expect([...seriesB.querySelectorAll('.v-charts-scatter-symbol')].map(size)).toEqual(['2', null])
 })
+
+// The rows are named by axis, so without seriesName a tooltip cannot say which series a point is from.
+it('gives each tooltip row the hovered series name, and keeps the axis names on the rows', async () => {
+  const { container } = render(() => (
+    <ScatterChart width={500} height={500}>
+      <XAxis type="number" dataKey="x" />
+      <YAxis type="number" dataKey="y" />
+      <Tooltip labelFormatter={(_, payload) => payload[0]?.seriesName} />
+      <Scatter name="A" data={[{ x: 1, y: 10 }]} isAnimationActive={false} />
+      <Scatter name="B" data={[{ x: 3, y: 30 }]} isAnimationActive={false} />
+    </ScatterChart>
+  ))
+  await nextTick()
+  const seriesB = container.querySelectorAll('.v-charts-scatter')[1]
+  seriesB.querySelector('.v-charts-scatter-symbol')?.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))
+  await nextTick()
+  await nextTick()
+  expect(container.querySelector('.v-charts-tooltip-label')?.textContent).toBe('B')
+  expect([...container.querySelectorAll('.v-charts-tooltip-item-name')].map(item => item.textContent)).toEqual(['x', 'y'])
+})
