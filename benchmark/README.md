@@ -53,7 +53,7 @@ completed. Runtime speed is not measured.
 
 ## Deploy
 
-The site is a Worker named `vue-charts-benchmark` on the `admin@unovue.com` Cloudflare account, deployed by hand from `main` after results change: `pnpm build && pnpm exec wrangler deploy` in `benchmark/site`, logged in to that account. `wrangler.jsonc` pins its `account_id`, so another login fails. CI only builds it.
+The site is [benchmark.vue-charts.com](https://benchmark.vue-charts.com), a Worker named `vue-charts-benchmark` on the `admin@unovue.com` Cloudflare account, deployed by hand from `main` after results change: `pnpm build && pnpm exec wrangler deploy` in `benchmark/site`, logged in to that account. `wrangler.jsonc` pins its `account_id`, so another login fails. CI only builds it.
 
 ## To update a version
 

@@ -7,7 +7,7 @@ import results from '../../../benchmark/results/latest.json'
 
 defineProps<{ section: 'sizes' | 'features' | 'alternatives' }>()
 
-const site = 'https://vue-charts-benchmark.crimson-dream-a1de.workers.dev'
+const site = 'https://benchmark.vue-charts.com'
 const cells = features as Record<string, Record<string, { support: string, value: string, source: string }>>
 const nameOf = (id: string) => libraries.find(library => library.id === id)?.name ?? id
 const sizes = computed(() => results.builds.filter(build => !build.reference).toSorted((a, b) => a.gzipBytes - b.gzipBytes))

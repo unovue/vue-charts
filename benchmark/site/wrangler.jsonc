@@ -3,6 +3,7 @@
   "name": "vue-charts-benchmark",
   // The admin@unovue.com account, so a deploy from any other login fails.
   "account_id": "eae6d9ec8c28c638381492e00d0cf362",
+  "routes": [{ "pattern": "benchmark.vue-charts.com", "custom_domain": true }],
   "compatibility_date": "2026-10-01",
   "assets": { "directory": "./dist" }
 }
