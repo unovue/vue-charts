@@ -41,8 +41,6 @@ Priority: **P1** user-visible bug, **P2** visible polish or reliability, **P3** 
   average about 30), `/area` at 1280 px flagged 4 paths as "unsettled" because the entrance clip
   rectangle was still widening at 2.5 s; `--route=/area` alone passed right after. The
   2.5 s settle limit runs on the real clock, so load can fail it. Rerun on a quiet machine first.
-- **P3 Firefox does not launch on the maintainer's Mac** (timeout after 30 s, also outside the
-  checker). `check:docs` covers Chromium and WebKit.
 - **P3 The docs build logs a landing-query POST 404** but exits 0. Cause unknown.
 - **P3 Motion timing noise.** Raw captures differ between runs, and throttled intervals
   sometimes run faster than unthrottled ones. Settled geometry is exact; the cause is unproven.
