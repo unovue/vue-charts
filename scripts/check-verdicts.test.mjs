@@ -5,14 +5,14 @@ import { droppedPrefetch, emptySurface, seenVerdict } from './lib/check-verdicts
 
 // A filter that is too wide would hide a page whose real script failed to load.
 test('only a dropped prefetch is forgiven, not an aborted script or another error', () => {
-  for (const [errorText, resourceType, expected] of [
-    ['NS_BINDING_ABORTED', 'other', true],
-    ['NS_BINDING_ABORTED', 'script', false],
-    ['NS_BINDING_ABORTED', 'fetch', false],
-    ['NS_ERROR_NET_RESET', 'other', false],
-    ['net::ERR_ABORTED', 'other', false],
+  const prefetched = ['/hint.js']
+  for (const [errorText, url, expected] of [
+    ['NS_BINDING_ABORTED', '/hint.js', true],
+    ['NS_BINDING_ABORTED', '/script.js', false],
+    ['NS_ERROR_NET_RESET', '/hint.js', false],
+    ['net::ERR_ABORTED', '/hint.js', false],
   ])
-    assert.equal(droppedPrefetch(errorText, resourceType), expected, `${errorText} ${resourceType}`)
+    assert.equal(droppedPrefetch(errorText, url, prefetched), expected, `${errorText} ${url}`)
 })
 
 // Empty recordings and reliable defects must fail even alongside noisy rows.
